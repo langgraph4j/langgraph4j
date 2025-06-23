@@ -33,7 +33,7 @@ public class CommandNode<State extends AgentState> extends Node<State> {
     @Override
     public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
       return CompletableFuture.completedFuture(
-          Map.of("command", action.apply(state, config).join(), "mappings", mappings));
+          Map.of("command", action, "mappings", mappings));
     }
   }
 }

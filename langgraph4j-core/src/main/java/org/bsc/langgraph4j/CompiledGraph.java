@@ -561,7 +561,6 @@ public class CompiledGraph<State extends AgentState> {
       return (Output) StateSnapshot.of(checkpoint, config, stateGraph.getStateFactory());
     }
 
-    @SuppressWarnings("unchecked")
     private Optional<Data<Output>> getEmbedGenerator(Map<String, Object> partialState) {
       return partialState.entrySet().stream()
           .filter(e -> e.getValue() instanceof AsyncGenerator)
@@ -614,7 +613,7 @@ public class CompiledGraph<State extends AgentState> {
                     });
               });
     }
-
+    @SuppressWarnings("unchecked")
     private CompletableFuture<Data<Output>> evaluateAction(
         AsyncNodeActionWithConfig<State> action, State withState) {
 
@@ -624,14 +623,16 @@ public class CompiledGraph<State extends AgentState> {
               updateState -> {
                 try {
                   if (action instanceof CommandNode.AsyncCommandNodeActionWithConfig) {
-                    Command command = (Command) updateState.get("command");
-                    this.currentState =
-                        AgentState.updateState(
-                            currentState, command.update(), stateGraph.getChannels());
-                    nextNodeId = command.gotoNode();
-                    return Data.of(getNodeOutput());
+                    AsyncCommandAction<State> commandAction = (AsyncCommandAction<State>) updateState.get("command");
+                      Command command =  commandAction.apply(withState, config).join();
+                      this.currentState =
+                              AgentState.updateState(
+                                      currentState,
+                                      command.update(),
+                                      stateGraph.getChannels());
+                      nextNodeId = command.gotoNode();
+                      return Data.of(getNodeOutput());
                   }
-
                   Optional<Data<Output>> embed = getEmbedGenerator(updateState);
                   if (embed.isPresent()) {
                     return embed.get();
