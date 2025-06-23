@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.internal.edge;
 
 import org.bsc.langgraph4j.action.AsyncCommandAction;
-import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.util.Map;
@@ -19,7 +18,7 @@ public record EdgeCondition<S extends AgentState>(AsyncCommandAction<S> action, 
 
     @Override
     public String toString() {
-        return format( "EdgeCondition[ %s, mapping=%s",
+        return format( "EdgeCondition[ %s, mapping=%s ]",
                 action!=null ? "action" : "null",
                 mappings);
     }

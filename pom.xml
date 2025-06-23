@@ -4,11 +4,11 @@
 
   <groupId>org.bsc.langgraph4j</groupId>
   <artifactId>langgraph4j-parent</artifactId>
-  <version>1.6.0-beta3</version>
+  <version>1.6-beta4</version>
   <packaging>pom</packaging>
 
   <name>langgraph4j::parent</name>
-  <url>https://github.com/bsorrentino/langgraph4j</url>
+  <url>https://github.com/langgraph4j/langgraph4j</url>
   <description>A library for building stateful, multi-agents applications with LLMs</description>
   <licenses>
     <license>
@@ -213,6 +213,7 @@
 
     <!-- LangGraph4j how-tos and examples, new examples repository: https://github.com/langgraph4j/langgraph4j-examples -->
     <module>how-tos</module>
+      <module>langgraph4j-postgres-saver</module>
   </modules>
 
   <profiles>

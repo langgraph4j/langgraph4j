@@ -1,0 +1,17 @@
+services:
+  pgvector-db:
+    image: pgvector/pgvector:pg16 # Use an official pgvector image (choose desired PG version, e.g., pg16)
+    container_name: lg4j-store # Optional: Give the container a specific name
+    environment:
+      POSTGRES_DB: lg4j-store # Name of the database to create
+      POSTGRES_USER: admin # Username to connect with
+      POSTGRES_PASSWORD: bsorrentino # Password for the user (CHANGE FOR PRODUCTION!)
+      # You can add other PostgreSQL environment variables if needed
+      # e.g., POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432
+#    volumes:
+#      - ./init_schema.sql:/docker-entrypoint-initdb.d/init_schema.sql # Mount the specific file
+    restart: unless-stopped
+
+# docker exec -it mcp-test psql -U admin -d mcp_db

@@ -15,7 +15,7 @@ public abstract class PlainTextStateSerializer<State extends AgentState> extends
     }
 
     @Override
-    public String mimeType() {
+    public String contentType() {
         return "plain/text";
     }
 

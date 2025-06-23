@@ -103,13 +103,13 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
     }
 
     @Override
-    public void write(State object, ObjectOutput out) throws IOException {
-        mapSerializer.write(object.data(), mapper.objectOutputWithMapper(out));
+    public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
+        mapSerializer.write(data, mapper.objectOutputWithMapper(out));
     }
 
     @Override
-    public final State read(ObjectInput in) throws IOException, ClassNotFoundException {
-        return stateFactory().apply(mapSerializer.read( mapper.objectInputWithMapper(in) ));
+    public final Map<String, Object> readData(ObjectInput in) throws IOException, ClassNotFoundException {
+        return mapSerializer.read( mapper.objectInputWithMapper(in) );
     }
 
 }

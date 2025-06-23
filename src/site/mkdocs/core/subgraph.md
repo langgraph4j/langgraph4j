@@ -80,9 +80,9 @@ In the  adding both **state subgraph** and **compiled subgraph** the streaming i
 
 [formatid]: /langgraph4j/apidocs/org/bsc/langgraph4j/SubGraphNode.html#formatId
 [action]: /langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeAction.html
-[state_sample]: /how-tos/subgraph-as-stategraph
-[compiled_sample]: /how-tos/subgraph-as-compiledgraph
-[node_sample]: /how-tos/subgraph-as-nodeaction
+[state_sample]: /langgraph4j/how-tos/subgraph-as-stategraph
+[compiled_sample]: /langgraph4j/how-tos/subgraph-as-compiledgraph
+[node_sample]: /langgraph4j/how-tos/subgraph-as-nodeaction
 [sg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#getGraph
 [cg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph
 [plantUML]: https://plantuml.com

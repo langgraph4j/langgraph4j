@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.bsc.langgraph4j</groupId>
 		<artifactId>langgraph4j-parent</artifactId>
-		<version>1.6.0-beta3</version>
+		<version>1.6-beta4</version>
         <relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>langgraph4j-springai-agentexecutor</artifactId>
-	<version>1.6.0-beta3</version>
+	<version>1.6-beta4</version>
 	<packaging>jar</packaging>
 
 	<name>langgraph4j::springai::agentexecutor</name>

@@ -50,6 +50,8 @@ nav:
   - Features: features.md  
   - Tutorial:
       - Core Library: core/low_level.md
+      - Checkpoint (Postgres): core/checkpoint-postgres.md
+      - Parallel Branch: core/parallel-branch.md
       - Streaming: core/streaming.md
       - Subgraphs: core/subgraph.md
   - Examples: https://github.com/langgraph4j/langgraph4j-examples

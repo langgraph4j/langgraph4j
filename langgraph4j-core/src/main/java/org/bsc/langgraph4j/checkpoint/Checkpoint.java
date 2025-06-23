@@ -79,7 +79,7 @@ public class Checkpoint {
         }
 
         public Checkpoint build() {
-            return result;
+            return new Checkpoint(result);
 
         }
     }

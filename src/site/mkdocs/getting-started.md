@@ -82,7 +82,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.6.0-beta3</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.6.0-beta4</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->

@@ -53,21 +53,20 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
     }
 
     @Override
-    public String mimeType() {
+    public String contentType() {
         return "application/json";
     }
 
     @Override
-    public void write(State object, ObjectOutput out) throws IOException {
-        String json = objectMapper.writeValueAsString(object.data());
+    public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
+        String json = objectMapper.writeValueAsString(data);
         out.writeUTF(json);
     }
 
     @Override
-    public State read(ObjectInput in) throws IOException, ClassNotFoundException {
+    public final Map<String, Object> readData(ObjectInput in) throws IOException, ClassNotFoundException {
         String json = in.readUTF();
-        var data = objectMapper.readValue(json, new TypeReference<Map<String,Object>>() {});
-        return stateFactory().apply(data);
+        return objectMapper.readValue(json, new TypeReference<Map<String,Object>>() {});
     }
 
 }

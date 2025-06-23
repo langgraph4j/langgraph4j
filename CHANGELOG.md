@@ -2,6 +2,111 @@
 
 
 
+<!-- "name: v1.6-beta4" is a release tag -->
+
+## [v1.6-beta4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.6-beta4) (2025-06-19)
+
+### Features
+
+ *  **PostgresSaver**  add module langgraph4j-postgres-saver ([02420db2871e873](https://github.com/bsorrentino/langgraph4j/commit/02420db2871e873b237259db90f5b5501149c7eb))
+     > - first reference implementation
+     > work on #133
+   
+ *  **core**  enforce attributes validation ([361c55f55dab709](https://github.com/bsorrentino/langgraph4j/commit/361c55f55dab70905a1e97dfa21995bc1234e317))
+   
+ *  **core**  add TryConsumer functional interface ([942754a3976230a](https://github.com/bsorrentino/langgraph4j/commit/942754a3976230a8279cb9e54579db697638952c))
+     > Added a new &#x60;TryConsumer&#x60; functional interface to handle exceptions within lambda expressions
+   
+ *  **core**  add TryConsumer functional interface ([39e1a3e80027546](https://github.com/bsorrentino/langgraph4j/commit/39e1a3e80027546acd0521ab87099a2aa92c1caf))
+     > Added a new &#x60;TryConsumer&#x60; functional interface to handle exceptions within lambda expressions
+   
+ *  **postgres**  start implementation of PostgresSaver ([7915c3077dc991a](https://github.com/bsorrentino/langgraph4j/commit/7915c3077dc991a368852c26384ad6fdae8b814b))
+     > work #133
+   
+
+### Bug Fixes
+
+ -  **how-to**  fix time-travel notebook replace getState() with state() ([e3652e3704eb8dd](https://github.com/bsorrentino/langgraph4j/commit/e3652e3704eb8ddb10e857d826f622ba634225d7))
+
+ -  update parent pom relative path ([431d87e46548494](https://github.com/bsorrentino/langgraph4j/commit/431d87e46548494d9f44a5f92296e535ea0fb08a))
+
+ -  **studio**  update parent pom path ([20bf3e315e82c7a](https://github.com/bsorrentino/langgraph4j/commit/20bf3e315e82c7a41ce28cd6c94a52b1a250a0d7))
+
+
+### Documentation
+
+ -  build: bump to version 1.6-beta4 ([0fac72c980045e4](https://github.com/bsorrentino/langgraph4j/commit/0fac72c980045e43c3259242491473d4f64d7811))
+
+ -  **postgres**  add readme ([15a323e208458cd](https://github.com/bsorrentino/langgraph4j/commit/15a323e208458cd7b9926378c929351e3ca05ef0))
+     > work on #133
+
+ -  refine parallel node documentation ([5d5babc1864d1d1](https://github.com/bsorrentino/langgraph4j/commit/5d5babc1864d1d104275a155317d946626a05f3c))
+
+ -  refine parallel node documentation ([e8f12334c332ab4](https://github.com/bsorrentino/langgraph4j/commit/e8f12334c332ab4dfb165bc9a9e0f8e0395a6b9f))
+
+ -  **pom**  update project url ([276402be6de96a3](https://github.com/bsorrentino/langgraph4j/commit/276402be6de96a32e23cc6798f75366c43201dda))
+
+ -  fix link references in site ([c517965326eb4da](https://github.com/bsorrentino/langgraph4j/commit/c517965326eb4da58ca31823872174084bb6a151))
+
+ -  update changelog ([fe8d3337d614f7d](https://github.com/bsorrentino/langgraph4j/commit/fe8d3337d614f7d1d3abd7749f8a0062d2cb9e2d))
+
+
+### Refactor
+
+ -  **how-to**  code refinement ([8dcd0159a1c5ca1](https://github.com/bsorrentino/langgraph4j/commit/8dcd0159a1c5ca121f9a28294a23e6eb4bb63c44))
+    > evaluate tool call during streaming for springai
+ > work on #169
+
+ -  **how-to**  code refinement ([edaab7cddb51d83](https://github.com/bsorrentino/langgraph4j/commit/edaab7cddb51d831898d60b38e749851bf6a6fbc))
+    > evaluate tool call during streaming for springai
+ > work on #169
+
+ -  **how-to**  code refinement ([f7bfe2c14ba6612](https://github.com/bsorrentino/langgraph4j/commit/f7bfe2c14ba66125f92c7862c69661c98607d904))
+    > evaluate tool call during streaming
+ > work on #169
+
+ -  **how-to**  code refinement ([cdb911c4a474333](https://github.com/bsorrentino/langgraph4j/commit/cdb911c4a4743335395bbb6e899f81a283743cee))
+    > evaluate tool call during streaming
+ > work on #169
+
+ -  **serialization**  apply serialization changes ([d51faaef437b23c](https://github.com/bsorrentino/langgraph4j/commit/d51faaef437b23cc2ec796f21f9a52ac0fc87272))
+   
+ -  **StateSerializer**  abstract read/write methods for state data serialization ([3d4507094827ff7](https://github.com/bsorrentino/langgraph4j/commit/3d4507094827ff72859f4a2f61be1116f69335f5))
+    > - Renamed &#x27;write&#x27; and &#x27;read&#x27; methods to abstract methods &#x27;writeData&#x27; and &#x27;readData&#x27; respectively.
+ > - Added &#x27;dataToBytes&#x27; and &#x27;dataFromBytes&#x27; as final methods for serializing/deserializing Map&lt;String, Object&gt; instances.
+
+ -  **Serializer**  update method names and documentation ([caef4159282526f](https://github.com/bsorrentino/langgraph4j/commit/caef4159282526f31df73c9d259bc2d9d27e47ea))
+    > - Renamed &#x60;mimeType&#x60; to &#x60;contentType&#x60; for clarification.
+ > - Deprecated old methods (&#x60;writeObject&#x60;, &#x60;readObject&#x60;) in favor of new ones (&#x60;objectToBytes&#x60;, &#x60;bytesToObject&#x60;).
+
+ -  **core**  enhance MemorySaver to become a base cache implementation for further CheckpointSaver extensions ([611bbe490d64fdf](https://github.com/bsorrentino/langgraph4j/commit/611bbe490d64fdf6081fd3dc999a9577850bc112))
+   
+ -  **CompiledGraph**  add public access to lastStateOf method ([8819776a0f5519a](https://github.com/bsorrentino/langgraph4j/commit/8819776a0f5519a3c59cb443b542773f227023fa))
+   
+
+### ALM 
+
+ -  bump to version 1.6-beta4 ([878166fe608cdd8](https://github.com/bsorrentino/langgraph4j/commit/878166fe608cdd8cd9414dfe3386e13173629c2b))
+   
+ -  **PostgresSaver**  skip integration test on build ([5034c1f81f12485](https://github.com/bsorrentino/langgraph4j/commit/5034c1f81f12485a07317f43d9c3d16b8e7d1b96))
+    > work on #133
+
+ -  **postgres**  add new module for saving checkpoint to postgres ([4b61aa3dba9a14d](https://github.com/bsorrentino/langgraph4j/commit/4b61aa3dba9a14d67cdc011d0017bc77fc415ce5))
+    > work on #133
+
+ -  bump to 1.6-SNAPSHOT ([7530493939954ee](https://github.com/bsorrentino/langgraph4j/commit/7530493939954ee74bfcd231f4584c3b0607a25c))
+   
+
+### Test 
+
+ -  **postgres**  verify dropTable and createTable built-in commands ([d35fea32c9fa06d](https://github.com/bsorrentino/langgraph4j/commit/d35fea32c9fa06dd0dcdb61ace1f0a52f9c04ec4))
+    > work on #133
+
+
+
+
+
+
 <!-- "name: v1.6.0-beta3" is a release tag -->
 
 ## [v1.6.0-beta3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.6.0-beta3) (2025-06-09)
