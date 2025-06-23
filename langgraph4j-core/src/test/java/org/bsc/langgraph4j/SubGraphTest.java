@@ -1,9 +1,13 @@
 package org.bsc.langgraph4j;
 
+import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.action.CommandAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
+import org.bsc.langgraph4j.state.StateSnapshot;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,7 @@ import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SubGraphTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SubGraphTest.class);
@@ -529,6 +534,26 @@ public class SubGraphTest {
 
     }
 
+    @Test
+    public void testMergeSubgraph05() throws Exception {
+
+        RunnableConfig thread_2 = RunnableConfig.builder().threadId("thread_2").build();
+        var graph = new MessagesStateGraph<String>()
+                .addNode("B1", _makeNode("B1") )
+                .addNode("B2", _makeNode( "B2" ))
+                .addNode("command_node",AsyncCommandAction.node_async((state, config) -> new Command("B2",Map.of("messages","go_to_command"))), Map.of( "B2", "B2"))
+                .addEdge(START, "B1")
+                .addEdge("B1", "command_node")
+                .addEdge("B2", END)
+                ;
+        CompiledGraph<MessagesState<String>> compile = graph.compile(CompileConfig.builder().checkpointSaver(new MemorySaver()).interruptAfter("command_node").build());
+        assertEquals(List.of(START,"B1","command_node"),_execute(compile, Map.of()));
+        assertEquals(List.of("B2",END),_execute(compile, null));
+        CompiledGraph<MessagesState<String>> compile1 = graph.compile(CompileConfig.builder().checkpointSaver(new MemorySaver()).interruptBefore("command_node").build());
+        assertEquals(List.of(START,"B1"),_execute(compile1, Map.of()));
+        assertEquals(List.of("command_node","B2",END),_execute(compile1, null));
+    }
+
 
     @Test
     public void testCheckpointWithSubgraph() throws Exception {
@@ -574,6 +599,51 @@ public class SubGraphTest {
                 "child:step3",
                 "step3"), result.get().messages());
 
+    }
+    @Test
+    public void testCheckpointWithCommandSubgraph() throws GraphStateException {
+        var compileConfig = CompileConfig.builder().checkpointSaver(new MemorySaver()).build();
+        var workflowChild = new MessagesStateGraph<String>()
+                .addNode("step_1", _makeNode("child:step1") )
+                .addNode("step_2", _makeNode("child:step2") )
+                .addNode("step_3", _makeNode("child:step3") )
+                .addNode("step_4", _makeNode("child:step4"))
+                .addNode("command_node", AsyncCommandAction.node_async((state, config) -> new Command("step_4", Map.of("messages","go to command"))),Map.of("step_4","step_4","step_3","step_3"))
+                .addEdge(START, "step_1")
+                .addEdge("step_1", "step_2")
+                .addEdge("step_2", "command_node")
+                .addEdge("step_3",END)
+                .addEdge("step_4",END)
+                //.compile(compileConfig)
+                ;
+
+        var workflowParent = new MessagesStateGraph<String>()
+                .addNode("step_1", _makeNode( "step1"))
+                .addNode("step_2", _makeNode("step2"))
+                .addNode("step_3",  _makeNode("step3"))
+                .addNode("subgraph", workflowChild)
+                .addEdge(START, "step_1")
+                .addEdge("step_1", "step_2")
+                .addEdge("step_2", "subgraph")
+                .addEdge("subgraph", "step_3")
+                .addEdge("step_3", END)
+                .compile(compileConfig);
+        String plantuml = workflowParent.getGraph(GraphRepresentation.Type.PLANTUML).content();
+        String mermaid=workflowParent.getGraph(GraphRepresentation.Type.MERMAID).content();
+        System.out.println("===============plantuml===============");
+        System.out.println(plantuml);
+        System.out.println("===============mermaid===============");
+        System.out.println(mermaid);
+
+        MessagesState<String> state = workflowParent.invoke(Map.of()).orElseThrow();
+        assertIterableEquals(List.of(
+                "step1",
+                "step2",
+                "child:step1",
+                "child:step2",
+                "go to command",
+                "child:step4",
+                "step3"), state.messages());
     }
 
 }
