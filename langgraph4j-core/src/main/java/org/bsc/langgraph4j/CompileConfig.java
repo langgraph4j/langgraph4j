@@ -1,14 +1,33 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
+import org.bsc.langgraph4j.state.AgentState;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
+
+@FunctionalInterface
+interface InterruptPredicate {
+
+    <State extends AgentState> boolean test( String nodeId, State state );
+
+    static  <State extends AgentState> InterruptPredicate of( BiPredicate<String, State> predicate ) {
+        return new InterruptPredicate() {
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public <S extends AgentState> boolean test(String nodeId, S state) {
+                return predicate.test( nodeId, (State) state );
+            }
+        };
+    }
+}
 
 /**
  * class is a configuration container for defining compile settings and behaviors.
@@ -17,16 +36,19 @@ import static java.util.Optional.ofNullable;
 public class CompileConfig {
 
     private BaseCheckpointSaver checkpointSaver;
-    private Set<String> interruptsBefore = Set.of();
+
     private Set<String> interruptsAfter = Set.of();
+    private Set<String> interruptsBefore = Set.of();
     private boolean releaseThread = false;
+    private InterruptPredicate interruptBeforePredicate;
+    private InterruptPredicate interruptAfterPredicate;
 
     /**
      * Returns the array of interrupts that will occur before the specified node.
      *
      * @return an array of interruptible nodes.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public String[] getInterruptBefore() { return interruptsBefore.toArray( new String[0]); }
 
     /**
@@ -34,7 +56,7 @@ public class CompileConfig {
      *
      * @return an array of interruptible nodes.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public String[] getInterruptAfter() { return interruptsAfter.toArray( new String[0]); }
 
     /**
@@ -50,7 +72,25 @@ public class CompileConfig {
      * @return an unmodifiable {@link Set} of interruptible nodes.
      */
     public Set<String> interruptsAfter() { return interruptsAfter; }
- 
+
+    public BiPredicate<String,AgentState> interruptBeforePredicate() {
+        return (nodeId, state) -> {
+            if( interruptsBefore.contains(nodeId) ) {
+                return true;
+            }
+            return interruptBeforePredicate.test( nodeId, state );
+        };
+    }
+
+    public BiPredicate<String,? extends AgentState> interruptAfterPredicate() {
+        return (nodeId, state) -> {
+            if (interruptsAfter.contains(nodeId)) {
+                return true;
+            }
+            return interruptAfterPredicate.test(nodeId, state);
+        };
+    }
+
     /**
      * Returns the current {@code BaseCheckpointSaver} instance if it is not {@code null},
      * otherwise returns an empty {@link Optional}.
@@ -132,6 +172,17 @@ public class CompileConfig {
             this.config.interruptsAfter = Set.of(interruptAfter);
             return this;
         }
+
+        public <State extends AgentState> Builder interruptBeforePredicate( BiPredicate<String, State> interruptBeforePredicate ) {
+            this.config.interruptBeforePredicate = InterruptPredicate.of( interruptBeforePredicate );
+            return this;
+        }
+
+        public <State extends AgentState> Builder interruptAfterPredicate( BiPredicate<String, State> interruptAfterPredicate ) {
+            this.config.interruptAfterPredicate = InterruptPredicate.of( interruptAfterPredicate );
+            return this;
+        }
+
         /**
          * Sets the collection of interrupts to be executed before the configuration.
          *
@@ -191,6 +242,9 @@ public class CompileConfig {
         this.interruptsBefore = config.interruptsBefore;
         this.interruptsAfter = config.interruptsAfter;
         this.releaseThread = config.releaseThread;
+        this.interruptBeforePredicate = config.interruptBeforePredicate;
+        this.interruptAfterPredicate = config.interruptAfterPredicate;
+
     }
 
 }
