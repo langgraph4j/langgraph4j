@@ -17,7 +17,12 @@ interface InterruptPredicate {
 
     <State extends AgentState> boolean test( String nodeId, State state );
 
+    default <State extends AgentState> BiPredicate<String,State> asPredicate() {
+        return this::test;
+    }
+
     static  <State extends AgentState> InterruptPredicate of( BiPredicate<String, State> predicate ) {
+
         return new InterruptPredicate() {
 
             @Override
@@ -46,22 +51,6 @@ public class CompileConfig {
     /**
      * Returns the array of interrupts that will occur before the specified node.
      *
-     * @return an array of interruptible nodes.
-     */
-    @Deprecated(forRemoval = true)
-    public String[] getInterruptBefore() { return interruptsBefore.toArray( new String[0]); }
-
-    /**
-     * Returns the array of interrupts that will occur after the specified node.
-     *
-     * @return an array of interruptible nodes.
-     */
-    @Deprecated(forRemoval = true)
-    public String[] getInterruptAfter() { return interruptsAfter.toArray( new String[0]); }
-
-    /**
-     * Returns the array of interrupts that will occur before the specified node.
-     *
      * @return an unmodifiable {@link Set} of interruptible nodes.
      */
     public Set<String> interruptsBefore() { return interruptsBefore; }
@@ -73,22 +62,12 @@ public class CompileConfig {
      */
     public Set<String> interruptsAfter() { return interruptsAfter; }
 
-    public BiPredicate<String,AgentState> interruptBeforePredicate() {
-        return (nodeId, state) -> {
-            if( interruptsBefore.contains(nodeId) ) {
-                return true;
-            }
-            return interruptBeforePredicate.test( nodeId, state );
-        };
+    public <State extends AgentState> BiPredicate<String,State> interruptBeforePredicate() {
+        return interruptBeforePredicate.asPredicate();
     }
 
-    public BiPredicate<String,? extends AgentState> interruptAfterPredicate() {
-        return (nodeId, state) -> {
-            if (interruptsAfter.contains(nodeId)) {
-                return true;
-            }
-            return interruptAfterPredicate.test(nodeId, state);
-        };
+    public <State extends AgentState> BiPredicate<String,State> interruptAfterPredicate() {
+        return interruptAfterPredicate.asPredicate();
     }
 
     /**
@@ -133,6 +112,8 @@ public class CompileConfig {
      */
     public static class Builder {
         private final CompileConfig config;
+        private InterruptPredicate _interruptBeforePredicate;
+        private InterruptPredicate _interruptAfterPredicate;
 
         /**
          * Constructs a new instance of {@code Builder} with the specified compile configuration.
@@ -174,12 +155,12 @@ public class CompileConfig {
         }
 
         public <State extends AgentState> Builder interruptBeforePredicate( BiPredicate<String, State> interruptBeforePredicate ) {
-            this.config.interruptBeforePredicate = InterruptPredicate.of( interruptBeforePredicate );
+            this._interruptBeforePredicate = InterruptPredicate.of(interruptBeforePredicate);
             return this;
         }
 
         public <State extends AgentState> Builder interruptAfterPredicate( BiPredicate<String, State> interruptAfterPredicate ) {
-            this.config.interruptAfterPredicate = InterruptPredicate.of( interruptAfterPredicate );
+            this._interruptAfterPredicate = InterruptPredicate.of(interruptAfterPredicate);
             return this;
         }
 
@@ -222,6 +203,19 @@ public class CompileConfig {
          * @return the compiled {@link CompileConfig} object
          */
         public CompileConfig build() {
+            this.config.interruptAfterPredicate =  InterruptPredicate.of((nodeId, state) -> {
+                if (config.interruptsAfter.contains(nodeId)) {
+                    return true;
+                }
+                return _interruptAfterPredicate != null && _interruptAfterPredicate.test(nodeId, state);
+            });
+            this.config.interruptBeforePredicate =  InterruptPredicate.of((nodeId, state) -> {
+                if (config.interruptsBefore.contains(nodeId)) {
+                    return true;
+                }
+                return _interruptBeforePredicate != null && _interruptBeforePredicate.test(nodeId, state);
+            });
+
             return config;
         }
     }
