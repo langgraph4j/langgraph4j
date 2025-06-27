@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.state.Channel;
 import java.util.*;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a checkpoint of an agent state.
@@ -19,14 +20,12 @@ import static java.lang.String.format;
  */
 public class Checkpoint {
 
-    private String id = UUID.randomUUID().toString();
+    private final String id;
     private Map<String,Object> state = null;
     private String nodeId = null ;
     private String nextNodeId = null;
 
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
 
     public Map<String, Object> getState() {
         return state;
@@ -40,14 +39,26 @@ public class Checkpoint {
         return nextNodeId;
     }
 
-    private Checkpoint() {
+    /**
+     * create a copy of given checkpoint with a new id
+     * @param checkpoint value from which copy is created
+     * @return new copy with different id
+     */
+    public static Checkpoint copyOf( Checkpoint checkpoint ) {
+        requireNonNull( checkpoint, "checkpoint cannot be null" );
+        return new Checkpoint( UUID.randomUUID().toString(),
+                                checkpoint.state,
+                                checkpoint.nodeId,
+                                checkpoint.nextNodeId);
     }
 
-    public Checkpoint( Checkpoint checkpoint ) {
-        this.id = Objects.requireNonNull( checkpoint.id, "id cannot be null" );
-        this.state =  Objects.requireNonNull( checkpoint.state, "state cannot be null" );
-        this.nodeId = Objects.requireNonNull( checkpoint.nodeId, "nodeId cannot be null" );
-        this.nextNodeId =  Objects.requireNonNull( checkpoint.nextNodeId, "Checkpoint.nextNodeId cannot be null" );
+    private Checkpoint( String id, Map<String,Object> state, String nodeId, String nextNodeId ) {
+
+        this.id = requireNonNull( id, "id cannot be null" );
+        this.state =  requireNonNull( state, "state cannot be null" );
+        this.nodeId = requireNonNull( nodeId, "nodeId cannot be null" );
+        this.nextNodeId =  requireNonNull( nextNodeId, "Checkpoint.nextNodeId cannot be null" );
+
     }
 
     public static Builder builder() {
@@ -55,40 +66,46 @@ public class Checkpoint {
     }
 
     public static class Builder {
-        private final Checkpoint result = new Checkpoint();
+        private String id = UUID.randomUUID().toString();
+        private Map<String,Object> state = null;
+        private String nodeId = null ;
+        private String nextNodeId = null;
 
         public Builder id( String id ) {
-            result.id = id;
+            this.id = id;
             return this;
         }
         public Builder state( AgentState state ) {
-            result.state = state.data();
+            this.state = state.data();
             return this;
         }
         public Builder state( Map<String,Object> state ) {
-            result.state = state;
+            this.state = state;
             return this;
         }
         public Builder nodeId( String nodeId ) {
-            result.nodeId = nodeId;
+            this.nodeId = nodeId;
             return this;
         }
         public Builder nextNodeId( String nextNodeId ) {
-            result.nextNodeId = nextNodeId;
+            this.nextNodeId = nextNodeId;
             return this;
         }
 
         public Checkpoint build() {
-            return new Checkpoint(result);
-
+            return new Checkpoint(  id,
+                                    state,
+                                    nodeId,
+                                    nextNodeId );
         }
     }
 
     public Checkpoint updateState(Map<String,Object> values, Map<String, Channel<?>> channels ) {
 
-        Checkpoint result = new Checkpoint( this );
-        result.state = AgentState.updateState( state, values, channels );
-        return result;
+        return new Checkpoint( this.id,
+                AgentState.updateState( this.state, values, channels ),
+                this.nodeId,
+                this.nextNodeId );
     }
 
     @Override

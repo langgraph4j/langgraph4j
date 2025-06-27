@@ -231,11 +231,12 @@ public class CompiledGraph<State extends AgentState> {
      * @throws Exception when something goes wrong
      */
     public RunnableConfig updateState( RunnableConfig config, Map<String,Object> values, String asNode ) throws Exception {
+
         BaseCheckpointSaver saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         // merge values with checkpoint values
         Checkpoint branchCheckpoint = saver.get(config)
-                            .map(Checkpoint::new)
+                            .map(Checkpoint::copyOf)
                             .map( cp -> cp.updateState(values, stateGraph.getChannels()) )
                             .orElseThrow( () -> (new IllegalStateException("Missing Checkpoint!")) );
 
