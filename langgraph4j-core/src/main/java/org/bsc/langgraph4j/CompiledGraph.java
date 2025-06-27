@@ -327,19 +327,19 @@ public class CompiledGraph<State extends AgentState> {
         return nextNodeId(entryPoint, state, "entryPoint", config);
     }
 
-    private boolean shouldInterruptBefore( String nodeId, String previousNodeId ) {
+    private boolean shouldInterruptBefore( String nodeId, String previousNodeId, State state ) {
         Objects.requireNonNull( nodeId, "nodeId cannot be null" );
         if( previousNodeId == null ) { // FIX RESUME ERROR
             return false;
         }
-        return compileConfig.interruptsBefore().contains(nodeId);
+        return compileConfig.interruptBeforePredicate().test( nodeId,state );
     }
 
-    private boolean shouldInterruptAfter(String nodeId, String previousNodeId ) {
+    private boolean shouldInterruptAfter(String nodeId, String previousNodeId, State state  ) {
         if( nodeId == null || Objects.equals(nodeId, previousNodeId) ) { // FIX RESUME ERROR
             return false;
         }
-        return compileConfig.interruptsAfter().contains(nodeId);
+        return compileConfig.interruptAfterPredicate().test( nodeId,state );
     }
 
     private Optional<Checkpoint> addCheckpoint( RunnableConfig config, String nodeId, Map<String,Object> state, String nextNodeId ) throws Exception {
@@ -685,12 +685,14 @@ public class CompiledGraph<State extends AgentState> {
                     return Data.of( buildNodeOutput( END ) );
                 }
 
+                var currentStateObject = cloneState(currentState);
+
                 // check on previous node
-                if( shouldInterruptAfter( currentNodeId, nextNodeId )) {
+                if( shouldInterruptAfter( currentNodeId, nextNodeId, currentStateObject )) {
                     return Data.done(currentNodeId);
                 }
 
-                if( shouldInterruptBefore( nextNodeId, currentNodeId ) ) {
+                if( shouldInterruptBefore( nextNodeId, currentNodeId, currentStateObject  ) ) {
                     return Data.done(currentNodeId);
                 }
 
@@ -701,7 +703,7 @@ public class CompiledGraph<State extends AgentState> {
                 if (action == null)
                     throw RunnableErrors.missingNode.exception(currentNodeId);
 
-                return evaluateAction(action, cloneState(currentState) ).get();
+                return evaluateAction(action, currentStateObject ).get();
             }
             catch( Exception e ) {
                 log.error( e.getMessage(), e );
