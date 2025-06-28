@@ -17,10 +17,6 @@ interface InterruptPredicate {
 
     <State extends AgentState> boolean test( String nodeId, State state );
 
-    default <State extends AgentState> BiPredicate<String,State> asPredicate() {
-        return this::test;
-    }
-
     static  <State extends AgentState> InterruptPredicate of( BiPredicate<String, State> predicate ) {
 
         return new InterruptPredicate() {
@@ -40,13 +36,12 @@ interface InterruptPredicate {
  */
 public class CompileConfig {
 
-    private BaseCheckpointSaver checkpointSaver;
-
-    private Set<String> interruptsAfter = Set.of();
-    private Set<String> interruptsBefore = Set.of();
-    private boolean releaseThread = false;
-    private InterruptPredicate interruptBeforePredicate;
-    private InterruptPredicate interruptAfterPredicate;
+    private final BaseCheckpointSaver checkpointSaver;
+    private final Set<String> interruptsAfter;
+    private final Set<String> interruptsBefore;
+    private final boolean releaseThread;
+    private final InterruptPredicate interruptBeforePredicate;
+    private final InterruptPredicate interruptAfterPredicate;
 
     /**
      * Returns the array of interrupts that will occur before the specified node.
@@ -61,13 +56,36 @@ public class CompileConfig {
      * @return an unmodifiable {@link Set} of interruptible nodes.
      */
     public Set<String> interruptsAfter() { return interruptsAfter; }
-
-    public <State extends AgentState> BiPredicate<String,State> interruptBeforePredicate() {
-        return interruptBeforePredicate.asPredicate();
+    /**
+     * Returns a predicate that determines if an interrupt should occur before a given node.
+     * The predicate takes the node ID and the current state as input.
+     *
+     * @param <State> the type of the agent state, which must extend {@link AgentState}.
+     * @return a {@link BiPredicate} that returns {@code true} if an interrupt should occur before the node.
+     */
+    public <State extends AgentState> BiPredicate<String, State> interruptBeforePredicate() {
+        return (nodeId, state) -> {
+            if (interruptsBefore.contains(nodeId)) {
+                return true;
+            }
+            return interruptBeforePredicate != null && interruptBeforePredicate.test(nodeId, state);
+        };
     }
 
-    public <State extends AgentState> BiPredicate<String,State> interruptAfterPredicate() {
-        return interruptAfterPredicate.asPredicate();
+    /**
+     * Returns a predicate that determines if an interrupt should occur after a given node.
+     * The predicate takes the node ID and the current state as input.
+     *
+     * @param <State> the type of the agent state, which must extend {@link AgentState}.
+     * @return a {@link BiPredicate} that returns {@code true} if an interrupt should occur after the node.
+     */
+    public <State extends AgentState> BiPredicate<String, State> interruptAfterPredicate() {
+        return (nodeId, state) -> {
+            if (interruptsAfter.contains(nodeId)) {
+                return true;
+            }
+            return interruptAfterPredicate != null && interruptAfterPredicate.test(nodeId, state);
+        };
     }
 
     /**
@@ -93,7 +111,7 @@ public class CompileConfig {
      * @return A {@link Builder} instance.
      */
     public static Builder builder() {
-        return new Builder(new CompileConfig());
+        return new Builder();
     }
     /**
      * Creates a new {@link Builder} instance with the specified Compile configuration.
@@ -111,9 +129,15 @@ public class CompileConfig {
      *
      */
     public static class Builder {
-        private final CompileConfig config;
-        private InterruptPredicate _interruptBeforePredicate;
-        private InterruptPredicate _interruptAfterPredicate;
+        private BaseCheckpointSaver checkpointSaver;
+        private Set<String> interruptsAfter;
+        private Set<String> interruptsBefore;
+        private boolean releaseThread;
+        private InterruptPredicate interruptBeforePredicate;
+        private InterruptPredicate interruptAfterPredicate;
+
+        protected Builder() {
+        }
 
         /**
          * Constructs a new instance of {@code Builder} with the specified compile configuration.
@@ -121,7 +145,12 @@ public class CompileConfig {
          * @param config The compile configuration to be used. This value must not be {@literal null}.
          */
         protected Builder( CompileConfig config ) {
-            this.config = new CompileConfig(config);
+            this.checkpointSaver = config.checkpointSaver;
+            this.interruptsBefore = config.interruptsBefore;
+            this.interruptsAfter = config.interruptsAfter;
+            this.releaseThread = config.releaseThread;
+            this.interruptBeforePredicate = config.interruptBeforePredicate;
+            this.interruptAfterPredicate = config.interruptAfterPredicate;
         }
         /**
          * Sets the checkpoint saver for the configuration.
@@ -130,7 +159,7 @@ public class CompileConfig {
          * @return The current {@code Builder} instance for method chaining.
          */
         public Builder checkpointSaver(BaseCheckpointSaver checkpointSaver) {
-            this.config.checkpointSaver = checkpointSaver;
+            this.checkpointSaver = checkpointSaver;
             return this;
         }
         /**
@@ -140,7 +169,7 @@ public class CompileConfig {
          * @return a reference to the current instance of Builder
          */
         public Builder interruptBefore(String... interruptBefore) {
-            this.config.interruptsBefore = Set.of(interruptBefore);
+            this.interruptsBefore = Set.of(interruptBefore);
             return this;
         }
         /**
@@ -150,17 +179,17 @@ public class CompileConfig {
          * @return The current Builder instance, allowing method chaining.
          */
         public Builder interruptAfter(String... interruptAfter) {
-            this.config.interruptsAfter = Set.of(interruptAfter);
+            this.interruptsAfter = Set.of(interruptAfter);
             return this;
         }
 
         public <State extends AgentState> Builder interruptBeforePredicate( BiPredicate<String, State> interruptBeforePredicate ) {
-            this._interruptBeforePredicate = InterruptPredicate.of(interruptBeforePredicate);
+            this.interruptBeforePredicate = InterruptPredicate.of(interruptBeforePredicate);
             return this;
         }
 
         public <State extends AgentState> Builder interruptAfterPredicate( BiPredicate<String, State> interruptAfterPredicate ) {
-            this._interruptAfterPredicate = InterruptPredicate.of(interruptAfterPredicate);
+            this.interruptAfterPredicate = InterruptPredicate.of(interruptAfterPredicate);
             return this;
         }
 
@@ -171,7 +200,7 @@ public class CompileConfig {
          * @return This builder instance for method chaining.
          */
         public Builder interruptsBefore(Collection<String> interruptsBefore) {
-            this.config.interruptsBefore = interruptsBefore.stream().collect(Collectors.toUnmodifiableSet());
+            this.interruptsBefore = interruptsBefore.stream().collect(Collectors.toUnmodifiableSet());
             return this;
         }
         /**
@@ -181,7 +210,7 @@ public class CompileConfig {
          * @return The current Builder instance for method chaining
          */
         public Builder interruptsAfter(Collection<String> interruptsAfter) {
-            this.config.interruptsAfter = interruptsAfter.stream().collect(Collectors.toUnmodifiableSet());;
+            this.interruptsAfter = interruptsAfter.stream().collect(Collectors.toUnmodifiableSet());;
             return this;
         }
 
@@ -193,7 +222,7 @@ public class CompileConfig {
          * @return The current {@code Builder} instance for method chaining.
          */
         public Builder releaseThread( boolean releaseThread ) {
-            this.config.releaseThread = releaseThread;
+            this.releaseThread = releaseThread;
             return this;
         }
 
@@ -203,41 +232,17 @@ public class CompileConfig {
          * @return the compiled {@link CompileConfig} object
          */
         public CompileConfig build() {
-            this.config.interruptAfterPredicate =  InterruptPredicate.of((nodeId, state) -> {
-                if (config.interruptsAfter.contains(nodeId)) {
-                    return true;
-                }
-                return _interruptAfterPredicate != null && _interruptAfterPredicate.test(nodeId, state);
-            });
-            this.config.interruptBeforePredicate =  InterruptPredicate.of((nodeId, state) -> {
-                if (config.interruptsBefore.contains(nodeId)) {
-                    return true;
-                }
-                return _interruptBeforePredicate != null && _interruptBeforePredicate.test(nodeId, state);
-            });
-
-            return config;
+            return new CompileConfig( this );
         }
     }
 
-
-    /**
-     * Default constructor for the {@class CompileConfig} class. This constructor is private to enforce that instances of this class are not created outside its package.
-     */
-    private CompileConfig() {}
-
-    /**
-     * Creates a new {@code CompileConfig} object as a copy of the provided configuration.
-     *
-     * @param config The configuration to copy.
-     */
-    private CompileConfig( CompileConfig config ) {
-        this.checkpointSaver = config.checkpointSaver;
-        this.interruptsBefore = config.interruptsBefore;
-        this.interruptsAfter = config.interruptsAfter;
-        this.releaseThread = config.releaseThread;
-        this.interruptBeforePredicate = config.interruptBeforePredicate;
-        this.interruptAfterPredicate = config.interruptAfterPredicate;
+    private CompileConfig( Builder builder ) {
+        this.checkpointSaver = builder.checkpointSaver;
+        this.interruptsBefore = ofNullable(builder.interruptsBefore).orElseGet(Set::of);
+        this.interruptsAfter = ofNullable(builder.interruptsAfter).orElseGet(Set::of);
+        this.releaseThread = builder.releaseThread;
+        this.interruptBeforePredicate = builder.interruptBeforePredicate;
+        this.interruptAfterPredicate = builder.interruptAfterPredicate;
 
     }
 
