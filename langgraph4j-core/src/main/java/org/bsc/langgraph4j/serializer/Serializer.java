@@ -15,7 +15,7 @@ public interface Serializer<T> {
     default byte[] objectToBytes(T object) throws IOException {
         Objects.requireNonNull( object, "object cannot be null" );
         try( ByteArrayOutputStream stream = new ByteArrayOutputStream() ) {
-            ObjectOutputStream oas = new ObjectOutputStream(stream);
+            ExtendedObjectOutputStream oas = new ExtendedObjectOutputStream(stream);
             write(object, oas);
             oas.flush();
             return stream.toByteArray();
@@ -28,7 +28,7 @@ public interface Serializer<T> {
             throw new IllegalArgumentException("bytes cannot be empty");
         }
         try( ByteArrayInputStream stream = new ByteArrayInputStream( bytes ) ) {
-            ObjectInputStream ois = new ObjectInputStream(stream);
+            ExtendedObjectInputStream ois = new ExtendedObjectInputStream(stream);
             return read(ois);
         }
     }
