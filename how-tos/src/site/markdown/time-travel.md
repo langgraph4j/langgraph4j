@@ -12,14 +12,14 @@ a few things:
 
 The key methods used for this functionality are:
 
-- [getState](https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getState-org.bsc.langgraph4j.RunnableConfig-):
+- [getState](https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getState-org.bsc.langgraph4j.RunnableConfig-):
   fetch the values from the target config
-- [updateState](https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#updateState-org.bsc.langgraph4j.RunnableConfig-java.util.Map-java.lang.String-):
+- [updateState](https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#updateState-org.bsc.langgraph4j.RunnableConfig-java.util.Map-java.lang.String-):
   apply the given values to the target state
 
 **Note:** this requires passing in a checkpointer.
 
-This works for [StateGraph](https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html)
+This works for [StateGraph](https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html)
 
 Below is an example.
 
@@ -42,8 +42,8 @@ State is an (immutable) data class, inheriting from prebuilt [MessagesState], sh
 1. Schema (optional), that is a `Map<String,Channel>` where each [`Channel`] describe behaviour of the related property
 1. `value()` accessors that inspect Map an return an Optional of value contained and cast to the required type
 
-[`Channel`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html
-[MessagesState]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/prebuilt/MessagesState.html
+[`Channel`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html
+[MessagesState]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/prebuilt/MessagesState.html
 
 
 ```java
