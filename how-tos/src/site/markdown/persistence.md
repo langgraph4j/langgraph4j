@@ -8,10 +8,10 @@ When creating any LangGraph workflow, you can set them up to persist their state
 1. Pass your [`Checkpointers`] in configuration when compiling the graph.
 
 
-[`StateGraph`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html
-[`Checkpointers`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.html
-[`Checkpointer`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/Checkpoint.html
-[`MemorySaver`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/MemorySaver.html
+[`StateGraph`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html
+[`Checkpointers`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.html
+[`Checkpointer`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/Checkpoint.html
+[`MemorySaver`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/MemorySaver.html
 
 
 **Initialize Logger**
@@ -30,8 +30,8 @@ State is an (immutable) data class, inheriting from prebuilt [MessagesState], sh
 1. Schema (optional), that is a `Map<String,Channel>` where each [`Channel`] describe behaviour of the related property
 1. `value()` accessors that inspect Map an return an Optional of value contained and cast to the required type
 
-[`Channel`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html
-[MessagesState]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/prebuilt/MessagesState.html
+[`Channel`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html
+[MessagesState]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/prebuilt/MessagesState.html
 
 
 ```java
@@ -53,11 +53,11 @@ public class MessageState extends MessagesState<ChatMessage> {
 
 Every object that should be stored into State **MUST BE SERIALIZABLE**. If the object is not `Serializable` by default, Langgraph4j provides a way to build and associate a custom [Serializer] to it. 
 
-In the example, we use  [`Serializer`] for [ToolExecutionRequest] and [ChatMesssager] provided by langgraph4j integration module with langchain4j .
+In the example, we use  [`Serializer`] for [ToolExecutionRequest] and [ChatMessage] provided by langgraph4j integration module with langchain4j .
 
-[Serializer]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/serializer/Serializer.html
-[ChatMesssager]: https://docs.langchain4j.dev/apidocs/dev/langchain4j/data/message/ChatMesssager.html
-[ToolExecutionRequest]: https://docs.langchain4j.dev/apidocs/dev/langchain4j/data/message/ToolExecutionRequest.html
+[Serializer]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/serializer/Serializer.html
+[ChatMessage]: https://docs.langchain4j.dev/apidocs/dev/langchain4j/data/message/ChatMessage.html
+[ToolExecutionRequest]: https://docs.langchain4j.dev/apidocs/dev/langchain4j/agent/tool/ToolExecutionRequest.html
 
 
 ```java
@@ -320,7 +320,7 @@ Let's try it again with a checkpointer. We will use the
 [`MemorySaver`],
 which will "save" checkpoints in-memory.
 
-[`MemorySaver`]: https://bsorrentino.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/MemorySaver.html
+[`MemorySaver`]: https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/MemorySaver.html
 
 
 ```java
