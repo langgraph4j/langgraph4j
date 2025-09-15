@@ -2,6 +2,9 @@ package org.bsc.langgraph4j;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.*;
+import org.bsc.langgraph4j.cancellation.AbortController;
+import org.bsc.langgraph4j.cancellation.GraphCancellationException;
+import org.bsc.langgraph4j.cancellation.StreamWithController;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.internal.edge.Edge;
@@ -10,7 +13,6 @@ import org.bsc.langgraph4j.internal.node.ParallelNode;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNodeAction;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.StateSnapshot;
-import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
 
 import java.io.IOException;
@@ -25,7 +27,6 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -198,6 +199,36 @@ public class CompiledGraph<State extends AgentState> {
      */
     public StateSnapshot<State> getState( RunnableConfig config ) {
         return stateOf(config).orElseThrow( () -> (new IllegalStateException("Missing Checkpoint!")) );
+    }
+
+    /**
+     * Creates an AsyncGenerator stream with cancellation support.
+     *
+     * @param inputs the input map
+     * @param abortController the abort controller for cancellation
+     * @return an AsyncGenerator stream of NodeOutput
+     */
+    public AsyncGenerator<NodeOutput<State>> streamCancellable(
+            Map<String,Object> inputs,
+            AbortController abortController) {
+
+        RunnableConfig config = RunnableConfig.builder()
+                .abortController(abortController)
+                .build();
+
+        return stream(inputs, config);
+    }
+
+    /**
+     * Creates an AsyncGenerator stream with a new cancellation controller.
+     *
+     * @param inputs the input map
+     * @return an AsyncGenerator stream of NodeOutput and the AbortController
+     */
+    public StreamWithController<State> streamCancellable(Map<String,Object> inputs) {
+        AbortController abortController = AbortController.create();
+        AsyncGenerator<NodeOutput<State>> stream = streamCancellable(inputs, abortController);
+        return new StreamWithController<>(stream, abortController);
     }
 
     /**
@@ -717,12 +748,51 @@ public class CompiledGraph<State extends AgentState> {
         }
 
         private CompletableFuture<Data<Output>> evaluateAction( AsyncNodeActionWithConfig<State> action ) {
-                try {
-                    return action.apply( cloneState(currentState), config)
-                            .thenApply(TryFunction.Try(updateState -> {
+            try {
+                // Check cancellation before starting action
+                config.getAbortController().throwIfCancelled();
 
+                return action.apply(cloneState(currentState), config)
+                        .handle((updateState, throwable) -> {
 
-                                Optional<Data<Output>> embed = getEmbedGenerator( action, updateState);
+                            // Handle cancellation exception
+                            if (throwable instanceof GraphCancellationException) {
+                                log.debug("Node {} was cancelled: {}", context.currentNodeId(), throwable.getMessage());
+
+                                // Return cancellation as interruption metadata
+                                try {
+                                    return Data.done(InterruptionMetadata.builder(
+                                            context.currentNodeId(),
+                                            cloneState(currentState)
+                                    ).build());
+                                } catch (Exception e) {
+                                    return Data.error(e);
+                                }
+                            }
+
+                            // Handle other exceptions
+                            if (throwable != null) {
+                                return Data.error(throwable);
+                            }
+
+                            // Check cancellation after action completes
+                            try {
+                                config.getAbortController().throwIfCancelled();
+                            } catch (GraphCancellationException e) {
+                                log.debug("Node {} cancelled after completion", context.currentNodeId());
+                                try {
+                                    return Data.done(InterruptionMetadata.builder(
+                                            context.currentNodeId(),
+                                            cloneState(currentState)
+                                    ).build());
+                                } catch (Exception ex) {
+                                    return Data.error(ex);
+                                }
+                            }
+
+                            // Process normal result
+                            try {
+                                Optional<Data<Output>> embed = getEmbedGenerator(action, updateState);
                                 if (embed.isPresent()) {
                                     return embed.get();
                                 }
@@ -730,21 +800,43 @@ public class CompiledGraph<State extends AgentState> {
                                 currentState = AgentState.updateState(currentState, updateState, stateGraph.getChannels());
 
                                 if (compileConfig.interruptBeforeEdge() && compileConfig.interruptsAfter().contains(context.currentNodeId())) {
-                                    //nextNodeId = INTERRUPT_AFTER;
                                     context.setNextNodeId(INTERRUPT_AFTER);
                                 } else {
                                     var nextNodeCommand = nextNodeId(context.currentNodeId(), currentState, config);
-                                    //nextNodeId = nextNodeCommand.gotoNode();
                                     context.setNextNodeId(nextNodeCommand.gotoNode());
                                     currentState = nextNodeCommand.update();
                                 }
 
                                 return Data.of(getNodeOutput());
 
-                            }));
-                } catch( Exception e ) {
-                    return failedFuture(e);
+                            } catch (GraphCancellationException e) {
+                                log.debug("Cancelled during state update processing");
+                                try {
+                                    return Data.done(InterruptionMetadata.builder(
+                                            context.currentNodeId(),
+                                            cloneState(currentState)
+                                    ).build());
+                                } catch (Exception ex) {
+                                    return Data.error(ex);
+                                }
+                            } catch (Exception e) {
+                                return Data.error(e);
+                            }
+                        });
+
+            } catch (GraphCancellationException e) {
+                log.debug("Action cancelled before execution: {}", e.getMessage());
+                try {
+                    return CompletableFuture.completedFuture(Data.done(InterruptionMetadata.builder(
+                            context.currentNodeId(),
+                            cloneState(currentState)
+                    ).build()));
+                } catch (Exception ex) {
+                    return CompletableFuture.failedFuture(ex);
                 }
+            } catch (Exception e) {
+                return CompletableFuture.failedFuture(e);
+            }
         }
 
         private CompletableFuture<Output> getNodeOutput() throws Exception {
@@ -767,6 +859,9 @@ public class CompiledGraph<State extends AgentState> {
         public Data<Output> next() {
 
             try {
+                // Check cancellation at start of each iteration
+                config.getAbortController().throwIfCancelled();
+
                 // GUARD: CHECK MAX ITERATION REACHED
                 if( ++iteration > maxIterations ) {
                     // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
@@ -861,12 +956,20 @@ public class CompiledGraph<State extends AgentState> {
                 }
 
                 return evaluateAction( action ).get();
-            }
-            catch( Exception e ) {
+            } catch (GraphCancellationException e) {
+                log.debug("Graph iteration cancelled: {}", e.getMessage());
+                try {
+                    return Data.done(InterruptionMetadata.builder(
+                            context.currentNodeId() != null ? context.currentNodeId() : "unknown",
+                            cloneState(currentState)
+                    ).build());
+                } catch (Exception ex) {
+                    return Data.error(ex);
+                }
+            } catch( Exception e ) {
                 log.error( e.getMessage(), e );
                 return Data.error(e);
             }
-
         }
     }
 

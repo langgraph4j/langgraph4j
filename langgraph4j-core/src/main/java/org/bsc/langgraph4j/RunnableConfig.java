@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j;
 
+import org.bsc.langgraph4j.cancellation.AbortController;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
 
 import java.util.HashMap;
@@ -24,6 +25,7 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
     private final String nextNode;
     private final CompiledGraph.StreamMode streamMode;
     private final Map<String,Object> metadata;
+    private final AbortController abortController;
 
     /**
      * Returns the stream mode of the compiled graph.
@@ -107,6 +109,35 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
     }
 
     /**
+     * Returns the AbortController for cooperative cancellation.
+     * Returns a no-op controller if none was explicitly set.
+     *
+     * @return the AbortController, never null
+     */
+    public AbortController getAbortController() {
+        return abortController != null ? abortController : AbortController.noop();
+    }
+
+    // ADD NEW CONVENIENCE METHOD
+    /**
+     * Create a new RunnableConfig with the same attributes as this one
+     * but with a different AbortController.
+     *
+     * @param abortController the new abort controller
+     * @return a new RunnableConfig with the updated abort controller
+     */
+    public RunnableConfig withAbortController(AbortController abortController) {
+        if (this.abortController == abortController) {
+            return this;
+        }
+
+        return RunnableConfig.builder(this)
+                .abortController(abortController)
+                .build();
+    }
+
+
+    /**
      * Creates a new instance of the {@link Builder} class.
      *
      * @return A new {@code Builder} object.
@@ -132,6 +163,7 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
         private String checkPointId;
         private String nextNode;
         private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
+        private AbortController abortController;
 
         /**
          * Constructs a new instance of the {@link Builder} with default configuration settings.
@@ -149,6 +181,17 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
             this.checkPointId   = config.checkPointId;
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
+            this.abortController = config.abortController;
+        }
+        /**
+         * Sets the AbortController for cooperative cancellation.
+         *
+         * @param abortController the abort controller to set
+         * @return a reference to this Builder object for method chaining
+         */
+        public Builder abortController(AbortController abortController) {
+            this.abortController = abortController;
+            return this;
         }
         /**
          * Sets the ID of the thread.
@@ -229,6 +272,7 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
         this.metadata       = ofNullable(builder.metadata())
                                 .map( Map::copyOf )
                                 .orElse(null);
+        this.abortController = builder.abortController;
     }
 
     @Override
@@ -237,7 +281,8 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
                 threadId,
                 checkPointId,
                 nextNode,
-                streamMode
+                streamMode,
+                abortController
                 );
     }
 
