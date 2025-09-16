@@ -106,7 +106,7 @@ public class CallModel<State extends MessagesState<ChatMessage>> implements Asyn
             throw new IllegalArgumentException("no input provided!");
         }
 
-        if( isStreaming()) {
+        if( isStreaming() && !config.isRunningInStudio() ) {
 
             var generator = StreamingChatGenerator.<State>builder()
                     .mapResult( this::mapResult )

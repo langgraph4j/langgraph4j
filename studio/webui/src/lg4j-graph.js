@@ -4,7 +4,7 @@ import * as d3 from 'd3'
 import { debug } from './debug.js';
 
 const _DBG = debug( { on: false, topic: 'LG4jGraph' } )
-
+const _TRACE = debug( { on: false, topic: 'LG4jGraph' } )
 
 /**
  * Mermaid Component
@@ -32,7 +32,7 @@ export class LG4jMermaid extends HTMLElement {
     this._lastTransform = null
 
 
-    const shadowRoot = this.attachShadow({ mode: "open" });
+    const shadowRoot = this.attachShadow({ mode: 'open' });
 
     const style = document.createElement("style");
     style.textContent = `
@@ -110,7 +110,7 @@ export class LG4jMermaid extends HTMLElement {
       return this._content
     }
 
-    return "flowchart TD" //this.#textNodes.map(node => node.textContent?.trim()).join('');
+    return 'flowchart TD' //this.#textNodes.map(node => node.textContent?.trim()).join('');
   }
 
 
@@ -124,7 +124,7 @@ export class LG4jMermaid extends HTMLElement {
 
     return mermaid.render( 'graph', this.#textContent )
         .then( res => { 
-          _DBG( "RENDER COMPLETE", svgContainer );
+          _DBG( 'RENDER COMPLETE', svgContainer );
           const { width, height } = svgContainer.getBoundingClientRect();
           _DBG( 'width:', width, 'height:', height);
           const translated = res.svg
@@ -140,7 +140,7 @@ export class LG4jMermaid extends HTMLElement {
               _DBG( rc );
             }}
           )})
-        .catch( e => console.error( "RENDER ERROR", e ) )
+        .catch( e => console.error( 'RENDER ERROR', e ) )
 
   }
 
@@ -157,7 +157,7 @@ export class LG4jMermaid extends HTMLElement {
       // 'this' refers to the current DOM element
       const svg = d3.select(this);
       
-      svg.html("<g>" + svg.html() + "</g>");
+      svg.html("<g>" + svg.html() + '</g>');
 
       const inner = svg.select("g");
    
@@ -188,6 +188,7 @@ export class LG4jMermaid extends HTMLElement {
   #onContent(e) {
     const { detail: newContent } = e;
 
+
     this._content = newContent;
     this.#renderDiagram();
   }
@@ -199,6 +200,8 @@ export class LG4jMermaid extends HTMLElement {
    */
   #onActive(e) {
     const { detail: activeClass } = e;
+
+    _TRACE("Active class updated:", activeClass);
 
     this._activeClass = activeClass;
     this.#renderDiagram();

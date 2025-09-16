@@ -23,6 +23,11 @@ public class TestTool {
     }
 }
 
+public static String getPCName() {
+    return "Langgraph4j";
+}
+
+
 public void main( String args[] ) throws Exception {
 
     var toolSpecification = ToolSpecification.builder()
@@ -30,7 +35,7 @@ public void main( String args[] ) throws Exception {
             .description("Returns a String - PC name the AI is currently running in. Returns null if station is not running")
             .build();
 
-    var toolExecutor = (toolExecutionRequest, memoryId) -> getPCName();
+    ToolExecutor toolExecutor = (toolExecutionRequest, memoryId) -> getPCName();
 
     var chatModel = OpenAiChatModel.builder()
             .apiKey( System.getenv( "OPENAI_API_KEY" ) )
@@ -43,9 +48,9 @@ public void main( String args[] ) throws Exception {
 
 
     var agentExecutor = AgentExecutor.graphBuilder()
-                .chatLanguageModel(chatLanguageModel)
+                .chatModel(chatModel)
                 // add object with tools
-                .toolFromObjects(new TestTool())
+                .toolsFromObject(new TestTool())
                 // add dynamic tool
                 .tool(toolSpecification, toolExecutor)
                 .build();
@@ -53,8 +58,10 @@ public void main( String args[] ) throws Exception {
     var workflow = agentExecutor.compile();
 
     var state =  workflow.stream( Map.of( "messages", UserMessage.from("Run my test!") ) );
-
-    System.out.println( state.lastMessage() );
+    var lastNode = generator.stream().reduce((a, b) -> b).orElseThrow();
+    if (lastNode.isEND()) {
+        System.out.println(String.format( "result: %s\n", lastNode.state().finalResponse().orElseThrow()));
+    }
 }
 ```
 

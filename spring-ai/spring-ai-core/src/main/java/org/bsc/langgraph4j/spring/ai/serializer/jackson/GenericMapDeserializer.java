@@ -26,13 +26,10 @@ class GenericMapDeserializer extends StdDeserializer<Map<String, Object>> {
 
         Map<String, Object> result = new HashMap<>();
 
-        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        for( var property : node.properties() ) {
 
-        while (fields.hasNext()) {
-            var entry = fields.next();
-
-            String key = entry.getKey();
-            JsonNode valueNode = entry.getValue();
+            String key = property.getKey();
+            JsonNode valueNode = property.getValue();
 
             // Example: Detect type based on field name or value structure
             Object value;

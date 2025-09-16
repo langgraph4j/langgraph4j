@@ -154,40 +154,34 @@ var graph = AgentExecutor.builder()
 
 ```java
 @Configuration
-public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig {
+public class LangGraphStudioConfiguration extends LangGraphStudioConfig {
 
-    final LangGraphFlow flow;
-
-    public LangGraphStudioConfiguration(  ChatModel chatModel, List<ToolCallback> tools ) throws GraphStateException {
-
-        var workflow = AgentExecutor.builder()
-                .chatModel( chatModel )
-                .tools( tools )
-                .build();
-
-        var mermaid = workflow.getGraph( GraphRepresentation.Type.MERMAID, "ReAct Agent", false );
-        System.out.println( mermaid.content() );
-
-        this.flow = agentWorkflow( workflow );
-    }
-
-    private LangGraphFlow agentWorkflow( StateGraph<AgentExecutor.State> workflow ) throws GraphStateException {
-
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (Spring AI)")
-                .addInputStringArg( "messages", true, v -> new UserMessage( Objects.toString(v) ) )
-                .stateGraph( workflow )
-                .compileConfig( CompileConfig.builder()
-                        .checkpointSaver( new MemorySaver() )
-                        .build())
-                .build();
-
-    }
+    final StateGraph<AgentExecutorEx.State> workflow;
 
     @Override
-    public LangGraphFlow getFlow() {
-        return this.flow;
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
+
+        return  Map.of( "sample", LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Spring AI)")
+                .addInputStringArg( "messages", true, v -> new UserMessage( Objects.toString(v) ) )
+                .graph( workflow )
+                .compileConfig( CompileConfig.builder()
+                        .checkpointSaver( new MemorySaver() )
+                        .releaseThread(true)
+                        .build())
+                .build());
+
     }
+
+    public LangGraphStudioConfiguration( /*@Qualifier("ollama")*/ ChatModel chatModel ) throws GraphStateException {
+
+        this.workflow = AgentExecutorEx.builder()
+                .chatModel(chatModel, true)
+                .toolsFromObject(new TestTools())
+                .build();
+
+    }
+
 }
 
 ```

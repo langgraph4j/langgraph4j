@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.NodeActionWithConfig;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.generators.StreamingChatGenerator;
+import org.bsc.langgraph4j.utils.TypeRef;
 import org.springframework.ai.chat.messages.Message;
 
 import java.util.Map;
@@ -40,7 +41,7 @@ class CallModel<State extends MessagesState<Message>> implements NodeActionWithC
             throw new IllegalArgumentException("no input provided!");
         }
 
-        if (streaming) {
+        if (streaming && !config.isRunningInStudio() ) {
             var flux = chatService.streamingExecute(messages);
 
             var generator = StreamingChatGenerator.builder()

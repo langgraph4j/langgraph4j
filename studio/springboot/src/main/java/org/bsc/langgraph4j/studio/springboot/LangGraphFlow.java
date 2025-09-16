@@ -2,10 +2,9 @@ package org.bsc.langgraph4j.studio.springboot;
 
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.studio.LangGraphStreamingServer;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,8 @@ import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
 
-public record LangGraphFlow(    List<LangGraphStreamingServer.ArgumentMetadata> inputArgs,
+@Deprecated(forRemoval = true)
+public record LangGraphFlow(    List<LangGraphStudioServer.ArgumentMetadata> inputArgs,
                                 String title,
                                 CompileConfig compileConfig,
                                 StateGraph<? extends AgentState> stateGraph ) {
@@ -23,12 +23,21 @@ public record LangGraphFlow(    List<LangGraphStreamingServer.ArgumentMetadata> 
         Objects.requireNonNull( stateGraph, "stateGraph is null" );
     }
 
+    public LangGraphStudioServer.Instance toInstance() {
+        return LangGraphStudioServer.Instance.builder()
+                .title(title)
+                .graph(stateGraph)
+                .compileConfig(compileConfig)
+                .addInputStringArgs(inputArgs)
+                .build();
+    }
+
     public static LangGraphFlow.Builder builder() {
         return new LangGraphFlow.Builder();
     }
 
     public static class Builder {
-        private final List<LangGraphStreamingServer.ArgumentMetadata> inputArgs = new ArrayList<>();
+        private final List<LangGraphStudioServer.ArgumentMetadata> inputArgs = new ArrayList<>();
         private String title = null;
         private CompileConfig compileConfig;
         private StateGraph<? extends AgentState> stateGraph;
@@ -46,7 +55,7 @@ public record LangGraphFlow(    List<LangGraphStreamingServer.ArgumentMetadata> 
         }
 
         public Builder addInputStringArg(String name, boolean required, Function<Object,Object> converter) {
-            inputArgs.add(new LangGraphStreamingServer.ArgumentMetadata(name, LangGraphStreamingServer.ArgumentMetadata.ArgumentType.STRING, required, converter));
+            inputArgs.add(new LangGraphStudioServer.ArgumentMetadata(name, LangGraphStudioServer.ArgumentMetadata.ArgumentType.STRING, required, converter));
             return this;
         }
 
@@ -79,7 +88,7 @@ public record LangGraphFlow(    List<LangGraphStreamingServer.ArgumentMetadata> 
          * @return the Builder instance
          */
         public Builder addInputImageArg(String name, boolean required) {
-            inputArgs.add(new LangGraphStreamingServer.ArgumentMetadata(name, LangGraphStreamingServer.ArgumentMetadata.ArgumentType.IMAGE, required));
+            inputArgs.add(new LangGraphStudioServer.ArgumentMetadata(name, LangGraphStudioServer.ArgumentMetadata.ArgumentType.IMAGE, required));
             return this;
         }
 

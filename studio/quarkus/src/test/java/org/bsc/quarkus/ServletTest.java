@@ -14,7 +14,7 @@ class ServletTest {
     @Test
     void textGraphINitServlet() {
         given()
-          .when().get("/init")
+          .when().get("/init?instance=sample")
           .then()
              .statusCode(200)
              .body( not( empty() ) );

@@ -1,7 +1,11 @@
 import TWStyles from './twlit.js';
-
 import { html, css, LitElement } from 'lit';
 import { debug } from './debug.js';
+
+/**
+ * @file
+ * @typedef {import('./types.js').Instance} Instance
+ */
 
 
 const _DBG = debug( { on: true, topic: 'LG4JWorkbench' } )
@@ -37,7 +41,7 @@ export class LG4JWorkbenchElement extends LitElement {
 
     const elem = this.querySelector(`[slot="${slot}"]`)
     if( !elem ) {
-      console.error( `slot "${slot}" not found!` )
+      console.error( `slot '${slot}' not found!` )
       return
     }
     elem.dispatchEvent( event )
@@ -47,13 +51,13 @@ export class LG4JWorkbenchElement extends LitElement {
   /**
    * Event handler for the 'init' event.
    * 
-   * @param {CustomEvent} e - The event object containing init data.
+   * @param {CustomEvent<Instance>} e - The event object containing init data.
    */
   #routeInitEvent( e ) {
       const { graph, title, threads  } = e.detail 
 
-      this.#routeEvent( new CustomEvent( "graph", { detail: graph }));
-      this.#routeEvent( new CustomEvent( "init-threads", { detail: threads }), 'result');
+      this.#routeEvent( new CustomEvent( 'graph', { detail: graph }));
+      this.#routeEvent( new CustomEvent( 'init-threads', { detail: threads }), 'result');
 
       if( title ) {
         this.title = title
@@ -118,13 +122,13 @@ export class LG4JWorkbenchElement extends LitElement {
     super.connectedCallback()
 
     // @ts-ignore
-    this.addEventListener( "init", this.#routeInitEvent );
+    this.addEventListener( 'init', this.#routeInitEvent );
     // @ts-ignore
-    this.addEventListener( "result", this.#routeEvent );
+    this.addEventListener( 'result', this.#routeEvent );
     // @ts-ignore
-    this.addEventListener( "graph-active", this.#onGraphActive);
+    this.addEventListener( 'graph-active', this.#onGraphActive);
     // @ts-ignore
-    this.addEventListener( "thread-updated", this.#routeUpdateEvent );
+    this.addEventListener( 'thread-updated', this.#routeUpdateEvent );
     // @ts-ignore
     this.addEventListener( 'node-updated', this.#routeUpdateEvent )
     // @ts-ignore
@@ -140,13 +144,13 @@ export class LG4JWorkbenchElement extends LitElement {
     // @ts-ignore
     this.removeEventListener( 'node-updated', this.#routeUpdateEvent )
     // @ts-ignore
-    this.removeEventListener( "thread-updated", this.#routeUpdateEvent );
+    this.removeEventListener( 'thread-updated', this.#routeUpdateEvent );
     // @ts-ignore
-    this.removeEventListener( "graph-active", this.#onGraphActive );
+    this.removeEventListener( 'graph-active', this.#onGraphActive );
     // @ts-ignore
-    this.removeEventListener( "result", this.#routeEvent );
+    this.removeEventListener( 'result', this.#routeEvent );
     // @ts-ignore
-    this.removeEventListener( "init", this.#routeInitEvent );
+    this.removeEventListener( 'init', this.#routeInitEvent );
 
   }
 

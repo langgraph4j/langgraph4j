@@ -17,7 +17,7 @@ export class LG4JNodeOutputWithSchema extends HTMLElement {
     constructor() {
         super()
 
-        const shadowRoot = this.attachShadow({ mode: "open" });
+        const shadowRoot = this.attachShadow({ mode: 'open' });
         
         const style = document.createElement("style");
         style.textContent = `
@@ -59,7 +59,7 @@ export class LG4JNodeOutputWithSchema extends HTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === 'value') {
           if (newValue !== null) {
-            _DBG( "attributeChangedCallback.value", newValue )
+            _DBG( 'attributeChangedCallback.value', newValue )
             this.#editor?.setValue( JSON.parse(newValue) );
 
           }
@@ -69,7 +69,7 @@ export class LG4JNodeOutputWithSchema extends HTMLElement {
     connectedCallback() {
 
         const value = this.textContent
-        _DBG( "value", value )
+        _DBG( 'value', value )
         this.#initialize( JSON.parse(value) )
         
     }
@@ -93,7 +93,7 @@ export class LG4JNodeOutputWithSchema extends HTMLElement {
                   "array",
                 ]
               },
-  
+
             "additionalProperties": {
               "options": {
               },

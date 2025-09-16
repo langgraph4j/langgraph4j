@@ -7,6 +7,7 @@ import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
@@ -17,14 +18,18 @@ import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 @Configuration
-public class LangGraphStudioSampleConfig extends AbstractLangGraphStudioConfig {
+public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
 
-    final LangGraphFlow flow;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LangGraphStudioSampleConfig.class);
 
-    public LangGraphStudioSampleConfig() throws GraphStateException {
-        // this.flow = sampleFlow();
-        // this.flow = addStateSubgraphSample();
-        this.flow = withCompiledSubgraphSample();
+    @Override
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
+        try {
+            return Map.ofEntries( sampleFlow(), withStateSubgraphSample(), withCompiledSubgraphSample() );
+        } catch (GraphStateException e) {
+            log.error(e.getMessage(), e);
+            return Map.of();
+        }
     }
 
     private AsyncNodeAction<MessagesState<String>> _makeNode(String id ) {
@@ -33,7 +38,7 @@ public class LangGraphStudioSampleConfig extends AbstractLangGraphStudioConfig {
         );
     }
 
-    private LangGraphFlow sampleFlow() throws GraphStateException {
+    private Map.Entry<String, LangGraphStudioServer.Instance> sampleFlow() throws GraphStateException {
 
         final EdgeAction<AgentState> conditionalAge  = new EdgeAction<>() {
             int steps= 0;
@@ -67,14 +72,14 @@ public class LangGraphStudioSampleConfig extends AbstractLangGraphStudioConfig {
                         edge_async(conditionalAge), Map.of( "next", "action", "end", END ) )
                 ;
 
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (Sample)")
-                .stateGraph( workflow )
-                .build();
+        return  Map.entry( "sample", LangGraphStudioServer.Instance.builder()
+                                        .title("LangGraph Studio (Sample)")
+                                        .graph( workflow )
+                                        .build());
 
     }
 
-    private LangGraphFlow withStateSubgraphSample() throws GraphStateException {
+    private Map.Entry<String, LangGraphStudioServer.Instance> withStateSubgraphSample() throws GraphStateException {
         var workflowChild = new MessagesStateGraph<String>()
                 .addNode("B1", _makeNode("B1") )
                 .addNode("B2", _makeNode( "B2" ) )
@@ -100,14 +105,14 @@ public class LangGraphStudioSampleConfig extends AbstractLangGraphStudioConfig {
                 //.compile(compileConfig)
                 ;
 
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (Merged Subgraph)")
-                .stateGraph( workflowParent )
-                .build();
+        return   Map.entry( "state_subgraph", LangGraphStudioServer.Instance.builder()
+                                        .title("LangGraph Studio (Merged Subgraph)")
+                                        .graph( workflowParent )
+                                        .build());
 
     }
 
-    private LangGraphFlow withCompiledSubgraphSample() throws GraphStateException {
+    private Map.Entry<String, LangGraphStudioServer.Instance> withCompiledSubgraphSample() throws GraphStateException {
         var workflowChild = new MessagesStateGraph<String>()
                 .addNode("B1", _makeNode("B1") )
                 .addNode("B2", _makeNode( "B2" ) )
@@ -134,15 +139,11 @@ public class LangGraphStudioSampleConfig extends AbstractLangGraphStudioConfig {
                 //.compile(compileConfig)
                 ;
 
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (Compiled Subgraph)")
-                .stateGraph( workflowParent )
-                .build();
+        return  Map.entry( "compiled_subgraph", LangGraphStudioServer.Instance.builder()
+                                        .title("LangGraph Studio (Compiled Subgraph)")
+                                        .graph( workflowParent )
+                                        .build());
 
     }
 
-    @Override
-    public LangGraphFlow getFlow() {
-        return this.flow;
-    }
 }

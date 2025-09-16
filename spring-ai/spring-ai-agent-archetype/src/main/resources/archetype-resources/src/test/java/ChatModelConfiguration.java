@@ -38,7 +38,7 @@ public class ChatModelConfiguration {
     public ChatModel openaiModel() {
         return OpenAiChatModel.builder()
                 .openAiApi(OpenAiApi.builder()
-                        .baseUrl("https://api.openai.com")
+                        //.baseUrl("https://api.openai.com")
                         .apiKey(System.getenv("OPENAI_API_KEY"))
                         .build())
                 .defaultOptions(OpenAiChatOptions.builder()
@@ -62,6 +62,23 @@ public class ChatModelConfiguration {
                 .defaultOptions(VertexAiGeminiChatOptions.builder()
                         .model("gemini-2.5-pro")
                         .temperature(0.0)
+                        .build())
+                .build();
+
+    }
+
+    @Bean
+    @Profile("github-models")
+    public ChatModel githubModel() {
+        return OpenAiChatModel.builder()
+                .openAiApi(OpenAiApi.builder()
+                        .baseUrl("https://models.github.ai/inference") // GITHUB MODELS
+                        .apiKey(System.getenv("GITHUB_MODELS_TOKEN"))
+                        .build())
+                .defaultOptions(OpenAiChatOptions.builder()
+                        .model("gpt-4o-mini")
+                        .logprobs(false)
+                        .temperature(0.1)
                         .build())
                 .build();
 

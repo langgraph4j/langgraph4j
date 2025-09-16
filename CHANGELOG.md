@@ -2,6 +2,116 @@
 
 
 
+<!-- "name: v1.6.3" is a release tag -->
+
+## [v1.6.3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.6.3) (2025-09-14)
+
+### Features
+
+ *  **studio/webui**  adding support for multi graph instances ([48fb2856552ba04](https://github.com/bsorrentino/langgraph4j/commit/48fb2856552ba043b045f50e21bf4c6b119f56f7))
+     > work on #233
+   
+ *  **studio/quarkus**  adding support for multi graph instances ([df0017eef130ea7](https://github.com/bsorrentino/langgraph4j/commit/df0017eef130ea78d7ce08989cd68fc4fbb32efb))
+     > work on #233
+   
+ *  **studio/springboot**  adding support for multi graph instances ([ccb4f9f41aafcd8](https://github.com/bsorrentino/langgraph4j/commit/ccb4f9f41aafcd8a345c12be659421882fe09bb9))
+     > work on [#233](https://github.com/langgraph4j/langgraph4j/issues/233)
+   
+ *  **studio/jetty**  rename  LangGraphStreamingServerJetty to  LangGraphStudioServer4Jetty adding support for multi graph instances ([7efa87a18286f16](https://github.com/bsorrentino/langgraph4j/commit/7efa87a18286f16d0a442ce769a03d7315629674))
+     > work on #233
+   
+ *  **studio**  add support for multi graph instances ([7731ff5a392984f](https://github.com/bsorrentino/langgraph4j/commit/7731ff5a392984f910246411087412b701aaf370))
+     > work on #233
+   
+ *  **RunnableConfig**  Add metadata support for studio environment check ([10e6419cd09d70c](https://github.com/bsorrentino/langgraph4j/commit/10e6419cd09d70c30a0f615f8796ff6ed706fb71))
+     > - Added a new constant &#x60;STUDIO_METADATA_KEY&#x60;.
+     > - add method &#x60;isRunningInStudio()&#x60; that checks if the graph is running within a studio environment based on the value of the &#x60;STUDIO_METADATA_KEY&#x60; metadata key.
+     > work on #231
+   
+
+### Bug Fixes
+
+ -  **studio**  Ensure compileConfig is valid during instance build ([908daa20e730f85](https://github.com/bsorrentino/langgraph4j/commit/908daa20e730f8536e379a0643298933e95b2495))
+     > Refactored code to check if compileConfig is null and initialize it with a default MemorySaver if necessary.
+     > work on #233
+
+
+### Documentation
+
+ -  bump to version 1.6.3 ([44e1fec42027db0](https://github.com/bsorrentino/langgraph4j/commit/44e1fec42027db07f1cb7d0a0fa44f876bf7f004))
+
+ -  **studio**  updare documentation ([cc699106571f2f7](https://github.com/bsorrentino/langgraph4j/commit/cc699106571f2f7b46e11b357c16ceaca56154d8))
+
+ -  update README.md imports and examples ([08ad5d1470051e8](https://github.com/bsorrentino/langgraph4j/commit/08ad5d1470051e8db35c7ebdb7de0be9e9eb9971))
+
+ -  update README.md imports and examples ([0d8f7d7a70e96b8](https://github.com/bsorrentino/langgraph4j/commit/0d8f7d7a70e96b8a40002c899b68cbfe9d8661e0))
+
+ -  update changelog ([835db8a7db56077](https://github.com/bsorrentino/langgraph4j/commit/835db8a7db56077aa3592810094a95d0e2a7b6e2))
+
+
+### Refactor
+
+ -  **studio**  refactors the LangGraphStudioServer class by removing the unused 'start' method. ([f67a032df25f16a](https://github.com/bsorrentino/langgraph4j/commit/f67a032df25f16a8968ee51737682cc4b544798f))
+    > work on #233
+
+ -  **studio/springboot**  deprecate use of AbstractLangGraphStudioConfig and LangGraphFlow ([7a114d2538174ad](https://github.com/bsorrentino/langgraph4j/commit/7a114d2538174adacdd89b51794a8d47bafdffa1))
+    > work on #233
+
+ -  **springai-agent**  Refactored LangGraphStudioConfiguration to use Map<String, LangGraphStudioServer.Instance> ([47df74f1a89f065](https://github.com/bsorrentino/langgraph4j/commit/47df74f1a89f0659054fd63f5b05ab2c3fb6742b))
+    > work on #233
+
+ -  **studio**  move  NodeOutputSerializer in a independet file ([12780a31e1ba075](https://github.com/bsorrentino/langgraph4j/commit/12780a31e1ba0750bcb0e24f91d738f43f7e2051))
+    > work on [#233](https://github.com/langgraph4j/langgraph4j/issues/233)
+
+ -  **studio**  rename  LangGraphStreamingServer to LangGraphStudioServer ([a6d1164b9a940c5](https://github.com/bsorrentino/langgraph4j/commit/a6d1164b9a940c5b144e6216421b55a91b302652))
+    > work on #233
+
+ -  **LangGraphStreamingServer**  Add metadata key to RunnableConfig ([5e195f854068ab0](https://github.com/bsorrentino/langgraph4j/commit/5e195f854068ab0fe694ce6cb94e31b1f22f0b23))
+    > adding metadata key &#x27;STUDIO_METADATA_KEY&#x27; to RunnableConfig in request handling methods.
+ > work on #231
+
+ -  Remove type parameter ([93b5442e691469e](https://github.com/bsorrentino/langgraph4j/commit/93b5442e691469e27a98436f0733836bc3e4ed63))
+   
+ -  **HasMetadata**  Add key validation and private prefix warning ([be5a057331450e6](https://github.com/bsorrentino/langgraph4j/commit/be5a057331450e612d7defbf5faa4c4723756861))
+    > - The HasMetadata interface has been updated to include key validation. Keys that start with the private prefix &#x27;__&#x27; are now prohibited, and an IllegalArgumentException is thrown if attempted.
+ > - This interface is not generic anymore
+ > work on #231
+
+ -  replace deprecated methods fields() with properties() ([3513c005a0f46a6](https://github.com/bsorrentino/langgraph4j/commit/3513c005a0f46a66d85eccccd8cff66850b5d58c))
+   
+ -  replace deprecated methods fields() with properties() ([34a226e149b391d](https://github.com/bsorrentino/langgraph4j/commit/34a226e149b391d85bb8e5d869ab5436b1db32e4))
+   
+
+### ALM 
+
+ -  bump to version 1.6.3 ([78cf2c8e047589a](https://github.com/bsorrentino/langgraph4j/commit/78cf2c8e047589af4ed85636504fb9dd4f1e2c4b))
+   
+ -  **studio/webui**  deploy new forntend implementation ([1adaf47adcb5a4d](https://github.com/bsorrentino/langgraph4j/commit/1adaf47adcb5a4d7cc15b8e42f688a5969614803))
+   
+ -  bump to 1.6-SNAPSHOT ([bc8e6332aef4bb9](https://github.com/bsorrentino/langgraph4j/commit/bc8e6332aef4bb97dc412c791db373f48f65da06))
+   
+ -  bump langchain4j version from 1.2.0 to 1.4.0 and beta from 1.2.0-beta8 to 1.4.0-beta10. ([3cc9d6526ce8c7a](https://github.com/bsorrentino/langgraph4j/commit/3cc9d6526ce8c7ae78703c0cecb4b3db6d30256a))
+   
+
+### Test 
+
+ -  **studio/quarkus**  fix unit test passing instance to GraphInit servlet ([b24913062be0cb3](https://github.com/bsorrentino/langgraph4j/commit/b24913062be0cb37113ba4f8937846174d62f386))
+    > work on #233
+
+ -  **studio/springboot**  testing for multi graph instances support ([4953126681b4ca0](https://github.com/bsorrentino/langgraph4j/commit/4953126681b4ca0c8891e0156034713225090e5f))
+    > work on #233
+
+ -  **studio/jetty**  testing for multi graph instances support ([088b07a9b98a303](https://github.com/bsorrentino/langgraph4j/commit/088b07a9b98a30377f2b98a9c10741a4dee3d58f))
+    > work on [#233](https://github.com/langgraph4j/langgraph4j/issues/233)
+
+ -  ckeck if `isRunningInStudio()` is correct handled when running agent in studioenvironemnt ([36f483703acb8e5](https://github.com/bsorrentino/langgraph4j/commit/36f483703acb8e58ba1432c97c76a0acc9315fdf))
+    > work on #231
+
+
+
+
+
+
 <!-- "name: v1.6.2" is a release tag -->
 
 ## [v1.6.2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.6.2) (2025-08-28)

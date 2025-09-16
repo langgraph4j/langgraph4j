@@ -39,10 +39,15 @@
  */
 
 /**
- * @typedef {Object} InitData
+ * @typedef {Object} Instance
+ * @property {string} id
  * @property {string} title
  * @property {string} graph
  * @property {Array<ArgumentMetadata>} args
  * @property {Array<[ string, Array<any> ]>} threads
+ */
+
+/**
+ * @typedef {Array<Instance>} InitData
  */
 

@@ -3,7 +3,7 @@ import TWStyles from './twlit.js';
 
 import { html, css, LitElement, CSSResult } from 'lit';
 
-import { imageToDiagram as test } from './lg4j-executor-test.js';
+//import { imageToDiagram as test } from './lg4j-executor-test.js';
 
 import { debug } from './debug.js';
 
@@ -15,7 +15,7 @@ const _DBG = debug( { on: true, topic: 'LG4JExecutor' } )
  * @typedef {import('./types.js').ResultData} ResultData * 
  * @typedef {import('./types.js').EditEvent} EditEvent
  * @typedef {import('./types.js').UpdatedState} UpdatedState
- * @typedef {import('./types.js').InitData} InitData
+ * @typedef {import('./types.js').Instance} Instance
  * @typedef {import('./types.js').ArgumentMetadata} ArgumentMetadata
  * 
  */
@@ -129,6 +129,13 @@ export class LG4JExecutorElement extends LitElement {
    * @type {UpdatedState|null}
    */
   #updatedState = null
+  
+  /**
+   * Instance id
+   * 
+   * @type {string|undefined} - instance id
+   */
+  #instanceId;
 
   /**
    * Creates an instance of LG4JInputElement.
@@ -222,14 +229,14 @@ export class LG4JExecutorElement extends LitElement {
     // @ts-ignore
     this.addEventListener('node-updated', this.#onNodeUpdated)
 
-    if (this.test) {
-      test.callInit(this)
-        .then(data => {
-          this.formMetaData = data.args 
-          this.requestUpdate()
-        })
-      return
-    }
+    // if (this.test) {
+    //   test.callInit(this)
+    //     .then(instance => {
+    //       this.formMetaData = instance.args 
+    //       this.requestUpdate()
+    //     })
+    //   return
+    // }
 
     this.#callInit()
 
@@ -322,27 +329,32 @@ export class LG4JExecutorElement extends LitElement {
   }
 
   async #callInit() {
-
-    const initResponse = await fetch(`${this.url}/init`)
+  
+    const initResponse = await fetch(`${this.url}/init${window.location.search}`, {
+      method: 'GET',
+      credentials: 'include'
+    })
 
     if( !initResponse.ok ) {
       this.#requestShowError(initResponse.statusText) 
       return null
     }
   
-    /** @type {InitData} */
-    const initData = await initResponse.json()
+    /** @type {Instance} */
+    const instance = await initResponse.json()
 
-    _DBG('initData', initData);
+    _DBG('initData', instance);
 
     this.dispatchEvent(new CustomEvent('init', {
-      detail: initData,
+      detail: instance,
       bubbles: true,
       composed: true,
       cancelable: true
     }));
 
-    this.formMetaData = initData.args
+
+    this.#instanceId = instance.id
+    this.formMetaData = instance.args
     // this.#nodes = initData.nodes
     this.requestUpdate()
   }
@@ -354,10 +366,10 @@ export class LG4JExecutorElement extends LitElement {
 
     try {
 
-      if (this.test) {
-        await test.callSubmitAction(this, this.#selectedThread);
-        return
-      }
+      // if (this.test) {
+      //   await test.callSubmitAction(this, this.#selectedThread);
+      //   return
+      // }
 
       result =  await this.#callResumeAction()
 
@@ -376,7 +388,7 @@ export class LG4JExecutorElement extends LitElement {
 
   async #callResumeAction() {
 
-    const execResponse = await fetch(`${ this.url}/stream?thread=${this.#selectedThread}&resume=true&node=${this.#updatedState?.node}&checkpoint=${this.#updatedState?.checkpoint}`, {
+    const execResponse = await fetch(`${this.url}/stream/${this.#instanceId}?thread=${this.#selectedThread}&resume=true&node=${this.#updatedState?.node}&checkpoint=${this.#updatedState?.checkpoint}`, {
       method: 'POST', // *GET, POST, PUT, DELETE, etc.
       headers: {
         'Content-Type': 'application/json'
@@ -417,11 +429,9 @@ export class LG4JExecutorElement extends LitElement {
 
     try {
 
-      if (this.test) {
-        await test.callSubmitAction(this, this.#selectedThread);
-        // await delay(1000);
-        // throw new Error('Error test')
-      }
+      // if (this.test) {
+      //   await test.callSubmitAction(this, this.#selectedThread);
+      // }
 
       result = await this.#callSubmitAction()
     }
@@ -463,8 +473,7 @@ export class LG4JExecutorElement extends LitElement {
     }, result);
 
     
-    // const execResponse = await fetch(`${this.url}/stream?thread=${this.#selectedThread}&resume=${interrupted}&node=${this.#updatedState?.node}&checkpoint=${this.#updatedState?.checkpoint}`, {
-    const execResponse = await fetch(`${this.url}/stream?thread=${this.#selectedThread}`, {
+    const execResponse = await fetch(`${this.url}/stream/${this.#instanceId}?thread=${this.#selectedThread}`, {
         method: 'POST', // *GET, POST, PUT, DELETE, etc.
       headers: {
         'Content-Type': 'application/json'
@@ -480,7 +489,7 @@ export class LG4JExecutorElement extends LitElement {
     let lastChunk = null
     
     for await (let detail of streamingResponse(execResponse)) {
-      _DBG( "SUBMIT RESULT", detail)
+      _DBG( 'SUBMIT RESULT', detail)
 
       // lastChunk = JSON.parse(chunk);
       lastChunk = detail

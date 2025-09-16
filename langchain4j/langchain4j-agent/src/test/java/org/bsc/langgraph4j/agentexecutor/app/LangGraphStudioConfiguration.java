@@ -13,15 +13,16 @@ import org.bsc.langgraph4j.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.agentexecutor.TestTool;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.studio.springboot.AbstractLangGraphStudioConfig;
-import org.bsc.langgraph4j.studio.springboot.LangGraphFlow;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
+import org.bsc.langgraph4j.studio.springboot.LangGraphStudioConfig;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 @Configuration
-public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig {
+public class LangGraphStudioConfiguration extends LangGraphStudioConfig {
     enum AiModel {
 
         OPENAI_GPT_4O_MINI( OpenAiChatModel.builder()
@@ -59,7 +60,12 @@ public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig 
         }
     }
 
-    final LangGraphFlow flow;
+    final Map<String, LangGraphStudioServer.Instance> instanceMap;
+
+    @Override
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
+        return instanceMap;
+    }
 
     public LangGraphStudioConfiguration() throws GraphStateException {
 
@@ -69,24 +75,20 @@ public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig 
                 .build();
         System.out.println( workflow.getGraph(GraphRepresentation.Type.PLANTUML, "ReACT Agent", false ).content() );
 
-        this.flow = agentWorkflow( workflow );
+        this.instanceMap = agentWorkflow( workflow );
     }
 
-    private LangGraphFlow agentWorkflow( StateGraph<? extends AgentState> workflow ) throws GraphStateException {
+    private Map<String, LangGraphStudioServer.Instance> agentWorkflow( StateGraph<? extends AgentState> workflow ) throws GraphStateException {
 
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (LangChain4j)")
-                .addInputStringArg( "messages", true, v -> UserMessage.from( Objects.toString(v) ) )
-                .stateGraph( workflow )
-                .compileConfig( CompileConfig.builder()
-                        .checkpointSaver( new MemorySaver() )
-                        .build())
-                .build();
+        return  Map.of( "sample", LangGraphStudioServer.Instance.builder()
+                            .title("LangGraph Studio (LangChain4j)")
+                            .addInputStringArg( "messages", true, v -> UserMessage.from( Objects.toString(v) ) )
+                            .graph( workflow )
+                            .compileConfig( CompileConfig.builder()
+                                    .checkpointSaver( new MemorySaver() )
+                                    .build())
+                            .build());
 
     }
 
-    @Override
-    public LangGraphFlow getFlow() {
-        return this.flow;
-    }
 }

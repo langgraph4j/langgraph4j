@@ -1,35 +1,28 @@
 package org.bsc.langgraph4j.studio.springboot;
 
-import org.bsc.langgraph4j.studio.LangGraphStreamingServer;
-import org.springframework.boot.web.servlet.ServletRegistrationBean;
-import org.springframework.context.annotation.Bean;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 
-public abstract class AbstractLangGraphStudioConfig {
+import java.util.Map;
+
+
+/**
+ * Abstract base class for LangGraph Studio configuration, simplifying the setup for a single flow.
+ * <p>
+ * This class is designed for scenarios where only one graph (flow) needs to be exposed
+ * through the LangGraph Studio.
+ *
+ * @deprecated This class is scheduled for removal. Implement {@link LangGraphStudioConfig} directly
+ *             and provide a custom implementation for the {@link #instanceMap()} method to configure
+ *             one or more graph instances.
+ */
+@Deprecated(forRemoval = true)
+public abstract class AbstractLangGraphStudioConfig extends LangGraphStudioConfig {
 
     public abstract LangGraphFlow getFlow();
 
-    @Bean
-    public ServletRegistrationBean<LangGraphStreamingServer.GraphInitServlet> initServletBean() {
-
-        var flow = getFlow();
-
-        var initServlet = new LangGraphStreamingServer.GraphInitServlet(flow.stateGraph(), flow.title(), flow.inputArgs());
-        var bean = new ServletRegistrationBean<>(
-                initServlet, "/init");
-        bean.setLoadOnStartup(1);
-        return bean;
-    }
-
-    @Bean
-    public ServletRegistrationBean<LangGraphStreamingServer.GraphStreamServlet> streamingServletBean() {
-
-        var flow = getFlow();
-
-        var initServlet = new LangGraphStreamingServer.GraphStreamServlet(flow.stateGraph(), flow.compileConfig(), flow.inputArgs());
-        var bean = new ServletRegistrationBean<>(
-                initServlet, "/stream");
-        bean.setLoadOnStartup(1);
-        return bean;
+    @Override
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
+        return Map.of("sample", getFlow().toInstance());
     }
 
 }

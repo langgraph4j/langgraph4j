@@ -12,12 +12,21 @@ import ${groupId}.prebuilt.MessagesState;
 import ${groupId}.spring.ai.serializer.std.SpringAIStateSerializer;
 import ${groupId}.spring.ai.tool.SpringAIToolService;
 import ${groupId}.state.AgentState;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.tool.ToolCallback;
+import reactor.core.publisher.Flux;
+
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
@@ -28,6 +37,27 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * @author lambochen
  */
 public interface AgentExecutor {
+
+    interface ChatService {
+
+        ChatClient chatClient();
+
+        default ChatResponse execute(List<Message> messages) {
+            return chatClient()
+                    .prompt()
+                    .messages( messages )
+                    .call()
+                    .chatResponse();
+        }
+
+        default Flux<ChatResponse> streamingExecute(List<Message> messages) {
+            return chatClient()
+                    .prompt()
+                    .messages( messages )
+                    .stream()
+                    .chatResponse();
+        }
+    }
 
     org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AgentExecutor.class);
 
@@ -45,15 +75,15 @@ public interface AgentExecutor {
          * @return A configured StateGraph object.
          * @throws GraphStateException If there is an issue with building the graph state.
          */
-        public StateGraph<State> build() throws GraphStateException {
+        public StateGraph<State> build( Function<AgentExecutorBuilder<?,?>, ChatService> chatServiceFactory ) throws GraphStateException {
 
             if (stateSerializer == null) {
                 stateSerializer =  new SpringAIStateSerializer<>(AgentExecutor.State::new);
             }
 
-            final var chatService = new ChatService(this);
+            final var chatService = requireNonNull(chatServiceFactory, "chatServiceFactory cannot be null!").apply(this);
 
-            final var toolService = new SpringAIToolService(tools);
+            final var toolService = new SpringAIToolService(tools());
 
             return Agent.<Message,State>builder()
                     .stateSerializer(stateSerializer)

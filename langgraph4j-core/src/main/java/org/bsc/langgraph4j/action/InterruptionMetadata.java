@@ -17,7 +17,7 @@ import static java.util.Optional.ofNullable;
  *
  * @param <State> the type of the agent state, which must extend {@link AgentState}
  */
-public final class InterruptionMetadata<State extends AgentState> implements HasMetadata<InterruptionMetadata.Builder<State>>  {
+public final class InterruptionMetadata<State extends AgentState> implements HasMetadata  {
 
     private final String nodeId;
     private final State state;

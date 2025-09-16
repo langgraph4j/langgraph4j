@@ -9,15 +9,7 @@ const _DBG = debug( { on: true, topic: 'LG4JNodeOutput' } )
 /**
  * @file
  * @typedef {import('./types.js').ResultData} ResultData * 
- */
-
-/**
- * @file
  * @typedef {import('./types.js').EditEvent} EditEvent
- */
-
-/**
- * @file
  * @typedef {import('./types.js').UpdatedState} UpdatedState
  */
 
@@ -31,7 +23,7 @@ export class LG4JNodeOutput extends HTMLElement {
   constructor() {
       super()
 
-      const shadowRoot = this.attachShadow({ mode: "open" });
+      const shadowRoot = this.attachShadow({ mode: 'open' });
       
       const style = document.createElement("style");
       style.textContent = `
@@ -51,7 +43,7 @@ export class LG4JNodeOutput extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
       if (name === 'value') {
         if (newValue !== null) {
-          _DBG( "attributeChangedCallback.value", newValue )
+          _DBG( 'attributeChangedCallback.value', newValue )
         }
       }
   }
@@ -60,7 +52,7 @@ export class LG4JNodeOutput extends HTMLElement {
 
       const value = this.textContent ?? '{}'
       
-      _DBG( "value", value )
+      _DBG( 'value', value )
 
       this.root = this.#createRoot( JSON.parse(value) )
       

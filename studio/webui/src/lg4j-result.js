@@ -109,7 +109,7 @@ export class LG4JResultElement extends LitElement {
   #onResult = (e) => {
 
     const [ thread, result ] = e.detail
-    _DBG( "ON RESULT", thread, result  )
+    _DBG( 'ON RESULT', thread, result  )
     
     if( !this.threadMap.has( thread ) ) {
       throw new Error( `result doesn't contain a valid thread! ${thread}` );
@@ -159,7 +159,7 @@ export class LG4JResultElement extends LitElement {
     // @ts-ignore
     const { id } = event.target
 
-    _DBG( "onSelectTab", id )
+    _DBG( 'onSelectTab', id )
 
     this.selectedTab = id
 
@@ -168,7 +168,7 @@ export class LG4JResultElement extends LitElement {
 
   // @ts-ignore
   #onNewTab(event) {
-    _DBG( "NEW TAB", event)
+    _DBG( 'NEW TAB', event)
 
     const threadId = `Thread-${this.threadMap.size+1}`
 

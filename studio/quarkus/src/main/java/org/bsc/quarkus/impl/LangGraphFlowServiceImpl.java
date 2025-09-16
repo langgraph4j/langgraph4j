@@ -3,12 +3,11 @@ package org.bsc.quarkus.impl;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Singleton;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.quarkus.LangGraphFlow;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 
 import java.util.Map;
 
@@ -20,18 +19,18 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 @ApplicationScoped
 public class LangGraphFlowServiceImpl  {
 
-    private LangGraphFlow flow;
+    private Map<String, LangGraphStudioServer.Instance> instanceMap;
 
     @PostConstruct
     void init() throws GraphStateException {
-        flow = sampleFlow();
+        instanceMap = sampleFlow();
     }
     @Produces
-    public LangGraphFlow getFlow()  {
-        return flow;
+    public Map<String, LangGraphStudioServer.Instance> getInstanceMap()  {
+        return instanceMap;
     }
 
-    private LangGraphFlow sampleFlow() throws GraphStateException {
+    private Map<String, LangGraphStudioServer.Instance> sampleFlow() throws GraphStateException {
 
         final EdgeAction<AgentState> conditionalAge  = new EdgeAction<>() {
             int steps= 0;
@@ -65,10 +64,10 @@ public class LangGraphFlowServiceImpl  {
                         edge_async(conditionalAge), Map.of( "next", "action", "end", END ) )
                 ;
 
-        return  LangGraphFlow.builder()
-                .title("LangGraph Studio (Sample)")
-                .stateGraph( workflow )
-                .build();
+        return  Map.of( "sample", LangGraphStudioServer.Instance.builder()
+                                        .title("LangGraph Studio (Sample)")
+                                        .graph( workflow )
+                                        .build());
 
     }
 

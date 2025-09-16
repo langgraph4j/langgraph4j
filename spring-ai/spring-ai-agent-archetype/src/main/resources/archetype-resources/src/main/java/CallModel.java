@@ -8,6 +8,7 @@ import ${groupId}.action.AsyncNodeActionWithConfig;
 import ${groupId}.action.NodeActionWithConfig;
 import ${groupId}.prebuilt.MessagesState;
 import ${groupId}.spring.ai.generators.StreamingChatGenerator;
+import ${groupId}.utils.TypeRef;
 import org.springframework.ai.chat.messages.Message;
 
 import java.util.Map;
@@ -16,14 +17,14 @@ import static ${groupId}.action.AsyncNodeActionWithConfig.node_async;
 
 class CallModel<State extends MessagesState<Message>> implements NodeActionWithConfig<State> {
 
-    public static <State extends MessagesState<Message>> AsyncNodeActionWithConfig<State> of(ChatService chatService, boolean streaming ) {
+    public static <State extends MessagesState<Message>> AsyncNodeActionWithConfig<State> of( AgentExecutor.ChatService chatService, boolean streaming ) {
         return node_async(new CallModel<>(chatService, streaming));
     }
 
-    private final ChatService chatService;
+    private final AgentExecutor.ChatService chatService;
     private final boolean streaming;
 
-    protected CallModel(ChatService chatService, boolean streaming) {
+    protected CallModel(AgentExecutor.ChatService chatService, boolean streaming) {
         this.chatService = chatService;
         this.streaming = streaming;
     }
@@ -43,7 +44,7 @@ class CallModel<State extends MessagesState<Message>> implements NodeActionWithC
             throw new IllegalArgumentException("no input provided!");
         }
 
-        if (streaming) {
+        if (streaming && !config.isRunningInStudio() ) {
             var flux = chatService.streamingExecute(messages);
 
             var generator = StreamingChatGenerator.builder()

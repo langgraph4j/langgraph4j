@@ -9,49 +9,46 @@ import ${groupId}.GraphStateException;
 import ${groupId}.StateGraph;
 import ${groupId}.checkpoint.MemorySaver;
 import ${groupId}.state.AgentState;
-import ${groupId}.studio.springboot.AbstractLangGraphStudioConfig;
-import ${groupId}.studio.springboot.LangGraphFlow;
+import ${groupId}.studio.LangGraphStudioServer;
+import ${groupId}.studio.springboot.LangGraphStudioConfig;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
 import java.util.Objects;
 
 @Configuration
-public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig {
+public class LangGraphStudioConfiguration extends LangGraphStudioConfig {
 
-    final LangGraphFlow flow;
+    final StateGraph<AgentExecutorEx.State> workflow;
 
-    public LangGraphStudioConfiguration( /*@Qualifier("ollama")*/ ChatModel chatModel ) throws GraphStateException {
+    @Override
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
 
-        var workflow = AgentExecutorEx.builder()
-                .chatModel( chatModel )
-                .toolsFromObject( new TestTools() )
-                .build()
-                ;
-
-        var mermaid = workflow.getGraph( GraphRepresentation.Type.MERMAID, "ReAct Agent", false );
-        System.out.println( mermaid.content() );
-
-        this.flow = agentWorkflow( workflow );
-    }
-
-    private LangGraphFlow agentWorkflow( StateGraph<? extends AgentState> workflow ) throws GraphStateException {
-
-        return  LangGraphFlow.builder()
+        return  Map.of( "sample", LangGraphStudioServer.Instance.builder()
                 .title("LangGraph Studio (Spring AI)")
                 .addInputStringArg( "messages", true, v -> new UserMessage( Objects.toString(v) ) )
-                .stateGraph( workflow )
+                .graph( workflow )
                 .compileConfig( CompileConfig.builder()
                         .checkpointSaver( new MemorySaver() )
                         .releaseThread(true)
                         .build())
+                .build());
+
+    }
+
+    public LangGraphStudioConfiguration( /*@Qualifier("ollama")*/ ChatModel chatModel ) throws GraphStateException {
+
+        this.workflow = AgentExecutorEx.builder()
+                .chatModel(chatModel, true)
+                .toolsFromObject(new TestTools())
                 .build();
 
+        var mermaid = workflow.getGraph( GraphRepresentation.Type.MERMAID, "ReAct Agent", false );
+        System.out.println( mermaid.content() );
+
     }
 
-    @Override
-    public LangGraphFlow getFlow() {
-        return this.flow;
-    }
 }

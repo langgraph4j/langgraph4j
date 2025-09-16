@@ -4,7 +4,7 @@
  * @typedef {import('./types.js').ResultData} ResultData
  * @typedef {import('./types.js').EditEvent} EditEvent
  * @typedef {import('./types.js').UpdatedState} UpdatedState
- * @typedef {import('./types.js').InitData} InitData
+ * @typedef {import('./types.js').Instance} Instance
  * @typedef {import('./types.js').ArgumentMetadata} ArgumentMetadata
  * 
  */
@@ -20,11 +20,11 @@ const delay = async (ms) => (new Promise(resolve => setTimeout(resolve, ms)));
 export const adaptiveRAG = {
   /**
    * @param   {HTMLElement}  elem  
-   * @returns {Promise<InitData>}
+   * @returns {Promise<Instance>}
    */
   callInit: async (elem) => {
 
-    /** @typedef {InitData} */
+    /** @typedef {Instance} */
     const detail = {
       threads: [['default', []]],
       title: 'LangGraph4j : TEST',
@@ -58,7 +58,7 @@ flowchart TD
 
     await delay(1000);
 
-    /** @typedef {CustomEvent<InitData>} */
+    /** @typedef {CustomEvent<Instance>} */
     const event = new CustomEvent('init', {
       detail,
       bubbles: true,
@@ -82,7 +82,7 @@ flowchart TD
 
     const thread = selectedThread
 
-    const send = async ( /** @type {string} */ nodeId, /** @type {string} */ nextNodeId) => {
+    const send = async ( /** @type {string} */ nodeId, /** @type {string?} */ nextNodeId) => {
 
       /** @typedef {ResultData} */
       const detail = [thread, {
@@ -90,9 +90,9 @@ flowchart TD
         node: nodeId,
         next: nextNodeId,
         state: {
-          input: "this is input",
-          property1: { value: "value1", valid: true },
-          property2: { value: "value2", children: { elements: [1, 2, 3] } }
+          input: 'this is input',
+          property1: { value: 'value1', valid: true },
+          property2: { value: 'value2', children: { elements: [1, 2, 3] } }
         }
       }
       ]
@@ -116,7 +116,7 @@ flowchart TD
     await send('retrieve', 'grade_documents');
     await send('grade_documents', 'generate');
     await send('generate', 'generate');
-    await send('stop');
+    await send('stop', null);
 
     elem.dispatchEvent(new CustomEvent('state-updated', {
       detail:  'stop',
@@ -132,11 +132,11 @@ flowchart TD
 export const imageToDiagram = {
   /**
    * @param   {HTMLElement}  elem  
-   * @returns {Promise<InitData>}
+   * @returns {Promise<Instance>}
    */
   callInit: async (elem) => {
 
-    /** @typedef {InitData} */
+    /** @typedef {Instance} */
     const detail = {
       threads: [['default', []]],
       title: 'LangGraph4j : TEST',
@@ -187,7 +187,7 @@ end
 
     await delay(1000);
 
-    /** @typedef {CustomEvent<InitData>} */
+    /** @typedef {CustomEvent<Instance>} */
     const event = new CustomEvent('init', {
       detail,
       bubbles: true,
@@ -210,7 +210,7 @@ end
 
     const thread = selectedThread
 
-    const send = async ( /** @type {string} */ nodeId, /** @type {string} */ nextNodeId) => {
+    const send = async ( /** @type {string} */ nodeId, /** @type {string?} */ nextNodeId) => {
 
       /** @typedef {ResultData} */
       const detail = [thread, {
@@ -218,9 +218,9 @@ end
         node: nodeId,
         next: nextNodeId,
         state: {
-          input: "this is input",
-          property1: { value: "value1", valid: true },
-          property2: { value: "value2", children: { elements: [1, 2, 3] } }
+          input: 'this is input',
+          property1: { value: 'value1', valid: true },
+          property2: { value: 'value2', children: { elements: [1, 2, 3] } }
         }
       }]
 
@@ -241,8 +241,8 @@ end
     await send('agent_generic_plantuml', '___START__');
     await send('___START__', '_evaluate_result');
     await send('_evaluate_result', '__END__');
-    await send('___END__');
-    await send('__END__');
+    await send('___END__', null);
+    await send('__END__', null);
 
     elem.dispatchEvent(new CustomEvent('state-updated', {
       detail:  'stop',

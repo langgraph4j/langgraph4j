@@ -2,8 +2,8 @@ package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.cancellation.AbortController;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
+import org.bsc.langgraph4j.utils.TypeRef;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,7 +19,13 @@ import static java.util.Optional.ofNullable;
  * and stream mode, providing methods to modify these parameters safely
  * without permanently altering the original configuration.
  */
-public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder> {
+public final class RunnableConfig implements HasMetadata {
+    /**
+     * key that contains boolean value to inform that graph is executing in studio environment
+     * Warning: it is a RESERVED METADATA KEY don't use it
+     */
+    public static final String STUDIO_METADATA_KEY = "__STUDIO_MDK__";
+
     private final String threadId;
     private final String checkPointId;
     private final String nextNode;
@@ -136,6 +142,13 @@ public final class RunnableConfig implements HasMetadata<RunnableConfig.Builder>
                 .build();
     }
 
+     * Checks if the graph is running within a studio environment.
+     *
+     * @return {@code true} if the {@link #STUDIO_METADATA_KEY} metadata key is present and its value is {@code true}, {@code false} otherwise.
+     */
+    public boolean isRunningInStudio() {
+        return metadata(STUDIO_METADATA_KEY, new TypeRef<Boolean>() {} ).orElse(false);
+    }
 
     /**
      * Creates a new instance of the {@link Builder} class.

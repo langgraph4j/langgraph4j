@@ -1,22 +1,21 @@
 package org.bsc.quarkus;
 
-import jakarta.inject.Inject;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
-import org.bsc.langgraph4j.GraphStateException;
-import org.bsc.langgraph4j.studio.LangGraphStreamingServer;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 
 import java.io.IOException;
+import java.util.Map;
 
 @WebServlet(name = "GraphInitServlet", urlPatterns = "/init")
 public class GraphInitServletProxy extends HttpServlet {
 
     private final Servlet servlet;
 
-    public GraphInitServletProxy( LangGraphFlow flow ) {
+    public GraphInitServletProxy( Map<String, LangGraphStudioServer.Instance> instanceMap ) {
         super();
-        servlet = new LangGraphStreamingServer.GraphInitServlet(flow.stateGraph(), flow.title(), flow.inputArgs());
+        servlet = new LangGraphStudioServer.GraphInitServlet( instanceMap );
     }
 
     @Override

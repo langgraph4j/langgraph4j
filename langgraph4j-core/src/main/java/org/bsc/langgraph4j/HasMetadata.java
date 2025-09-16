@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
-public interface HasMetadata<B extends HasMetadata.Builder<B>> {
-
+public interface HasMetadata {
     /**
      * return metadata value for key
      *
@@ -63,10 +64,17 @@ public interface HasMetadata<B extends HasMetadata.Builder<B>> {
 
         @SuppressWarnings("unchecked")
         public B addMetadata( String key, Object value ) {
+            requireNonNull(key, "key cannot be null");
             if( metadata == null ) {
                 // Lazy initialization of metadata map
                 metadata = new HashMap<>();
             }
+            else {
+                if( metadata.containsKey(key)) {
+                    throw new IllegalArgumentException( format("Metadata key [%s] already exists: ", key));
+                }
+            }
+
 
             metadata.put( key, value);
 
