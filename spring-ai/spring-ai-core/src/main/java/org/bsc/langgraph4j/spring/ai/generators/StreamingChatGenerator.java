@@ -1,5 +1,12 @@
 package org.bsc.langgraph4j.spring.ai.generators;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.FlowGenerator;
 import org.bsc.langgraph4j.NodeOutput;
@@ -10,14 +17,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static java.util.Objects.requireNonNull;
 
 public interface StreamingChatGenerator {
 
@@ -78,6 +77,10 @@ public interface StreamingChatGenerator {
                     }
 
                     final var currentMessage = response.getResult().getOutput();
+
+                    if (lastResponse.hasToolCalls()) {
+                      return lastResponse;
+                    }
 
                     if( currentMessage.hasToolCalls() ) {
                         return response;
