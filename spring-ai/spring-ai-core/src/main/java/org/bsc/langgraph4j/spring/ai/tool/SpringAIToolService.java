@@ -99,7 +99,7 @@ public class SpringAIToolService {
 
         }
 
-        update = mergeMap( update, Map.of(propertyNameToUpdate, new ToolResponseMessage( toolResponses )) );
+        update = mergeMap( update, Map.of(propertyNameToUpdate, ToolResponseMessage.builder().responses(toolResponses).build()) );
 
         return completedFuture( new Command( gotoNode, update  ) );
     }

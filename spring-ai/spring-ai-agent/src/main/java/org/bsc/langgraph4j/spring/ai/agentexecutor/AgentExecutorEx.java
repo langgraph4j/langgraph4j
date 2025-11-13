@@ -224,7 +224,7 @@ public interface AgentExecutorEx {
                                 })
                                 .toList();
 
-                var toolResponseMessages = new ToolResponseMessage( toolResponses );
+                var toolResponseMessages = ToolResponseMessage.builder().responses(toolResponses).build();
 
                 result.complete( new Command( resumeState,
                         Map.of( "messages",toolResponseMessages,

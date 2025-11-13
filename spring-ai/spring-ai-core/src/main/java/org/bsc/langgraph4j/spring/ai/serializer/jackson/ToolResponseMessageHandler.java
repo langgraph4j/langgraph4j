@@ -76,7 +76,7 @@ public interface ToolResponseMessageHandler {
             var metadata = deserializeMetadata( mapper, node );
 
             if( responsesNode.isNull() || responsesNode.isEmpty() ) {
-                return new ToolResponseMessage( List.of(), metadata );
+                return ToolResponseMessage.builder().metadata(metadata).build();
             }
 
             var responses = new ArrayList<ToolResponseMessage.ToolResponse>( responsesNode.size() );
@@ -84,7 +84,7 @@ public interface ToolResponseMessageHandler {
                 responses.add( mapper.treeToValue( responseNode, ToolResponseMessage.ToolResponse.class ) );
             }
 
-            return new ToolResponseMessage( responses, metadata );
+            return ToolResponseMessage.builder().responses(responses).metadata(metadata).build();
         }
     }
 }

@@ -41,7 +41,10 @@ public class AssistantMessageSerializeTest {
 
         Map<String,Object> metadata = Map.of( "key1", "value1", "key2", 100 );
 
-        var message = new AssistantMessage( "Hello world", metadata);
+        var message = AssistantMessage.builder()
+            .content("Hello world")
+            .properties(metadata)
+            .build();
 
         var state = serializer.cloneObject( Map.of( "assistant1", message) );
 
@@ -76,7 +79,11 @@ public class AssistantMessageSerializeTest {
                 new AssistantMessage.ToolCall( "t2", "function", "test2", "{ param: 'value'}" )
         );
 
-        var message = new AssistantMessage( "Hello world", metadata, toolCalls);
+        var message = AssistantMessage.builder()
+            .content("Hello world")
+            .properties(metadata)
+            .toolCalls(toolCalls)
+            .build();
 
         var state = serializer.cloneObject( Map.of( "assistant1", message) );
 

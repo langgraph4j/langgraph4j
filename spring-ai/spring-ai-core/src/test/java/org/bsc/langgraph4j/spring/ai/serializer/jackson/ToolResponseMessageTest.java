@@ -26,7 +26,7 @@ public class ToolResponseMessageTest {
         List<ToolResponseMessage.ToolResponse> toolResponses = List.of(
         );
 
-        var message = new ToolResponseMessage( toolResponses, metadata );
+        var message = ToolResponseMessage.builder().responses(toolResponses).metadata(metadata).build();
 
         var state = serializer.cloneObject( Map.of( "tool_response", message) );
 
@@ -59,7 +59,7 @@ public class ToolResponseMessageTest {
                 new ToolResponseMessage.ToolResponse( "t2", "test2", "{ result: 'OK'}" )
         );
 
-        var message = new ToolResponseMessage( toolResponses, metadata );
+        var message = ToolResponseMessage.builder().responses(toolResponses).metadata(metadata).build();
 
         var state = serializer.cloneObject( Map.of( "tool_response", message) );
 

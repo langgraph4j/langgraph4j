@@ -81,7 +81,10 @@ public interface AssistantMessageHandler {
             var requestsNode = node.findValue(Field.TOOL_CALLS.name);
 
             if( requestsNode.isNull() || requestsNode.isEmpty() ) {
-                return new AssistantMessage( text, metadata );
+                return AssistantMessage.builder()
+                    .content(text)
+                    .properties(metadata)
+                    .build();
             }
 
             var requests = new LinkedList<AssistantMessage.ToolCall>();
@@ -93,7 +96,11 @@ public interface AssistantMessageHandler {
                 requests.add(request);
             }
 
-            return new AssistantMessage( text, metadata, requests );
+            return AssistantMessage.builder()
+                .content(text)
+                .properties(metadata)
+                .toolCalls(requests)
+                .build();
         }
 
     }
