@@ -72,8 +72,15 @@ public interface StreamingChatGenerator {
 
             var processedFlux = flux
                     .filter( response -> response.getResult() != null && response.getResult().getOutput() != null )
-                    .scan(this::mergeResponses)
-                    .doOnNext(result::set)
+                    .doOnNext(currentResponse -> {
+                        ChatResponse merged;
+                        if (result.get() == null) {
+                            merged = currentResponse;
+                        } else {
+                            merged = mergeResponses(result.get(), currentResponse);
+                        }
+                        result.set(merged);
+                    })
                     .map(next ->
                             new StreamingOutput<>( next.getResult().getOutput().getText(),
                                     startingNode,
