@@ -1,20 +1,17 @@
 package org.bsc.langgraph4j.spring.ai;
 
 import org.bsc.langgraph4j.action.Command;
-import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.tool.SpringAIToolResponseBuilder;
 import org.bsc.langgraph4j.spring.ai.tool.SpringAIToolService;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

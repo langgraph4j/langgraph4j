@@ -73,13 +73,11 @@ public interface StreamingChatGenerator {
             var processedFlux = flux
                     .filter( response -> response.getResult() != null && response.getResult().getOutput() != null )
                     .doOnNext(currentResponse -> {
-                        ChatResponse merged;
-                        if (result.get() == null) {
-                            merged = currentResponse;
-                        } else {
-                            merged = mergeResponses(result.get(), currentResponse);
-                        }
-                        result.set(merged);
+                        result.updateAndGet( lastResponse ->
+                            lastResponse == null ?
+                                    currentResponse :
+                                    mergeResponses(lastResponse, currentResponse)
+                        );
                     })
                     .map(next ->
                             new StreamingOutput<>( next.getResult().getOutput().getText(),
