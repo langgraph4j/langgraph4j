@@ -378,8 +378,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         return compileConfig.interruptsBefore().contains(nodeId);
     }
 
-    private boolean shouldInterruptAfter(String nodeId, String previousNodeId ) {
-        if( nodeId == null || Objects.equals(nodeId, previousNodeId) ) { // FIX RESUME ERROR
+    private boolean shouldInterruptAfter(String nodeId, String nextNodeId ) {
+        if( nodeId == null || Objects.equals(nodeId, nextNodeId) ) { // FIX RESUME ERROR
             return false;
         }
         return ( compileConfig.interruptBeforeEdge() && Objects.equals(nodeId, INTERRUPT_AFTER )) ||
