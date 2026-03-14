@@ -51,7 +51,7 @@ public class MemorySaver implements BaseCheckpointSaver {
     @Override
     public final Collection<Checkpoint> list( RunnableConfig config ) {
         try {
-            return loadOrInitCheckpoints( config, Collections::unmodifiableCollection);
+            return loadOrInitCheckpoints( config, List::copyOf);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
