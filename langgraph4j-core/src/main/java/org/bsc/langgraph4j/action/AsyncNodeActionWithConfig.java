@@ -1,12 +1,13 @@
 package org.bsc.langgraph4j.action;
 
+import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
@@ -16,7 +17,7 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
  *
  * @param <S> the type of the agent state
  */
-public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunction<S, RunnableConfig,CompletableFuture<Map<String, Object>>> {
+public interface AsyncNodeActionWithConfig<S extends AgentState>  {
 
     AsyncNodeActionWithConfig<?> NOOP = ( state, config ) ->
             completedFuture(Map.of());
@@ -34,6 +35,21 @@ public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunct
      */
     CompletableFuture<Map<String, Object>> apply(S state, RunnableConfig config);
 
+    default CompletableFuture<NodeResult> applyWithResult( S state, RunnableConfig config)  {
+        return apply(state, config).thenApply( data -> {
+            final var result = new HashMap<>(data);
+            AsyncGenerator<?> generator = null;
+            for( var entry : data.entrySet() ) {
+                if (entry.getValue() instanceof AsyncGenerator<?>) {
+                    generator = (AsyncGenerator<?>)result.remove(entry.getKey());
+                }
+            }
+            return ( generator != null ) ?
+                    NodeResult.withGenerator(generator, result) :
+                    NodeResult.withData(result);
+
+        });
+    }
 
     /**
      * Converts a synchronous {@link NodeActionWithConfig} to an asynchronous one.

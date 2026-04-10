@@ -5,6 +5,7 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import org.bsc.langgraph4j.action.NodeAction;
+import org.bsc.langgraph4j.action.NodeActionWithConfig;
 import org.bsc.langgraph4j.langchain4j.generators.StreamingChatGenerator;
 import org.bsc.langgraph4j.langchain4j.serializer.std.LC4jStateSerializer;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -39,17 +40,17 @@ public class Issue118ITest {
     }
 
     @Test
-    public void testinterruptGraphWhileStreamingNodeOutput() throws Exception {
+    public void testInterruptGraphWhileStreamingNodeOutput() throws Exception {
         // setup streaming model
         var model = OllamaStreamingChatModel.builder()
                 .baseUrl("http://localhost:11434")
                 .temperature(0.0)
                 .logRequests(true)
                 .logResponses(true)
-                .modelName("llama3.1:latest")
+                .modelName("qwen3")
                 .build();
 
-        NodeAction<State> calculationNode = state -> {
+        NodeActionWithConfig<State> calculationNode = (state, config ) -> {
 
             log.trace("calculationNode: {}", state.messages());
 
@@ -68,7 +69,7 @@ public class Issue118ITest {
             return Map.of("_streaming_messages", generator);
         };
 
-        NodeAction<State> summaryNode = state -> {
+        NodeActionWithConfig<State> summaryNode = (state, config) -> {
             log.trace("summaryNode: {}", state.messages());
 
             var lastMessage = state.lastMessage().orElseThrow();
@@ -76,10 +77,10 @@ public class Issue118ITest {
             return Map.of();
         };
 
-        var stateSerializer = new LC4jStateSerializer<State>(State::new);
+        var stateSerializer = new LC4jStateSerializer<>(State::new);
 
         // Define Graph
-        var workflow = new StateGraph<State>(State.SCHEMA, stateSerializer)
+        var workflow = new StateGraph<>(State.SCHEMA, stateSerializer)
                 .addNode("calculation", node_async(calculationNode))
                 .addNode("summary", node_async(summaryNode))
                 .addEdge(START, "calculation")
@@ -89,7 +90,7 @@ public class Issue118ITest {
         var app = workflow.compile();
 
         for( var out : app.stream( Map.of( "messages", UserMessage.from( "generate a UUID for me")) ) ) {
-            if( out instanceof StreamingOutput streaming ) {
+            if( out instanceof StreamingOutput<?> streaming ) {
                 log.info( "StreamingOutput{node={}, chunk={} }", streaming.node(), streaming.chunk() );
             }
             else {

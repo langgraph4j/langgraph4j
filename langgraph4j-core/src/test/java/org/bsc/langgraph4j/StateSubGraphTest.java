@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncCommandAction;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
@@ -21,7 +20,7 @@ import java.util.logging.LogManager;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class StateSubGraphTest {
@@ -74,8 +73,8 @@ public class StateSubGraphTest {
         }
     }
 
-    private AsyncNodeAction<MessagesState<String>> _makeNode(String id ) {
-        return node_async(state ->
+    private AsyncNodeActionWithConfig<MessagesState<String>> _makeNode(String id ) {
+        return node_async((state,config) ->
                 Map.of("messages", id)
         );
     }

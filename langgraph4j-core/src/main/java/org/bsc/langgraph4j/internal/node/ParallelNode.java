@@ -46,27 +46,18 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
         @SuppressWarnings("unchecked")
         private CompletableFuture<Map<String, Object>> evalNodeActionSync(AsyncNodeActionWithConfig<State> action, State state, RunnableConfig config) {
 
-            return action.apply(state, config).thenCompose(partialState ->
-                    partialState.entrySet().stream()
-                            .filter(e -> e.getValue() instanceof AsyncGenerator)
-                            .findFirst()
-                            .map(generatorEntry -> {
-
-                                var partialStateWithoutGenerator = partialState.entrySet().stream()
-                                        .filter(e -> !Objects.equals(e.getKey(), generatorEntry.getKey()))
-                                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                                return evalGenerator((AsyncGenerator<NodeOutput<State>>) generatorEntry.getValue(), partialStateWithoutGenerator);
-
-                            })
-                            .orElse(completedFuture(partialState))
-            );
+            return action.applyWithResult(state, config).thenCompose(nodeResult ->
+                ( nodeResult.hasGenerator() ) ?
+                    evalGenerator((AsyncGenerator<NodeOutput<State>>) nodeResult.generator(), nodeResult.data()) :
+                        completedFuture(nodeResult.data()) );
         }
 
         private CompletableFuture<Map<String, Object>> evalNodeActionAsync(AsyncNodeActionWithConfig<State> action,
                                                                            State state,
                                                                            RunnableConfig config,
                                                                            Executor executor) {
-            return CompletableFuture.supplyAsync(() -> evalNodeActionSync(action, state, config).join(), executor);
+            return CompletableFuture.supplyAsync(() -> evalNodeActionSync(action, state, config), executor)
+                    .thenCompose( Function.identity());
 
         }
         private Optional<Executor> getExecutor(RunnableConfig config) {

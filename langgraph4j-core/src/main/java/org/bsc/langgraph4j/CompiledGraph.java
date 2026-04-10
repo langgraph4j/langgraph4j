@@ -745,53 +745,43 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                                       String nodeId,
                                                       State state,
                                                       RunnableConfig runnableConfig,
-                                                      Map<String,Object> partialState )
+                                                      NodeResult nodeResult )
         {
-            return partialState.entrySet().stream()
-                .filter( e -> e.getValue() instanceof AsyncGenerator)
-                .findFirst()
-                .map( generatorEntry -> {
+            if( !nodeResult.hasGenerator() ) {
+                return Optional.empty();
+            }
 
-                    final var generator = (AsyncGenerator<Output>) generatorEntry.getValue();
+            final var generator = (AsyncGenerator<Output>) nodeResult.generator();
 
-                    return Data.composeWith( generator, data -> {
+            final var output =  Data.composeWith( generator, data -> {
 
-                        final var result = GraphResult.from(data);
-                        if (!result.isEmpty()) {
+                    final var result = GraphResult.from(data);
+                    if (!result.isEmpty()) {
 
-                            if( result.isInterruptionMetadata()  ) {
-                                context.setReturnFromEmbedWithValue( result );
-                                return;
-                            }
-                            if ( result.isStateDataOrCheckpointSaverTag() ) {
-                                // FIX #102
-                                // Assume that the whatever used appender channel doesn't accept duplicates
-                                // FIX #104: remove generator
-                                final Map<String,Object> partialStateWithoutGenerator = partialState.entrySet().stream()
-                                        .filter( e -> e.getKey() != null &&
-                                                !Objects.equals(e.getKey(),generatorEntry.getKey()))
-                                        .collect( LinkedHashMap::new,
-                                                ( map, entry ) ->
-                                                        map.put( entry.getKey(), entry.getValue() ),
-                                                Map::putAll );
-
-                                final var intermediateState = AgentState.updateState( context.currentState(),
-                                        partialStateWithoutGenerator,
-                                        stateGraph.getChannels() );
-
-                                context.setCurrentState(intermediateState);
-
-                                context.setReturnFromEmbedWithValue( result );
-                                return;
-                            }
-                            else {
-                                throw new IllegalArgumentException("Embedded generator must return a Map");
-                            }
+                        if( result.isInterruptionMetadata()  ) {
+                            context.setReturnFromEmbedWithValue( result );
+                            return;
                         }
+                        if ( result.isStateDataOrCheckpointSaverTag() ) {
 
-                        context.setReturnFromEmbedWithValue( GraphResult.from(Map.of()) );
-                    });
+                            final var intermediateState = AgentState.updateState( context.currentState(),
+                                    nodeResult.data(),
+                                    stateGraph.getChannels() );
+
+                            context.setCurrentState(intermediateState);
+
+                            context.setReturnFromEmbedWithValue( result );
+                            return;
+                        }
+                        else {
+                            throw new IllegalArgumentException("Embedded generator must return a Map");
+                        }
+                    }
+
+                    context.setReturnFromEmbedWithValue( GraphResult.from(Map.of()) );
                 });
+
+            return Optional.of( output );
         }
 
         private Data<Output> applyAction( AsyncNodeActionWithConfig<State> action,
@@ -805,14 +795,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             };
             return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, runnableConfig, stateFactory, stateGraph.getChannels() )
                 .thenApply(TryFunction.Try(result -> {
-                    if( result.hasPartialState() ) {
-                        return result.partialState().thenApply( TryFunction.<Map<String,Object>, Data<Output>, Exception>Try(partial -> {
-                            Optional<Data<Output>> embed = embedGenerator( action, nodeId, clonedState, runnableConfig, partial);
+                    if( result.hasNodeResult() ) {
+                        return result.nodeResult().thenApply( TryFunction.Try(nodeResult -> {
+                            final var embed = embedGenerator( action, nodeId, clonedState, runnableConfig, nodeResult);
                             if (embed.isPresent()) {
                                 return embed.get();
                             }
 
-                            context.setCurrentState( AgentState.updateState(context.currentState(), partial, stateGraph.getChannels()) );
+                            context.setCurrentState( AgentState.updateState(context.currentState(), nodeResult.data(), stateGraph.getChannels()) );
 
                             if (compileConfig.interruptBeforeEdge() && compileConfig.interruptsAfter().contains(context.currentNodeId())) {
                                 //nextNodeId = INTERRUPT_AFTER;
@@ -875,23 +865,23 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // FIX #336
                     // Streaming completed: call AfterHook here
-                    final CompletableFuture<Map<String,Object>> future;
+                    final CompletableFuture<NodeResult> future;
                     if( !stateGraph.nodeHooks.afterCalls.isEmpty() ) {
                         future = stateGraph.nodeHooks.afterCalls.apply(
                                         context.currentNodeId(),
                                         stateGraph.getStateFactory().apply(context.currentState()),
                                         config,
-                                        returnFromEmbed.asStateDataOrLastCheckpointStateData());
+                                        NodeResult.withData( returnFromEmbed.asStateDataOrLastCheckpointStateData() ));
                     }
                     else {
-                        future = completedFuture( returnFromEmbed.asStateDataOrLastCheckpointStateData() );
+                        future = completedFuture( NodeResult.withData( returnFromEmbed.asStateDataOrLastCheckpointStateData() ));
                     }
 
 
-                    return Data.of( future.thenCompose( TryFunction.Try((partialResult) -> {
+                    return Data.of( future.thenCompose( TryFunction.Try((nodeResult) -> {
 
                         final var updatedState = AgentState.updateState( context.currentState(),
-                                partialResult,
+                                nodeResult.data(),
                                 stateGraph.getChannels() );
 
                         final var nextNodeCommand = nextNodeId(context.currentNodeId(), updatedState, config);

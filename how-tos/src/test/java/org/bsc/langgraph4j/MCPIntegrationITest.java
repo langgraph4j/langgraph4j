@@ -33,7 +33,7 @@ public class MCPIntegrationITest {
                 .temperature(0.0)
                 .logRequests(true)
                 .logResponses(true)
-                .modelName("qwen2.5-coder:latest")
+                .modelName("qwen3")
                 .build();
 
         try( var mcpClient = new DefaultMcpClient.Builder()

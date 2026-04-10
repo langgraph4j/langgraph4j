@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class Issue128ITest {
 
@@ -27,42 +27,33 @@ public class Issue128ITest {
     enum AiModel {
 
 
-        OPENAI_GPT_4O_MINI( () -> OpenAiChatModel.builder()
+        OPENAI( (model) -> OpenAiChatModel.builder()
                 .apiKey( System.getenv("OPENAI_API_KEY") )
-                .modelName( "gpt-4o-mini" )
+                .modelName( model )
                 .supportedCapabilities(Set.of(Capability.RESPONSE_FORMAT_JSON_SCHEMA))
                 .logResponses(true)
                 .maxRetries(2)
                 .temperature(0.0)
                 .build() ),
-        OLLAMA_LLAMA3_1_8B( () -> OllamaChatModel.builder()
-                .modelName( "llama3.1" )
+        OLLAMA( ( model ) -> OllamaChatModel.builder()
+                .modelName(model)
                 .baseUrl("http://localhost:11434")
                 .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
                 .logRequests(true)
                 .logResponses(true)
                 .maxRetries(2)
                 .temperature(0.5)
-                .build() ),
-        OLLAMA_QWEN2_5_7B( () -> OllamaChatModel.builder()
-                .modelName( "qwen2.5:7b" )
-                .baseUrl("http://localhost:11434")
-                .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
-                .logRequests(true)
-                .logResponses(true)
-                .maxRetries(2)
-                .temperature(0.0)
                 .build() )
         ;
 
-        private final Supplier<ChatModel> modelSupplier;
+        private final Function<String,ChatModel> modelFactory;
 
-        public ChatModel model() {
-            return modelSupplier.get();
+        public ChatModel model( String model ) {
+            return modelFactory.apply(model);
         }
 
-        AiModel(  Supplier<ChatModel> modelSupplier ) {
-            this.modelSupplier = modelSupplier;
+        AiModel(   Function<String,ChatModel> modelFactory ) {
+            this.modelFactory = modelFactory;
         }
     }
 
@@ -70,7 +61,7 @@ public class Issue128ITest {
     public void agentExecutorTest() throws Exception {
 
         var agent = AgentExecutor.builder()
-                .chatModel(AiModel.OLLAMA_LLAMA3_1_8B.model())
+                .chatModel(AiModel.OLLAMA.model("qwen3"))
                 .toolsFromObject( new DummyTool() )
                 .build()
                 .compile();

@@ -10,4 +10,7 @@ import java.util.Map;
 public interface NodeActionWithConfig<S extends AgentState> {
     Map<String, Object> apply(S state, RunnableConfig config) throws Exception;
 
+    default NodeResult applyWithResult( S state, RunnableConfig config) throws Exception {
+        return NodeResult.withData( apply(state, config) );
+    }
 }

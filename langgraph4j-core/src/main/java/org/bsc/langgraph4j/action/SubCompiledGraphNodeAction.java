@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.action;
 
+import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.subgraph.SubGraphOutputFactory;
@@ -57,12 +58,16 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
      */
     @Override
     public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
+        throw new UnsupportedOperationException("not implemented");
+    }
 
+    @Override
+    public CompletableFuture<NodeResult> applyWithResult(State state, RunnableConfig config) {
         final boolean resumeSubgraph = config.metadata( resumeSubGraphId(), new TypeRef<Boolean>() {} )
-                                        .orElse( false );
+                .orElse( false );
 
         final var subGraphRunnableConfigBuilder = RunnableConfig.builder(config)
-                    .putMetadata(RunnableConfig.GRAPH_PATH, config.graphPath().append(nodeId));
+                .putMetadata(RunnableConfig.GRAPH_PATH, config.graphPath().append(nodeId));
         subGraph.compileConfig.graphId()
                 .ifPresent( id ->
                         subGraphRunnableConfigBuilder.putMetadata(RunnableConfig.GRAPH_ID, id));
@@ -80,8 +85,8 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
             if( parentSaver.get() == subGraphSaver.get() ) {
                 subGraphRunnableConfig = RunnableConfig.builder(subGraphRunnableConfig)
                         .threadId( config.threadId()
-                                            .map( threadId -> "%s_%s".formatted( threadId, subGraphId()))
-                                            .orElseGet(this::subGraphId))
+                                .map( threadId -> "%s_%s".formatted( threadId, subGraphId()))
+                                .orElseGet(this::subGraphId))
                         .streamMode( config.streamMode() )
                         .build();
             }
@@ -96,11 +101,11 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
             var generator = subGraph.stream(input, subGraphRunnableConfig)
                     .map( n -> SubGraphOutputFactory.createFromNodeOutput( n, nodeId) );
 
-            return completedFuture( Map.of("%s_%s".formatted(subGraphId(), UUID.randomUUID()), generator));
+            return completedFuture( NodeResult.withGenerator( generator, Map.of() ) );
 
         } catch (Exception e) {
-
             return failedFuture(e);
         }
+
     }
 }

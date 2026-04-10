@@ -4,6 +4,7 @@ import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.action.NodeResult;
 import org.bsc.langgraph4j.internal.hook.EdgeHooks;
 import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.internal.node.Node;
@@ -166,18 +167,20 @@ public class HookTest implements LG4JLoggable {
         assertTrue( hooksValueMap.containsKey(nodeId));
         assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get(nodeId) );
 
-        var afterCallResult = hooks.afterCalls.apply( nodeId, state, config, Map.of() ).join();
-        assertFalse( afterCallResult.isEmpty() );
-        assertTrue( afterCallResult.containsKey(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
-        assertInstanceOf( Integer.class, afterCallResult.get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
-        assertEquals( 2, afterCallResult.get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
+        final var afterCallResult = hooks.afterCalls.apply( nodeId, state, config, NodeResult.withData(Map.of()) ).join();
+        assertTrue( afterCallResult.hasData() );
+        assertFalse( afterCallResult.data().isEmpty() );
+        assertTrue( afterCallResult.data().containsKey(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
+        assertInstanceOf( Integer.class, afterCallResult.data().get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
+        assertEquals( 2, afterCallResult.data().get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
 
-        var wrapCallResult = hooks.wrapCalls.apply( nodeId, state, config, action ).join();
+        final var wrapCallResult = hooks.wrapCalls.apply( nodeId, state, config, action ).join();
 
-        assertFalse( wrapCallResult.isEmpty() );
-        assertEquals( 2, wrapCallResult.size() );
-        assertTrue( wrapCallResult.containsKey("messages"));
-        assertTrue( wrapCallResult.containsKey(NestedNodeHook.HOOKS_ATTRIBUTE));
+        assertTrue( wrapCallResult.hasData() );
+        assertFalse( wrapCallResult.data().isEmpty() );
+        assertEquals( 2, wrapCallResult.data().size() );
+        assertTrue( wrapCallResult.data().containsKey("messages"));
+        assertTrue( wrapCallResult.data().containsKey(NestedNodeHook.HOOKS_ATTRIBUTE));
         hooksValue = beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);
         assertInstanceOf( Map.class,  hooksValue );
         hooksValueMap = (Map<String,Object>)beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);

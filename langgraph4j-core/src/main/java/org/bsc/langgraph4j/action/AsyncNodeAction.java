@@ -15,6 +15,7 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
  *
  * @param <S> the type of the agent state
  */
+@Deprecated
 @FunctionalInterface
 public interface AsyncNodeAction<S extends AgentState> extends Function<S, CompletableFuture<Map<String, Object>>> {
 
@@ -25,6 +26,10 @@ public interface AsyncNodeAction<S extends AgentState> extends Function<S, Compl
      * @return a CompletableFuture representing the result of the action
      */
     CompletableFuture<Map<String, Object>> apply(S state);
+
+    default CompletableFuture<NodeResult> applyWithResult( S state )  {
+        return apply(state).thenApply(NodeResult::withData);
+    }
 
     /**
      * Creates an asynchronous node action from a synchronous node action.

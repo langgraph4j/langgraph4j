@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
+import org.bsc.langgraph4j.action.NodeResult;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.exception.SubGraphInterruptionException;
@@ -45,19 +46,23 @@ public class CompiledSubGraphTest {
     }
 
     static class WrapCallHook extends WrapCallHookSubgraphAware<MyState> {
+        @Override
+        public CompletableFuture<Map<String, Object>> applyWrap(String nodeId, MyState state, RunnableConfig config, AsyncNodeActionWithConfig<MyState> action) {
+            throw new UnsupportedOperationException("not implemented");
+        }
 
         @Override
-        public CompletableFuture<Map<String, Object>> applyWrap(String nodeId,
-                                                                MyState state,
-                                                                RunnableConfig config,
-                                                                AsyncNodeActionWithConfig<MyState> action) {
+        public CompletableFuture<NodeResult> applyWrapWithResult(String nodeId,
+                                                                 MyState state,
+                                                                 RunnableConfig config,
+                                                                 AsyncNodeActionWithConfig<MyState> action) {
 
             isSubgraphEnded( config ).ifPresent(
                     item -> System.out.printf("[%s] ended%n", item.nodeId()));
 
             System.out.printf("[%s] start%n", nodeId);
 
-            return action.apply( state, config ).whenComplete( (result, ex ) -> {
+            return action.applyWithResult( state, config ).whenComplete( (result, ex ) -> {
 
                 if( ex != null ) {
                     return;

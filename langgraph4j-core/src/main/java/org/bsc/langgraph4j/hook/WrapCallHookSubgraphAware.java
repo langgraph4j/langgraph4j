@@ -3,6 +3,7 @@ package org.bsc.langgraph4j.hook;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.GraphPath;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.NodeResult;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.util.*;
@@ -25,10 +26,9 @@ public abstract class WrapCallHookSubgraphAware<S extends AgentState> implements
             return Optional.empty();
         }
 
-        protected Optional<Step> isSubgraphRequested(String nodeId, RunnableConfig config, Map<String,Object> result ) {
+    protected Optional<Step> isSubgraphRequested(String nodeId, RunnableConfig config, NodeResult nodeResult ) {
 
-            var isSubgraphRequested =  result.values().stream().anyMatch( v -> v instanceof AsyncGenerator<?>);
-            if( isSubgraphRequested ) {
+            if( nodeResult.hasGenerator() ) {
                 var item = new Step(nodeId, lastElement(config.graphPath()));
                 subgraphStack.push( item );
                 return Optional.of(item);

@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.InterruptableAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.action.NodeResult;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
@@ -77,14 +78,15 @@ public class NodeHooks<State extends AgentState> {
             super(Type.LIFO);
         }
 
-        public CompletableFuture<Map<String, Object>> apply(String nodeId, State state, RunnableConfig config, Map<String,Object> partialResult ) {
+
+        public CompletableFuture<NodeResult> apply(String nodeId, State state, RunnableConfig config, NodeResult nodeResult ) {
             if( isEmpty() ) {
-                return completedFuture(partialResult);
+                return completedFuture(nodeResult);
             }
             return Stream.concat( callListAsStream(), callMapAsStream(nodeId))
-                    .reduce( completedFuture(partialResult),
+                    .reduce( completedFuture(nodeResult),
                             (futureResult, call) ->
-                                    futureResult.thenCompose( result -> call.applyAfter( nodeId, state, config, result)),
+                                    futureResult.thenCompose( result -> call.applyAfterWithResult( nodeId, state, config, result)),
                                             // Merge original result with partial result returned by hook
                                             //.thenApply( partial -> mergeMap(result, partial, ( oldValue, newValue) -> newValue ) )),
                             (f1, f2) -> f1.thenCompose(v -> f2) // Combiner for parallel streams
@@ -107,6 +109,11 @@ public class NodeHooks<State extends AgentState> {
         public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
             return delegate.applyWrap(nodeId, state, config, action);
         }
+
+        @Override
+        public CompletableFuture<NodeResult> applyWithResult(State state, RunnableConfig config) {
+            return delegate.applyWrapWithResult(nodeId, state, config, action);
+        }
     }
 
 
@@ -115,15 +122,15 @@ public class NodeHooks<State extends AgentState> {
             super(Type.FIFO);
         }
 
-        public CompletableFuture<Map<String, Object>> apply( String nodeId, State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action ) {
+        public CompletableFuture<NodeResult> apply( String nodeId, State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action ) {
             if( isEmpty() ) {
-                return action.apply( state, config );
+                return action.applyWithResult( state, config );
             }
             return Stream.concat( callListAsStream(), callMapAsStream(nodeId))
                     .reduce(action,
                             (acc, wrapper) -> new WrapCallChainLink<>(nodeId, wrapper, acc),
                             (v1, v2) -> v1)
-                    .apply(state, config);
+                    .applyWithResult(state, config);
         }
 
     }
@@ -134,27 +141,27 @@ public class NodeHooks<State extends AgentState> {
     }
 
     public record Result<State extends AgentState>(
-            CompletableFuture<Map<String,Object>> partialState,
+            CompletableFuture<NodeResult> nodeResult,
             CompletableFuture<InterruptionMetadata<State>> interruptionMetadata) {
 
         public Result {
-            if( partialState == null && interruptionMetadata == null ) {
-                throw new IllegalArgumentException( "Either partialState or interruptionMetadata must be provided");
+            if( nodeResult == null && interruptionMetadata == null ) {
+                throw new IllegalArgumentException( "Either nodeResult or interruptionMetadata must be provided");
             }
-            if( partialState != null && interruptionMetadata != null ) {
-                throw new IllegalArgumentException( "Only one of partialState or interruptionMetadata can be provided");
+            if( nodeResult != null && interruptionMetadata != null ) {
+                throw new IllegalArgumentException( "Only one of nodeResult or interruptionMetadata can be provided");
             }
 
         }
         public Result(InterruptionMetadata<State> interruptionMetadata) {
             this(null, CompletableFuture.completedFuture(interruptionMetadata));
         }
-        public Result( CompletableFuture<Map<String,Object>> partialState) {
-            this( partialState, null);
+        public Result( CompletableFuture<NodeResult> nodeResult) {
+            this( nodeResult, null);
         }
 
-        public boolean hasPartialState() {
-            return partialState != null;
+        public boolean hasNodeResult() {
+            return nodeResult != null;
         }
     }
 
@@ -186,14 +193,14 @@ public class NodeHooks<State extends AgentState> {
         return beforeCalls.apply(nodeId, state, config, stateFactory, schema)
                 .thenCompose(newState -> {
                     final var result = applyWrapCallHooksHandlingInterruption(nodeId, newState, config, action);
-                    if( result.hasPartialState() ) {
-                        return result.partialState().thenApply( partial -> {
+                    if( result.hasNodeResult() ) {
+                        return result.nodeResult().thenApply( nodeResult -> {
                             // Checking if the Node return AsyncGenerator as a Streaming node
-                            if (hasStreamingGenerator(partial)) {
+                            if( nodeResult.hasGenerator() ) {
                                 // Streaming: Skip AfterHook call here，Call in embedGenerator after get the completed result
-                                return new Result<>(completedFuture(partial), null );
+                                return new Result<>( completedFuture(nodeResult), null );
                             }
-                            return new Result<>(afterCalls.apply(nodeId, newState, config, partial), null );
+                            return new Result<>(afterCalls.apply(nodeId, newState, config, nodeResult), null );
                         });
                     }
 

@@ -188,7 +188,7 @@ public class MultiAgentSupervisorITest {
                 .logResponses(true)
                 .responseFormat( ResponseFormat.JSON)
                 // .format( "json" )
-                .modelName("deepseek-r1:14b")
+                .modelName("qwen3")
                 //.modelName("llama3.2:latest")
                 .build();
 
@@ -197,7 +197,7 @@ public class MultiAgentSupervisorITest {
             .temperature(0.0)
             .logRequests(true)
             .logResponses(true)
-            .modelName("llama3.1:latest")
+            .modelName("qwen3.5")
             .build();
 
     @Test
