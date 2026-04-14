@@ -25,7 +25,7 @@ Add the dependency:
 <dependency>
   <groupId>org.bsc.langgraph4j</groupId>
   <artifactId>langgraph4j-opentelemetry</artifactId>
-  <version>1.8.11</version>
+  <version>1.8.12</version>
 </dependency>
 ```
 

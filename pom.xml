@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-parent</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.8.12</version>
     <packaging>pom</packaging>
 
     <name>langgraph4j::parent</name>

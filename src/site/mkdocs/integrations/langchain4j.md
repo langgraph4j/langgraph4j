@@ -28,7 +28,7 @@
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-langchain4j</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.8.12</version>
 </dependency>
 ```
 

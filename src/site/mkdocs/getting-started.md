@@ -82,7 +82,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.8.11</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.8.12</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -114,7 +114,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.8-SNAPSHOT</version> <!-- Or the current snapshot version -->
+    <version>1.8.12</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:

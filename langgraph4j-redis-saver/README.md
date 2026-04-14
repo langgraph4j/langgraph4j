@@ -18,7 +18,7 @@ Redis-based checkpoint saver for LangGraph4j. Provides high-performance, persist
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-redis-saver</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.8.12</version>
 </dependency>
 ```
 

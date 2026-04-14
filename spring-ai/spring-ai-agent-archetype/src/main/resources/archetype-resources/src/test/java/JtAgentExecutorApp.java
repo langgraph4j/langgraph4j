@@ -1,8 +1,8 @@
 #set( $symbol_pound = '#' )
 #set( $symbol_dollar = '$' )
 #set( $symbol_escape = '\' )
-//DEPS ${package}:${artifactId}:1.8.11
-//DEPS ${package}:langgraph4j-javelit:1.8.11
+//DEPS ${package}:${artifactId}:1.8.12
+//DEPS ${package}:langgraph4j-javelit:1.8.12
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS org.springframework.ai:spring-ai-bom:1.1.0@pom
 //DEPS org.springframework.ai:spring-ai-client-chat
