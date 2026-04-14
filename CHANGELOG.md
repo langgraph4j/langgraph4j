@@ -2,6 +2,203 @@
 
 
 
+<!-- "name: v1.8.12" is a release tag -->
+
+## [v1.8.12](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.12) (2026-04-14)
+
+### Features
+
+ *  **MetadataUtils**  Add utility method to convert metadata to string representation ([3917aa0930c49e3](https://github.com/bsorrentino/langgraph4j/commit/3917aa0930c49e34622b3bc21007cdbce1ec5592))
+   
+ *  **spring-ai-core/StreamingChatGenerator**  Add metadata support for chat responses ([1393314724aae7e](https://github.com/bsorrentino/langgraph4j/commit/1393314724aae7ec7737fd6cd62ec3b5f4db63a2))
+     > The commit introduces metadata handling for chat responses in the StreamingChatGenerator class. Key changes include:
+     > - Implementing a Metadata class that wraps ChatResponse metadata
+     > - Integrating metadata into StreamingOutput and StreamingOutputEnd objects
+     > - Updating text extraction logic to include metadata from chat responses
+     > This enhancement enables richer metadata handling for streaming chat operations.
+     > working on #374
+   
+ *  **NodeOutput**  Add metadata support via HasMetadata interface ([8b9d244873352c3](https://github.com/bsorrentino/langgraph4j/commit/8b9d244873352c3b99445ab866f44177cfd17737))
+     > working on #374
+   
+
+### Bug Fixes
+
+ -  **langchain4j**  Complete support for ToolExecutionRequest in Jackson serializer ([02163786a65b9ce](https://github.com/bsorrentino/langgraph4j/commit/02163786a65b9ce2217c347d8384e2042d25b210))
+
+ -  **langchain4j-agent**  update route when an action is rejected ([706e860230ee0ef](https://github.com/bsorrentino/langgraph4j/commit/706e860230ee0ef53ba020be56314950f0b3966e))
+     > working on #375
+
+ -  **langchain4j-agent**  Replace wrong label as target of shouldContinue action ([d726906743ce8de](https://github.com/bsorrentino/langgraph4j/commit/d726906743ce8de50bfd7ba132487c0fa92deb62))
+     > Replacing hardcoded string references with constant fields
+     > Adjusting map operations to reference constants instead of literal strings
+     > resolve  #375
+
+ -  **CompiledGraph**  if CompileConfig.releaseThread(true) avoid restore saved checkpoints on rerun graph execution ([d330d81a53f1c36](https://github.com/bsorrentino/langgraph4j/commit/d330d81a53f1c3686cf9fdfbee199e57e978dc31))
+     > The change introduces a filter to the checkpoint saver that excludes threads marked as release threads.
+     > This modification ensures that checkpoint saving behavior is conditioned on thread configuration,
+     > potentially improving resource management or preventing unintended checkpoints restore on rerun graph execution.
+     > BREAKING CHANGE: this change previous behaviours on replay graph execution
+
+ -  **langgraph4j-core/CompiledGraph**  implement null safety for  merging strategy in embedGenerator ([51ccc074ffa15b0](https://github.com/bsorrentino/langgraph4j/commit/51ccc074ffa15b0dfd3fcedf8b666cbe1bef4bef))
+     > resolve #370
+
+
+### Refactor
+
+ -  **GenericMapDeserializer**  replace iterator with for-each loop over node.properties() to remove fields() deprecation ([7d2f43fef023e89](https://github.com/bsorrentino/langgraph4j/commit/7d2f43fef023e89cc59b8094758e5bb815e5edb5))
+   
+ -  **HasMetadata**  Replace return (B)this with return this$() in multiple methods to use helper method ([c24aa97f87d7456](https://github.com/bsorrentino/langgraph4j/commit/c24aa97f87d7456e8153bc3dcb9da2e309d50fec))
+   
+ -  **StreamingChatGenerator**  Add metadata handling to StreamingChatGenerator ([2703b64e4446e61](https://github.com/bsorrentino/langgraph4j/commit/2703b64e4446e61a42e085a797902f035bcc4207))
+    > - Adding metadata extraction logic from ChatResponse
+ > - Updating streaming output objects to carry metadata
+ > - Modifying partial response and completion handling to include metadata context
+ > working on #374
+
+ -  **StreamingOutputEnd**  add metadataSupplier parameter ([19706618e1ef215](https://github.com/bsorrentino/langgraph4j/commit/19706618e1ef2158fe78167709b8a17fb46a21e1))
+    > working on #374
+
+ -  **langchain4j/LLMStreamingGenerator**  add null parameter to StreamingOutput constructor ([44dac3464e565c0](https://github.com/bsorrentino/langgraph4j/commit/44dac3464e565c0303352930fb3a0bd66559c014))
+    > working on #374
+
+ -  **StreamingOutput**  add metadata support and update toString to include metadata ([ea952718592df63](https://github.com/bsorrentino/langgraph4j/commit/ea952718592df6340a3dd227c38286bb354a9d3c))
+    > The changes introduce metadata handling by:
+ > 1. Adding imports for HasMetadata and MetadataUtils
+ > 2. Updating constructor to accept metadataSupplier parameter
+ > 3. Enhancing toString() to display metadata information using MetadataUtils
+ > working on #374
+
+ -  **SubGraphOutput**  refactor constructor to pass NodeOutput directly ([fed1332d4bc1c81](https://github.com/bsorrentino/langgraph4j/commit/fed1332d4bc1c81e7b8f4354313e3e96edf1138a))
+    > working on #374
+
+ -  **spring-ai-agent**  Adding a custom channel handler for approval results that extracts the approval state name ([be6fd298761ac9e](https://github.com/bsorrentino/langgraph4j/commit/be6fd298761ac9e50ef85c33761431a691c66512))
+    > Updates the AgentExecutorEx interface to consistently use the new AgentEx.APPROVAL_RESULT constant
+
+ -  **AgentEx.java**  Rename APPROVAL_RESULT_PROPERTY to APPROVAL_RESULT and update references ([0f5afa5af28a986](https://github.com/bsorrentino/langgraph4j/commit/0f5afa5af28a9861a8c667b79a335da63efcc941))
+    > The constant APPROVAL_RESULT_PROPERTY has been deprecated in favour of APPROVAL_RESULT to align with naming conventions.
+
+ -  **langchain4j-agent**  add approval result channel ([379d3d0cef615f4](https://github.com/bsorrentino/langgraph4j/commit/379d3d0cef615f45bb5cb8ecd9bd8af0878a6080))
+    > Introduce dedicated channel for approval state processing in agent executor
+
+ -  **langchain4j**  Refactor deserialization to inline logic and add type information ([9a2ef84438395c1](https://github.com/bsorrentino/langgraph4j/commit/9a2ef84438395c15b0d8508cf527285cfcde8609))
+   
+ -  **spring-ai-agent**  refactor method visibility and add private helper for tool rejection response ([f0835c511c1c7a9](https://github.com/bsorrentino/langgraph4j/commit/f0835c511c1c7a9889cacf1dca1908aaf793aa84))
+    > The commit refactors the AgentExecutorEx class by:
+ > 1. Changing several methods from public to private access modifiers
+ > 2. Adding a private helper method &#x60;createRejectToolResponseMessage&#x60; to encapsulate tool rejection logic
+ > 3. Updating method references to use the new public constants from the State class
+ > 4. Improving code structure while maintaining the same functionality
+
+ -  **AgentExecutorEx.java**  Refactor tool execution state handling and improve error resilience with CompletableFuture utilities ([3d56494a6be1842](https://github.com/bsorrentino/langgraph4j/commit/3d56494a6be1842d3327491f53c707e3f23d1c70))
+    > The changes implement a complete rewrite of tool execution state management, introducing:
+ > New state constants for tracking execution requests and responses
+ > Enhanced state loading logic from AI messages
+ > Better flow control for tool execution dispatch
+ > resolve  #375
+
+ -  **spring-ai-agent**  extract method to load tool execution requests from last message ([72dd3fd343c8f77](https://github.com/bsorrentino/langgraph4j/commit/72dd3fd343c8f77795205239e10e6a71a03d48f0))
+   
+ -  **core/AgentEx**  Replace hardcoded strings with constants for better maintainability ([dfcdbe5adbb1633](https://github.com/bsorrentino/langgraph4j/commit/dfcdbe5adbb16337644284331f06cede74952f27))
+   
+ -  **spring-ai-agent**  Replace string literal with constant for model command ([f53023b9f6c404d](https://github.com/bsorrentino/langgraph4j/commit/f53023b9f6c404d2d9fabc1cfd9561747413e856))
+   
+ -  **GraphResult.java**  Add methods to handle checkpoint state data and state data checks ([5aee515c0c83389](https://github.com/bsorrentino/langgraph4j/commit/5aee515c0c8338925ec66731515210c0673f3923))
+    > The commit introduces new methods to retrieve checkpoint state data and check for state data or checkpoint saver tag presence.
+
+ -  **package-info**  Remove references to internal classes Node and Edge from package-info.java ([ca89bf89d4472cf](https://github.com/bsorrentino/langgraph4j/commit/ca89bf89d4472cf2c3b6f91edbd3a3f87cfe182e))
+   
+ -  **CompiledGraph**  Update state data handling to include checkpoint saver tags ([59765a095f121f8](https://github.com/bsorrentino/langgraph4j/commit/59765a095f121f897deec1ece5fd5f564cc8f215))
+    > Renaming SubCompiledGraphNode to SubGraphNode in type checks
+ > Expanding result condition checks to include state data or checkpoint tags
+ > Updating method calls to handle state data with checkpoint context
+
+
+### Test 
+
+ -  **JtAgentExecutorApp**  update dependencies and code to use Google GenAI instead of Vertex AI Gemini ([d9dea322d3731d0](https://github.com/bsorrentino/langgraph4j/commit/d9dea322d3731d09fbdea014ea3b7b0c31c70972))
+   
+ -  **AiModel**  refactor google gen ai integration in ai model test ([2a830205b8963de](https://github.com/bsorrentino/langgraph4j/commit/2a830205b8963dee3d9f767ce8bef7d392da2701))
+   
+ -  **AgentExecutorITest**  update agent executor test to use google genai model and refactor configuration ([3780030678b6ef5](https://github.com/bsorrentino/langgraph4j/commit/3780030678b6ef535200c13089ebc8f00f8b9d6f))
+    > The commit refactors the AgentExecutorITest to:
+ > Replace VertexAiGeminiChatModel checks with GoogleGenAiChatModel
+ > Update model configuration beans for different providers (ollama, openai, google)
+
+ -  **InterruptionTest**  add metadata parameter to test cases ([cc9c0e1b6c319b9](https://github.com/bsorrentino/langgraph4j/commit/cc9c0e1b6c319b9b08ac50a44e684c354975222f))
+    > working on #374
+
+ -  **Issue336Test**  Add metadata parameter to StreamingOutput constructor in test ([34b07cdc2b51676](https://github.com/bsorrentino/langgraph4j/commit/34b07cdc2b5167610fc5421f190a2f1675631c84))
+    > working on #374
+
+ -  **Issue102Test**  Updated StreamingOutput to include metadata parameter ([39b161138f9e7df](https://github.com/bsorrentino/langgraph4j/commit/39b161138f9e7df4c45fbc29d0e6646b68ce49b3))
+    > working on #374
+
+ -  **spring-ai-agent**  add integration tests for agent executor features ([6c6beeecc1babe8](https://github.com/bsorrentino/langgraph4j/commit/6c6beeecc1babe84c707c4df4da47d31c20f57f6))
+   
+ -  **langchain4j-agent**  enhance test to handle multiple approval states and serializers ([f854a97b7f56620](https://github.com/bsorrentino/langgraph4j/commit/f854a97b7f56620737721290333157aab2d48c72))
+   
+ -  **spring-ai-agent**  add integration tests for agent executor features ([8829933a9ffc8bc](https://github.com/bsorrentino/langgraph4j/commit/8829933a9ffc8bc603720a005ce32e21212bd927))
+   
+ -  **spring-ai-agent**  add AgentExecutorExITest for streaming approvals interruptions cancellations and skill integration ([d8dd82cf24fd15c](https://github.com/bsorrentino/langgraph4j/commit/d8dd82cf24fd15c80f7464b93797ee745e032a45))
+   
+ -  **spring-ai-agent**  add AgentExecutorExITest for streaming approvals interruptions cancellations and skill integration ([d08c52af2aa6c9f](https://github.com/bsorrentino/langgraph4j/commit/d08c52af2aa6c9f21c22f66d9181669885493426))
+   
+ -  **langchain4j-agent**  Add test for approval flow and interruption metadata in agent executor ([895b53295b37d92](https://github.com/bsorrentino/langgraph4j/commit/895b53295b37d9230ab1131810b62fe988e8b602))
+    > working on #375
+
+ -  **langchain4j-agent**  Add test for approval flow and interruption metadata in agent executor ([8620bc990b22e20](https://github.com/bsorrentino/langgraph4j/commit/8620bc990b22e20df9ea9d5bae0b00cb9a739a6c))
+    > working on #375
+
+ -  **Issue375Test**  Enhance test to handle approval states with parameterized enum values ([6ef15f1555a8c6d](https://github.com/bsorrentino/langgraph4j/commit/6ef15f1555a8c6d62fd61fb56f67f8574ffff578))
+    > The test was updated to use ParameterizedTest with EnumSource for ApprovalState, adding support for both APPROVE and REJECT cases. The test now includes resume scenario validation based on different approval states.
+ > working on #375
+
+ -  **Issue375Test**  Add test for issue #375 ([b3edfebb3fc2ef9](https://github.com/bsorrentino/langgraph4j/commit/b3edfebb3fc2ef96a3ded6278f42bbf02cea532c))
+    > This test verifies the fix for the problem described in issue #375 by simulating the agent executor&#x27;s behavior and checking the interruption metadata.
+ > working on #375
+
+ -  Add test for handling null values in map stream operations ([8918818335090cc](https://github.com/bsorrentino/langgraph4j/commit/8918818335090cc3d3ecc532a4c1267ea68c0bdc))
+    > working on #370
+
+
+### Documentation
+
+ -  bump to next version 1.8.11 ([c70c5d6e5f4f908](https://github.com/bsorrentino/langgraph4j/commit/c70c5d6e5f4f9087296e18d2e306a77113cace70))
+
+ -  update changelog ([b79b45dc1ee6030](https://github.com/bsorrentino/langgraph4j/commit/b79b45dc1ee6030db75f1540f8b3309de5b35288))
+
+ -  update changelog ([10f5882519e7dec](https://github.com/bsorrentino/langgraph4j/commit/10f5882519e7dec75504ad3ee0875ce3ec324e65))
+
+
+### ALM 
+
+ -  bump to next version 1.8.12 ([cfacf163262f517](https://github.com/bsorrentino/langgraph4j/commit/cfacf163262f517ba58811c11d172047c29dbfdf))
+   
+ -  **pom.xml**  Add jackson-databind dependency 2.21.1 and update Google Gemini artifactId ([83afba5bf198df5](https://github.com/bsorrentino/langgraph4j/commit/83afba5bf198df5180db00210abee1d0b2226f65))
+    > Renamed spring-ai-vertex-ai-gemini to spring-ai-google-genai.
+
+ -  **spring-ai-agent**  Update Spring Boot version and dependencies to version 4.1.0-M4 ([5ec3a33167b85ba](https://github.com/bsorrentino/langgraph4j/commit/5ec3a33167b85baad2df07711c7ed6762167ee02))
+   
+ -  **core**  update jackson version to 2.21.1 ([e56a58fce4b89eb](https://github.com/bsorrentino/langgraph4j/commit/e56a58fce4b89eb720d3e518e4df2f60a2118601))
+   
+ -  update langchain4j and spring-ai versions to 1.13.0 and 2.0.0-M4 respectively ([647bf03fc6deab9](https://github.com/bsorrentino/langgraph4j/commit/647bf03fc6deab9c31852ff5f08c27b2ae5c9255))
+   
+ -  update spring-ai version to 1.1.4 ([dc56cff7149b9a2](https://github.com/bsorrentino/langgraph4j/commit/dc56cff7149b9a2aa6e873590a8c0617065f3514))
+   
+ -  **spring-ai-agent**  bump spring-ai-agent-utils to 0.6.0 ([d3cf43ae86c5a15](https://github.com/bsorrentino/langgraph4j/commit/d3cf43ae86c5a1592356b1e465af3bfcab324746))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([2029bd0dfbfbd5b](https://github.com/bsorrentino/langgraph4j/commit/2029bd0dfbfbd5b152ffce0361ace7d73f1af6f0))
+   
+ -  bump to next version 1.8.11 ([fd2f7bb91fa102e](https://github.com/bsorrentino/langgraph4j/commit/fd2f7bb91fa102e436c606f071396697038938ae))
+   
+ -  **javelit**  bump to next version 1.8.11 ([490a22f197ece7a](https://github.com/bsorrentino/langgraph4j/commit/490a22f197ece7afdebca57f822458dbb5bd3227))
+   
+
+
+
+
+
 <!-- "name: v1.8.11" is a release tag -->
 
 ## [v1.8.11](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.11) (2026-03-30)
