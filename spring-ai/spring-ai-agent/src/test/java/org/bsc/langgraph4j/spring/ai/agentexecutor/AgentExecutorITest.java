@@ -13,6 +13,7 @@ import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.gemini.TestTools4Gemini;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -20,22 +21,57 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = { AgentExecutorITest.Config.class })
+@ActiveProfiles("ollama")
 public class AgentExecutorITest {
 
+    static class Config {
+        @Bean
+        @Profile("ollama")
+        public ChatModel ollamaModel() {
+            return AiModel.OLLAMA.chatModel("qwen3");
+        }
+
+        @Bean
+        @Profile("openai")
+        public ChatModel openaiModel() {
+            return AiModel.OPENAI.chatModel("gpt-5-mini",
+                    Map.of( "OPENAI_API_KEY",System.getenv("OPENAI_API_KEY")));
+        }
+
+        @Bean
+        @Profile("google")
+        public ChatModel geminiModel() {
+            return AiModel.GEMINI.chatModel("gemini-2.5-pro",
+                    Map.of( "GEMINI_API_KEY",System.getenv("GEMINI_API_KEY"),
+                            "GOOGLE_CLOUD_PROJECT", System.getenv("GOOGLE_CLOUD_PROJECT"),
+                            "GOOGLE_CLOUD_LOCATION",System.getenv("GOOGLE_CLOUD_LOCATION")
+            ));
+        }
+
+        @Bean
+        @Profile("github-models")
+        public ChatModel githubModel() {
+            return AiModel.GITHUB_MODEL.chatModel("gpt-4o-mini");
+        }
+
+    }
     @Autowired
     private ChatModel chatModel;
     @Autowired
@@ -137,7 +173,7 @@ public class AgentExecutorITest {
                 .emitStreamingEnd(call.streaming().emitStreamingEnd());
 
         // FIX for GEMINI MODEL
-        if (chatModel instanceof VertexAiGeminiChatModel) {
+        if (chatModel instanceof GoogleGenAiChatModel) {
             agentBuilder.toolsFromObject(new TestTools4Gemini());
         } else {
             agentBuilder.toolsFromObject(new TestTools());
@@ -147,7 +183,7 @@ public class AgentExecutorITest {
 
         System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
-        Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
+        final var input = GraphInput.args(Map.of("messages", new UserMessage(call.userMessage())));
         var runnableConfig = RunnableConfig.builder().build();
 
         var result = agent.stream(input, runnableConfig);
@@ -165,7 +201,39 @@ public class AgentExecutorITest {
 
     }
 
-    public void runAgentWithApproval(Call call) throws Exception {
+    public enum runAgentWithApproval implements Call {
+        TestWithApprove {
+            @Override
+            public String userMessage() {
+                return """
+                perform test twice with message 'this is a test' and reports their results and also number of current active threads
+                """;
+            }
+            @Override
+            public Streaming streaming() {
+                return Streaming.FULL ;
+            }
+
+        },
+        testWithReject {
+            @Override
+            public String userMessage() {
+                return """
+                perform test twice with message 'this is a test' and reports their results and also number of current active threads
+                """;
+            }
+            @Override
+            public Streaming streaming() {
+                return Streaming.FULL ;
+            }
+        }
+        ;
+
+    }
+
+    @ParameterizedTest
+    @EnumSource(runAgentWithApproval.class)
+    public void runAgentWithApproval(runAgentWithApproval call) throws Exception {
 
         var saver = new MemorySaver();
 
@@ -185,9 +253,9 @@ public class AgentExecutorITest {
                 .build()
                 .compile(compileConfig);
 
-        System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
+        // System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
-        Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
+        GraphInput input = GraphInput.args(Map.of("messages", new UserMessage(call.userMessage())));
 
         var runnableConfig = RunnableConfig.builder().build();
 
@@ -197,7 +265,8 @@ public class AgentExecutorITest {
             var output = result.stream()
                     .peek(s -> {
                         if (s instanceof StreamingOutput<?> out) {
-                            System.out.printf("%s: (%s)\n", out.node(), out.chunk());
+                            if( !out.chunk().isEmpty())
+                                System.out.printf("%s: (%s)\n", out.node(), out.chunk());
                         } else {
                             System.out.println(s.node());
                         }
@@ -211,25 +280,18 @@ public class AgentExecutorITest {
 
             } else {
 
-                var returnValue = AsyncGenerator.resultValue(result);
+                var returnValue = GraphResult.from(result);
 
-                if (returnValue.isPresent()) {
+                if (returnValue.isInterruptionMetadata()) {
 
-                    System.out.printf("interrupted: %s%n", returnValue.orElse("NO RESULT FOUND!"));
+                    System.out.printf("interrupted: %s%n",returnValue.asInterruptionMetadata() );
 
-                    if (returnValue.get() instanceof InterruptionMetadata<?> interruption) {
+                    input = switch( call ) {
+                        case TestWithApprove -> GraphInput.resume(Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.APPROVED));
+                        case testWithReject -> GraphInput.resume(Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.REJECTED));
+                    };
 
-                        var answer = System.console().readLine(format("%s : (N\\y) \t\n", interruption.metadata("label").orElse("Approve action ?")));
-
-                        if (Objects.equals(answer, "Y") || Objects.equals(answer, "y")) {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT_PROPERTY, AgentEx.ApprovalState.APPROVED.name()));
-                        } else {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT_PROPERTY, AgentEx.ApprovalState.REJECTED.name()));
-                        }
-                    }
-                    input = null;
                 }
-
             }
 
         }
@@ -251,7 +313,7 @@ public class AgentExecutorITest {
                 .emitStreamingEnd(call.streaming().emitStreamingEnd());
 
         // FIX for GEMINI MODEL
-        if (chatModel instanceof VertexAiGeminiChatModel) {
+        if (chatModel instanceof GoogleGenAiChatModel) {
             agentBuilder.toolsFromObject(new TestTools4Gemini());
         } else {
             agentBuilder.toolsFromObject(new TestTools());
@@ -300,7 +362,7 @@ public class AgentExecutorITest {
                 ;
 
         // FIX for GEMINI MODEL
-        if (chatModel instanceof VertexAiGeminiChatModel) {
+        if (chatModel instanceof GoogleGenAiChatModel) {
             agentBuilder.toolsFromObject(new TestTools4Gemini());
         } else {
             agentBuilder.toolsFromObject(new TestTools());

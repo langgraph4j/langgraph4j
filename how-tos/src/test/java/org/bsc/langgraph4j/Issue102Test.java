@@ -40,7 +40,7 @@ public class Issue102Test {
 
                     sb.append(i);
 
-                    return Data.of(new StreamingOutput<>("" + i++, "node2", agentState));
+                    return Data.of(new StreamingOutput<>("%d".formatted(i++), "node2", agentState, null));
                 }
             })))
         .addNode("node3", node_async( agentState -> Map.of("node3_result", "333") ) )

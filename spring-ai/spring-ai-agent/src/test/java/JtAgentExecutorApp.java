@@ -5,7 +5,7 @@
 //DEPS org.springframework.ai:spring-ai-client-chat
 //DEPS org.springframework.ai:spring-ai-openai
 //DEPS org.springframework.ai:spring-ai-ollama
-//DEPS org.springframework.ai:spring-ai-vertex-ai-gemini
+//DEPS org.springframework.ai:spring-ai-google-genai
 //DEPS org.springframework.ai:spring-ai-azure-openai
 
 //SOURCES org/bsc/langgraph4j/spring/ai/agentexecutor/AiModel.java
@@ -18,7 +18,6 @@ import org.bsc.javelit.JtPlantUMLImage;
 import org.bsc.javelit.JtSelectAiModel;
 
 import org.bsc.javelit.JtSpinner;
-import org.bsc.javelit.SpinnerComponent;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutor;
@@ -26,13 +25,11 @@ import org.bsc.langgraph4j.spring.ai.agentexecutor.AiModel;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.TestTools;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.gemini.TestTools4Gemini;
 import org.bsc.langgraph4j.spring.ai.serializer.std.SpringAIStateSerializer;
-import org.bsc.langgraph4j.spring.ai.serializer.std.gemini.LogProbsSerializer;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.content.Content;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
-import org.springframework.ai.vertexai.gemini.api.VertexAiGeminiApi;
+import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -171,20 +168,18 @@ public class JtAgentExecutorApp {
         var saver = new MemorySaver();
 
         var stateSerializer = new SpringAIStateSerializer<>(AgentExecutor.State::new);
-        // Fix problem with Gemini logprobs serialization
-        stateSerializer.mapper().register(VertexAiGeminiApi.LogProbs.class, new LogProbsSerializer());
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
         var agentBuilder = AgentExecutor.builder()
-                .stateSerializer(stateSerializer)
+                //.stateSerializer(stateSerializer)
                 .chatModel(chatModel)
                 .streaming(true);
 
         // FIX for GEMINI MODEL
-        if (chatModel instanceof VertexAiGeminiChatModel) {
+        if (chatModel instanceof GoogleGenAiChatModel) {
             agentBuilder.toolsFromObject(new TestTools4Gemini());
         } else {
             agentBuilder.toolsFromObject(new TestTools());

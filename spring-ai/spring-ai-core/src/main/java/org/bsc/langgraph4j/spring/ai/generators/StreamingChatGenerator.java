@@ -4,11 +4,14 @@ import java.util.*;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.streaming.StreamingOutputEnd;
+import org.springframework.ai.chat.messages.AbstractMessage;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import reactor.core.publisher.Flux;
@@ -20,9 +23,34 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 
 public class StreamingChatGenerator<State extends AgentState> extends AsyncGenerator.WithResult<StreamingOutput<State>> {
 
+    private static class Metadata implements HasMetadata {
+
+        public static Metadata of( ChatResponse response ) {
+            return new Metadata( response.getMetadata() );
+        }
+
+        private final ChatResponseMetadata metadata;
+
+        private Metadata(ChatResponseMetadata metadata) {
+            this.metadata = metadata;
+        }
+
+        @Override
+        public Optional<Object> metadata(String key) {
+            return ofNullable(metadata.get(key));
+        }
+
+        @Override
+        public Set<String> metadataKeys() {
+            return metadata.keySet();
+        }
+
+
+    }
     public static class Builder<State extends AgentState> {
         private BlockingQueue<Data<StreamingOutput<State>>> queue;
         private Function<ChatResponse, Map<String,Object>> mapResult;
@@ -113,10 +141,12 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
                     public void accept(ChatResponse current, SynchronousSink<ChatResponse> sink) {
                         last = mergeResponses(last, current);
 
+
                         builder.queue.add( AsyncGenerator.Data.of(
                                 new StreamingOutput<>( textFromResponse(current).orElse(""),
                                         builder.startingNode,
-                                        builder.startingState )));
+                                        builder.startingState,
+                                        Metadata.of(current) )));
 
                         sink.next(last);
 
@@ -128,7 +158,8 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
                         builder.queue.add(AsyncGenerator.Data.of(
                                 new StreamingOutputEnd<>(  textFromResponse(last).orElse(null),
                                         builder.startingNode,
-                                        builder.startingState )) );
+                                        builder.startingState,
+                                        Metadata.of(last) )));
                     }
                     builder.queue.add(AsyncGenerator.Data.done( builder.mapResult.apply(last) ));
                 })
@@ -141,7 +172,10 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
         if( response.getResults().isEmpty() ) {
             return Optional.empty();
         }
-        return Optional.ofNullable( response.getResult().getOutput().getText() );
+
+        return ofNullable( response.getResult() )
+                    .map(Generation::getOutput)
+                    .map(AbstractMessage::getText);
     }
 
     /**

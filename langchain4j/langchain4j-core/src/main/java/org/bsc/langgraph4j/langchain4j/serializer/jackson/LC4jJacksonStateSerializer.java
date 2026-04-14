@@ -59,6 +59,7 @@ public class LC4jJacksonStateSerializer <State extends AgentState>  extends Jack
                 .register(new TypeMapper.Reference<UserMessage>(ChatMessageType.USER.name()) {} )
                 .register(new TypeMapper.Reference<AiMessage>(ChatMessageType.AI.name()) {} )
                 .register(new TypeMapper.Reference<Content>(ContentType.IMAGE.name()) {} )
+                .register(new TypeMapper.Reference<ToolExecutionRequest>(ToolExecutionRequest.class.getName()) {} )
         ;
 
         module.addDeserializer( ToolExecutionRequest.class, new ToolExecutionRequestHandler.Deserializer() );

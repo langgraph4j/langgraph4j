@@ -6,6 +6,7 @@ import dev.langchain4j.data.message.*;
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.InvocationParameters;
 import org.bsc.langgraph4j.GraphStateException;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.agent.AgentEx;
@@ -18,13 +19,12 @@ import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
-import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_RESET;
-import static org.bsc.langgraph4j.utils.CollectionsUtils.mapOf;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 
 /**
@@ -48,36 +48,51 @@ import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
  *       └────┘         └─────────────┘ └─────────────┘      └─────────────┘
  * </pre>
  */
-public interface AgentExecutorEx {
-
-    org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AgentExecutorEx.class);
+public interface AgentExecutorEx extends LG4JLoggable {
 
     /**
      * Represents the state of an agent.
      */
     class State extends MessagesState<ChatMessage> {
 
-        public static final String TOOL_EXECUTION_RESULTS = "tool_execution_results";
+        public static final String TOOL_EXECUTION_REQUESTS = "tool_execution_requests";
+        public static final String NEXT_ACTION = "next_action";
+        public static final String FINAL_RESPONSE = "agent_response";
 
         static final Map<String, Channel<?>> SCHEMA = mergeMap(
                 MessagesState.SCHEMA,
-                Map.of(TOOL_EXECUTION_RESULTS, Channels.appender(ArrayList::new) ) );
+                Map.of(
+                        TOOL_EXECUTION_REQUESTS, Channels.base( LinkedList::new ),
+                        AgentEx.APPROVAL_RESULT, Channels.base( ( prevValue, newValue ) -> {
+                            if( newValue instanceof AgentEx.ApprovalState approval ) {
+                                return approval.name();
+                            }
+                            return newValue;
+                        }))
+                );
 
-        public static final String FINAL_RESPONSE = "agent_response";
-        public static final String NEXT_ACTION = "next_action";
 
-        /**
-         * Constructs a new State with the given initialization data.
-         *
-         * @param initData the initialization data
-         */
+
         public State(Map<String, Object> initData) {
             super(initData);
         }
 
-        public List<ToolExecutionResultMessage> toolExecutionResults() {
-            return this.<List<ToolExecutionResultMessage>>value(TOOL_EXECUTION_RESULTS)
-                    .orElseThrow(() -> new RuntimeException("messages not found"));
+        public List<ToolExecutionRequest> toolExecutionRequests() {
+            return this.<List<ToolExecutionRequest>>value(TOOL_EXECUTION_REQUESTS)
+                    .orElseThrow();
+        }
+
+        public List<ToolExecutionRequest> toolExecutionRequests$removeFirst() {
+            return toolExecutionRequests().stream().skip(1).toList();
+        }
+
+        private Optional<List<ToolExecutionRequest>> loadToolExecutionRequestsFromLastMessage() {
+
+            return lastMessage()
+                    .filter(m -> ChatMessageType.AI == m.type())
+                    .map(AiMessage.class::cast)
+                    .filter(AiMessage::hasToolExecutionRequests)
+                    .map(AiMessage::toolExecutionRequests);
         }
 
         public Optional<String> nextAction() {
@@ -92,19 +107,6 @@ public interface AgentExecutorEx {
         public Optional<String> finalResponse() {
             return value(FINAL_RESPONSE);
         }
-
-        private  List<ToolExecutionRequest> toolExecutionRequestsByName(String actionName ) {
-            return lastMessage()
-                    .filter(m -> ChatMessageType.AI == m.type())
-                    .map(AiMessage.class::cast)
-                    .filter(AiMessage::hasToolExecutionRequests)
-                    .map(AiMessage::toolExecutionRequests)
-                    .map(requests -> requests.stream()
-                            .filter(req -> Objects.equals(req.name(), actionName)).toList())
-                    .orElseGet(List::of)
-                    ;
-        }
-
     }
 
     /**
@@ -136,101 +138,119 @@ public interface AgentExecutorEx {
         }
     }
 
+    private static ToolExecutionResultMessage createRejectToolResponseMessage(ToolExecutionRequest toolRequest  )
+    {
+        final var text = "tool '%s' execution has been DENIED!".formatted(toolRequest.name());
+
+        return ToolExecutionResultMessage.builder()
+                .id( toolRequest.id() )
+                .toolName(toolRequest.name() )
+                .text( text )
+                .build();
+
+    }
+
     static AsyncNodeActionWithConfig<State> executeTool( LC4jToolService toolService, String actionName ) {
 
         return ( state, config ) -> {
             log.trace( "ExecuteTool" );
 
-            var toolExecutionRequests = state.lastMessage()
-                    .filter( m -> ChatMessageType.AI==m.type() )
-                    .map( m -> (AiMessage)m )
-                    .filter(AiMessage::hasToolExecutionRequests)
-                    .map(AiMessage::toolExecutionRequests)
-                    .map( requests -> requests.stream()
-                            .filter( req -> Objects.equals(req.name(), actionName)).toList())
-                    .orElseThrow(() -> new IllegalArgumentException("no tool execution request found!"))
-                    ;
+            final var currentToolExecutionRequests = state.toolExecutionRequests();
+
+            if( currentToolExecutionRequests.isEmpty()) {
+                return failedFuture( new IllegalArgumentException("no tool execution request found!") );
+            }
+
+            final var currentToolExecutionRequest = currentToolExecutionRequests.get(0);
 
             final var context = InvocationContext.builder()
                     .invocationParameters( InvocationParameters.from(state.data()))
                     .build();
 
-            return toolService.execute( toolExecutionRequests, context, "tool_execution_results")
-                    .thenApply( Command::update );
+            return toolService.execute( List.of(currentToolExecutionRequest), context, "messages")
+                    .thenApply( command ->
+                            mergeMap( command.update(),
+                                    Map.of(State.TOOL_EXECUTION_REQUESTS,
+                                            state.toolExecutionRequests$removeFirst() ),
+                                    (v1,v2) -> v2 ));
 
         };
     }
 
     private static AsyncNodeActionWithConfig<State> dispatchTools(Set<String> approvals ) {
-        return AsyncNodeActionWithConfig.node_async(( state, config ) -> {
-
+        return AsyncNodeActionWithConfig.node_async((state, config) -> {
             log.trace("DispatchTools");
 
-            var toolExecutionRequests = state.lastMessage()
-                    .filter( m -> ChatMessageType.AI==m.type() )
-                    .map( m -> (AiMessage)m )
-                    .filter(AiMessage::hasToolExecutionRequests)
-                    .map(AiMessage::toolExecutionRequests);
+            final var previousToolExecutionRequests = state.toolExecutionRequests();
+            if (!previousToolExecutionRequests.isEmpty()) {
 
-            if( toolExecutionRequests.isEmpty() ) {
-                return Map.of(State.FINAL_RESPONSE, "no tool execution request found!" );
+                final var currentToolExecutionRequest = previousToolExecutionRequests.get(0);
+
+                final var nextAction = approvals.contains(currentToolExecutionRequest.name()) ?
+                        "approval_%s".formatted(currentToolExecutionRequest.name()) :
+                        currentToolExecutionRequest.name();
+
+                return Map.of(State.NEXT_ACTION, nextAction,
+                        State.TOOL_EXECUTION_REQUESTS, previousToolExecutionRequests);
             }
 
-            var requests = toolExecutionRequests.get();
+            return state.loadToolExecutionRequestsFromLastMessage().map( newToolExecutionRequests -> {
 
-            return requests.stream()
-                    .filter( request -> state.toolExecutionResults().stream()
-                            .noneMatch( r -> Objects.equals(r.toolName(), request.name())))
-                    .findFirst()
-                    .map( result -> ( approvals.contains(result.name()) ?
-                            format( "approval_%s", result.name() ) :
-                            result.name()))
-                    .map( actionId -> Map.<String,Object>of( State.NEXT_ACTION, actionId ))
-                    .orElseGet( () ->  mapOf(State.MESSAGES_STATE,  state.toolExecutionResults(),
-                            State.TOOL_EXECUTION_RESULTS, MARK_FOR_RESET, /* reset results */
-                            State.NEXT_ACTION, MARK_FOR_REMOVAL  /* remove element */ ));
+                final var currentToolExecutionRequest = newToolExecutionRequests.get(0);
+
+                final var nextAction = approvals.contains(currentToolExecutionRequest.name()) ?
+                        "approval_%s".formatted(currentToolExecutionRequest.name()) :
+                        currentToolExecutionRequest.name();
+
+                return Map.of(State.NEXT_ACTION, nextAction,
+                        State.TOOL_EXECUTION_REQUESTS, newToolExecutionRequests);
+
+            }).orElseGet( () -> Map.of(State.FINAL_RESPONSE, "no tool execution request found!",
+                    State.NEXT_ACTION, MARK_FOR_REMOVAL,
+                    State.TOOL_EXECUTION_REQUESTS, MARK_FOR_RESET));
+
         });
     }
 
     private static AsyncCommandAction<State> approvalAction() {
         return (state, config) -> {
-            var result = new CompletableFuture<Command>();
 
-            if( state.value( AgentEx.APPROVAL_RESULT_PROPERTY ).isEmpty() ) {
-                result.completeExceptionally( new IllegalStateException(format("resume property '%s' not found!", AgentEx.APPROVAL_RESULT_PROPERTY) ));
-                return result;
+            final var approvalResultOptional = state.<String>value( AgentEx.APPROVAL_RESULT );
+
+            if( approvalResultOptional.isEmpty() ) {
+                return failedFuture( new IllegalStateException( "resume property '%s' not found!".formatted(AgentEx.APPROVAL_RESULT) ));
             }
 
-            var resumeState = state.<String>value( AgentEx.APPROVAL_RESULT_PROPERTY )
-                    .orElseThrow( () -> new IllegalStateException(format("resume property '%s' not found!", AgentEx.APPROVAL_RESULT_PROPERTY) ));
+            final var resumeState = approvalResultOptional.get();
 
             if( Objects.equals( resumeState, AgentEx.ApprovalState.APPROVED.name() )) {
-                result.complete( new Command( resumeState,
-                        Map.of(AgentEx.APPROVAL_RESULT_PROPERTY, MARK_FOR_REMOVAL)));
+                // APPROVED
+                return completedFuture( new Command( resumeState,
+                        Map.of(AgentEx.APPROVAL_RESULT, MARK_FOR_REMOVAL)));
 
             }
             else {
-                var actionName = state.nextAction()
-                        .map( v -> v.replace("approval_", "") )
-                        .orElseThrow( () -> new IllegalStateException("no next action found!"));
+                // DENIED
 
-                var tools = state.toolExecutionRequestsByName( actionName );
+                final var currentToolExecutionRequests = state.toolExecutionRequests();
 
-                if(tools.isEmpty())  {
-                    throw new IllegalStateException("no tool execution request found!");
+                if(currentToolExecutionRequests.isEmpty())  {
+                    return failedFuture( new IllegalStateException("no tool execution request found!") );
                 }
 
-                var toolResponses = tools.stream().map( toolRequest ->
-                        ToolExecutionResultMessage.from( toolRequest, "execution has been DENIED!")
-                ).toList();
+                final var toolResponseMessage = createRejectToolResponseMessage( currentToolExecutionRequests.get(0));
 
-                result.complete( new Command( resumeState,
-                        Map.of( State.MESSAGES_STATE, toolResponses ,
-                                State.TOOL_EXECUTION_RESULTS, "execution has been DENIED!",
-                                AgentEx.APPROVAL_RESULT_PROPERTY, MARK_FOR_REMOVAL)));
+                final var gotoNode = ( currentToolExecutionRequests.size() > 1 ) ?
+                        AgentEx.ACTION_DISPATCHER_NODE :
+                        AgentEx.CALL_MODEL_NODE ;
+
+                return completedFuture( new Command( gotoNode,
+                        Map.of( "messages",toolResponseMessage,
+                                State.TOOL_EXECUTION_REQUESTS, state.toolExecutionRequests$removeFirst(),
+                                AgentEx.APPROVAL_RESULT, MARK_FOR_REMOVAL)));
 
             }
-            return result;
+
         };
     }
 

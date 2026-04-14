@@ -47,7 +47,9 @@ public interface AgentEx {
 
     String CONTINUE_LABEL = "continue";
     String END_LABEL = "end";
-    String APPROVAL_RESULT_PROPERTY = "approval_result";
+    String APPROVAL_RESULT = "approval_result";
+    @Deprecated
+    String APPROVAL_RESULT_PROPERTY = APPROVAL_RESULT;
 
     String CALL_MODEL_NODE = "model";
     String ACTION_DISPATCHER_NODE = "action_dispatcher";
@@ -73,7 +75,7 @@ public interface AgentEx {
 
         @Override
         public Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state, RunnableConfig config) {
-            if( state.<String>value( APPROVAL_RESULT_PROPERTY ).map(String::isEmpty).orElse(true) ) {
+            if( state.<String>value( APPROVAL_RESULT ).map(String::isEmpty).orElse(true) ) {
                 var metadata = interruptionMetadataProvider.apply(nodeId,state);
                 return Optional.of(metadata);
             }
@@ -214,7 +216,7 @@ public interface AgentEx {
                     .addNode(ACTION_DISPATCHER_NODE, requireNonNull(dispatchToolsAction, "dispatchToolsAction is required!"))
                     .addAfterCallNodeHook(ACTION_DISPATCHER_NODE, (nodeId, state, config, lastResult ) -> {
                         final Map<String,Object> result = ( config.isRunningInStudio() ) ?
-                            mergeMap( lastResult, Map.of( APPROVAL_RESULT_PROPERTY, ""), (left,right) -> right):
+                            mergeMap( lastResult, Map.of( APPROVAL_RESULT, ""), (left,right) -> right):
                             lastResult;
                         return completedFuture( result );
                     })

@@ -29,7 +29,7 @@ public sealed class SubGraphOutput<State extends AgentState> extends NodeOutput<
     }
 
     public SubGraphOutput( NodeOutput<State> output, String subGraphId) {
-        super(output.node(), output.state());
+        super( output );
         this.subGraphId = requireNonNull(subGraphId, "subGraphId cannot be null");
     }
 

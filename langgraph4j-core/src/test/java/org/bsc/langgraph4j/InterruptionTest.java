@@ -37,8 +37,8 @@ public class InterruptionTest {
                                   String startingNode) {
             super(new AsyncGeneratorQueue.Generator<>(queue));
 
-            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test1", startingNode, startingState ) ) );
-            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test2", startingNode, startingState ) ) );
+            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test1", startingNode, startingState,null ) ) );
+            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test2", startingNode, startingState, null ) ) );
             queue.add(AsyncGenerator.Data.done( Map.of("messages", "Test1Test2") ));
         }
 

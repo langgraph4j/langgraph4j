@@ -31,10 +31,7 @@ class GenericMapDeserializer extends StdDeserializer<Map<String, Object>> {
 
         final Map<String, Object> result = new HashMap<>();
 
-        final Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-
-        while (fields.hasNext()) {
-            final var entry = fields.next();
+        for( var entry : node.properties())  {
 
             result.put(
                     entry.getKey(),

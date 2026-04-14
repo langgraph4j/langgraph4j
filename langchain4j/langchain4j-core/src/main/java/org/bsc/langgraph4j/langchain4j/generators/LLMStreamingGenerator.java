@@ -57,7 +57,7 @@ public class LLMStreamingGenerator<T, State extends AgentState> extends AsyncGen
         @Override
         public void onNext(String token) {
             log.trace("onNext: {}", token);
-            queue.add( AsyncGenerator.Data.of( new StreamingOutput<>( token, startingNode, startingState ) ) );
+            queue.add( AsyncGenerator.Data.of( new StreamingOutput<>( token, startingNode, startingState, null ) ) );
         }
 
         @Override

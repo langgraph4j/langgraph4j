@@ -1,16 +1,15 @@
 package org.bsc.langgraph4j.spring.ai.agentexecutor;
 
-import com.google.cloud.vertexai.Transport;
-import com.google.cloud.vertexai.VertexAI;
+import com.google.genai.Client;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -53,13 +52,13 @@ public enum AiModel {
                         .build())
                 .build()),
     GEMINI( (model,extra) ->
-            VertexAiGeminiChatModel.builder()
-                .vertexAI( new VertexAI.Builder()
-                    .setProjectId( extraAttribute(extra,"GOOGLE_CLOUD_PROJECT") )
-                    .setLocation( extraAttribute(extra,"GOOGLE_CLOUD_LOCATION") )
-                    .setTransport(Transport.REST)
-                    .build())
-            .defaultOptions(VertexAiGeminiChatOptions.builder()
+            GoogleGenAiChatModel.builder()
+                .genAiClient( Client.builder()
+                        .vertexAI(true)
+                        .project( extraAttribute(extra,"GOOGLE_CLOUD_PROJECT") )
+                        .location( extraAttribute(extra,"GOOGLE_CLOUD_LOCATION") )
+                        .build())
+            .defaultOptions(GoogleGenAiChatOptions.builder()
                     .model(model)
                     .temperature(0.0)
                     .build())

@@ -10,7 +10,6 @@
 	</parent>
 
 	<artifactId>langgraph4j-springai-agentexecutor</artifactId>
-	<version>1.9-SNAPSHOT</version>
 	<packaging>jar</packaging>
     <url>https://github.com/langgraph4j/langgraph4j</url>
 
@@ -70,17 +69,18 @@
 
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-vertex-ai-gemini</artifactId>
+			<artifactId>spring-ai-azure-openai</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-azure-openai</artifactId>
+			<artifactId>spring-ai-google-genai</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-        <dependency>
+
+		<dependency>
             <groupId>org.springaicommunity</groupId>
             <artifactId>spring-ai-agent-utils</artifactId>
             <version>0.6.0</version>
@@ -112,7 +112,7 @@
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-parent</artifactId>
-				<version>3.3.4</version>
+				<version>4.1.0-M4</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

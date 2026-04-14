@@ -100,7 +100,7 @@ public class Issue336Test implements LG4JLoggable {
             CompletableFuture.runAsync(() -> {
                 try {
                     for (String token : tokens) {
-                        queue.add(AsyncGenerator.Data.of(new StreamingOutput<>(token, nodeId, state)));
+                        queue.add(AsyncGenerator.Data.of(new StreamingOutput<>(token, nodeId, state, null)));
                         Thread.sleep(10);
                     }
                     // Send completion with final result
@@ -127,7 +127,7 @@ public class Issue336Test implements LG4JLoggable {
                 @Override
                 public Data<StreamingOutput<State>> next() {
                     if (iterator.hasNext()) {
-                        return AsyncGenerator.Data.of(new StreamingOutput<>(iterator.next(), nodeId, state));
+                        return AsyncGenerator.Data.of(new StreamingOutput<>(iterator.next(), nodeId, state, null));
                     }
                     return AsyncGenerator.Data.done(Map.of("VALUE", "streaming_completed"));
                 }

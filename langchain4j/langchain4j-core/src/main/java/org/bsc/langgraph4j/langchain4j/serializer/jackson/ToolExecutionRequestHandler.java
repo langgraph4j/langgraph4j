@@ -23,6 +23,7 @@ public interface ToolExecutionRequestHandler {
         @Override
         public void serialize(ToolExecutionRequest msg, JsonGenerator gen, SerializerProvider provider) throws IOException {
             gen.writeStartObject();
+            gen.writeStringField("@type", msg.getClass().getName());
             if( msg.id() == null )
                 gen.writeNullField( "id");
             else
@@ -50,11 +51,8 @@ public interface ToolExecutionRequestHandler {
          */
         @Override
         public ToolExecutionRequest deserialize(JsonParser parser, DeserializationContext ctx) throws IOException, JacksonException {
-            return deserialize( parser.getCodec().readTree(parser) );
-        }
-
-        protected ToolExecutionRequest deserialize(JsonNode node) throws IOException, JacksonException {
-            var idNode = node.get("id");
+            final JsonNode node =  parser.getCodec().readTree(parser);
+            final var idNode = node.get("id");
             return dev.langchain4j.agent.tool.ToolExecutionRequest.builder()
                     .id( idNode.isNull() ? null : idNode.asText() )
                     .name(node.get("name").asText())

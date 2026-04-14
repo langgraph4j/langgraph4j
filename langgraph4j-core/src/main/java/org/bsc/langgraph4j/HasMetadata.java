@@ -59,7 +59,12 @@ public interface HasMetadata {
                 this.metadata = new HashMap<>(metadata);
             }
         }
+
         @SuppressWarnings("unchecked")
+        protected B this$() {
+            return (B)this;
+        }
+
         public B putMetadata( Map<String,Object> newMetadata ) {
             if( newMetadata != null && !newMetadata.isEmpty() ) {
                 if (metadata == null) {
@@ -68,10 +73,9 @@ public interface HasMetadata {
                 }
                 metadata.putAll(newMetadata);
             }
-            return (B)this;
+            return this$();
         }
 
-        @SuppressWarnings("unchecked")
         public B putMetadata( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
             if( metadata == null ) {
@@ -79,10 +83,9 @@ public interface HasMetadata {
                 metadata = new HashMap<>();
             }
             metadata.put( key, value);
-            return (B)this;
+            return this$();
         }
 
-        @SuppressWarnings("unchecked")
         public B putMetadataIfAbsent( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
             if( metadata == null ) {
@@ -90,10 +93,9 @@ public interface HasMetadata {
                 metadata = new HashMap<>();
             }
             metadata.putIfAbsent( key, value);
-            return (B)this;
+            return this$();
         }
 
-        @SuppressWarnings("unchecked")
         public B addMetadata( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
             if( metadata == null ) {
@@ -108,15 +110,14 @@ public interface HasMetadata {
 
             metadata.put( key, value);
 
-            return (B)this;
+            return this$();
         }
 
-        @SuppressWarnings("unchecked")
         public B removeMetadata( String key ) {
             if( metadata != null ) {
                 metadata.remove(requireNonNull(key, "key cannot be null"));
             }
-            return (B)this;
+            return this$();
         }
 
     }

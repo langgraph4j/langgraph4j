@@ -41,6 +41,12 @@
             <artifactId>langgraph4j-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.21.1</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.ai</groupId>
@@ -68,8 +74,8 @@
 
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-vertex-ai-gemini</artifactId>
-            <scope>provided</scope>
+            <artifactId>spring-ai-google-genai</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

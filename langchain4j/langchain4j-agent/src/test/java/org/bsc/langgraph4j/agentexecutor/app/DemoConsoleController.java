@@ -117,9 +117,9 @@ public class DemoConsoleController implements CommandLineRunner {
                         var answer = console.readLine(format("%s : (N\\y) \t\n", returnValue.asInterruptionMetadata().metadata("label").orElse("Approve action ?")));
 
                         if (Objects.equals(answer, "Y") || Objects.equals(answer, "y")) {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT_PROPERTY, AgentEx.ApprovalState.APPROVED.name()));
+                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.APPROVED));
                         } else {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT_PROPERTY, AgentEx.ApprovalState.REJECTED.name()));
+                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.REJECTED));
                         }
                     }
                     input = null;

@@ -44,10 +44,10 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <langchain4j.version>1.12.2</langchain4j.version>
-        <langchain4j.beta>1.12.2-beta22</langchain4j.beta>
+        <langchain4j.version>1.13.0</langchain4j.version>
+        <langchain4j.beta>1.13.0-beta23</langchain4j.beta>
         <!-- back port spring-ai to version 1.0.0 from 1.1.2 due to the following bug: https://github.com/spring-projects/spring-ai/issues/5196 -->
-        <spring-ai.version>1.1.4</spring-ai.version>
+        <spring-ai.version>2.0.0-M4</spring-ai.version>
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
 

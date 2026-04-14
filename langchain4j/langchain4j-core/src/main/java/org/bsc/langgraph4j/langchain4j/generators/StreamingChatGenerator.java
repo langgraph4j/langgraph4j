@@ -1,24 +1,58 @@
 package org.bsc.langgraph4j.langchain4j.generators;
 
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.ChatResponseMetadata;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.streaming.StreamingOutputEnd;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
+
+import static java.util.Optional.ofNullable;
 
 
 public class StreamingChatGenerator<State extends AgentState> extends AsyncGenerator.WithResult<StreamingOutput<State>> {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StreamingChatGenerator.class);
 
+    private static class Metadata implements HasMetadata {
+
+        public static Metadata of( ChatResponse response ) {
+            return new Metadata( response.metadata() );
+        }
+
+        private final Map<String,Object> metadata;
+
+        private Metadata(ChatResponseMetadata metadata) {
+            this.metadata =  Map.of(
+                    "finishReason", metadata.finishReason(),
+                    "tokenUsage", metadata.tokenUsage(),
+                    "modelName", metadata.modelName(),
+                    "id", metadata.id());
+
+        }
+
+        @Override
+        public Optional<Object> metadata(String key) {
+            return ofNullable(metadata.get(key));
+        }
+
+        @Override
+        public Set<String> metadataKeys() {
+            return metadata.keySet();
+        }
+
+    }
     /**
      * Builder class for constructing instances of LLMStreamingGenerator.
      *
@@ -117,7 +151,8 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
             @Override
             public void onPartialResponse(String token) {
                 log.trace("onNext: {}", token);
-                builder.queue.add( AsyncGenerator.Data.of( new StreamingOutput<>( token, builder.startingNode, builder.startingState ) ) );
+                final var output = new StreamingOutput<>( token, builder.startingNode, builder.startingState, null );
+                builder.queue.add( AsyncGenerator.Data.of( output ) );
 
             }
 
@@ -126,8 +161,14 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
                 log.trace("onComplete: {}", chatResponse);
 
                 if( builder.emitStreamingOutputEnd ) {
-                    builder.queue.add(AsyncGenerator.Data.of(
-                            new StreamingOutputEnd<>( chatResponse.aiMessage().text(), builder.startingNode, builder.startingState )) );
+
+                    final var output = new StreamingOutputEnd<>(
+                            chatResponse.aiMessage().text(),
+                            builder.startingNode,
+                            builder.startingState,
+                            Metadata.of( chatResponse ) );
+
+                    builder.queue.add(AsyncGenerator.Data.of(output));
                 }
                 builder.queue.add(AsyncGenerator.Data.done( builder.mapResult.apply(chatResponse) ));
 
