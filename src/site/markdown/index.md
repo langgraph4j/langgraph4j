@@ -17,7 +17,7 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Mar 30, 2026 | `1.8.12` | official release
+| Feb 14, 2026 | `1.8.12` | official release
 
 ----
 
