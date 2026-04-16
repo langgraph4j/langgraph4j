@@ -183,6 +183,13 @@ Let's create a very simple graph that has two nodes: `greeter` and `responder`.
 The `greeter` node will add a greeting message to the state.
 The `responder` node will add a response message based on the greeting.
 
+Before you start, the shortest path is:
+
+1. Make sure you are on Java 17+ and have added `langgraph4j-core` to your project.
+2. Copy the example below exactly once to understand the basic `StateGraph` + shared-state flow.
+3. Run the graph locally and confirm you can see the state evolve across the two nodes.
+4. After that first success, jump to the built-in integrations or checkpointing sections depending on whether you want framework integration or persistence next.
+
 **1. Define the State:**
 Our state will hold a list of messages.
 
@@ -516,5 +523,30 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 [how-tos/subgraph-as-compiledgraph.ipynb]: how-tos/subgraph-as-compiledgraph.ipynb
 [how-tos/subgraph-as-stategraph.ipynb]: how-tos/subgraph-as-stategraph.ipynb
 
+## Baseline Maintenance
 
+### Environment
 
+- Put runtime credentials in environment variables.
+- Use `.env.example` as the configuration template.
+
+### CI
+
+- `baseline-ci.yml` provides a unified pipeline with `lint + build + test + secret scan`.
+
+### Repo Hygiene
+
+- Keep generated files (`dist/`, `build/`, `__pycache__/`, `.idea/`, `.DS_Store`) out of version control.
+
+## Audit Baseline Notes
+
+### Requirements
+
+- Environment requirements are defined by this module and parent project documentation.
+- Configure credentials via environment variables before startup.
+- Use `.env.example` (or equivalent sample config) for local setup.
+
+### Run
+
+- Install dependencies for this module before execution.
+- Use the standard project command to build and run (for example Maven, Gradle, npm, or Python entrypoint scripts in this repository).
