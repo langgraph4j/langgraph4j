@@ -18,6 +18,12 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 ‼️ **Note:**
 > The miminum supported version is the `Java 17` 
 
+| Release line | Java baseline | Notes |
+|---|---|---|
+| `1.8.x` stable releases | Java 17+ | Recommended baseline for core, integrations, and saver modules |
+| `1.8-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
+
 ## Star History
 
 [![Star History Chart](https://starchart.cc/langgraph4j/langgraph4j.svg)](https://starchart.cc/langgraph4j/langgraph4j)
@@ -516,5 +522,30 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 [how-tos/subgraph-as-compiledgraph.ipynb]: how-tos/subgraph-as-compiledgraph.ipynb
 [how-tos/subgraph-as-stategraph.ipynb]: how-tos/subgraph-as-stategraph.ipynb
 
+## Baseline Maintenance
 
+### Environment
 
+- Put runtime credentials in environment variables.
+- Use `.env.example` as the configuration template.
+
+### CI
+
+- `baseline-ci.yml` provides a unified pipeline with `lint + build + test + secret scan`.
+
+### Repo Hygiene
+
+- Keep generated files (`dist/`, `build/`, `__pycache__/`, `.idea/`, `.DS_Store`) out of version control.
+
+## Audit Baseline Notes
+
+### Requirements
+
+- Environment requirements are defined by this module and parent project documentation.
+- Configure credentials via environment variables before startup.
+- Use `.env.example` (or equivalent sample config) for local setup.
+
+### Run
+
+- Install dependencies for this module before execution.
+- Use the standard project command to build and run (for example Maven, Gradle, npm, or Python entrypoint scripts in this repository).
