@@ -93,6 +93,14 @@ LangGraph4j allows you to save (`Checkpoint`) the state of your graph at any ste
 *   **Long-running processes:** Persist the state of long-running agent interactions.
 You'll typically use a `CheckpointSaver` implementation (e.g., `MemorySaver` for in-memory storage, or you can implement your own for persistent storage).
 
+Useful starting points for persistence:
+
+- [`langgraph4j-mysql-saver/README.md`](langgraph4j-mysql-saver/README.md) for MySQL-backed checkpoints
+- [`langgraph4j-postgres-saver/README.md`](langgraph4j-postgres-saver/README.md) for PostgreSQL-backed checkpoints
+- [`langgraph4j-redis-saver/README.md`](langgraph4j-redis-saver/README.md) for Redis-backed checkpoints
+
+If you only want to see the minimal integration point first, look for `CompileConfig.builder().checkpointSaver(...)` in the saver module examples before diving into the full storage details.
+
 ## Project Structure
 
 ```
@@ -516,5 +524,30 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 [how-tos/subgraph-as-compiledgraph.ipynb]: how-tos/subgraph-as-compiledgraph.ipynb
 [how-tos/subgraph-as-stategraph.ipynb]: how-tos/subgraph-as-stategraph.ipynb
 
+## Baseline Maintenance
 
+### Environment
 
+- Put runtime credentials in environment variables.
+- Use `.env.example` as the configuration template.
+
+### CI
+
+- `baseline-ci.yml` provides a unified pipeline with `lint + build + test + secret scan`.
+
+### Repo Hygiene
+
+- Keep generated files (`dist/`, `build/`, `__pycache__/`, `.idea/`, `.DS_Store`) out of version control.
+
+## Audit Baseline Notes
+
+### Requirements
+
+- Environment requirements are defined by this module and parent project documentation.
+- Configure credentials via environment variables before startup.
+- Use `.env.example` (or equivalent sample config) for local setup.
+
+### Run
+
+- Install dependencies for this module before execution.
+- Use the standard project command to build and run (for example Maven, Gradle, npm, or Python entrypoint scripts in this repository).
