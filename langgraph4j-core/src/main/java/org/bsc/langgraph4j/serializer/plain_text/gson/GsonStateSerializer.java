@@ -15,6 +15,7 @@ import java.util.Map;
  * . Need to be extended from specific state implementation
  * @param <State> The type of the agent state to be serialized/deserialized.
  */
+@Deprecated(forRemoval = true)
 public abstract class GsonStateSerializer<State extends AgentState> extends PlainTextStateSerializer<State> {
 
     protected final Gson gson;
