@@ -95,6 +95,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
+                .releaseThread(false)
                 .build();
 
         CompiledGraph<State> app = workflow.compile( compileConfig );
@@ -102,12 +103,10 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
         RunnableConfig runnableConfig_1 = RunnableConfig.builder()
                                     .threadId("thread_1")
                                     .build();
-        saver.deleteFile( runnableConfig_1 );
 
         RunnableConfig runnableConfig_2 = RunnableConfig.builder()
                                             .threadId("thread_2")
                                             .build();
-        saver.deleteFile( runnableConfig_2 );
 
         try {
 
@@ -160,8 +159,8 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
         }
         finally {
 
-//            saver.clear(runnableConfig_1);
-//            saver.clear(runnableConfig_2);
+            saver.release(runnableConfig_1);
+            saver.release(runnableConfig_2);
         }
     }
 
@@ -190,6 +189,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
+                .releaseThread(false)
                 .build();
 
         var app = workflow.compile( compileConfig );
@@ -197,12 +197,12 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
         var runnableConfig_1 = RunnableConfig.builder()
                 .threadId("thread_1")
                 .build();
-        saver.deleteFile( runnableConfig_1 );
+        // saver.deleteFile( runnableConfig_1 );
 
         var runnableConfig_2 = RunnableConfig.builder()
                 .threadId("thread_2")
                 .build();
-        saver.deleteFile( runnableConfig_2 );
+        // saver.deleteFile( runnableConfig_2 );
 
         var state = app.invoke( Map.of(), runnableConfig_1);
 
@@ -290,7 +290,6 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
-                .releaseThread(true)
                 .build();
 
         var app = workflow.compile( compileConfig );
