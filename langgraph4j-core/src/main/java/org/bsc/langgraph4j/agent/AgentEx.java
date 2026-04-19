@@ -9,6 +9,7 @@ import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.Channel;
+import org.bsc.langgraph4j.state.Channels;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
@@ -59,6 +60,13 @@ public interface AgentEx {
         APPROVED,
         REJECTED
     }
+
+    Map.Entry<String,Channel<?>> ApprovalResultChannelEntry = Map.entry( APPROVAL_RESULT, Channels.base( (prevValue, newValue ) -> {
+        if( newValue instanceof AgentEx.ApprovalState approval ) {
+            return approval.name();
+        }
+        return newValue;
+    }) );
 
     final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptableAction<State> {
 
