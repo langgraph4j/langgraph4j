@@ -282,6 +282,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
             throw Errors.duplicateNodeError.exception(id);
         }
 
+        nodeHooks.afterCalls.add( id, new RunnableConfig.RemoveResumeSubgraphData<>() );
         nodes.elements.add(node);
         return this;
 
