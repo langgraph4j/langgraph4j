@@ -1,18 +1,21 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
+import org.bsc.langgraph4j.hook.NodeHook;
+import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
+import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.bsc.langgraph4j.utils.TypeRef;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
 
 /**
  * A final class representing configuration for a runnable task.
@@ -21,6 +24,19 @@ import static java.util.Optional.ofNullable;
  * without permanently altering the original configuration.
  */
 public final class RunnableConfig implements HasMetadata {
+
+    public static class RemoveResumeSubgraphData<State extends AgentState> implements NodeHook.AfterCall<State> {
+
+        @Override
+        public CompletableFuture<Map<String, Object>> applyAfter(String nodeId, State state, RunnableConfig config, Map<String, Object> lastResult) {
+            config.removeMetadata(
+                    resumeSubGraphId( nodeId ),
+                    RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA );
+
+            return completedFuture(lastResult);
+        }
+    }
+
     /**
      * key that contains boolean value to inform that graph is executing in studio environment
      * Warning: it is a RESERVED METADATA KEY don't use it
@@ -117,6 +133,14 @@ public final class RunnableConfig implements HasMetadata {
         return new RunnableConfig.Builder( this)
                 .putMetadata( newMetadata )
                 .build();
+    }
+
+    private void removeMetadata( String ...keys ) {
+        if( metadata != null && !metadata.isEmpty() ) {
+            for (String key : keys) {
+                metadata.remove(key);
+            }
+        }
     }
 
     @Override
@@ -286,9 +310,7 @@ public final class RunnableConfig implements HasMetadata {
         this.checkPointId   = builder.checkPointId;
         this.nextNode       = builder.nextNode;
         this.streamMode     = builder.streamMode;
-        this.metadata       = ofNullable(builder.metadata())
-                                .map( Map::copyOf )
-                                .orElse(null);
+        this.metadata       = new HashMap<>(builder.metadata());
     }
 
     @Override
