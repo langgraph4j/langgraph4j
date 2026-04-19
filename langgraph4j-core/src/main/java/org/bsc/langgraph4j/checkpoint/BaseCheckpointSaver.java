@@ -9,11 +9,20 @@ import static java.util.Optional.ofNullable;
 public interface BaseCheckpointSaver {
     String THREAD_ID_DEFAULT = "$default";
 
-    record Tag(String threadId, Collection<Checkpoint> checkpoints) {
-        public Tag(String threadId, Collection<Checkpoint> checkpoints) {
+    record Tag(String threadId, Collection<Checkpoint> checkpoints, int version ) {
+        public Tag(String threadId, Collection<Checkpoint> checkpoints, int version ) {
             this.threadId = threadId;
             this.checkpoints = ofNullable(checkpoints).map(List::copyOf).orElseGet(List::of);
+            this.version = version;
         }
+        public Tag(String threadId, Collection<Checkpoint> checkpoints) {
+            this(threadId, checkpoints,0);
+        }
+
+        public Optional<Checkpoint> lastCheckpoint() {
+            return checkpoints().stream().findFirst();
+        }
+
     }
 
     Collection<Checkpoint> list(RunnableConfig config);
