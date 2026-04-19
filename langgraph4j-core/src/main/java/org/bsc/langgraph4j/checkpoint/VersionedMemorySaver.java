@@ -88,7 +88,7 @@ public class VersionedMemorySaver implements BaseCheckpointSaver, HasVersions {
     public Collection<Integer> versionsByThreadId( String threadId ) {
         return getCheckpointHistoryByThread( ofNullable(threadId).orElse( THREAD_ID_DEFAULT ) )
                 .map( history ->  (Collection<Integer>)history.keySet()  )
-                .orElse( Collections.emptyList() );
+                .orElse( List.of() );
     }
 
     /**
@@ -189,5 +189,10 @@ public class VersionedMemorySaver implements BaseCheckpointSaver, HasVersions {
         finally {
             _lock.unlock();
         }
+    }
+
+    @Override
+    public String threadId(RunnableConfig config) {
+        return BaseCheckpointSaver.super.threadId(config);
     }
 }
