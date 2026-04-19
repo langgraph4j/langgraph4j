@@ -67,14 +67,10 @@ public interface AgentExecutorEx extends LG4JLoggable {
 
         static final Map<String, Channel<?>> SCHEMA = mergeMap(
                 MessagesState.SCHEMA,
-                Map.of(
-                        TOOL_EXECUTION_REQUESTS, Channels.base( LinkedList::new ),
-                        AgentEx.APPROVAL_RESULT, Channels.base( ( prevValue, newValue ) -> {
-                            if( newValue instanceof AgentEx.ApprovalState approval ) {
-                                return approval.name();
-                            }
-                            return newValue;
-                        }))
+                Map.ofEntries(
+                        Map.entry(TOOL_EXECUTION_REQUESTS, Channels.base( LinkedList::new )),
+                        AgentEx.ApprovalResultChannelEntry
+                        )
         );
 
         /**
