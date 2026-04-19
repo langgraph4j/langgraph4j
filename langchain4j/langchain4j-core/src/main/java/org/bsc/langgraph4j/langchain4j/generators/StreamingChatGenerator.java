@@ -10,10 +10,7 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.streaming.StreamingOutputEnd;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
@@ -28,28 +25,35 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
     private static class Metadata implements HasMetadata {
 
         public static Metadata of( ChatResponse response ) {
-            return new Metadata( response.metadata() );
+            return new Metadata( response );
         }
 
-        private final Map<String,Object> metadata;
+        private final ChatResponseMetadata responseMetadata;
+        private final Map<String,Object> aiMessageAttributes;
 
-        private Metadata(ChatResponseMetadata metadata) {
-            this.metadata =  Map.of(
-                    "finishReason", metadata.finishReason(),
-                    "tokenUsage", metadata.tokenUsage(),
-                    "modelName", metadata.modelName(),
-                    "id", metadata.id());
+        private Metadata(ChatResponse response) {
+
+            this.responseMetadata = response.metadata();
+            this.aiMessageAttributes = response.aiMessage().attributes();
 
         }
 
         @Override
         public Optional<Object> metadata(String key) {
-            return ofNullable(metadata.get(key));
+            if( Objects.equals(key, "chatResponseMetadata") ) {
+                return Optional.of( responseMetadata );
+            }
+            return ofNullable(aiMessageAttributes).map( m -> m.get(key));
         }
 
         @Override
         public Set<String> metadataKeys() {
-            return metadata.keySet();
+            final var keys = new HashSet<String>();
+            keys.add( "chatResponseMetadata" );
+            if( aiMessageAttributes != null ) {
+                keys.addAll( aiMessageAttributes.keySet() );
+            }
+            return keys;
         }
 
     }
@@ -151,7 +155,10 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
             @Override
             public void onPartialResponse(String token) {
                 log.trace("onNext: {}", token);
-                final var output = new StreamingOutput<>( token, builder.startingNode, builder.startingState, null );
+                final var output = new StreamingOutput<>( token,
+                        builder.startingNode,
+                        builder.startingState,
+                        null );
                 builder.queue.add( AsyncGenerator.Data.of( output ) );
 
             }

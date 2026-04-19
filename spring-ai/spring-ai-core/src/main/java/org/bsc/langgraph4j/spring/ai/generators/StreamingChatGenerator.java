@@ -11,6 +11,7 @@ import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.streaming.StreamingOutputEnd;
 import org.springframework.ai.chat.messages.AbstractMessage;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -30,23 +31,49 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
     private static class Metadata implements HasMetadata {
 
         public static Metadata of( ChatResponse response ) {
-            return new Metadata( response.getMetadata() );
+            return new Metadata( response );
         }
 
-        private final ChatResponseMetadata metadata;
+        private final ChatResponseMetadata responseMetadata;
+        private final ChatGenerationMetadata generationMetadata;
+        private final Map<String,Object> assistantMessageMetadata;
 
-        private Metadata(ChatResponseMetadata metadata) {
-            this.metadata = metadata;
+        private Metadata(ChatResponse response  ) {
+            this.responseMetadata = response.getMetadata();
+
+            final var generation = response.getResult();
+            if( generation != null ) {
+                this.generationMetadata = generation.getMetadata();
+                this.assistantMessageMetadata = generation.getOutput().getMetadata();
+            }
+            else {
+                this.generationMetadata = null;
+                this.assistantMessageMetadata = null;
+            }
         }
 
         @Override
         public Optional<Object> metadata(String key) {
-            return ofNullable(metadata.get(key));
+            if( Objects.equals(key, "chatResponseMetadata") ) {
+                return Optional.of( responseMetadata );
+            }
+            else if( Objects.equals(key, "chatGenerationMetadata") ) {
+                return Optional.of( generationMetadata );
+            }
+            return ofNullable(assistantMessageMetadata).map( m -> m.get(key));
         }
 
         @Override
         public Set<String> metadataKeys() {
-            return metadata.keySet();
+            final var keys = new HashSet<String>();
+            keys.add( "chatResponseMetadata" );
+            if( generationMetadata != null ) {
+                keys.add( "chatGenerationMetadata" );
+            }
+            if( assistantMessageMetadata != null ) {
+                keys.addAll( assistantMessageMetadata.keySet() );
+            }
+            return keys;
         }
 
 

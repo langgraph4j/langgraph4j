@@ -12,7 +12,7 @@ public class AgentExecutorOllamaITest extends AbstractAgentExecutorTest {
     protected StateGraph<AgentExecutor.State> newGraph(AgentExecutor.Serializers serializer) throws Exception {
 
         final var chatModel = OllamaChatModel.builder()
-                .modelName( "qwen2.5:7b" )
+                .modelName( "qwen3.5" )
                 .baseUrl("http://localhost:11434")
                 .logResponses(true)
                 .maxRetries(2)
@@ -30,7 +30,7 @@ public class AgentExecutorOllamaITest extends AbstractAgentExecutorTest {
     @Override
     protected StateGraph<AgentExecutor.State> newGraphWithStreaming( AgentExecutor.Serializers serializer, boolean emitStreamingOutputEnd ) throws Exception {
         final var chatModel = OllamaStreamingChatModel.builder()
-                .modelName( "qwen2.5:7b" )
+                .modelName( "qwen3.5" )
                 .baseUrl("http://localhost:11434")
                 .logResponses(true)
                 .temperature(0.0)

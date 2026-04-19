@@ -7,10 +7,10 @@ import com.github.mustachejava.MustacheFactory;
 import io.javelit.core.JtComponent;
 import io.javelit.core.JtComponentBuilder;
 import io.javelit.core.JtContainer;
+
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.StringWriter;
 import java.time.Duration;
@@ -132,7 +132,7 @@ public class JtSpinner extends JtComponent<JtContainer> {
         }
 
         @Override
-        protected void afterUse(@NotNull JtContainer container) {
+        protected void afterUse(@Nonnull JtContainer container) {
 
             if( onStart != null ) {
                 final var start = Instant.now();
@@ -195,13 +195,13 @@ public class JtSpinner extends JtComponent<JtContainer> {
     }
 
     @Override
-    protected void beforeUse(@NotNull JtContainer container) {
+    protected void beforeUse(@Nonnull JtContainer container) {
         this.currentValue = container.inPlaceChild(this.getInternalKey());
 
     }
 
     @Override
-    protected void afterUse(@NotNull JtContainer container) {
+    protected void afterUse(@Nonnull JtContainer container) {
         spinnerComponent.use( currentValue);
     }
 

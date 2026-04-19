@@ -13,7 +13,7 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Feb 14, 2026 | `1.9-SNAPSHOT` | last release
+| Apr 19, 2026 | `1.8.13` | last release
 
 ‼️ **Note:**
 > The miminum supported version is the `Java 17` 
@@ -515,6 +515,5 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 [how-tos/subgraph-as-nodeaction.ipynb]: how-tos/subgraph-as-nodeaction.ipynb
 [how-tos/subgraph-as-compiledgraph.ipynb]: how-tos/subgraph-as-compiledgraph.ipynb
 [how-tos/subgraph-as-stategraph.ipynb]: how-tos/subgraph-as-stategraph.ipynb
-
 
 

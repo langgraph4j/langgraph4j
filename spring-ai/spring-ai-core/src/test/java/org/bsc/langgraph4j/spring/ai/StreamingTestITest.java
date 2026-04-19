@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.generators.StreamingChatGenerator;
 import org.bsc.langgraph4j.spring.ai.serializer.std.SpringAIStateSerializer;
 import org.bsc.langgraph4j.spring.ai.tool.SpringAIToolService;
+import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.FlowAdapters;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -268,7 +270,7 @@ public class StreamingTestITest {
     @Test
     public void simpleStreamingGraphTest() throws Exception {
 
-        var chatClient = ChatClient.builder(AiModel.DEEPSEEK.model( "deepseek-chat"))
+        var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen3.5"))
                 .defaultOptions(ToolCallingChatOptions.builder()
                         .internalToolExecutionEnabled(false)
                         .build())
@@ -287,7 +289,11 @@ public class StreamingTestITest {
             var generator = StreamingChatGenerator.builder()
                     .startingNode("agent")
                     .startingState(state)
-                    .mapResult(response -> Map.of("messages", response.getResult().getOutput()))
+                    .emitStreamingOutputEnd(true)
+                    .mapResult(response ->
+                            ofNullable( response.getResult() )
+                                    .map( result -> Map.<String,Object>of("messages", result.getOutput()))
+                                    .orElseGet( () -> Map.of( "messages", "no output from model!")) )
                     .build(flux);
 
             return Map.of("messages", generator);
@@ -306,7 +312,13 @@ public class StreamingTestITest {
 
         System.out.println("=== Streaming Output ===");
         for (var item : inputStream) {
-            System.out.println(item);
+            if( item instanceof StreamingOutput<State> streamingOutput ) {
+                if( !streamingOutput.chunk().isBlank()) {
+                    System.out.println(item);
+                }
+            } else {
+                System.out.println(item);
+            }
         }
         System.out.println("=== End of Stream ===");
     }

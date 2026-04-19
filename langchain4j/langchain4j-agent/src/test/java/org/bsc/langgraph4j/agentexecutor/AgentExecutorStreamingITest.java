@@ -27,7 +27,7 @@ public class AgentExecutorStreamingITest {
     private StateGraph<AgentExecutor.State> newGraph()  throws Exception {
 
         var chatLanguageModel = OllamaStreamingChatModel.builder()
-                .modelName( "qwen2.5:7b" )
+                .modelName( "qwen3.5" )
                 .baseUrl("http://localhost:11434")
                 .logResponses(true)
                 .temperature(0.0)
@@ -35,7 +35,7 @@ public class AgentExecutorStreamingITest {
 
         return AgentExecutor.builder()
                 .stateSerializer( AgentExecutor.Serializers.JSON.object() )
-                .chatModel(chatLanguageModel)
+                .chatModel(chatLanguageModel, true)
                 .toolsFromObject(new TestTools())
                 .build();
     }
@@ -66,7 +66,7 @@ public class AgentExecutorStreamingITest {
         return generator.stream()
                 .filter( s -> {
                     if( s instanceof StreamingOutput<AgentExecutor.State> streamingOutput) {
-                        System.out.printf( "%s '%s'\n", streamingOutput.node(), streamingOutput.chunk() );
+                        System.out.println( streamingOutput );
                         return false;
                     }
                     return true;
@@ -80,7 +80,7 @@ public class AgentExecutorStreamingITest {
     void executeAgentWithSingleToolInvocation() throws Exception {
 
         var states = executeAgent("what is the result of test with messages: 'MY FIRST TEST'");
-        assertEquals( 5, states.size() );
+        assertEquals( 6, states.size() );
         var state = CollectionsUtils.lastOf(states).orElse(null);
         assertNotNull(state);
         assertTrue(state.finalResponse().isPresent());
@@ -139,7 +139,7 @@ public class AgentExecutorStreamingITest {
     void executeAgentWithDoubleToolInvocation() throws Exception {
 
         var states = executeAgent("what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'");
-        assertEquals( 5, states.size() );
+        assertEquals( 6, states.size() );
         var state = CollectionsUtils.lastOf(states).orElse(null);
         assertNotNull(state);
         assertTrue(state.finalResponse().isPresent());
@@ -156,7 +156,7 @@ public class AgentExecutorStreamingITest {
                 "thread_1",
                 saver
                 );
-        assertEquals( 5, states.size() );
+        assertEquals( 6, states.size() );
         var state = CollectionsUtils.lastOf(states).orElse(null);
         assertNotNull(state);
         assertTrue(state.finalResponse().isPresent());
@@ -167,7 +167,7 @@ public class AgentExecutorStreamingITest {
                 "thread_1",
                 saver
         );
-        assertEquals( 3, states.size() );
+        assertEquals( 4, states.size() );
         state = CollectionsUtils.lastOf(states).orElse(null);
         assertNotNull(state);
         assertTrue(state.finalResponse().isPresent());

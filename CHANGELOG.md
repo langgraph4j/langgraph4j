@@ -2,6 +2,58 @@
 
 
 
+<!-- "name: v1.8.13" is a release tag -->
+
+## [v1.8.13](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.13) (2026-04-19)
+
+
+### Bug Fixes
+
+ -  **CheckpointSerializer**  swap nextNodeId and nodeId assignment in read method to fix field mapping ([0ac1d1c73afa629](https://github.com/bsorrentino/langgraph4j/commit/0ac1d1c73afa629e5fe68489d5ca709394ef9985))
+
+
+### Refactor
+
+ -  **spring-ai/StreamingChatGenerator.java**  Update Metadata class to handle metadata for chat response,generation and assistant message. ([3070ae413a58147](https://github.com/bsorrentino/langgraph4j/commit/3070ae413a58147a4dcb8f465b61c8be88237078))
+    > working on #374
+
+ -  **langchain4j/StreamingChatGenerator.java**  Refactor Metadata class to handle ChatResponse and AI message attributes ([9c9f65f3c82781d](https://github.com/bsorrentino/langgraph4j/commit/9c9f65f3c82781d8af76e4d12b9d1402aa424ace))
+    > The Metadata class now directly constructs from ChatResponse instead of ChatResponseMetadata, and implements metadata lookup logic to prioritize &quot;chatResponseMetadata&quot; key while merging AI message attributes. This improves flexibility for handling different metadata structures in streaming responses.
+ > working on #374
+
+
+### Test 
+
+ -  **StreamingTestITest**  enhance streaming test to handle chunked outputs and optional results ([9cf84d021cec61e](https://github.com/bsorrentino/langgraph4j/commit/9cf84d021cec61e73c3eec65f210cde6b648187b))
+    > The test now supports:
+ > - OLLAMA qwen3.5 model instead of deepseek-chat
+ > - StreamingOutput chunk processing with blank chunk filtering
+ > - Optional result handling with fallback message
+ > - More robust mapping of streaming response objects
+
+ -  **AgentExecutorStreamingITest**  update expected state counts for new tool invocations ([6e018a6cf42ae88](https://github.com/bsorrentino/langgraph4j/commit/6e018a6cf42ae88764905bb989c985454a9107f4))
+   
+ -  **AgentExecutorOllamaITest**  update model name from qwen2.5:7b to qwen3.5 in test configurations ([7f719ad6c9e3978](https://github.com/bsorrentino/langgraph4j/commit/7f719ad6c9e3978a669c2cdd36ebc5d63fc6c926))
+   
+
+### Documentation
+
+ -  update release date ([15ff69ea91a1eeb](https://github.com/bsorrentino/langgraph4j/commit/15ff69ea91a1eeb0b337d7a6fe41c27b5b557cf3))
+
+ -  update changelog ([9c060eeb1e41c02](https://github.com/bsorrentino/langgraph4j/commit/9c060eeb1e41c028baf663097806c620bb472568))
+
+
+### ALM 
+
+ -  bump to next version 1.8.13 ([de1526771e44642](https://github.com/bsorrentino/langgraph4j/commit/de1526771e4464280db77ee2177e938708df3171))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([297c3edb0274d8f](https://github.com/bsorrentino/langgraph4j/commit/297c3edb0274d8f13b9387ce87d43bb1ee80ffc1))
+   
+
+
+
+
+
 <!-- "name: v1.8.12" is a release tag -->
 
 ## [v1.8.12](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.12) (2026-04-14)
