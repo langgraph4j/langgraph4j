@@ -414,7 +414,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     Map<String,Object> initialState(Map<String,Object> inputs, RunnableConfig config) {
 
         return compileConfig.checkpointSaver()
-                .filter( $1 -> !compileConfig.releaseThread() )
                 .flatMap( saver -> saver.get( config ) )
                 .map( cp -> AgentState.updateState( cp.getState(), inputs, stateGraph.getChannels() ))
                 .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.getChannels() ));
@@ -443,7 +442,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #stream(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( Map<String,Object> inputs, RunnableConfig config ) {
         return stream(  ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), config );
     }
@@ -453,7 +454,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      *
      * @param inputs the input map
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #stream(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator<NodeOutput<State>> stream(Map<String,Object> inputs ) {
         return this.stream( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() );
     }
@@ -479,7 +482,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #streamSnapshots(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration and to prepare for future changes that may require a config parameter.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( Map<String,Object> inputs, RunnableConfig config )  {
         return streamSnapshots( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), config );
     }
@@ -519,7 +524,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an Optional containing the final state if present, otherwise an empty Optional
+     * @deprecated use {@link #invoke(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public Optional<State> invoke(Map<String,Object> inputs, RunnableConfig config ) {
         return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), config ).map( NodeOutput::state);
     }
@@ -529,11 +536,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      *
      * @param inputs the input map
      * @return an Optional containing the final state if present, otherwise an empty Optional
+     * @deprecated use {@link #invoke(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
-    public Optional<State> invoke(Map<String,Object> inputs )  {
+    @Deprecated(forRemoval = true)
+    public Optional<State> invoke( Map<String,Object> inputs )  {
         return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() ).map( NodeOutput::state);
     }
-
 
     /**
      * Generates a drawable graph representation of the state graph.
@@ -665,9 +673,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         }
 
-        final Context context;
         int iteration = 0;
-        final RunnableConfig config;
+        private final Context context;
+        private final RunnableConfig config;
 
         protected AsyncNodeGenerator(GraphInput input, RunnableConfig config )  {
             final var configBuilder = RunnableConfig.builder(config)
@@ -704,9 +712,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 }
                 else {
                     final var stateData = optionalResumeUpdateData.orElseGet(resumeRequest::value);
+
                     this.config = configBuilder
-                            .removeMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA )
+                    //        .removeMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA )
                             .build();
+
                     // FIX ISSUE #302
                     context.setCurrentState( AgentState.updateState( startCheckpoint.getState(),
                             stateData,
@@ -725,7 +735,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 State initializedState = stateGraph.getStateFactory().apply(initState);
                 this.context = new Context( initializedState.data() );
                 this.config = configBuilder
-                                .removeMetadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA)
+                                //.removeMetadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA)
                                 .build();
             }
         }
