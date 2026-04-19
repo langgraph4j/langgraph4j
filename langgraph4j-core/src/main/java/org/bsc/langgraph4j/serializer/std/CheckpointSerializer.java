@@ -25,8 +25,8 @@ public  record CheckpointSerializer(
     public Checkpoint read(ObjectInput in) throws IOException, ClassNotFoundException {
         return Checkpoint.builder()
                 .id(Serializer.readUTF(in))
-                .nextNodeId(readNullableUTF(in).orElse(null))
                 .nodeId(readNullableUTF(in).orElse(null))
+                .nextNodeId(readNullableUTF(in).orElse(null))
                 .state(stateSerializer.read(in))
                 .build();
     }
