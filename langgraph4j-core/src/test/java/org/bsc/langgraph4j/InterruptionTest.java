@@ -157,6 +157,7 @@ public class InterruptionTest {
                 .compile(CompileConfig.builder()
                         .checkpointSaver(saver)
                         .interruptAfter("B")
+                        .releaseThread(false)
                         .build());
 
         var runnableConfig = RunnableConfig.builder().build();

@@ -185,6 +185,7 @@ public class StateGraphMemorySaverTest
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
+                .releaseThread(false)
                 .build();
 
        var app = workflow.compile( compileConfig );
@@ -265,6 +266,7 @@ public class StateGraphMemorySaverTest
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
+                .releaseThread(false)
                 .build();
 
         var app = workflow.compile( compileConfig );

@@ -293,16 +293,19 @@ public class CancellationTest {
                     .thenApply( v -> parallelExecutor.shutdownNow() )
             ;
 
-            var optionalResult = generator.toCompletableFuture()
+           generator.toCompletableFutureAsync()
                     .exceptionally( ex ->
                         ExceptionUtils.findCauseByType(ex, InterruptedException.class)
                                 .map( root -> AsyncGenerator.IsCancellable.CANCELLED )
                                 .orElse(null)
-                    );
+                    ).thenAccept( result -> {
+                        assertEquals(AsyncGenerator.IsCancellable.CANCELLED, result);
+                    })
+                   .join();
 
             assertTrue(generator.isCancelled());
             assertEquals( 2, taskExecuted.get() );
-            assertEquals(AsyncGenerator.IsCancellable.CANCELLED, optionalResult.get());
+
         }
     }
 
