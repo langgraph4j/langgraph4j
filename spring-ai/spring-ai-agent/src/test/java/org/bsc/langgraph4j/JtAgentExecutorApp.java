@@ -1,11 +1,11 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9-SNAPSHOT
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9-SNAPSHOT
+package org.bsc.langgraph4j;//DEPS org.bsc.langgraph4j:spring-ai-agent-archetype:1.8.10
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.10
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS org.springframework.ai:spring-ai-bom:1.1.0@pom
 //DEPS org.springframework.ai:spring-ai-client-chat
 //DEPS org.springframework.ai:spring-ai-openai
 //DEPS org.springframework.ai:spring-ai-ollama
-//DEPS org.springframework.ai:spring-ai-google-genai
+//DEPS org.springframework.ai:spring-ai-goole-genai
 //DEPS org.springframework.ai:spring-ai-azure-openai
 
 //SOURCES org/bsc/langgraph4j/spring/ai/agentexecutor/AiModel.java
@@ -24,12 +24,10 @@ import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutor;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AiModel;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.TestTools;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.gemini.TestTools4Gemini;
-import org.bsc.langgraph4j.spring.ai.serializer.std.SpringAIStateSerializer;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.content.Content;
-import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -167,23 +165,13 @@ public class JtAgentExecutorApp {
     public CompiledGraph<AgentExecutor.State> buildAgent(ChatModel chatModel, boolean streaming) throws Exception {
         var saver = new MemorySaver();
 
-        var stateSerializer = new SpringAIStateSerializer<>(AgentExecutor.State::new);
-
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
         var agentBuilder = AgentExecutor.builder()
-                //.stateSerializer(stateSerializer)
                 .chatModel(chatModel)
                 .streaming(true);
-
-        // FIX for GEMINI MODEL
-        if (chatModel instanceof GoogleGenAiChatModel) {
-            agentBuilder.toolsFromObject(new TestTools4Gemini());
-        } else {
-            agentBuilder.toolsFromObject(new TestTools());
-        }
 
         return agentBuilder
                 .build()
