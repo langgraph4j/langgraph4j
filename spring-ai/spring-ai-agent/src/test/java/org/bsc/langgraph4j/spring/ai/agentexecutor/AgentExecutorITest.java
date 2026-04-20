@@ -15,16 +15,21 @@ import org.bsc.langgraph4j.spring.ai.agentexecutor.gemini.TestTools4Gemini;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springaicommunity.agent.tools.FileSystemTools;
+import org.springaicommunity.agent.tools.ShellTools;
+import org.springaicommunity.agent.tools.SkillsTool;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -363,12 +368,18 @@ public class AgentExecutorITest {
                 .checkpointSaver(saver)
                 .build();
 
+        final var skills = SkillsTool.builder()
+                            .addSkillsResource( resourceLoader.getResource("classpath:skills"))
+                            .build();
+
         var agent = AgentExecutor.builder()
                 .addCallModelHook( hook )
                 .addExecuteToolsHook( hook )
                 .chatModel(chatModel)
                 .defaultSystem("Always use the available skills to assist the user in their requests.")
-                .skills(resourceLoader.getResource("classpath:skills"))
+                .tool( skills )
+                .tools(List.of(ToolCallbacks.from(FileSystemTools.builder().build())))
+                .tools(List.of(ToolCallbacks.from(ShellTools.builder().build())))
                 .build()
                 .compile(compileConfig);
 
@@ -407,6 +418,10 @@ public class AgentExecutorITest {
                 .checkpointSaver(saver)
                 .build();
 
+        final var skills = SkillsTool.builder()
+                .addSkillsResource( resourceLoader.getResource("classpath:skills"))
+                .build();
+
         var agent = AgentExecutorEx.builder()
                 .addCallModelHook( hook )
                 .addApprovalActionHook( hook )
@@ -415,7 +430,9 @@ public class AgentExecutorITest {
                 .addDispatchToolsHook( hook )
                 .chatModel(chatModel)
                 .defaultSystem("Always use the available skills to assist the user in their requests.")
-                .skills(resourceLoader.getResource("classpath:skills"))
+                .tool( skills )
+                .tools(List.of(ToolCallbacks.from(FileSystemTools.builder().build())))
+                .tools(List.of(ToolCallbacks.from(ShellTools.builder().build())))
                 .build()
                 .compile(compileConfig);
 
