@@ -4,9 +4,6 @@ import org.bsc.langgraph4j.agent.ConversationContextPolicy;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.Channel;
-import org.springaicommunity.agent.tools.FileSystemTools;
-import org.springaicommunity.agent.tools.ShellTools;
-import org.springaicommunity.agent.tools.SkillsTool;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.support.ToolCallbacks;
@@ -27,7 +24,6 @@ public abstract class BaseReactAgentBuilder<B extends BaseReactAgentBuilder<B,St
     protected String systemMessage;
     protected boolean streaming = false;
     protected final Set<ToolCallback> tools = new HashSet<>();
-    protected SkillsTool.Builder skillsBuilder;
     protected Map<String, Channel<?>> schema = MessagesState.SCHEMA;
     protected boolean emitStreamingOutputEnd;
     protected ConversationContextPolicy<Message> conversationContextPolicy;
@@ -44,7 +40,6 @@ public abstract class BaseReactAgentBuilder<B extends BaseReactAgentBuilder<B,St
         if( !builder.tools.isEmpty() ) {
             this.tools.addAll(builder.tools);
         }
-        this.skillsBuilder = builder.skillsBuilder;
         this.schema = builder.schema;
         this.emitStreamingOutputEnd = builder.emitStreamingOutputEnd;
         this.conversationContextPolicy = builder.conversationContextPolicy;
@@ -169,29 +164,4 @@ public abstract class BaseReactAgentBuilder<B extends BaseReactAgentBuilder<B,St
         return result();
     }
 
-    public B skills( String skillDirectory ) {
-        if( skillsBuilder == null ) {
-            skillsBuilder = SkillsTool.builder();
-        }
-        skillsBuilder.addSkillsDirectory( requireNonNull(skillDirectory, "skillDirectory cannot be null!"));
-        return result();
-    }
-
-    public B skills( Resource skillsRootPath ) {
-        if( skillsBuilder == null ) {
-            skillsBuilder = SkillsTool.builder();
-        }
-        skillsBuilder.addSkillsResource( requireNonNull(skillsRootPath, "skillDirectory cannot be null!"));
-        return result();
-    }
-
-    protected void applySkills() {
-        // Apply skills
-        if( skillsBuilder != null ) {
-            this.tools.add( skillsBuilder.build() );
-            this.tools.addAll(List.of(ToolCallbacks.from(FileSystemTools.builder().build())));
-            this.tools.addAll(List.of(ToolCallbacks.from(ShellTools.builder().build())));
-        }
-
-    }
 }
