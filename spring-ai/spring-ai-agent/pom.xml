@@ -84,6 +84,7 @@
             <groupId>org.springaicommunity</groupId>
             <artifactId>spring-ai-agent-utils</artifactId>
             <version>0.6.0</version>
+			<scope>test</scope>
         </dependency>
 
 		<dependency>
