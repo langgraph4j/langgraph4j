@@ -47,8 +47,6 @@ public interface AgentExecutor {
          */
         public StateGraph<State> build( ) throws GraphStateException {
 
-            applySkills();
-
             final var callModelAction = new CallModelAction<State>(this );
 
             final var executeToolsAction = new ExecuteToolsAction<State>( tools() );
