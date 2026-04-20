@@ -19,14 +19,14 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 
 public class CallModelAction<State extends MessagesState<Message>> implements AsyncNodeActionWithConfig<State> {
 
-    private final ReactAgent.ChatService chatService;
+    private final ChatService chatService;
     private final boolean streaming;
     private final boolean emitStreamingOutputEnd;
     private final ConversationContextPolicy<Message> conversationContextPolicy;
 
-    public CallModelAction(Function<ReactAgentBuilder<?,?>, ReactAgent.ChatService> chatServiceFactory, ReactAgentBuilder<?,?> builder ) {
+    public <B extends BaseReactAgentBuilder<?,?>> CallModelAction( B builder ) {
 
-        this.chatService = requireNonNull(chatServiceFactory, "chatServiceFactory cannot be null!").apply(builder);
+        this.chatService = ofNullable(builder.chatService).orElseGet( () -> new DefaultChatService(builder) );
         this.conversationContextPolicy = builder.conversationContextPolicy;
         this.streaming = builder.streaming;
         this.emitStreamingOutputEnd = builder.emitStreamingOutputEnd;
@@ -64,7 +64,7 @@ public class CallModelAction<State extends MessagesState<Message>> implements As
             return completedFuture(Map.of("messages", generator));
         } else {
             final var output = ofNullable(chatService.execute(messages).getResult())
-                                .map(Generation::getOutput);
+                    .map(Generation::getOutput);
 
             return output
                     .map( o -> completedFuture(Map.<String,Object>of("messages", o)) )

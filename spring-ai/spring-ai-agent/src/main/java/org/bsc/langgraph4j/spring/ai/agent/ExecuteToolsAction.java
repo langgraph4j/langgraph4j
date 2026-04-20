@@ -17,7 +17,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 
-class ExecuteToolsAction<State extends MessagesState<Message>> implements AsyncCommandAction<State>  {
+public class ExecuteToolsAction<State extends MessagesState<Message>> implements AsyncCommandAction<State> {
 
     final SpringAIToolService toolService;
 
@@ -27,7 +27,6 @@ class ExecuteToolsAction<State extends MessagesState<Message>> implements AsyncC
 
     @Override
     public CompletableFuture<Command> apply(State state, RunnableConfig runnableConfig) {
-        ReactAgent.log.trace("executeTools");
 
         final var message = state.lastMessage();
 
