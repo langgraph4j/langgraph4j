@@ -3,13 +3,10 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) [![docs](https://img.shields.io/badge/Site-Documentation-blue)][documentation] [![DeepWiki](https://img.shields.io/badge/DeepWiki-docs-0b6?style=flat)](https://deepwiki.com/langgraph4j/langgraph4j) [![Static Badge](https://img.shields.io/badge/maven--snapshots-1.8--SNAPSHOT-blue)][snapshots] [![Maven Central](https://img.shields.io/maven-central/v/org.bsc.langgraph4j/langgraph4j-core.svg)][releases][![discord](https://img.shields.io/discord/1364514593765986365?logo=discord&style=flat)](https://discord.gg/szVVztSYKh)
 
-
 LangGraph for Java. A library for building stateful, multi-agents applications with LLMs, built for work with [langchain4j] and [Spring AI]
 > It is inspired by [LangGraph] solution, part of [LangChain AI project].
 
-
 ## Releases
-
 
 | Date         | Release        | info
 |--------------|----------------| ---
@@ -17,6 +14,12 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 ‼️ **Note:**
 > The miminum supported version is the `Java 17` 
+
+| Release line | Java baseline | Notes |
+|---|---|---|
+| `1.8.x` stable releases | Java 17+ | Recommended baseline for core, integrations, and saver modules |
+| `1.8-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
 
 ## Star History
 
@@ -46,6 +49,16 @@ LangGraph4j offers several features and benefits:
     *   **Graph Visualization:** Generate visual representations of your graph using PlantUML or Mermaid to understand its structure.
 *   **Asynchronous & Streaming Support:** Build responsive applications with non-blocking operations and stream results from LLMs.
 *   **Playground & Studio:** A web UI to visually inspect, run, and debug your graphs.
+
+## Pattern Matrix
+
+| Pattern | Best for | Main abstraction | Start here |
+|---|---|---|---|
+| First graph / linear flow | Learning the core execution model | `StateGraph`, normal edges, shared state | [`## Your First Graph - A Simple Example`](#your-first-graph---a-simple-example) |
+| Conditional routing | Router-style decisions and dynamic control flow | Conditional edges | [`### Edges`](#edges) |
+| Stateful checkpointed flow | Long-running or resumable workflows | `CheckpointSaver`, `CompileConfig` | [`### Checkpoints (Persistence)`](#checkpoints-persistence) |
+| Framework-integrated agents | Using LangGraph4j with Java AI frameworks | LangChain4j / Spring AI integrations | [`## BONUS: built-in integrations`](#bonus-built-in-integrations) |
+| Visual debugging and inspection | Observing and iterating on graphs interactively | Studio | [`## Studio 🤩 - Running Your Graph visually`](#studio--running-your-graph-visually) |
 
 ## Core Concepts Explained
 
@@ -93,6 +106,14 @@ LangGraph4j allows you to save (`Checkpoint`) the state of your graph at any ste
 *   **Long-running processes:** Persist the state of long-running agent interactions.
 You'll typically use a `CheckpointSaver` implementation (e.g., `MemorySaver` for in-memory storage, or you can implement your own for persistent storage).
 
+Useful starting points for persistence:
+
+- [`langgraph4j-mysql-saver/README.md`](langgraph4j-mysql-saver/README.md) for MySQL-backed checkpoints
+- [`langgraph4j-postgres-saver/README.md`](langgraph4j-postgres-saver/README.md) for PostgreSQL-backed checkpoints
+- [`langgraph4j-redis-saver/README.md`](langgraph4j-redis-saver/README.md) for Redis-backed checkpoints
+
+If you only want to see the minimal integration point first, look for `CompileConfig.builder().checkpointSaver(...)` in the saver module examples before diving into the full storage details.
+
 ## Project Structure
 
 ```
@@ -129,7 +150,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.9-SNAPSHOT</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.8.13</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -161,7 +182,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.9-SNAPSHOT</version> <!-- Or the current snapshot version -->
+    <version>1.8.13</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
@@ -182,6 +203,13 @@ You might need to configure your `settings.xml` or `pom.xml` to include the Sona
 Let's create a very simple graph that has two nodes: `greeter` and `responder`.
 The `greeter` node will add a greeting message to the state.
 The `responder` node will add a response message based on the greeting.
+
+Before you start, the shortest path is:
+
+1. Make sure you are on Java 17+ and have added `langgraph4j-core` to your project.
+2. Copy the example below exactly once to understand the basic `StateGraph` + shared-state flow.
+3. Run the graph locally and confirm you can see the state evolve across the two nodes.
+4. After that first success, jump to the built-in integrations or checkpointing sections depending on whether you want framework integration or persistence next.
 
 **1. Define the State:**
 Our state will hold a list of messages.
@@ -317,6 +345,13 @@ The `RunnableConfig` can be used to pass in runtime configuration.
 To explore the **Langgraph4j Studio** go to [studio]
 
 ## BONUS: built-in integrations
+
+### Integration Paths
+
+| Integration | Best for | Quick links |
+|---|---|---|
+| LangChain4j | Projects already using LangChain4j chat models, tools, and agent patterns | [`langchain4j/README.md`](langchain4j/README.md), [`langchain4j/langchain4j-agent/README.md`](langchain4j/langchain4j-agent/README.md) |
+| Spring AI | Spring Boot and Spring-native MCP / agent applications | [`spring-ai/README.md`](spring-ai/README.md), [`spring-ai/spring-ai-agent/README.md`](spring-ai/spring-ai-agent/README.md) |
 
 ### LangChain4j 
 
@@ -515,5 +550,4 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 [how-tos/subgraph-as-nodeaction.ipynb]: how-tos/subgraph-as-nodeaction.ipynb
 [how-tos/subgraph-as-compiledgraph.ipynb]: how-tos/subgraph-as-compiledgraph.ipynb
 [how-tos/subgraph-as-stategraph.ipynb]: how-tos/subgraph-as-stategraph.ipynb
-
 
