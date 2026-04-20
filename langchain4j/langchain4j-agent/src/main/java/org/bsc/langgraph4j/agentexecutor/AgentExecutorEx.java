@@ -5,6 +5,7 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.invocation.InvocationParameters;
+import dev.langchain4j.service.tool.ToolExecutor;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.StateGraph;
@@ -21,6 +22,8 @@ import org.bsc.langgraph4j.state.Channels;
 import java.util.*;
 import java.util.function.BiFunction;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
@@ -109,6 +112,22 @@ public interface AgentExecutorEx extends LG4JLoggable {
         }
     }
 
+    record FunctionToolBehaviour(LC4jToolService toolService, ToolSpecification toolSpecification, ToolExecutor toolExecutor) implements AgentEx.ToolBehaviour<ChatMessage, State> {
+        public FunctionToolBehaviour {
+            requireNonNull(toolService, "toolService cannot be null!");
+            requireNonNull(toolSpecification, "toolSpecification cannot be null!");
+            requireNonNull(toolExecutor, "toolCallback cannot be null!");
+        }
+        @Override
+        public String name() {
+            return toolSpecification.name();
+        }
+
+        @Override
+        public void addToGraph(StateGraph<State> graph) throws GraphStateException {
+            graph.addNode( name(), executeTool( this ));
+        }
+    }
     /**
      * Enum representing different serializers for the agent state.
      */
@@ -150,7 +169,7 @@ public interface AgentExecutorEx extends LG4JLoggable {
 
     }
 
-    static AsyncNodeActionWithConfig<State> executeTool( LC4jToolService toolService, String actionName ) {
+    static AsyncNodeActionWithConfig<State> executeTool( FunctionToolBehaviour functionToolBehaviour ) {
 
         return ( state, config ) -> {
             log.trace( "ExecuteTool" );
@@ -167,7 +186,7 @@ public interface AgentExecutorEx extends LG4JLoggable {
                     .invocationParameters( InvocationParameters.from(state.data()))
                     .build();
 
-            return toolService.execute( List.of(currentToolExecutionRequest), context, "messages")
+            return functionToolBehaviour.toolService().execute( List.of(currentToolExecutionRequest), context, "messages")
                     .thenApply( command ->
                             mergeMap( command.update(),
                                     Map.of(State.TOOL_EXECUTION_REQUESTS,
@@ -300,25 +319,27 @@ public interface AgentExecutorEx extends LG4JLoggable {
                 throw new IllegalArgumentException("a chatLanguageModel or streamingChatLanguageModel is required!");
             }
 
-            if (stateSerializer == null) {
-                stateSerializer = Serializers.STD.object();
-            }
+            stateSerializer = ofNullable(stateSerializer)
+                                .orElseGet(Serializers.JSON::object);
 
-            var tools = toolMap();
+            final var tools = toolMap();
 
-            final LC4jToolService toolService = new LC4jToolService(tools);
+            final var toolService = new LC4jToolService(tools);
+
+            final var toolBehaviours = tools.entrySet().stream()
+                    .map( entry ->
+                        new FunctionToolBehaviour( toolService, entry.getKey(), entry.getValue() ))
+                    .toList();
 
             return AgentEx.<ChatMessage, State, ToolSpecification>builder()
                     .stateSerializer( stateSerializer )
                     .schema( State.SCHEMA )
-                    .toolName(ToolSpecification::name)
                     .callModelAction( new CallModel<>(this) )
                     .dispatchToolsAction( dispatchTools( approvals.keySet() ) )
-                    .executeToolFactory( ( toolName ) -> executeTool( toolService, toolName ) )
                     .shouldContinueEdge( shouldContinue() )
                     .approvalActionEdge( approvalAction() )
                     .dispatchActionEdge( dispatchAction() )
-                    .build( tools.keySet(), approvals )
+                    .build( toolBehaviours, approvals )
                     ;
         }
     }
