@@ -153,8 +153,6 @@ public interface AgentExecutorEx extends LG4JLoggable {
          */
         public StateGraph<State> build() throws GraphStateException {
 
-            applySkills();
-
             final var toolService = new SpringAIToolService(tools());
 
             final var callModelAction = new CallModelAction<State>( this );
