@@ -49,11 +49,17 @@ public abstract class HookCalls<T> {
         return (callList == null || callList.isEmpty()) && (callMap == null || callMap.isEmpty()) ;
     }
 
-    protected Stream<T> callListAsStream( ) {
+    public Stream<T> callListAsStream( ) {
         return ofNullable(callList).stream().flatMap(Collection::stream);
     }
 
-    protected Stream<T> callMapAsStream( String nodeId ) {
+    public Stream<Map.Entry<String,Deque<T>>> callMapAsStream() {
+        return ofNullable(callMap).stream()
+                .map( Map::entrySet )
+                .flatMap( Collection::stream );
+    }
+
+    public Stream<T> callMapAsStream( String nodeId ) {
         requireNonNull( nodeId, "nodeId cannot be null");
         return ofNullable(callMap).stream()
                 .flatMap( map ->
