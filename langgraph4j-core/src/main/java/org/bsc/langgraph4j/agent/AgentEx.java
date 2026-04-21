@@ -9,6 +9,8 @@ import org.bsc.langgraph4j.action.InterruptableAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
+import org.bsc.langgraph4j.internal.hook.EdgeHooks;
+import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.Channel;
@@ -122,6 +124,7 @@ public interface AgentEx {
     }
 
     class Builder<M, S extends MessagesState<M>, TOOL> {
+
         private StateSerializer<S> stateSerializer;
         private AsyncNodeActionWithConfig<S> callModelAction;
         private AsyncNodeActionWithConfig<S> dispatchToolsAction;
@@ -130,8 +133,8 @@ public interface AgentEx {
         private AsyncCommandAction<S> approvalActionEdge;
         private Map<String, Channel<?>> schema;
 
-        final Map<String, List<NodeHook.WrapCall<S>>> nodeHookMap = new HashMap<>(2);
-        final Map<String, List<EdgeHook.WrapCall<S>>> edgeHookMap = new HashMap<>(3);
+        private final NodeHooks<S> nodeHooks = new NodeHooks<>();
+        private final EdgeHooks<S> edgeHooks = new EdgeHooks<>();
 
         private static <H> void addHook( Map<String,List<H>> map, String id, H hook) {
             map.computeIfAbsent(id, k -> new LinkedList<>()).add(hook);
@@ -148,24 +151,62 @@ public interface AgentEx {
             return this;
         }
 
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.WrapCall<S> wrapCall ) {
+            nodeHooks.wrapCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.WrapCall<S> wrapCall ) {
+            nodeHooks.wrapCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.BeforeCall<S> wrapCall ) {
+            nodeHooks.beforeCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.BeforeCall<S> wrapCall ) {
+            nodeHooks.beforeCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.AfterCall<S> wrapCall ) {
+            nodeHooks.afterCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.AfterCall<S> wrapCall ) {
+            nodeHooks.afterCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.WrapCall<S> wrapCall ) {
+            edgeHooks.wrapCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.WrapCall<S> wrapCall ) {
+            edgeHooks.wrapCalls.add( nodeId, wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.BeforeCall<S> wrapCall ) {
+            edgeHooks.beforeCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.BeforeCall<S> wrapCall ) {
+            edgeHooks.beforeCalls.add( nodeId, wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.AfterCall<S> wrapCall ) {
+            edgeHooks.afterCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.AfterCall<S> wrapCall ) {
+            edgeHooks.afterCalls.add( nodeId, wrapCall );
+            return this;
+        }
+
         public Builder<M, S, TOOL> callModelAction(AsyncNodeActionWithConfig<S> callModelAction) {
             this.callModelAction = callModelAction;
             return this;
         }
 
-        public Builder<M, S, TOOL> addCallModelHook(NodeHook.WrapCall<S> wrapCall ) {
-            addHook(nodeHookMap, CALL_MODEL_NODE, wrapCall);
-            return this;
-        }
-
-
         public Builder<M, S, TOOL> dispatchToolsAction(AsyncNodeActionWithConfig<S> dispatchToolsAction) {
             this.dispatchToolsAction = dispatchToolsAction;
-            return this;
-        }
-
-        public Builder<M, S, TOOL> addDispatchToolsHook(NodeHook.WrapCall<S> wrapCall ) {
-            addHook(nodeHookMap, ACTION_DISPATCHER_NODE, wrapCall);
             return this;
         }
 
@@ -174,18 +215,8 @@ public interface AgentEx {
             return this;
         }
 
-        public Builder<M, S, TOOL> addShouldContinueHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, CALL_MODEL_NODE, wrapCall);
-            return this;
-        }
-
         public Builder<M, S, TOOL> dispatchActionEdge(AsyncCommandAction<S> dispatchActionEdge) {
             this.dispatchActionEdge = dispatchActionEdge;
-            return this;
-        }
-
-        public Builder<M, S, TOOL> addDispatchActionHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, ACTION_DISPATCHER_NODE, wrapCall);
             return this;
         }
 
@@ -193,12 +224,6 @@ public interface AgentEx {
             this.approvalActionEdge = approvalActionEdge;
             return this;
         }
-
-        public Builder<M, S, TOOL> addApprovalActionHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, APPROVAL_ACTION, wrapCall);
-            return this;
-        }
-
 
         public StateGraph<S> build(Collection<? extends ToolBehaviour<M, S>> tools, Map<String, ApprovalNodeAction<M, S>> approvals) throws GraphStateException {
 
@@ -235,13 +260,36 @@ public interface AgentEx {
                     .toEND();
 
             // apply hooks
-            nodeHookMap.forEach((key, value) ->
-                    value.forEach(hook -> graph.addWrapCallNodeHook(key, hook)));
 
-            final var approvalActionHook = edgeHookMap.remove(APPROVAL_ACTION);
+            // apply global node hooks
+            nodeHooks.beforeCalls.callListAsStream().forEach(graph::addBeforeCallNodeHook);
+            nodeHooks.wrapCalls.callListAsStream().forEach(graph::addWrapCallNodeHook);
+            nodeHooks.afterCalls.callListAsStream().forEach(graph::addAfterCallNodeHook);
+            // apply node hooks by node id
+            nodeHooks.beforeCalls.callMapAsStream().forEach( entry ->
+                    entry.getValue().forEach( hook -> graph.addBeforeCallNodeHook(entry.getKey(), hook)));
+            nodeHooks.wrapCalls.callMapAsStream().forEach( entry ->
+                     entry.getValue().forEach( hook -> graph.addWrapCallNodeHook(entry.getKey(), hook)));
+            nodeHooks.afterCalls.callMapAsStream().forEach( entry ->
+                    entry.getValue().forEach( hook -> graph.addAfterCallNodeHook(entry.getKey(), hook)));
 
-            edgeHookMap.forEach( (key, values) ->
-                    values.forEach(hook -> graph.addWrapCallEdgeHook(key, hook)));
+            // apply global edge hooks
+            edgeHooks.beforeCalls.callListAsStream().forEach(graph::addBeforeCallEdgeHook);
+            edgeHooks.wrapCalls.callListAsStream().forEach(graph::addWrapCallEdgeHook);
+            edgeHooks.afterCalls.callListAsStream().forEach(graph::addAfterCallEdgeHook);
+            // apply edge hooks by node id
+            edgeHooks.beforeCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addBeforeCallEdgeHook(entry.getKey(), hook)));
+            edgeHooks.wrapCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addWrapCallEdgeHook(entry.getKey(), hook)));
+            edgeHooks.afterCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addAfterCallEdgeHook(entry.getKey(), hook)));
 
             for (var tool : tools) {
 
@@ -254,9 +302,12 @@ public interface AgentEx {
                     var approvalAction = approvals.get(toolName);
 
                     // apply approval action hooks
-                    if( approvalActionHook != null ) {
-                        approvalActionHook.forEach(hook -> graph.addWrapCallEdgeHook(approval_nodeId, hook));
-                    }
+                    edgeHooks.beforeCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addBeforeCallEdgeHook(approval_nodeId, hook));
+                    edgeHooks.wrapCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addWrapCallEdgeHook(approval_nodeId, hook));
+                    edgeHooks.afterCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addAfterCallEdgeHook(approval_nodeId, hook));
 
                     graph.addNode(approval_nodeId, approvalAction);
 
