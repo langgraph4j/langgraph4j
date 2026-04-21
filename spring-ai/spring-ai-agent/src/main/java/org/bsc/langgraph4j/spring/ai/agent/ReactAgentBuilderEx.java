@@ -30,28 +30,54 @@ public abstract class ReactAgentBuilderEx<B extends ReactAgentBuilderEx<B,State>
         this.approvals = builder.approvals;
     }
 
+    public B addNodeHook(NodeHook.BeforeCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addNodeHook(hook);
+        return result();
+    }
+    public B addNodeHook(NodeHook.WrapCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addNodeHook(hook);
+        return result();
+    }
+    public B addNodeHook(NodeHook.AfterCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addNodeHook(hook);
+        return result();
+    }
+
+    public B addEdgeHook(EdgeHook.BeforeCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addEdgeHook(hook);
+        return result();
+    }
+    public B addEdgeHook(EdgeHook.WrapCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addEdgeHook(hook);
+        return result();
+    }
+    public B addEdgeHook(EdgeHook.AfterCall<AgentExecutorEx.State> hook ) {
+        agentBuilder.addEdgeHook(hook);
+        return result();
+    }
+
     public B addCallModelHook(NodeHook.WrapCall<AgentExecutorEx.State> wrapCall ) {
-        agentBuilder.addCallModelHook(wrapCall);
+        agentBuilder.addNodeHook( AgentEx.CALL_MODEL_NODE, wrapCall);
         return result();
     }
 
     public B addDispatchToolsHook(NodeHook.WrapCall<AgentExecutorEx.State> wrapCall ) {
-        agentBuilder.addDispatchToolsHook(wrapCall);
+        agentBuilder.addNodeHook( AgentEx.ACTION_DISPATCHER_NODE, wrapCall);
         return result();
     }
 
     public B addApprovalActionHook(EdgeHook.WrapCall<AgentExecutorEx.State> wrapCall ) {
-        agentBuilder.addApprovalActionHook( wrapCall );
+        agentBuilder.addEdgeHook( AgentEx.APPROVAL_ACTION, wrapCall);
         return result();
     }
 
     public B addDispatchActionHook(EdgeHook.WrapCall<AgentExecutorEx.State> wrapCall ) {
-        agentBuilder.addDispatchActionHook( wrapCall );
+        agentBuilder.addEdgeHook( AgentEx.ACTION_DISPATCHER_NODE, wrapCall);
         return result();
     }
 
     public B addShouldContinueHook(EdgeHook.WrapCall<AgentExecutorEx.State> wrapCall ) {
-        agentBuilder.addShouldContinueHook( wrapCall );
+        agentBuilder.addEdgeHook( AgentEx.CALL_MODEL_NODE, wrapCall);
         return result();
     }
 
