@@ -24,6 +24,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.ofNullable;
 
 public class StreamingChatGenerator<State extends AgentState> extends AsyncGenerator.WithResult<StreamingOutput<State>> {
@@ -220,7 +221,7 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
         var currentMessage = current.getResult().getOutput();
 
         var mergedMessage = AssistantMessage.builder()
-                .content(requireNonNull(mergeText(lastMessage.getText(), currentMessage.getText())))
+                .content(requireNonNullElse(mergeText(lastMessage.getText(), currentMessage.getText()), ""))
                 .properties(currentMessage.getMetadata())
                 .toolCalls(mergeToolCalls(lastMessage.getToolCalls(), currentMessage.getToolCalls()))
                 .media(currentMessage.getMedia())
