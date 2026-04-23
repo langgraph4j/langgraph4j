@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Covers the streaming response merge logic, including edge cases where
  * LLM responses contain tool calls but no text content (which causes null text).
  *
- * @see <a href="https://github.com/langgraph4j/langgraph4j/issues/XXX">Related issue: NPE when both last and current text are null</a>
+ * @see <a href="https://github.com/langgraph4j/langgraph4j/issues/388">Related issue: NPE when both last and current text are null</a>
  */
 class Issue388Test {
 
