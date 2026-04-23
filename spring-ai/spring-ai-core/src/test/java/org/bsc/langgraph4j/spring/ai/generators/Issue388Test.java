@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.spring.ai.generators;
 
 import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://github.com/langgraph4j/langgraph4j/issues/XXX">Related issue: NPE when both last and current text are null</a>
  */
-class StreamingChatGeneratorTest {
+class Issue388Test {
 
     private ChatResponse createChatResponseWithText(String text) {
         var message = AssistantMessage.builder().content(text).build();
