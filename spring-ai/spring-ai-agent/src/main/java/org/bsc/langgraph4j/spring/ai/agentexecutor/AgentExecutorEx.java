@@ -1,8 +1,6 @@
 package org.bsc.langgraph4j.spring.ai.agentexecutor;
 
-import org.bsc.langgraph4j.GraphStateException;
-import org.bsc.langgraph4j.LG4JLoggable;
-import org.bsc.langgraph4j.StateGraph;
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.agent.AgentEx;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -177,6 +175,10 @@ public interface AgentExecutorEx extends LG4JLoggable {
                     .dispatchActionEdge( dispatchAction() )
                     .build( toolsInfo, approvals )
                     ;
+        }
+
+        public CompiledGraph<State> build( CompileConfig config ) throws GraphStateException {
+            return build().compile(config);
         }
 
     }
