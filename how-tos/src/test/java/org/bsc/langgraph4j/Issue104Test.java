@@ -49,7 +49,7 @@ public class Issue104Test {
                 .addEdge("B", END)
                 .compile();
 
-        var result = workflow.stream(Map.of("input", "test"))
+        var result = workflow.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty())
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -93,7 +93,7 @@ public class Issue104Test {
                 .addEdge("B", END)
                 .compile();
 
-        var result = workflow.stream(Map.of("input", "test"))
+        var result = workflow.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty())
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -144,7 +144,7 @@ public class Issue104Test {
                 .addEdge("B", END)
                 .compile();
 
-        var result = workflow.stream(Map.of("input", "test"))
+        var result = workflow.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty())
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)

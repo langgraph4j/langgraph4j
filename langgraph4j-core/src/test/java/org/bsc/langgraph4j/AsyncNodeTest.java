@@ -61,7 +61,7 @@ public class AsyncNodeTest {
                     .addEdge( "C2", END )
                     .compile();
 
-            var steps = graph.stream(Map.of()).stream()
+            var steps = graph.stream(GraphInput.noArgs(), RunnableConfig.empty()).stream()
                     .peek(System.out::println)
                     .toList();
 

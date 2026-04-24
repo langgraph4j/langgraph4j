@@ -153,7 +153,7 @@ public class ParallelNodeTest {
 
         var agentState = new State(new LinkedHashMap<>(initialData));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var result = measureTime(
                 () -> parallelNodeAction.apply(agentState, runnableConfig).join(),
@@ -207,7 +207,7 @@ public class ParallelNodeTest {
 
         var agentState = new State(new LinkedHashMap<>(initialData));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var exception = assertThrows( CompletionException.class, () -> parallelNodeAction.apply(agentState, runnableConfig).join());
 

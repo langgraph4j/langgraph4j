@@ -96,7 +96,7 @@ public class OTELObservationLangraph4jITest implements OTELObservable {
                                 .build())
                 .compile();
 
-        var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.builder().build());
+        var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.empty());
 
         assertTrue( result.isPresent() );
     }

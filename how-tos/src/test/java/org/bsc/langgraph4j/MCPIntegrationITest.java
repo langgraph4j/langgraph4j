@@ -88,7 +88,9 @@ public class MCPIntegrationITest {
                     "input", "get all issues names and project" ) )
                     .toUserMessage();
 
-            var result = agent.invoke( Map.of( "messages", message) )
+            var result = agent.invoke(
+                            GraphInput.args(Map.of( "messages", message)),
+                            RunnableConfig.empty() )
                     .flatMap(AgentExecutor.State::finalResponse)
                     .orElse("no response");
 

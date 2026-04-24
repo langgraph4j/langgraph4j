@@ -127,7 +127,7 @@ public class Issue309Test {
 
         System.out.println("First Time execute Done , Execute order NodeA - NodeB - END");
 
-        var stream = compiledGraph.stream(Map.of(), runnableConfig);
+        var stream = compiledGraph.stream(GraphInput.noArgs(), runnableConfig);
 
         var result = extracted(stream);
         assertFalse( result.isEmpty() );

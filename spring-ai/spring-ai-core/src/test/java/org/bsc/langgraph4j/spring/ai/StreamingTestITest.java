@@ -2,6 +2,8 @@ package org.bsc.langgraph4j.spring.ai;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.FlowGenerator;
+import org.bsc.langgraph4j.GraphInput;
+import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -261,7 +263,9 @@ public class StreamingTestITest {
 
         var app = workflow.compile();
 
-        var generator = app.stream( Map.of( "messages", new UserMessage( "what is the whether today?")) );
+        var generator = app.stream(
+                GraphInput.args(Map.of( "messages", new UserMessage( "what is the whether today?"))),
+                RunnableConfig.empty() );
 
         generator.forEachAsync(System.out::println).join();
 
@@ -308,7 +312,9 @@ public class StreamingTestITest {
         var app = workflow.compile();
 
         // Stream and iterate through results
-        var inputStream = app.stream(Map.of("messages", new UserMessage("tell me a short joke")));
+        var inputStream = app.stream(
+                GraphInput.args(Map.of("messages", new UserMessage("tell me a short joke"))),
+                RunnableConfig.empty());
 
         System.out.println("=== Streaming Output ===");
         for (var item : inputStream) {

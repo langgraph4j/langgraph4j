@@ -112,7 +112,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
             for (int execution = 0; execution < 2; execution++) {
 
-                Optional<State> state = app.invoke( Map.of(), runnableConfig_1);
+                Optional<State> state = app.invoke( GraphInput.noArgs(), runnableConfig_1);
 
                 assertTrue(state.isPresent());
                 assertEquals(expectedSteps + (execution * 2), state.get().steps());
@@ -134,7 +134,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
                 // SUBMIT NEW THREAD 2
 
-                state = app.invoke(emptyMap(), runnableConfig_2);
+                state = app.invoke(GraphInput.noArgs(), runnableConfig_2);
 
                 assertTrue(state.isPresent());
                 assertEquals(expectedSteps + execution, state.get().steps());
@@ -145,7 +145,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
                 assertEquals(expectedSteps + execution, messages.size());
 
                 // RE-SUBMIT THREAD 1
-                state = app.invoke(Map.of(), runnableConfig_1);
+                state = app.invoke(GraphInput.noArgs(), runnableConfig_1);
 
                 assertTrue(state.isPresent());
                 assertEquals(expectedSteps + 1 + execution * 2, state.get().steps());
@@ -204,7 +204,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
                 .build();
         // saver.deleteFile( runnableConfig_2 );
 
-        var state = app.invoke( Map.of(), runnableConfig_1);
+        var state = app.invoke( GraphInput.noArgs(), runnableConfig_1);
 
         assertTrue(state.isPresent());
         assertEquals(expectedSteps, state.get().steps());
@@ -231,7 +231,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
         // SUBMIT NEW THREAD 2
 
-        state = app.invoke(emptyMap(), runnableConfig_2);
+        state = app.invoke(GraphInput.noArgs(), runnableConfig_2);
 
         assertTrue(state.isPresent());
         assertEquals(expectedSteps, state.get().steps());
@@ -249,7 +249,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
         assertEquals(expectedSteps, messages.size());
 
         // RE-SUBMIT THREAD 1
-        state = app.invoke(Map.of(), runnableConfig_1);
+        state = app.invoke(GraphInput.noArgs(), runnableConfig_1);
 
         assertTrue(state.isPresent());
         assertEquals(expectedSteps, state.get().steps());
@@ -302,7 +302,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
                 .threadId("thread_2")
                 .build();
 
-        var state_1 = app.invoke( Map.of(), runnableConfig_1);
+        var state_1 = app.invoke( GraphInput.noArgs(), runnableConfig_1);
 
         assertTrue(state_1.isPresent());
         assertEquals(expectedSteps, state_1.get().steps());
@@ -327,7 +327,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
 
         // SUBMIT NEW THREAD 2
 
-        var state_2 = app.invoke(emptyMap(), runnableConfig_2);
+        var state_2 = app.invoke(GraphInput.noArgs(), runnableConfig_2);
 
         assertTrue(state_2.isPresent());
         assertEquals(expectedSteps, state_2.get().steps());
@@ -343,7 +343,7 @@ public class StateGraphFileSystemSaverTest implements LG4JLoggable {
         assertEquals(expectedSteps, messages.size());
 
         // RE-SUBMIT THREAD 1
-        var iterator = app.stream(Map.of(), runnableConfig_1);
+        var iterator = app.stream(GraphInput.noArgs(), runnableConfig_1);
 
         state_1 = iterator.stream()
                 .reduce((a, b) -> b)

@@ -158,7 +158,7 @@ public class Issue336Test implements LG4JLoggable {
                 .compile();
 
         // When
-        final var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.builder().build());
+        final var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.empty());
 
         // Then
         assertTrue(result.isPresent());
@@ -186,7 +186,7 @@ public class Issue336Test implements LG4JLoggable {
                 .compile();
 
         // When - consume the streaming generator
-        var stream = workflow.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+        var stream = workflow.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
         // Consume all streaming output
         List<String> streamingChunks = new ArrayList<>();
@@ -237,7 +237,7 @@ public class Issue336Test implements LG4JLoggable {
                 .compile();
 
         // When
-        var stream = workflow.stream(Map.of(), RunnableConfig.builder().build());
+        var stream = workflow.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
         List<String> streamingChunks = new ArrayList<>();
         String lastNode = null;

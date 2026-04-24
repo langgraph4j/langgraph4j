@@ -160,7 +160,7 @@ public class InterruptionTest {
                         .releaseThread(false)
                         .build());
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var results = workflow.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()
@@ -228,7 +228,7 @@ public class InterruptionTest {
                         .interruptBeforeEdge(true)
                         .build());
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var results = workflow.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()
@@ -276,7 +276,7 @@ public class InterruptionTest {
                         .checkpointSaver(saver)
                         .build());
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var results = workflow.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()
@@ -325,7 +325,7 @@ public class InterruptionTest {
                         .interruptBefore("A", "B")
                         .build());
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var results = workflow.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()

@@ -153,7 +153,7 @@ public class AgentExecutorITest {
         System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
         Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var result = agent.stream( GraphInput.args(input), runnableConfig);
 
@@ -194,7 +194,7 @@ public class AgentExecutorITest {
 
         Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         while (true) {
             var result = agent.stream(GraphInput.args(input), runnableConfig);
@@ -267,7 +267,7 @@ public class AgentExecutorITest {
         System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
         Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var iterator = agent.stream(GraphInput.args(input), runnableConfig);
 
@@ -317,7 +317,7 @@ public class AgentExecutorITest {
 
         Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var generator = agent.stream(GraphInput.args(input), runnableConfig);
 
@@ -392,7 +392,7 @@ public class AgentExecutorITest {
 					""";
         var input = GraphInput.args(Map.of("messages", new UserMessage(userMessage)));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var generator = agent.stream(input, runnableConfig);
 
@@ -445,7 +445,7 @@ public class AgentExecutorITest {
 					""";
         var input = GraphInput.args(Map.of("messages", new UserMessage(userMessage)));
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         var generator = agent.stream(input, runnableConfig);
 

@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.CompileConfig;
+import org.bsc.langgraph4j.GraphInput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -116,7 +117,7 @@ public class RedisSaverTest {
 
         Map<String, Object> inputs = Map.of("input", "test1");
 
-        var result = workflow.invoke(inputs, runnableConfig);
+        var result = workflow.invoke( GraphInput.args(inputs), runnableConfig);
 
         assertTrue(result.isPresent());
 
@@ -142,12 +143,12 @@ public class RedisSaverTest {
                 .releaseThread(false)
                 .build();
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
         var workflow = graph.compile(compileConfig);
 
         Map<String, Object> inputs = Map.of("input", "test1");
 
-        var result = workflow.invoke(inputs, runnableConfig);
+        var result = workflow.invoke( GraphInput.args(inputs), runnableConfig);
 
         assertTrue(result.isPresent());
 
@@ -182,7 +183,7 @@ public class RedisSaverTest {
                 .releaseThread(false)
                 .build();
 
-        runnableConfig = RunnableConfig.builder().build();
+        runnableConfig = RunnableConfig.empty();
         workflow = graph.compile(compileConfig);
 
         history = workflow.getStateHistory(runnableConfig);
@@ -227,9 +228,9 @@ public class RedisSaverTest {
                 .build();
 
         var workflow = graph.compile(compileConfig);
-        workflow.invoke(Map.of("input", "test1"), RunnableConfig.builder().build());
+        workflow.invoke( GraphInput.args(Map.of("input", "test1")), RunnableConfig.empty());
 
-        var history = workflow.getStateHistory(RunnableConfig.builder().build());
+        var history = workflow.getStateHistory(RunnableConfig.empty());
         assertFalse(history.isEmpty(), "Checkpoint should be persisted");
 
         // User manages the redissonClient lifecycle
@@ -253,10 +254,10 @@ public class RedisSaverTest {
                 .releaseThread(false)
                 .build();
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
         var workflow = graph.compile(compileConfig);
 
-        workflow.invoke(Map.of("input", "test-serializer"), runnableConfig);
+        workflow.invoke( GraphInput.args(Map.of("input", "test-serializer")), runnableConfig);
 
         var history = workflow.getStateHistory(runnableConfig);
         assertFalse(history.isEmpty());
@@ -323,11 +324,11 @@ public class RedisSaverTest {
                 .build();
 
         var workflow = graph.compile(compileConfig);
-        workflow.invoke(Map.of("input", "test1"), RunnableConfig.builder().build());
+        workflow.invoke( GraphInput.args(Map.of("input", "test1")), RunnableConfig.empty());
 
-        var history = workflow.getStateHistory(RunnableConfig.builder().build());
+        var history = workflow.getStateHistory(RunnableConfig.empty());
         assertFalse(history.isEmpty(), "Checkpoint with custom keys should be persisted");
 
-        saver.release(RunnableConfig.builder().build());
+        saver.release(RunnableConfig.empty());
     }
 }

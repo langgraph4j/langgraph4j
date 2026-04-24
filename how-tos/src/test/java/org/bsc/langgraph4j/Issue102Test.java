@@ -51,7 +51,7 @@ public class Issue102Test {
         .compile()
         ;
 
-        var result = graph.stream(Map.of("input", "test"))
+        var result = graph.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -84,7 +84,7 @@ public class Issue102Test {
                 .compile()
                 ;
 
-        var result = graph.stream(Map.of("input", "test"))
+        var result = graph.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -117,7 +117,7 @@ public class Issue102Test {
                 .compile()
                 ;
 
-        var result = graph.stream(Map.of("input", "test"))
+        var result = graph.stream( GraphInput.args(Map.of("input", "test")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)

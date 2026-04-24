@@ -79,7 +79,7 @@ public class CancellationTest {
         // CANCEL TEST USING FOR EACH ASYNC
         //////////////////////////////////////////////////////////////
         {
-            var generator = workflow.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+            var generator = workflow.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
             requestCancelGenerator(generator, true, Duration.ofMillis(50));
 
@@ -101,7 +101,7 @@ public class CancellationTest {
         // CANCEL TEST USING ITERATOR
         //////////////////////////////////////////////////////////////
         {
-            var generator = workflow.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+            var generator = workflow.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
             requestCancelGenerator(generator, true, Duration.ofMillis(50));
 
@@ -154,7 +154,7 @@ public class CancellationTest {
         // NO CANCEL TEST
         //////////////////////////////////////////////////////////////////////////////////
         {
-            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
             var output = generator.stream()
                     .peek(out -> log.info("output: {}", out))
@@ -169,7 +169,7 @@ public class CancellationTest {
         // CANCEL TEST USING FOR EACH ASYNC
         //////////////////////////////////////////////////////////////////////////////////
         {
-            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
             requestCancelGenerator(generator, true, Duration.ofSeconds(3));
 
@@ -192,7 +192,7 @@ public class CancellationTest {
         // TEST USING ITERATOR
         //////////////////////////////////////////////////////////////
         {
-            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.builder().build());
+            var generator = parentGraph.stream(GraphInput.noArgs(), RunnableConfig.empty());
 
             requestCancelGenerator(generator, true, Duration.ofSeconds(3));
 

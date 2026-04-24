@@ -18,7 +18,6 @@ import java.util.logging.LogManager;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.util.Collections.emptyMap;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
@@ -94,7 +93,7 @@ public class StateGraphMemorySaverTest
 
         var compileConfig = CompileConfig.builder().checkpointSaver(saver).build();
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
         var app = workflow.compile( compileConfig );
 
         Map<String, Object> inputs = Map.of( "input", "test1");
@@ -196,7 +195,7 @@ public class StateGraphMemorySaverTest
                                     .threadId("thread_1")
                                     .build();
 
-        var state = app.invoke( inputs, runnableConfig );
+        var state = app.invoke( GraphInput.args(inputs), runnableConfig );
 
         assertTrue( state.isPresent() );
         assertEquals( expectedSteps, state.get().steps() );
@@ -223,7 +222,7 @@ public class StateGraphMemorySaverTest
                 .threadId("thread_2")
                 .build();
 
-        state = app.invoke( emptyMap(), runnableConfig );
+        state = app.invoke( GraphInput.noArgs(), runnableConfig );
 
         assertTrue( state.isPresent() );
         assertEquals( expectedSteps, state.get().steps() );
@@ -237,7 +236,7 @@ public class StateGraphMemorySaverTest
         }
 
         // RE-SUBMIT THREAD 1
-        state = app.invoke( emptyMap(), runnableConfig );
+        state = app.invoke( GraphInput.noArgs(), runnableConfig );
 
         assertTrue( state.isPresent() );
         assertEquals( expectedSteps + 1, state.get().steps() );
@@ -277,7 +276,7 @@ public class StateGraphMemorySaverTest
                 .threadId("thread_1")
                 .build();
 
-        var results = app.streamSnapshots( inputs, runnableConfig ).stream().collect( Collectors.toList() );
+        var results = app.streamSnapshots(  GraphInput.args(inputs), runnableConfig ).stream().collect( Collectors.toList() );
 
         results.forEach( r -> log.info( "{}: Node: {} - {}", r.getClass().getSimpleName(), r.node(), r.state().messages() ) );
 
@@ -357,7 +356,7 @@ public class StateGraphMemorySaverTest
 
         log.info( "FIRST CALL WITH INTERRUPT BEFORE 'tools'");
         Map<String,Object> inputs = Map.of( "messages", "whether in Naples?")  ;
-        var results = app.stream( inputs, runnableConfig ).stream()
+        var results = app.stream(  GraphInput.args(inputs), runnableConfig ).stream()
                                 .peek( n -> log.info( "{}", n ) )
                                 .collect(Collectors.toList());
         assertNotNull( results );

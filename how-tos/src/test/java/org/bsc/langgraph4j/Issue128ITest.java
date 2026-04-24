@@ -81,7 +81,7 @@ public class Issue128ITest {
 
         var prompt1 = UserMessage.from(raw_text);
 
-        var result = agent.invoke( Map.of( "messages",prompt1 ));
+        var result = agent.invoke( GraphInput.args(Map.of( "messages",prompt1 )), RunnableConfig.empty() );
 
         System.out.println( result.orElseThrow() );
 
@@ -92,7 +92,7 @@ public class Issue128ITest {
                 """);
         var prompt2 = prompt_template.apply( Map.of("raw_text", raw_text)).toUserMessage();
 
-        var result2 = agent.invoke( Map.of( "messages",prompt2 ));
+        var result2 = agent.invoke( GraphInput.args(Map.of( "messages",prompt2 )), RunnableConfig.empty() );
 
         System.out.println( result2.orElseThrow() );
 

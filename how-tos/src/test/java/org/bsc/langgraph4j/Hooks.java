@@ -61,6 +61,6 @@ public class Hooks {
                 .addEdge("node_4", END)
                 .compile();
 
-        var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.builder().build());
+        var result = workflow.invoke( GraphInput.noArgs(), RunnableConfig.empty());
     }
 }
