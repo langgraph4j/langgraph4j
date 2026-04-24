@@ -458,7 +458,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     @Deprecated(forRemoval = true)
     public AsyncGenerator<NodeOutput<State>> stream(Map<String,Object> inputs ) {
-        return this.stream( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() );
+        return this.stream( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() );
     }
 
     /**
@@ -540,7 +540,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     @Deprecated(forRemoval = true)
     public Optional<State> invoke( Map<String,Object> inputs )  {
-        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() ).map( NodeOutput::state);
+        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() ).map( NodeOutput::state);
     }
 
     /**
