@@ -2,7 +2,6 @@ package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
 import org.bsc.langgraph4j.hook.NodeHook;
-import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
@@ -25,16 +24,142 @@ import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGra
  */
 public final class RunnableConfig implements HasMetadata {
 
-    public static class RemoveResumeSubgraphData<State extends AgentState> implements NodeHook.AfterCall<State> {
+    protected static class RemoveResumeSubgraphData<State extends AgentState> implements NodeHook.AfterCall<State> {
 
         @Override
-        public CompletableFuture<Map<String, Object>> applyAfter(String nodeId, State state, RunnableConfig config, Map<String, Object> lastResult) {
+        public CompletableFuture<Map<String, Object>> applyAfter(String nodeId,
+                                                                 State state,
+                                                                 RunnableConfig config,
+                                                                 Map<String, Object> lastResult)
+        {
             config.removeMetadata(
                     resumeSubGraphId( nodeId ),
                     RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA );
 
             return completedFuture(lastResult);
         }
+    }
+
+    private static class EmptyHolder {
+        static final RunnableConfig value = new RunnableConfig();
+    }
+
+    /**
+     * A builder pattern class for constructing {@link RunnableConfig} objects.
+     * This class provides a fluent interface to set various properties of a
+     * {@link RunnableConfig} object and then build the final configuration.
+     */
+    public static class Builder extends HasMetadata.Builder<Builder> {
+        private String threadId;
+        private String checkPointId;
+        private String nextNode;
+        private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
+
+        /**
+         * Constructs a new instance of the {@link Builder} with default configuration settings.
+         * Initializes a new {@link RunnableConfig} object for configuration purposes.
+         */
+        Builder() {}
+
+        /** Initializes a new instance of the {@code Builder} class with the specified {@link RunnableConfig}.
+         *
+         * @param config The configuration to be used for initialization.
+         */
+        Builder( RunnableConfig config ) {
+            super( requireNonNull(config, "config cannot be null!").metadata );
+            this.threadId       = config.threadId;
+            this.checkPointId   = config.checkPointId;
+            this.nextNode       = config.nextNode;
+            this.streamMode     = config.streamMode;
+
+        }
+
+        /**
+         * Sets the ID of the thread.
+         *
+         * @param threadId the ID of the thread to set
+         * @return a reference to this {@code Builder} object so that method calls can be chained together
+         */
+        public Builder threadId(String threadId) {
+            this.threadId = threadId;
+            return this;
+        }
+        /**
+         * Sets the checkpoint ID for the configuration.
+         *
+         * @param checkPointId - the ID of the checkpoint to be set
+         * @return {@literal this} - a reference to the current `Builder` instance
+         */
+        public Builder checkPointId(String checkPointId) {
+            this.checkPointId = checkPointId;
+            return this;
+        }
+        /**
+         * Sets the next node in the configuration and returns this builder for method chaining.
+         *
+         * @param nextNode The next node to be set.
+         * @return This builder instance, allowing for method chaining.
+         */
+        public Builder nextNode(String nextNode) {
+            this.nextNode = nextNode;
+            return this;
+        }
+        /**
+         * Sets the stream mode of the configuration.
+         *
+         * @param streamMode The {@link CompiledGraph.StreamMode} to set.
+         * @return A reference to this builder for method chaining.
+         */
+        public Builder streamMode(CompiledGraph.StreamMode streamMode) {
+            this.streamMode = streamMode;
+            return this;
+        }
+
+        /**
+         * Adds a custom {@link Executor} for a specific parallel node.
+         * <p>
+         * This allows you to control the execution of branches within a parallel node.
+         * When a parallel node is executed, it will look for an executor in the
+         * {@link RunnableConfig} metadata. If found, it will be used to run the
+         * parallel branches concurrently.
+         *
+         * @param nodeId the ID of the parallel node.
+         * @param executor  the {@link Executor} to use for the parallel node.
+         * @return this {@code Builder} instance for method chaining.
+         */
+        public Builder addParallelNodeExecutor( String nodeId, Executor executor ) {
+            return addMetadata( ParallelNode.formatNodeId(nodeId), requireNonNull(executor, "executor cannot be null!") );
+        }
+
+        /**
+         * Constructs and returns the configured {@code RunnableConfig} object.
+         *
+         * @return the configured {@code RunnableConfig} object
+         */
+        public RunnableConfig build() {
+            return new RunnableConfig(this);
+        }
+    }
+
+    /**
+     * Creates a new instance of the {@link Builder} class.
+     *
+     * @return A new {@code Builder} object.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Creates a new {@code Builder} instance with the specified {@link RunnableConfig}.
+     *
+     * @param config The configuration for the {@code Builder}.
+     * @return A new {@code Builder} instance.
+     */
+    public static Builder builder( RunnableConfig config ) { return new Builder(config); }
+
+    public static RunnableConfig empty() {
+        return EmptyHolder.value;
     }
 
     /**
@@ -52,6 +177,26 @@ public final class RunnableConfig implements HasMetadata {
     private final String nextNode;
     private final CompiledGraph.StreamMode streamMode;
     private final Map<String,Object> metadata;
+
+    /**
+     * Creates a new instance of {@code RunnableConfig} as a copy of the provided {@code config}.
+     *
+     * @param builder The configuration builder.
+     */
+    private RunnableConfig( Builder builder ) {
+        this.threadId       = builder.threadId;
+        this.checkPointId   = builder.checkPointId;
+        this.nextNode       = builder.nextNode;
+        this.streamMode     = builder.streamMode;
+        this.metadata       = new HashMap<>(builder.metadata());
+    }
+    private RunnableConfig() {
+        this.threadId = null;
+        this.checkPointId = null;
+        this.nextNode = null;
+        this.streamMode = CompiledGraph.StreamMode.VALUES;
+        this.metadata = null;
+    }
 
     /**
      * Returns the stream mode of the compiled graph.
@@ -188,130 +333,8 @@ public final class RunnableConfig implements HasMetadata {
         return metadata( SubCompiledGraphNodeAction.resumeSubGraphId( nodeId() )).isPresent();
     }
 
-    /**
-     * Creates a new instance of the {@link Builder} class.
-     *
-     * @return A new {@code Builder} object.
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-    /**
-     * Creates a new {@code Builder} instance with the specified {@link RunnableConfig}.
-     *
-     * @param config The configuration for the {@code Builder}.
-     * @return A new {@code Builder} instance.
-     */
-    public static Builder builder( RunnableConfig config ) { return new Builder(config); }
 
-    /**
-     * A builder pattern class for constructing {@link RunnableConfig} objects.
-     * This class provides a fluent interface to set various properties of a 
-     * {@link RunnableConfig} object and then build the final configuration.
-     */
-    public static class Builder extends HasMetadata.Builder<Builder> {
-        private String threadId;
-        private String checkPointId;
-        private String nextNode;
-        private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
 
-        /**
-         * Constructs a new instance of the {@link Builder} with default configuration settings.
-         * Initializes a new {@link RunnableConfig} object for configuration purposes.
-         */
-        Builder() {}
-
-        /** Initializes a new instance of the {@code Builder} class with the specified {@link RunnableConfig}.
-         * 
-         * @param config The configuration to be used for initialization.
-         */
-        Builder( RunnableConfig config ) {
-            super( requireNonNull(config, "config cannot be null!").metadata );
-            this.threadId       = config.threadId;
-            this.checkPointId   = config.checkPointId;
-            this.nextNode       = config.nextNode;
-            this.streamMode     = config.streamMode;
-
-        }
-
-        /**
-         * Sets the ID of the thread.
-         *
-         * @param threadId the ID of the thread to set
-         * @return a reference to this {@code Builder} object so that method calls can be chained together
-         */
-        public Builder threadId(String threadId) {
-            this.threadId = threadId;
-            return this;
-        }
-        /**
-         * Sets the checkpoint ID for the configuration.
-         *
-         * @param checkPointId - the ID of the checkpoint to be set
-         * @return {@literal this} - a reference to the current `Builder` instance
-         */
-        public Builder checkPointId(String checkPointId) {
-            this.checkPointId = checkPointId;
-            return this;
-        }
-        /**
-         * Sets the next node in the configuration and returns this builder for method chaining.
-         *
-         * @param nextNode The next node to be set.
-         * @return This builder instance, allowing for method chaining.
-         */
-        public Builder nextNode(String nextNode) {
-            this.nextNode = nextNode;
-            return this;
-        }
-        /**
-         * Sets the stream mode of the configuration.
-         *
-         * @param streamMode The {@link CompiledGraph.StreamMode} to set.
-         * @return A reference to this builder for method chaining.
-         */
-        public Builder streamMode(CompiledGraph.StreamMode streamMode) {
-            this.streamMode = streamMode;
-            return this;
-        }
-
-        /**
-         * Adds a custom {@link Executor} for a specific parallel node.
-         * <p>
-         * This allows you to control the execution of branches within a parallel node.
-         * When a parallel node is executed, it will look for an executor in the
-         * {@link RunnableConfig} metadata. If found, it will be used to run the
-         * parallel branches concurrently.
-         *
-         * @param nodeId the ID of the parallel node.
-         * @param executor  the {@link Executor} to use for the parallel node.
-         * @return this {@code Builder} instance for method chaining.
-         */
-        public Builder addParallelNodeExecutor( String nodeId, Executor executor ) {
-            return addMetadata( ParallelNode.formatNodeId(nodeId), requireNonNull(executor, "executor cannot be null!") );
-        }
-
-        /**
-         * Constructs and returns the configured {@code RunnableConfig} object.
-         *
-         * @return the configured {@code RunnableConfig} object
-         */
-        public RunnableConfig build() {
-            return new RunnableConfig(this);
-        }
-    }
-    /**
-     * Creates a new instance of {@code RunnableConfig} as a copy of the provided {@code config}.
-     *
-     * @param builder The configuration builder.
-     */
-    private RunnableConfig( Builder builder ) {
-        this.threadId       = builder.threadId;
-        this.checkPointId   = builder.checkPointId;
-        this.nextNode       = builder.nextNode;
-        this.streamMode     = builder.streamMode;
-        this.metadata       = new HashMap<>(builder.metadata());
-    }
 
     @Override
     public String toString() {
