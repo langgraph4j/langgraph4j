@@ -646,7 +646,7 @@ public interface LangGraphStudioServer {
                         instance.cache().put(persistentConfig, cacheEntry);
                     }
 
-                    cacheEntry.generator  = cacheEntry.compiledGraph.streamSnapshots(dataMap, runnableConfig(persistentConfig));
+                    cacheEntry.generator  = cacheEntry.compiledGraph.streamSnapshots( GraphInput.args(dataMap), runnableConfig(persistentConfig));
                 }
 
                 cacheEntry.generator.forEachAsync(s -> {
