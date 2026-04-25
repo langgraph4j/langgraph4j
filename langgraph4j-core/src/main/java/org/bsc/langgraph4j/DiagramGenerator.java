@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -92,9 +93,7 @@ public abstract class DiagramGenerator {
          * @return the snake_case formatted string
          */
         public Optional<String> titleToSnakeCase() {
-            return ofNullable(title)
-                        .map( v -> v.replaceAll("[^a-zA-Z0-9]", "_"));
-
+            return ofNullable(title).map(DiagramGenerator::toSnakeCase);
         }
 
         /**
@@ -108,6 +107,10 @@ public abstract class DiagramGenerator {
         }
     }
 
+    protected static String toSnakeCase( String value ) {
+        return requireNonNull(value, "value cannot be null")
+                .replaceAll("[^a-zA-Z0-9]", "_");
+    }
 
     protected boolean isStart( String id ) {
         return START.equals( id );

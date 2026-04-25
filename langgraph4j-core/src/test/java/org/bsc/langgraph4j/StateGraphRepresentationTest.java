@@ -51,7 +51,6 @@ public class StateGraphRepresentationTest {
                 skinparam hexagonStereotypeFontSize 12
                 title "Graph Diagram"
                 footer
-                
                 powered by langgraph4j
                 end footer
                 circle start<<input>> as __START__
@@ -99,7 +98,6 @@ public class StateGraphRepresentationTest {
                        skinparam hexagonStereotypeFontSize 12
                        title "Correction process"
                        footer
-                
                        powered by langgraph4j
                        end footer
                        circle start<<input>> as __START__
@@ -153,7 +151,6 @@ public class StateGraphRepresentationTest {
                         skinparam hexagonStereotypeFontSize 12
                         title "Graph Diagram"
                         footer
-                        
                         powered by langgraph4j
                         end footer
                         circle start<<input>> as __START__
@@ -207,7 +204,6 @@ public class StateGraphRepresentationTest {
                         skinparam hexagonStereotypeFontSize 12
                         title "Graph Diagram"
                         footer
-                        
                         powered by langgraph4j
                         end footer
                         circle start<<input>> as __START__
@@ -296,7 +292,6 @@ public class StateGraphRepresentationTest {
                 skinparam hexagonStereotypeFontSize 12
                 title "testWithParallelBranch"
                 footer
-                
                 powered by langgraph4j
                 end footer
                 circle start<<input>> as __START__
@@ -377,7 +372,6 @@ skinparam hexagonFontSize 14
 skinparam hexagonStereotypeFontSize 12
 title "testWithParallelBranchOnStart"
 footer
-
 powered by langgraph4j
 end footer
 circle start<<input>> as __START__
@@ -505,51 +499,46 @@ end
 
         var plantuml = stateGraph.getGraph(GraphRepresentation.Type.PLANTUML, "Example graph", false);
         assertEquals("""
-@startuml Example_graph
-skinparam usecaseFontSize 14
-skinparam usecaseStereotypeFontSize 12
-skinparam hexagonFontSize 14
-skinparam hexagonStereotypeFontSize 12
-title "Example graph"
-footer
-
-powered by langgraph4j
-end footer
-circle start<<input>> as __START__
-circle stop as __END__
-usecase "main1"<<Node>>
-package subgraph1 [
-{{
-circle " " as __START__
-circle exit as __END__
-usecase "bar1"<<Node>>
-package subGraph2 [
-{{
-circle " " as __START__
-circle exit as __END__
-usecase "foo1"<<Node>>
-usecase "foo2"<<Node>>
-usecase "foo3"<<Node>>
-"__START__" -down-> "foo1"
-"foo1" -down-> "foo2"
-"foo2" -down-> "foo3"
-"foo3" -down-> "__END__"
-}}
-]
-usecase "bar2"<<Node>>
-"__START__" -down-> "bar1"
-"bar1" -down-> "subGraph2"
-"subGraph2" -down-> "bar2"
-"bar2" -down-> "__END__"
-}}
-]
-usecase "main2"<<Node>>
-"__START__" -down-> "main1"
-"main1" -down-> "subgraph1"
-"subgraph1" -down-> "main2"
-"main2" -down-> "__END__"
-@enduml
-	""",
+               @startuml Example_graph
+               skinparam usecaseFontSize 14
+               skinparam usecaseStereotypeFontSize 12
+               skinparam hexagonFontSize 14
+               skinparam hexagonStereotypeFontSize 12
+               title "Example graph"
+               footer
+               powered by langgraph4j
+               end footer
+               circle start<<input>> as __START__
+               circle stop as __END__
+               usecase "main1"<<Node>>
+               package subgraph1 {
+               circle " " as subgraph1___START__
+               circle exit as subgraph1___END__
+               usecase "bar1"<<Node>> as subgraph1_bar1
+               package subGraph2 {
+               circle " " as subGraph2___START__
+               circle exit as subGraph2___END__
+               usecase "foo1"<<Node>> as subGraph2_foo1
+               usecase "foo2"<<Node>> as subGraph2_foo2
+               usecase "foo3"<<Node>> as subGraph2_foo3
+               "subGraph2___START__" -down-> "subGraph2_foo1"
+               "subGraph2_foo1" -down-> "subGraph2_foo2"
+               "subGraph2_foo2" -down-> "subGraph2_foo3"
+               "subGraph2_foo3" -down-> "subGraph2___END__"
+               }
+               usecase "bar2"<<Node>> as subgraph1_bar2
+               "subgraph1___START__" -down-> "subgraph1_bar1"
+               "subgraph1_bar1" -down-> "subGraph2"
+               "subGraph2" -down-> "subgraph1_bar2"
+               "subgraph1_bar2" -down-> "subgraph1___END__"
+               }
+               usecase "main2"<<Node>>
+               "__START__" -down-> "main1"
+               "main1" -down-> "subgraph1"
+               "subgraph1" -down-> "main2"
+               "main2" -down-> "__END__"
+               @enduml
+               """,
                 plantuml.content()
         );
 
