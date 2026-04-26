@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -128,27 +129,25 @@ public class AgentExecutorITest {
 
     @ParameterizedTest
     @EnumSource(RunAgentCall.class)
-    public void runAgent(Call call) throws Exception {
+    public void runAgentExecutor(Call call) throws Exception {
 
         var saver = new MemorySaver();
 
-        var compileConfig = CompileConfig.builder()
+        final var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
-        var agentBuilder = AgentExecutor.builder()
+        final var agent = AgentExecutor.builder()
                 .chatModel(chatModel)
                 .streaming(call.streaming().active())
-                .emitStreamingEnd(call.streaming().emitStreamingEnd());
-
-        // FIX for GEMINI MODEL
-        if (chatModel instanceof GoogleGenAiChatModel ) {
-            agentBuilder.toolsFromObject(new TestTools4Gemini());
-        } else {
-            agentBuilder.toolsFromObject(new TestTools());
-        }
-
-        var agent = agentBuilder.build().compile(compileConfig);
+                .emitStreamingEnd(call.streaming().emitStreamingEnd())
+                .toolsFromObject(
+                        // FIX for GEMINI MODEL
+                        (chatModel instanceof GoogleGenAiChatModel ) ?
+                                new TestTools4Gemini() :
+                                new TestTools())
+                .build()
+                .compile(compileConfig);
 
         System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
@@ -158,7 +157,64 @@ public class AgentExecutorITest {
         var result = agent.stream( GraphInput.args(input), runnableConfig);
 
         var output = result.stream()
-                .peek(System.out::println)
+                .peek( o -> {
+                    if (o instanceof StreamingOutput<?> out) {
+                        if( ofNullable(out.chunk()).map(String::isBlank).orElse(false) ) {
+                            return;
+                        }
+                    }
+                    System.out.println(o);
+
+                })
+                .reduce((a, b) -> b)
+                .orElseThrow();
+
+        System.out.printf("result: %s%n",
+                output.state().lastMessage()
+                        .map(AssistantMessage.class::cast)
+                        .map(AssistantMessage::getText)
+                        .orElseThrow());
+
+    }
+
+    @ParameterizedTest
+    @EnumSource(RunAgentCall.class)
+    public void runAgentExecutorEx(Call call) throws Exception {
+
+        final var saver = new MemorySaver();
+
+        final var compileConfig = CompileConfig.builder()
+                .checkpointSaver(saver)
+                .build();
+
+       final var agent = AgentExecutorEx.builder()
+                .chatModel(chatModel)
+                .streaming(call.streaming().active())
+                .emitStreamingEnd(call.streaming().emitStreamingEnd())
+                .toolsFromObject(
+                        // FIX for GEMINI MODEL
+                        (chatModel instanceof GoogleGenAiChatModel ) ?
+                            new TestTools4Gemini() :
+                            new TestTools())
+                .build(compileConfig);
+
+        System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
+
+        Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
+        var runnableConfig = RunnableConfig.empty();
+
+        var result = agent.stream( GraphInput.args(input), runnableConfig);
+
+        var output = result.stream()
+                .peek( o -> {
+                    if (o instanceof StreamingOutput<?> out) {
+                        final var chunk = out.chunk();
+                        if( chunk == null || chunk.isBlank() ) {
+                            return;
+                        }
+                    }
+                    System.out.println(o);
+                })
                 .reduce((a, b) -> b)
                 .orElseThrow();
 
