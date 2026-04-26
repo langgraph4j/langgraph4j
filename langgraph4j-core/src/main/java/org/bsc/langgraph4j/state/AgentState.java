@@ -16,8 +16,14 @@ import static org.bsc.langgraph4j.utils.CollectionsUtils.entryOf;
  * Represents the state of an agent with a map of data.
  */
 public class AgentState {
-    public static final Object MARK_FOR_RESET = new Object();
-    public static final Object MARK_FOR_REMOVAL = new Object();
+    public static final Object MARK_FOR_RESET = new Object() {
+        @Override
+        public String toString() { return "MARK_FOR_RESET"; }
+    };
+    public static final Object MARK_FOR_REMOVAL = new Object() {
+        @Override
+        public String toString() { return "MARK_FOR_REMOVAL"; }
+    };
 
     private final java.util.Map<String,Object> data;
 
