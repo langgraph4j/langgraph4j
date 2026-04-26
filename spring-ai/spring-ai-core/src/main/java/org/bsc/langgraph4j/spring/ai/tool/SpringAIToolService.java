@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.spring.ai.tool;
 
 import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ToolContext;
@@ -9,6 +10,7 @@ import org.springframework.ai.tool.ToolCallback;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -52,25 +54,19 @@ public class SpringAIToolService {
                 .findFirst();
     }
 
-    /**
-     * Executes a list of tool calls.
-     *
-     * @param toolCalls The list of tool calls to execute.
-     * @param toolContextData The tool context data.
-     * @param propertyNameToUpdate name of the state property where ste the tool response message
-     * @return A completable future that will be completed with the tool response message.
-     */
-    public CompletableFuture<Command> executeFunctions(List<AssistantMessage.ToolCall> toolCalls, Map<String,Object> toolContextData, String propertyNameToUpdate) {
-        if( propertyNameToUpdate == null  ) {
-            return failedFuture(new NullPointerException("propertyName cannot be null"));
-        }
-        if( propertyNameToUpdate.isEmpty()  ) {
-            return failedFuture(new IllegalArgumentException("propertyName cannot be empty") );
-        }
 
-        var toolResponses = new ArrayList<ToolResponseMessage.ToolResponse>(toolCalls.size());
+    public record ExecuteFunctionsResult(
+            List<ToolResponseMessage.ToolResponse> toolResponses,
+            Command command
+    ){}
 
-        Map<String,Object> update = Map.of();
+    public CompletableFuture<ExecuteFunctionsResult> executeFunctions(List<AssistantMessage.ToolCall> toolCalls,
+                                                                      Map<String,Object> toolContextData)
+    {
+
+        final var toolResponses = new ArrayList<ToolResponseMessage.ToolResponse>(toolCalls.size());
+
+        var update = Map.<String,Object>of();
         String gotoNode = null;
 
         for( var toolCall : toolCalls ) {
@@ -87,8 +83,8 @@ public class SpringAIToolService {
             if( command.gotoNodeSafe().isPresent() ) {
                 if( gotoNode != null ) {
                     return failedFuture( new IllegalStateException( format("Multiple nodes target provided! tried to set %s when %s was already present : ",
-                                                                        command.gotoNode(),
-                                                                        gotoNode) ));
+                            command.gotoNode(),
+                            gotoNode) ));
                 }
                 gotoNode = command.gotoNode();
             }
@@ -99,18 +95,36 @@ public class SpringAIToolService {
 
         }
 
-        final var toolResponseMessage = ToolResponseMessage.builder()
-                                    .responses( toolResponses )
-                                    .build();
-        update = mergeMap( update, Map.of(propertyNameToUpdate, toolResponseMessage) );
-
-        return completedFuture( new Command( gotoNode, update  ) );
+        return completedFuture( new ExecuteFunctionsResult(toolResponses, new Command(gotoNode, update)) );
     }
 
+    /**
+     * Executes a list of tool calls.
+     *
+     * @param toolCalls The list of tool calls to execute.
+     * @param toolContextData The tool context data.
+     * @param propertyNameToUpdate name of the state property where ste the tool response message
+     * @return A completable future that will be completed with the tool response message.
+     */
+    public CompletableFuture<Command> executeFunctions(List<AssistantMessage.ToolCall> toolCalls, Map<String,Object> toolContextData, String propertyNameToUpdate) {
+        if( propertyNameToUpdate == null  ) {
+            return failedFuture(new NullPointerException("propertyName cannot be null"));
+        }
+        if( propertyNameToUpdate.isEmpty()  ) {
+            return failedFuture(new IllegalArgumentException("propertyName cannot be empty") );
+        }
 
-    public CompletableFuture<Command> executeFunctions(List<AssistantMessage.ToolCall> toolCalls, Map<String,Object> toolContextData) {
-        return executeFunctions( toolCalls, toolContextData, "messages" );
+        return executeFunctions( toolCalls, toolContextData )
+                .thenApply( result -> {
+                    final var toolResponseMessage = ToolResponseMessage.builder()
+                    .responses( result.toolResponses )
+                    .build();
+
+                    return result.command.withMergedUpdate( Map.of(propertyNameToUpdate, toolResponseMessage) );
+                });
+
     }
+
 
     private record ScopedToolCallResult(
         ToolResponseMessage.ToolResponse toolResponse,
