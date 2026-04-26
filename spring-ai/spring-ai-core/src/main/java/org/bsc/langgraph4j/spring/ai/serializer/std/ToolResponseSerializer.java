@@ -19,14 +19,14 @@ class ToolResponseSerializer implements NullableObjectSerializer<ToolResponseMes
     @Override
     public ToolResponseMessage.ToolResponse read(ObjectInput in) throws IOException, ClassNotFoundException {
 
-        var id = readNullableUTF(in);
-        var name = readNullableUTF(in);
-        var responseData = readNullableUTF(in);
+        final var id = readNullableUTF(in).orElse("");
+        final var name = readNullableUTF(in).orElse("");
+        final var responseData = readNullableUTF(in).orElse("");
 
         return new ToolResponseMessage.ToolResponse(
-                id.orElse(null),
-                name.orElse(null),
-                responseData.orElse(null)
+                id,
+                name,
+                responseData
         );
     }
 

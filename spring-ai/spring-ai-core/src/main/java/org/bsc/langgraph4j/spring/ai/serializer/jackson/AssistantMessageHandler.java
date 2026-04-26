@@ -46,19 +46,7 @@ public interface AssistantMessageHandler {
             gen.writeStringField(Field.TEXT.name, msg.getText());
             gen.writeObjectField( Field.TOOL_CALLS.name, msg.getToolCalls() );
 
-//            gen.writeArrayFieldStart(Field.TOOL_CALLS.name);
-//            for( var toolCall : msg.getToolCalls() )
-//                gen.writeObject( toolCall );
-//            gen.writeEndArray();
-
-
             serializeMetadata( gen, msg.getMetadata() );
-
-//        gen.writeArrayFieldStart( Property.MEDIA.field);
-//        for (var media : msg.getMedia()) {
-//            gen.writeObject(media);
-//        }
-//        gen.writeEndArray();
 
             gen.writeEndObject();
         }

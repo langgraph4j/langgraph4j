@@ -3,13 +3,14 @@ package org.bsc.langgraph4j.spring.ai.serializer.jackson;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 
 import java.io.IOException;
@@ -43,16 +44,6 @@ public interface ToolResponseMessageHandler {
 
             gen.writeStringField("@type", msg.getMessageType().name());
             gen.writeObjectField( Field.RESPONSES.name, msg.getResponses() );
-
-//            gen.writeArrayFieldStart( Field.RESPONSES.name );
-//            for( var response : msg.getResponses() ) {
-//                gen.writeStartObject();
-//                gen.writeStringField("id", response.id());
-//                gen.writeStringField("name", response.name());
-//                gen.writeStringField("responseData", response.responseData());
-//                gen.writeEndObject();
-//            }
-//            gen.writeEndArray();
 
             serializeMetadata( gen, msg.getMetadata() );
 
@@ -93,4 +84,41 @@ public interface ToolResponseMessageHandler {
                     .build();
         }
     }
+
+    class ToolResponseSerializer extends StdSerializer<ToolResponseMessage.ToolResponse> {
+        protected ToolResponseSerializer() {
+            super(ToolResponseMessage.ToolResponse.class);
+        }
+
+        @Override
+        public void serialize(ToolResponseMessage.ToolResponse toolResponse, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("@type", ToolResponseMessage.ToolResponse.class.getName());
+            gen.writeStringField("id", toolResponse.id());
+            gen.writeStringField("name", toolResponse.name());
+            gen.writeStringField("responseData", toolResponse.responseData());
+            gen.writeEndObject();
+        }
+
+    }
+
+    class ToolResponseDeserializer extends StdDeserializer<ToolResponseMessage.ToolResponse> {
+        protected ToolResponseDeserializer() {
+            super(ToolResponseMessage.ToolResponse.class);
+        }
+
+        @Override
+        public ToolResponseMessage.ToolResponse deserialize(JsonParser jsonParser, DeserializationContext ctx) throws IOException {
+            var mapper = (ObjectMapper) jsonParser.getCodec();
+            JsonNode node = mapper.readTree(jsonParser);
+
+            return new ToolResponseMessage.ToolResponse(
+                    node.get("id").asText(),
+                    node.get("name").asText(),
+                    node.get("responseData").asText()
+            );
+        }
+
+    }
+
 }
