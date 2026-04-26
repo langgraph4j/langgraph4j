@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.spring.ai;
 
 import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.tool.SpringAIToolResponseBuilder;
 import org.bsc.langgraph4j.spring.ai.tool.SpringAIToolService;
 import org.bsc.langgraph4j.utils.TypeRef;
@@ -69,7 +70,7 @@ public class ToolTest {
                 toolName,
                 "{ \"arg0\": \"test1\"}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of()).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
 
         assertNotNull(callResult);
         assertTrue(callResult.gotoNodeSafe().isEmpty());
@@ -109,7 +110,7 @@ public class ToolTest {
                 toolName,
                 "{}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of()).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
 
         assertNotNull(callResult);
         assertTrue(callResult.gotoNodeSafe().isEmpty());
@@ -156,7 +157,7 @@ public class ToolTest {
                 toolName,
                 "{ \"arg0\": \"test2\"}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of()).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
 
         assertNotNull(callResult);
 

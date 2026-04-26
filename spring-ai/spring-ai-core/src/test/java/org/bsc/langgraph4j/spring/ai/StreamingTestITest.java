@@ -239,7 +239,7 @@ public class StreamingTestITest {
             if( lastMessage instanceof AssistantMessage assistantMessage ) {
                 if( assistantMessage.hasToolCalls() ) {
 
-                    return toolService.executeFunctions( assistantMessage.getToolCalls(), state.data() )
+                    return toolService.executeFunctions( assistantMessage.getToolCalls(), state.data(), MessagesState.MESSAGES_STATE )
                             .thenApply(Command::update);
 
                 }

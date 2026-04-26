@@ -16,10 +16,12 @@ public class SpringAIJacksonStateSerializer<State extends AgentState>  extends J
         AssistantMessageHandler.Deserializer ai = new AssistantMessageHandler.Deserializer();
         AssistantMessageHandler.ToolCallDeserializer toolCall = new AssistantMessageHandler.ToolCallDeserializer();
         ToolResponseMessageHandler.Deserializer tool = new ToolResponseMessageHandler.Deserializer();
+        ToolResponseMessageHandler.ToolResponseDeserializer toolResponse = new ToolResponseMessageHandler.ToolResponseDeserializer();
 
         static void registerTo( SimpleModule module ) {
             module
                     .addDeserializer(ToolResponseMessage.class, tool)
+                    .addDeserializer(ToolResponseMessage.ToolResponse.class, toolResponse)
                     .addDeserializer(SystemMessage.class, system )
                     .addDeserializer(UserMessage.class, user )
                     .addDeserializer(AssistantMessage.class, ai )
@@ -35,14 +37,17 @@ public class SpringAIJacksonStateSerializer<State extends AgentState>  extends J
         AssistantMessageHandler.Serializer ai = new AssistantMessageHandler.Serializer();
         AssistantMessageHandler.ToolCallSerializer toolCall = new AssistantMessageHandler.ToolCallSerializer();
         ToolResponseMessageHandler.Serializer tool = new ToolResponseMessageHandler.Serializer();
+        ToolResponseMessageHandler.ToolResponseSerializer toolResponse = new ToolResponseMessageHandler.ToolResponseSerializer();
 
         static void registerTo( SimpleModule module ) {
             module
                     .addSerializer(ToolResponseMessage.class, tool)
+                    .addSerializer(ToolResponseMessage.ToolResponse.class, toolResponse)
                     .addSerializer(SystemMessage.class, system)
                     .addSerializer(UserMessage.class, user)
                     .addSerializer(AssistantMessage.class, ai)
                     .addSerializer(AssistantMessage.ToolCall.class, toolCall)
+
             ;
 
         }
@@ -59,6 +64,7 @@ public class SpringAIJacksonStateSerializer<State extends AgentState>  extends J
 
         typeMapper
                 .register(new TypeMapper.Reference<ToolResponseMessage>(MessageType.TOOL.name()) {} )
+                .register(new TypeMapper.Reference<ToolResponseMessage.ToolResponse>( ToolResponseMessage.ToolResponse.class.getName() ) {})
                 .register(new TypeMapper.Reference<SystemMessage>(MessageType.SYSTEM.name()) {} )
                 .register(new TypeMapper.Reference<UserMessage>(MessageType.USER.name()) {} )
                 .register(new TypeMapper.Reference<AssistantMessage>(MessageType.ASSISTANT.name()) {} )
