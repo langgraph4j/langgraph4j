@@ -24,14 +24,30 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.lastOf;
 
+/**
+ * A {@link ToolCallback} backed by a React-style sub-agent whose tool metadata and system
+ * prompt are loaded from a skill source.
+ * <p>
+ * The skill front matter defines the exposed tool name, description, and optional allowed
+ * tool list, while the Markdown body becomes the sub-agent system prompt.
+ */
 public interface SkilledReactSubAgent extends ToolCallback, AgentEx.ToolBehaviour<Message, AgentExecutorEx.State> {
 
+    /**
+     * Input passed to the generated tool callback.
+     *
+     * @param context all conversation context needed by the skill to perform the task
+     */
     record Input(
         @ToolParam(description = """
     all information extracted by conversation needed to perform the required task
     """) String context) {
     }
 
+    /**
+     * Builder for creating a {@link SkilledReactSubAgent} from a skill definition and the
+     * underlying React agent configuration.
+     */
     class Builder extends ReactAgentBuilderEx<Builder, AgentExecutorEx.State> {
 
         private record AgentImpl(ToolCallback delegate,
@@ -47,6 +63,17 @@ public interface SkilledReactSubAgent extends ToolCallback, AgentEx.ToolBehaviou
                 return getToolDefinition().name();
             }
 
+            /**
+             * Registers the sub-agent as a node in the parent graph and adapts tool execution
+             * requests to the sub-agent message format.
+             * <p>
+             * Before invoking the sub-graph, the pending tool call arguments are wrapped as a
+             * {@link UserMessage}. After completion, the last sub-agent message is converted back
+             * into a {@link ToolResponseMessage} associated with the original tool call id.
+             *
+             * @param graph the parent graph receiving this sub-agent node
+             * @throws GraphStateException if graph node registration fails
+             */
             @Override
             public void addToGraph(StateGraph<AgentExecutorEx.State> graph) throws GraphStateException {
                 graph.addWrapCallNodeHook(name(), (nodeId, state, config, action) ->
@@ -102,6 +129,18 @@ public interface SkilledReactSubAgent extends ToolCallback, AgentEx.ToolBehaviou
             }
         }
 
+        /**
+         * Builds a skill-backed React sub-agent from the provided skill source.
+         * <p>
+         * The skill front matter must define at least the {@code name} and
+         * {@code description} properties. When {@code allowed-tools} is present, the current
+         * tool set is filtered before compiling the sub-agent.
+         *
+         * @param compileConfig the compile configuration to use, or {@code null} to use defaults
+         * @param skillSource the source used to load the skill markdown definition
+         * @return a configured {@link SkilledReactSubAgent}
+         * @throws Exception if the skill cannot be loaded or the agent cannot be built
+         */
         public SkilledReactSubAgent build(CompileConfig compileConfig, SkillSource skillSource ) throws Exception {
 
             final var parser = SkillParser.of(skillSource.content());
@@ -145,6 +184,11 @@ public interface SkilledReactSubAgent extends ToolCallback, AgentEx.ToolBehaviou
 
     }
 
+    /**
+     * Creates a new builder for configuring a skill-backed React sub-agent.
+     *
+     * @return a new {@link Builder} instance
+     */
     static Builder builder() {
         return new Builder();
     }
