@@ -1,4 +1,4 @@
-package org.bsc.langgraph4j;//DEPS org.bsc.langgraph4j:spring-ai-agent-archetype:1.8.10
+//DEPS org.bsc.langgraph4j:spring-ai-agent-archetype:1.8.10
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.10
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS org.springframework.ai:spring-ai-bom:1.1.0@pom
@@ -22,8 +22,6 @@ import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutor;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AiModel;
-import org.bsc.langgraph4j.spring.ai.agentexecutor.TestTools;
-import org.bsc.langgraph4j.spring.ai.agentexecutor.gemini.TestTools4Gemini;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
