@@ -10,10 +10,7 @@
 - Tool registration from `ToolCallback`, `ToolCallbackProvider`, or annotated tool objects.
 - Optional LangGraph Studio integration for interactive graph execution.
 
-<table>
-<tr>
-<td>
-
+---- 
 ```mermaid
 ---
 title: AgentExecutor
@@ -36,8 +33,7 @@ flowchart TD
 	classDef ___END__ fill:black,stroke-width:1px,font-size:xx-small;
 
 ```
-</td>
-<td>
+---- 
 
 ```mermaid
 ---
@@ -85,9 +81,6 @@ flowchart TD
 	classDef __START__ fill:black,stroke-width:1px,font-size:xx-small;
 	classDef __END__ fill:black,stroke-width:1px,font-size:xx-small;
 ```
-</td>
-</tr>
-</table>
 
 ## Installation
 
