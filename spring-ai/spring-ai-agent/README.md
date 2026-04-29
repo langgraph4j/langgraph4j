@@ -10,6 +10,85 @@
 - Tool registration from `ToolCallback`, `ToolCallbackProvider`, or annotated tool objects.
 - Optional LangGraph Studio integration for interactive graph execution.
 
+<table>
+<tr>
+<td>
+
+```mermaid
+---
+title: AgentExecutor
+---
+flowchart TD
+	__START__((start))
+	__END__((stop))
+	agent("agent")
+	action("actions")
+	%%	condition1{"check state"}
+	__START__:::__START__ --> agent:::agent
+	%%	agent:::agent -.-> condition1:::condition1
+	%%	condition1:::condition1 -.->|continue| action:::action
+	agent:::agent -.->|continue| action:::action
+	%%	condition1:::condition1 -.->|end| __END__:::__END__
+	agent:::agent -.->|end| __END__:::__END__
+	action:::action --> agent:::agent
+
+	classDef ___START__ fill:black,stroke-width:1px,font-size:xx-small;
+	classDef ___END__ fill:black,stroke-width:1px,font-size:xx-small;
+
+```
+</td>
+<td>
+
+```mermaid
+---
+title: AgentExecutorEx
+---
+flowchart TD
+	__START__((start)):::__START__
+	__END__((stop)):::__END__
+	model("model")
+	action_dispatcher("action_dispatcher")
+	action1("action 1")
+	action2("action 2")
+	approval_action3("approval action 3")
+	action3("action 3")
+
+	%%	condition1{"check state"}
+	%%	condition2{"check state"}
+	__START__:::__START__ --> model:::model
+	%%	model:::model -.-> condition1:::condition1
+	%%	condition1:::condition1 -.->|continue| action_dispatcher:::action_dispatcher
+	model:::model -.->|continue| action_dispatcher:::action_dispatcher
+	%%	condition1:::condition1 -.->|end| __END_:::__END_
+	model:::model -.->|end| __END__:::__END__
+	action1:::action1 --> action_dispatcher:::action_dispatcher
+	action2:::action2 --> action_dispatcher:::action_dispatcher
+	%%	action_dispatcher:::action_dispatcher -.-> condition2:::condition2
+	%%	condition2:::condition2 -.-> model:::model
+	action_dispatcher:::action_dispatcher -.-> model:::model
+	%%	condition2:::condition2 -.-> __END_:::__END_
+	action_dispatcher:::action_dispatcher -.-> __END__:::__END__
+	%%	condition2:::condition2 -.-> action1:::action1
+	action_dispatcher:::action_dispatcher -.-> action1:::action1
+	%%	condition2:::condition2 -.-> action2:::action2
+	action_dispatcher:::action_dispatcher -.-> action2:::action2
+	%%	condition1{"check state"}
+	%%	condition2{"check state"}
+
+        action3:::action3 --> action_dispatcher:::action_dispatcher
+	approval_action3:::approval_action3 -.-> model:::model
+	approval_action3:::approval_action3 -.-> action_dispatcher:::action_dispatcher
+	approval_action3:::approval_action3 -.->|APPROVED| action3:::action3
+	action_dispatcher:::action_dispatcher -.-> approval_action3:::approval_action3
+
+
+	classDef __START__ fill:black,stroke-width:1px,font-size:xx-small;
+	classDef __END__ fill:black,stroke-width:1px,font-size:xx-small;
+```
+</td>
+</tr>
+</table>
+
 ## Installation
 
 ```xml
