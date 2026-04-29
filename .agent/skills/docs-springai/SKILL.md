@@ -24,7 +24,6 @@ Primary files:
 Site documentation:
 
 - `spring-ai/spring-ai-core/src/site/markdown/index.md`
-- `spring-ai/spring-ai-core/src/site/markdown/00_index.md`
 - `spring-ai/spring-ai-core/src/site/markdown/*.md`
 - `spring-ai/spring-ai-agent/src/site/markdown/index.md`
 

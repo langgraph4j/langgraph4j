@@ -1,163 +1,84 @@
-# 🦜🕸️ Langgraph4j and SpringAI AgentExecutor
+# LangGraph4j Spring AI Agent Executor
 
-This is an implementation of ReACT agent in [Spring AI] using Langgraph4j
+`langgraph4j-springai-agentexecutor` packages ReAct-style agents for Spring AI `ChatModel` applications. It builds on LangGraph4j state graphs and the Spring AI integration utilities from `langgraph4j-spring-ai`.
 
 ## Diagram
 
 ![diagram](./agentexecutor.puml.png)
 
-## Getting Started
+## Installation
 
-
-```java
-@SpringBootApplication
-public class SpringAiDemoApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(SpringAiDemoApplication.class, args);
-    }
-}
+```xml
+<dependency>
+    <groupId>org.bsc.langgraph4j</groupId>
+    <artifactId>langgraph4j-springai-agentexecutor</artifactId>
+    <version>1.9-SNAPSHOT</version>
+</dependency>
 ```
 
-### create ChatModel configuration
+## Build an Agent
+
+```java
+var agent = AgentExecutor.builder()
+        .chatModel(chatModel)
+        .tools(tools)
+        .build()
+        .compile();
+
+var result = agent.stream(
+        GraphInput.args(Map.of("messages", new UserMessage("what is 234 + 45?"))),
+        RunnableConfig.empty());
+```
+
+Use `streaming(true)` and `emitStreamingEnd(true)` when you want incremental output events from the underlying Spring AI model.
+
+## Choose Between `AgentExecutor` and `AgentExecutorEx`
+
+- `AgentExecutor` keeps the graph compact and is suitable for the common `agent -> action -> agent` loop.
+- `AgentExecutorEx` expands tool execution into dedicated nodes and adds approval and dispatch channels in `AgentExecutorEx.State`.
+
+Example:
+
+```java
+var agent = AgentExecutorEx.builder()
+        .chatModel(chatModel)
+        .streaming(true)
+        .approvalOn("threadCount", (nodeId, state) ->
+                InterruptionMetadata.builder(nodeId, state)
+                        .addMetadata("label", "confirm thread count execution?")
+                        .build())
+        .toolsFromObject(new TestTools())
+        .build(compileConfig);
+```
+
+## LangGraph Studio Integration
+
+The test configuration uses `LangGraphStudioConfig` to expose an `AgentExecutorEx` graph:
 
 ```java
 @Configuration
-public class ChatModelConfiguration {
+public class LangGraphStudioConfiguration extends LangGraphStudioConfig {
 
-    @Bean
-    @Profile("ollama")
-    public ChatModel ollamaModel() {
-        return  OllamaChatModel.builder()
-                .ollamaApi( new OllamaApi( "http://localhost:11434" ) )
-                .defaultOptions(OllamaOptions.builder()
-                        .model("qwen2.5:7b")
-                        .temperature(0.1)
-                        .build())
-                .build();
-    }
-
-    @Bean
-    @Profile("openai")
-    public ChatModel openaiModel() {
-        return OpenAiChatModel.builder()
-                .openAiApi(OpenAiApi.builder()
-                        .baseUrl("https://api.openai.com")
-                        .apiKey(System.getenv("OPENAI_API_KEY"))
-                        .build())
-                .defaultOptions(OpenAiChatOptions.builder()
-                        .model("gpt-4o-mini")
-                        .logprobs(false)
-                        .temperature(0.1)
-                        .build())
-                .build();
-
-    }
-
-}
-```
-
-### create agent executor and run in a console application
-
-```java
-@Controller
-public class DemoConsoleController implements CommandLineRunner {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DemoConsoleController.class);
-
-    private final ChatModel chatModel;
-    private final List<ToolCallback> tools;
-
-    public DemoConsoleController( ChatModel chatModel, List<ToolCallback> tools) {
-
-        this.chatModel = chatModel;
-        this.tools = tools;
-    }
+    private final StateGraph<AgentExecutorEx.State> workflow;
 
     @Override
-    public void run(String... args) throws Exception {
-
-        log.info("Welcome to the Spring Boot CLI application!");
-
-        var graph = AgentExecutor.builder()
-                        .chatModel(chatModel)
-                        .tools(tools)
-                        .build();
-
-        var workflow = graph.compile();
-
-        var result = workflow.stream( Map.of( "messages", new UserMessage("what is the result of 234 + 45") ));
-
-        var state = result.stream()
-                .peek( s -> System.out.println( s.node() ) )
-                .reduce((a, b) -> b)
-                .map( NodeOutput::state)
-                .orElseThrow();
-
-        log.info( "result: {}", state.lastMessage()
-                                    .map(AssistantMessage.class::cast)
-                                    .map(AssistantMessage::getText)
-                                    .orElseThrow() );
-    }
-}
-```
-
-### BONUS: Create Langgraph4j Studio configuration
-
-```java
-@Configuration
-public class LangGraphStudioConfiguration extends AbstractLangGraphStudioConfig {
-
-    final LangGraphFlow flow;
-
-    public LangGraphStudioConfiguration(  ChatModel chatModel, List<ToolCallback> tools ) throws GraphStateException {
-
-        var workflow = AgentExecutor.builder()
-                .chatModel( chatModel )
-                .tools( tools )
-                .build();
-
-        var mermaid = workflow.getGraph( GraphRepresentation.Type.MERMAID, "ReAct Agent", false );
-        System.out.println( mermaid.content() );
-
-        this.flow = agentWorkflow( workflow );
-    }
-
-    private LangGraphFlow agentWorkflow( StateGraph<AgentExecutor.State> workflow ) throws GraphStateException {
-
-        return  LangGraphFlow.builder()
+    public Map<String, LangGraphStudioServer.Instance> instanceMap() {
+        return Map.of("sample", LangGraphStudioServer.Instance.builder()
                 .title("LangGraph Studio (Spring AI)")
-                .addInputStringArg( "messages", true, v -> new UserMessage( Objects.toString(v) ) )
-                .stateGraph( workflow )
-                .compileConfig( CompileConfig.builder()
-                        .checkpointSaver( new MemorySaver() )
+                .addInputStringArg("messages", true, v -> new UserMessage(Objects.toString(v)))
+                .graph(workflow)
+                .compileConfig(CompileConfig.builder()
+                        .checkpointSaver(new MemorySaver())
+                        .releaseThread(true)
                         .build())
-                .build();
-
-    }
-
-    @Override
-    public LangGraphFlow getFlow() {
-        return this.flow;
+                .build());
     }
 }
-
 ```
+
+## Related Documentation
+
+- [Spring AI integration overview](../../README.md)
+- [Core Spring AI utilities](../../spring-ai-core/README.md)
+
 [Spring AI]: https://docs.spring.io/spring-ai/reference/index.html
-
-    var agentExecutor = AgentExecutor.graphBuilder()
-            .chatLanguageModel(chatLanguageModel)
-            // add object with tool
-            .toolSpecification(new TestTool())
-            // add dynamic tool
-            .toolExecutor(toolSpecification, toolExecutor)
-            .build();
-
-    var workflow = agentExecutor.compile();
-
-    var state =  workflow.stream( Map.of( "messages", UserMessage.from("Run my test!") ) );
-
-    System.out.println( state.lastMessage() );
-}
-```
-
-
-    
