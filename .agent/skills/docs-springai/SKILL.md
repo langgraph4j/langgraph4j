@@ -21,11 +21,13 @@ Primary files:
 - `spring-ai/spring-ai-core/README.md`: user-facing overview for core Spring AI utilities.
 - `spring-ai/spring-ai-agent/README.md`: user-facing overview for the ReAct agent executor.
 
+<!--
 Site documentation:
 
 - `spring-ai/spring-ai-core/src/site/markdown/index.md`
 - `spring-ai/spring-ai-core/src/site/markdown/*.md`
 - `spring-ai/spring-ai-agent/src/site/markdown/index.md`
+-->
 
 Source-of-truth code and metadata:
 
@@ -60,10 +62,14 @@ Source-of-truth code and metadata:
    - Mention each module's purpose in one or two sentences.
    - Keep it as a navigation hub, not a duplicated full manual.
 
+5. Keep README concise, practical, and immediately useful from GitHub..
+
+<!-->
 5. Keep README and site docs consistent.
    - README files should be concise, practical, and immediately useful from GitHub.
    - Site markdown can include deeper tutorial structure, diagrams, and generated reference content.
    - If a concept appears in both places, names, examples, and links must agree.
+-->
 
 6. Validate the final docs.
    - Check Markdown headings, links, fenced code blocks, and relative paths.

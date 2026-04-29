@@ -59,6 +59,5 @@ Use the Jackson serializer when your agent state contains Spring AI `Message` im
 ## Related Documentation
 
 - [Spring AI integration overview](../README.md)
-- [Core Maven site docs](src/site/markdown/index.md)
 
 [Spring AI]: https://docs.spring.io/spring-ai/reference/index.html

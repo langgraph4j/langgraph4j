@@ -21,6 +21,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - Home: 
     - Overview: index.md    
@@ -44,7 +45,7 @@ nav:
       - PlantUML: how-tos/plantuml.ipynb
       - Hooks: how-tos/hooks.ipynb
     - Integrations: 
-      - integrations/spring-ai.md
+      - integrations/spring-ai/spring-ai-agent/README.md
       - integrations/langchain4j.md      
     - Studio: studio/index.md
     - Builder: builder/index.md

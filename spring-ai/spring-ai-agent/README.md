@@ -1,4 +1,5 @@
-# LangGraph4j Spring AI Agent Executor
+# <img src="https://spring.io/img/favicon.ico" alt="logo" width="25"/> Spring AI Integrations
+
 
 `langgraph4j-springai-agentexecutor` provides ReAct-style agents built on LangGraph4j and Spring AI `ChatModel`. Use it when you want a ready-to-run agent loop with tool callbacks, streaming output, approvals, or sub-agents instead of wiring every node manually.
 
@@ -10,11 +11,9 @@
 - Tool registration from `ToolCallback`, `ToolCallbackProvider`, or annotated tool objects.
 - Optional LangGraph Studio integration for interactive graph execution.
 
----- 
+## Agent Executor Diagram 
+
 ```mermaid
----
-title: AgentExecutor
----
 flowchart TD
 	__START__((start))
 	__END__((stop))
@@ -33,12 +32,10 @@ flowchart TD
 	classDef ___END__ fill:black,stroke-width:1px,font-size:xx-small;
 
 ```
----- 
+
+## AgentExecutorEx Diagram
 
 ```mermaid
----
-title: AgentExecutorEx
----
 flowchart TD
 	__START__((start)):::__START__
 	__END__((stop)):::__END__
@@ -46,7 +43,7 @@ flowchart TD
 	action_dispatcher("action_dispatcher")
 	action1("action 1")
 	action2("action 2")
-	approval_action3("approval action 3")
+	approval_action3("approval action 3 <br>(interruption)")
 	action3("action 3")
 
 	%%	condition1{"check state"}
@@ -165,27 +162,6 @@ var agent = AgentExecutorEx.builder()
 
 `AgentExecutorEx.State` adds channels for pending tool execution requests, tool responses, and next-action dispatching. This is the variant used by the test applications when approval flows or sub-agents are involved.
 
-### Customize the `ChatClient`
-
-Implement `org.bsc.langgraph4j.spring.ai.agent.ChatService` when you need to control how prompts are executed:
-
-```java
-public final class CustomChatService implements ChatService {
-
-    private final ChatClient chatClient;
-
-    public CustomChatService(ChatClient chatClient) {
-        this.chatClient = chatClient;
-    }
-
-    @Override
-    public ChatClient chatClient() {
-        return chatClient;
-    }
-}
-```
-
-Provide that service to the builder with `chatService(...)`.
 
 ## LangGraph Studio
 
@@ -194,7 +170,6 @@ The test configuration in `src/test/java/.../LangGraphStudioConfiguration.java` 
 ## Related Documentation
 
 - [Spring AI integration overview](../README.md)
-- [Agent Maven site docs](src/site/markdown/index.md)
 - [Core Spring AI utilities](../spring-ai-core/README.md)
 
 [Spring AI]: https://docs.spring.io/spring-ai/reference/index.html
