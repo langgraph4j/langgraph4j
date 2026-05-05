@@ -92,22 +92,20 @@ public class AgentExecutorITest {
         public static Streaming FULL = new Streaming(true, true);
     }
 
-    public interface Call {
+    public interface RunAgentCall {
         String userMessage();
-        Streaming streaming();
+        default Streaming streaming() {
+            return Streaming.FULL ;
+        }
     }
 
-    public enum RunAgentCall implements Call {
+    public enum RunAgentEnum implements RunAgentCall {
         twiceTest {
             @Override
             public String userMessage() {
                 return """
                 perform test twice with message 'this is a test' and reports their results
                 """;
-            }
-            @Override
-            public Streaming streaming() {
-                return Streaming.FULL ;
             }
 
         },
@@ -118,18 +116,14 @@ public class AgentExecutorITest {
                 perform test twice with message 'this is a test' and reports their results and also number of current active threads
                 """;
             }
-            @Override
-            public Streaming streaming() {
-                return Streaming.FULL ;
-            }
         }
         ;
 
     }
 
     @ParameterizedTest
-    @EnumSource(RunAgentCall.class)
-    public void runAgentExecutor(Call call) throws Exception {
+    @EnumSource(RunAgentEnum.class)
+    public void runAgentExecutor(RunAgentCall call) throws Exception {
 
         var saver = new MemorySaver();
 
@@ -178,8 +172,8 @@ public class AgentExecutorITest {
     }
 
     @ParameterizedTest
-    @EnumSource(RunAgentCall.class)
-    public void runAgentExecutorEx(Call call) throws Exception {
+    @EnumSource(RunAgentEnum.class)
+    public void runAgentExecutorEx(RunAgentCall call) throws Exception {
 
         final var saver = new MemorySaver();
 
@@ -226,15 +220,50 @@ public class AgentExecutorITest {
 
     }
 
-    public void runAgentWithApproval(Call call) throws Exception {
+    public interface RunAgentWithApprovalCall extends RunAgentCall{
+        String userMessage();
+        default boolean approve() {
+            return true;
+        };
+    }
 
-        var saver = new MemorySaver();
+    public enum RunAgentWithApprovalEnum implements RunAgentWithApprovalCall {
+        twiceTestAndThreadCountApproved {
+            @Override
+            public String userMessage() {
+                return """
+                perform test twice with message 'this is a test' and
+                reports their results and also number of current active threads
+                """;
+            }
+        },
+        twiceTestAndThreadCountDenied {
+            @Override
+            public String userMessage() {
+                return """
+                perform test twice with message 'this is a test' and
+                reports their results and also number of current active threads
+                """;
+            }
+            @Override
+            public boolean approve() {
+                return false;
+            }
 
-        var compileConfig = CompileConfig.builder()
+        };
+    }
+
+    @ParameterizedTest
+    @EnumSource(RunAgentWithApprovalEnum.class)
+    public void runAgentWithApproval(RunAgentWithApprovalCall call) throws Exception {
+
+        final var saver = new MemorySaver();
+
+        final var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
-        var agent = AgentExecutorEx.builder()
+        final var agent = AgentExecutorEx.builder()
                 .chatModel(chatModel)
                 .streaming(call.streaming().active())
                 .emitStreamingEnd(call.streaming().emitStreamingEnd())
@@ -246,57 +275,60 @@ public class AgentExecutorITest {
                 .build()
                 .compile(compileConfig);
 
-        System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
-
-        Map<String, Object> input = Map.of("messages", new UserMessage(call.userMessage()));
+        //System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
         var runnableConfig = RunnableConfig.empty();
 
-        while (true) {
-            var result = agent.stream(GraphInput.args(input), runnableConfig);
+        var input = GraphInput.args( Map.of("messages", new UserMessage(call.userMessage())) );
 
-            var output = result.stream()
-                    .peek(s -> {
-                        if (s instanceof StreamingOutput<?> out) {
-                            System.out.printf("%s: (%s)\n", out.node(), out.chunk());
+        while (true) {
+            final var result = agent.stream(input, runnableConfig)
+                    .forEachAsync( s -> {
+                        if (s instanceof StreamingOutput<?> out  ) {
+                            if( !out.chunk().isEmpty() ) {
+                                System.out.printf("%s: (%s)\n", out.node(), out.chunk());
+                            }
                         } else {
                             System.out.println(s.node());
                         }
                     })
-                    .reduce((a, b) -> b)
-                    .orElseThrow();
+                    .thenApply(GraphResult::from)
+                    .join();
 
-            if (output.isEND()) {
-                System.out.printf("result: %s%n", output.state());
+            if( result.isInterruptionMetadata() ) {
+                final var interruption = result.asInterruptionMetadata();
+
+                System.out.printf( "%s%n", interruption.metadata("label").orElse("Approve action ?"));
+
+                input = ( call.approve() ) ?
+                        GraphInput.resume(Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.APPROVED)) :
+                        GraphInput.resume(Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.REJECTED)) ;
+
+            }
+            else {
+
+                final var state = new AgentExecutorEx.State(result.asStateDataOrLastCheckpointStateData());
+
+                System.out.println( """
+                =============================
+                MESSAGES
+                =============================
+                """);
+                state.messages().forEach(System.out::println);
+
+                System.out.println( """
+                =============================
+                TOOL EXECUTION RESPONSES
+                =============================
+                """);
+                state.toolExecutionResponses().forEach(System.out::println);
                 break;
-
-            } else {
-
-                var returnValue = AsyncGenerator.resultValue(result);
-
-                if (returnValue.isPresent()) {
-
-                    System.out.printf("interrupted: %s%n", returnValue.orElse("NO RESULT FOUND!"));
-
-                    if (returnValue.get() instanceof InterruptionMetadata<?> interruption) {
-
-                        var answer = System.console().readLine(format("%s : (N\\y) \t\n", interruption.metadata("label").orElse("Approve action ?")));
-
-                        if (Objects.equals(answer, "Y") || Objects.equals(answer, "y")) {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.APPROVED.name()));
-                        } else {
-                            runnableConfig = agent.updateState(runnableConfig, Map.of(AgentEx.APPROVAL_RESULT, AgentEx.ApprovalState.REJECTED.name()));
-                        }
-                    }
-                    input = null;
-                }
-
             }
 
         }
     }
 
-    public void runAgentWithInterruption(Call call) throws Exception {
+    public void runAgentWithInterruption(RunAgentCall call) throws Exception {
 
         var saver = new MemorySaver();
 
@@ -346,7 +378,7 @@ public class AgentExecutorITest {
 
     }
 
-    public void runAgentWithCancellation(Call call) throws Exception {
+    public void runAgentWithCancellation(RunAgentCall call) throws Exception {
 
         var saver = new MemorySaver();
 
