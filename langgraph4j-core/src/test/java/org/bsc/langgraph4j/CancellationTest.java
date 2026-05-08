@@ -261,7 +261,8 @@ public class CancellationTest {
                 log.info("iteration is on: {}", output);
             }).exceptionally(ex -> {
                 assertTrue(generator.isCancelled());
-                assertInstanceOf(InterruptedException.class, ex.getCause());
+                assertInstanceOf(GraphRunException.class, ex.getCause());
+                assertInstanceOf(InterruptedException.class, ExceptionUtils.getRootCause(ex));
                 assertEquals( 2, taskExecuted.get() );
                 return "CANCELLED";
             });
