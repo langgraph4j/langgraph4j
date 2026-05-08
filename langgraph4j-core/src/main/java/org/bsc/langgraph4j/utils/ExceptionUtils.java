@@ -15,9 +15,10 @@ public interface ExceptionUtils {
                 .orElse(throwable);
     }
 
-    static Optional<Throwable> findCauseByType( Throwable throwable, Class<? extends Throwable> type ) {
+    static <Ex extends Throwable> Optional<Ex> findCauseByType( Throwable throwable, Class<Ex> type ) {
         return Stream.iterate(throwable, Objects::nonNull, Throwable::getCause )
                 .filter( ( ex ) -> ex.getClass().equals(type) )
-                .reduce((first, second) -> second);
+                .reduce((first, second) -> second)
+                .map( type::cast );
     }
 }
