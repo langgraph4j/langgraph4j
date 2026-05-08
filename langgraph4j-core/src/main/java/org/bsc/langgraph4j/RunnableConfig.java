@@ -1,20 +1,15 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
-import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
-import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.bsc.langgraph4j.utils.TypeRef;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
 
 /**
  * A final class representing configuration for a runnable task.
@@ -23,22 +18,6 @@ import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGra
  * without permanently altering the original configuration.
  */
 public final class RunnableConfig implements HasMetadata {
-
-    protected static class RemoveResumeSubgraphData<State extends AgentState> implements NodeHook.AfterCall<State> {
-
-        @Override
-        public CompletableFuture<Map<String, Object>> applyAfter(String nodeId,
-                                                                 State state,
-                                                                 RunnableConfig config,
-                                                                 Map<String, Object> lastResult)
-        {
-            config.removeMetadata(
-                    resumeSubGraphId( nodeId ),
-                    RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA );
-
-            return completedFuture(lastResult);
-        }
-    }
 
     private static class EmptyHolder {
         static final RunnableConfig value = new RunnableConfig();
@@ -72,6 +51,10 @@ public final class RunnableConfig implements HasMetadata {
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
 
+        }
+
+        public Builder graphId(String graphId) {
+            return super.addMetadata(GRAPH_ID, graphId);
         }
 
         /**
@@ -188,7 +171,7 @@ public final class RunnableConfig implements HasMetadata {
         this.checkPointId   = builder.checkPointId;
         this.nextNode       = builder.nextNode;
         this.streamMode     = builder.streamMode;
-        this.metadata       = new HashMap<>(builder.metadata());
+        this.metadata       = builder.metadata();
     }
     private RunnableConfig() {
         this.threadId = null;
@@ -280,12 +263,14 @@ public final class RunnableConfig implements HasMetadata {
                 .build();
     }
 
-    private void removeMetadata( String ...keys ) {
-        if( metadata != null && !metadata.isEmpty() ) {
-            for (String key : keys) {
-                metadata.remove(key);
-            }
+    public RunnableConfig removeMetadata( String ...keys ) {
+        if( metadata == null || metadata.isEmpty() ) return this;
+
+        final var resultBuilder = new RunnableConfig.Builder( this);
+        for (String key : keys) {
+            resultBuilder.removeMetadata(key);
         }
+        return resultBuilder.build();
     }
 
     @Override
