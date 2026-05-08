@@ -109,7 +109,7 @@ public class SubAgentITest {
                 .tool( AgentCommitAssistant.subAgent(
                         chatModel,
                         compileConfig,
-                        SkillResource.of( resLoader.getResource("classpath:skills/agent-commit/"))))
+                        SkillResource.of( resLoader.getResource("classpath:skills/agent-commit/")), System.out::println))
                 .addNodeHook( logHook.asBeforeCall() )
                 .addNodeHook( logHook.asAfterCall() )
                 .build( compileConfig );

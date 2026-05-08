@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -113,7 +114,12 @@ public interface AgentCommitAssistant {
         }
     }
 
-    static SkilledReactSubAgent subAgent(ChatModel chatModel, CompileConfig compileConfig, SkillSource skillSource) throws Exception {
+    static SkilledReactSubAgent subAgent(ChatModel chatModel,
+                                         CompileConfig compileConfig,
+                                         SkillSource skillSource,
+                                         Consumer<String> logConsumer) throws Exception {
+        final var logHook = new LogHook(logConsumer);
+
         return SkilledReactSubAgent.builder()
                 .chatModel(chatModel)
                 .streaming(true)
@@ -127,6 +133,8 @@ public interface AgentCommitAssistant {
                             .addMetadata( "TOOL_CALLS", toolCall)
                             .build();
                 })
+                .addNodeHook( logHook.asBeforeCall() )
+                .addNodeHook( logHook.asAfterCall() )
                 .build( compileConfig, skillSource );
 
     }

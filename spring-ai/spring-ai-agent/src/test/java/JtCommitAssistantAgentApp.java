@@ -110,7 +110,7 @@ public class JtCommitAssistantAgentApp {
 
                     final var runnableConfig = RunnableConfig.builder()
                             .threadId("agent-commit-001")
-                            .addMetadata(RunnableConfig.GRAPH_ID, "commit-assistant")
+                            .graphId("commit-assistant")
                             .build();
 
 
@@ -178,7 +178,7 @@ public class JtCommitAssistantAgentApp {
                     .checkpointSaver(saver)
                     .build();
 
-            final var agent = AgentExecutorEx.builder()
+            return AgentExecutorEx.builder()
                     .chatModel(chatModel)
                     .defaultSystem("""
                         You are a commit assistant.
@@ -192,15 +192,14 @@ public class JtCommitAssistantAgentApp {
                     .tool( AgentCommitAssistant.subAgent(
                             chatModel,
                             compileConfig,
-                            SkillPath.of( Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-commit/") )) )
+                            SkillPath.of( Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-commit/") ),
+                            logConsumer) )
                     .tools( AgentCommitAssistant.Tools.get().stream()
                                 .filter( t -> t.getToolDefinition().name().equals("git-list-files"))
                                 .toList())
                     .addNodeHook( logHook.asBeforeCall() )
                     .addNodeHook( logHook.asAfterCall() )
-                    .build();
-
-            return agent.compile(compileConfig);
+                    .build(compileConfig);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

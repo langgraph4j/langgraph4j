@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -29,11 +30,13 @@ public record LogHook(Consumer<String> consumer)  implements NodeHook.BeforeCall
                     %s
                     ```
                     """.formatted(
-                config.graphPath(),
-                nodeId,
-                state.messages().stream()
-                        .map(Object::toString)
-                        .collect(Collectors.joining("\n\n"))) );
+                        config.graphId()
+                                .map( id -> "%s:%s".formatted(id, config.graphPath()))
+                                .orElse( Objects.toString(config.graphPath())),
+                        nodeId,
+                        state.messages().stream()
+                                .map(Object::toString)
+                                .collect(Collectors.joining("\n\n"))) );
         return completedFuture( Map.of() );
     }
 
@@ -41,14 +44,16 @@ public record LogHook(Consumer<String> consumer)  implements NodeHook.BeforeCall
     public CompletableFuture<Map<String, Object>> applyAfter(String nodeId, AgentExecutorEx.State state, RunnableConfig config, Map<String, Object> partialResult) {
 
         consumer.accept("""
-                                #### %s:%s `FINISHED`
-                                ```
-                                %s
-                                ```
-                                """.formatted(
-                config.graphPath(),
-                nodeId,
-                CollectionsUtils.toString( partialResult )));
+                #### %s:%s `FINISHED`
+                ```
+                %s
+                ```
+                """.formatted(
+                config.graphId()
+                        .map( id -> "%s:%s".formatted(id, config.graphPath()))
+                        .orElse( Objects.toString(config.graphPath())),
+                    nodeId,
+                    CollectionsUtils.toString( partialResult )));
 
         return completedFuture(partialResult);
     }
