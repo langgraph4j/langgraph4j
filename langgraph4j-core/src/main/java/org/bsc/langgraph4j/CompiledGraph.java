@@ -580,6 +580,15 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     /**
+     * Generates a JSON DSL representation of this graph suitable for React Flow based renderers.
+     *
+     * @return JSON formatted graph DSL
+     */
+    public String toJSON() {
+        return stateGraph.reduce(new JsonDslGenerator<>());
+    }
+
+    /**
      * Applies a reducer function to process the nodes and edges of this graph.
      *
      * <p>This method allows external processing of the graph structure by applying a
