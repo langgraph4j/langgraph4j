@@ -20,13 +20,24 @@ class LangGraphDslVisualizerApplicationTest {
     MockMvc mockMvc;
 
     @Test
-    void indexServesReactFlowSpa() throws Exception {
-        mockMvc.perform(get("/"))
+    void indexServesDslViewShell() throws Exception {
+        mockMvc.perform(get("/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/html"))
                 .andExpect(content().string(containsString("Langgraph4j DSL Visualizer")))
+                .andExpect(content().string(containsString("<script type=\"module\" src=\"/dsl-view.js\"></script>")))
+                .andExpect(content().string(containsString("<lg4j-dsl-view api-url=\"/api/graph\"></lg4j-dsl-view>")));
+    }
+
+    @Test
+    void dslViewServesWebComponentModule() throws Exception {
+        mockMvc.perform(get("/dsl-view.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/javascript"))
                 .andExpect(content().string(containsString("@xyflow/react")))
                 .andExpect(content().string(containsString("react@19")))
+                .andExpect(content().string(containsString("export class LG4JDSLViewElement extends HTMLElement")))
+                .andExpect(content().string(containsString("customElements.define('lg4j-dsl-view', LG4JDSLViewElement)")))
                 .andExpect(content().string(containsString("CircleNode")))
                 .andExpect(content().string(containsString("NodeResizer")))
                 .andExpect(content().string(containsString("SubgraphNode")))
@@ -46,7 +57,7 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().string(containsString("handleNodesChange")))
                 .andExpect(content().string(containsString("onResizeEnd")))
                 .andExpect(content().string(containsString("savedSizes.set(node.id")))
-                .andExpect(content().string(containsString("fetch('/api/graph')")));
+                .andExpect(content().string(containsString("fetch(sampleUrl)")));
     }
 
     @Test
