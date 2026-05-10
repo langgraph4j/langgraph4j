@@ -6,12 +6,10 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProviderRequest;
-import dev.langchain4j.skills.FileSystemSkillLoader;
 import dev.langchain4j.skills.Skill;
 import dev.langchain4j.skills.Skills;
 
 import java.lang.reflect.Method;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -120,7 +118,8 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
 
         final var result = toolProvider.provideTools(request);
 
-        toolMap.putAll(result.tools());
+        result.aiServiceTools().forEach( tool ->
+                toolMap.put(tool.toolSpecification(), tool.toolExecutor()) );
 
         return result();
     }
