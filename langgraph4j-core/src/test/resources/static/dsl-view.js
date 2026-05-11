@@ -269,6 +269,18 @@ function App({ sampleUrl }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  const fitView = useCallback(() => {
+    // Wait two frames so React Flow has committed and measured async-loaded nodes before fitting.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        flowRef.current?.fitView({
+          padding: 0.16,
+          duration: 200
+        });
+      });
+    });
+  }, []);
+
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
       const next = new Set(current);
@@ -333,11 +345,8 @@ function App({ sampleUrl }) {
   }, [renderDsl, sampleUrl]);
 
   React.useEffect(() => {
-    loadSample();
-  }, [loadSample]);
-
-  React.useEffect(() => {
-  }, [edges.length, nodes.length]);
+    loadSample().then(fitView);
+  }, [fitView, loadSample]);
 
   const flow = useMemo(() => h(ReactFlow, {
     nodes,
