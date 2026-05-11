@@ -11,8 +11,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link StreamingChatGenerator}.

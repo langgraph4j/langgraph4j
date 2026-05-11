@@ -10,8 +10,14 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| May 7, 2026 | `1.8.15` | last release
+| Apr 19, 2026 | `1.8.13` | last release
 
+
+| Release line | Java baseline | Notes |
+|---|---|---|
+| `1.8.x` stable releases | Java 17+ | Recommended baseline for core, integrations, and saver modules |
+| `1.8-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
 
 | Release line | Java baseline | Notes |
 |---|---|---|
@@ -52,11 +58,11 @@ LangGraph4j offers several features and benefits:
 
 | Pattern | Best for | Main abstraction | Start here |
 |---|---|---|---|
-| First graph / linear flow | Learning the core execution model | `StateGraph`, normal edges, shared state | [`Your First Graph - A Simple Example`](#your-first-graph---a-simple-example) |
-| Conditional routing | Router-style decisions and dynamic control flow | Conditional edges | [`Edges`](#edges) |
-| Stateful checkpointed flow | Long-running or resumable workflows | `CheckpointSaver`, `CompileConfig` | [`Checkpoints (Persistence)`](#checkpoints-persistence) |
-| Framework-integrated agents | Using LangGraph4j with Java AI frameworks | LangChain4j / Spring AI integrations | [`BONUS: built-in integrations`](#bonus-built-in-integrations) |
-| Visual debugging and inspection | Observing and iterating on graphs interactively | Studio | [`Studio 🤩 - Running Your Graph visually`](#studio--running-your-graph-visually) |
+| First graph / linear flow | Learning the core execution model | `StateGraph`, normal edges, shared state | [`## Your First Graph - A Simple Example`](#your-first-graph---a-simple-example) |
+| Conditional routing | Router-style decisions and dynamic control flow | Conditional edges | [`### Edges`](#edges) |
+| Stateful checkpointed flow | Long-running or resumable workflows | `CheckpointSaver`, `CompileConfig` | [`### Checkpoints (Persistence)`](#checkpoints-persistence) |
+| Framework-integrated agents | Using LangGraph4j with Java AI frameworks | LangChain4j / Spring AI integrations | [`## BONUS: built-in integrations`](#bonus-built-in-integrations) |
+| Visual debugging and inspection | Observing and iterating on graphs interactively | Studio | [`## Studio 🤩 - Running Your Graph visually`](#studio--running-your-graph-visually) |
 
 ## Core Concepts Explained
 
@@ -148,7 +154,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.8.15</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.8.13</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -180,7 +186,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.8.15</version> <!-- Or the current snapshot version -->
+    <version>1.8.13</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
@@ -475,20 +481,26 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 # References
 
-## AI Wiki
+## Projects using LangGraph4j
 
-* [DeepWiki](https://deepwiki.com/langgraph4j/langgraph4j)
-* [Content7](https://context7.com/langgraph4j/langgraph4j)
+* [OpenHuskyAgent (_Agent Runtime Platform_)](https://github.com/HandleCoding/OpenHuskyAgent/tree/main)
+* [spring-ai-alibaba (_use an embedded version in spring-ai-alibaba-graph-core_)](https://github.com/alibaba/spring-ai-alibaba/tree/main)
+* [An ACP bridge to langraph4j and langchain4j](https://github.com/OsgiliathEnterprise/acp-langgraph-langchain-bridge)
+* [A deep research assistant based on the Langgraph4j](https://github.com/imfangs/langgraph4j-deep-researcher)
+* [research4j - Build your own perplexity for your applications](https://github.com/bhavuklabs/research4j)
+* [Multi Agent Banking Assistant with Java using Langraph4j](https://github.com/Azure-Samples/agent-openai-java-banking-assistant-langgraph4j)
+* [Java Async Generator, a Java version of Javascript async generator](https://github.com/bsorrentino/java-async-generator)
+* [AIDEEPIN: Ai-based productivity tools (Chat,Draw,RAG,Workflow etc)](https://github.com/moyangzhan/langchain4j-aideepin)
+* [Dynamo Multi AI Agent POC: Unlock the Power of Spring AI and LangGraph4J](https://github.com/Breezeware-OS/dynamo-multi-ai-agent-langgraph4j-starter)
+* [LangChain4j & LangGraph4j Integrate LangFuse](https://github.com/Kugaaa/langchain4j-langfuse)
 
-## Books
-
-* [Applied AI for Enterprise Java Development(Red Hat Developer e-books)](https://developers.redhat.com/e-books/applied-ai-enterprise-java-development)
 
 ## Articles
 
+* [Skill-Based Sub-Agents with LangGraph4j and Spring AI](https://dev.to/bsorrentino/skill-based-sub-agents-with-langgraph4j-and-spring-ai-52b0)
 * [Building AI-Powered Workflows in Java: A Hands-On Guide to Spring AI and LangGraph4j](https://medium.com/@kandisa.ganesh/building-ai-powered-workflows-in-java-a-hands-on-guide-to-spring-ai-and-langgraph4j-805464ab8a2e)
 * [Beyond the Basics: Building Real-World AI Workflows with LangGraph4j](https://medium.com/@kandisa.ganesh/beyond-the-basics-building-real-world-ai-workflows-with-langgraph4j-8e2f7765c505)
-* [🧭 LangGraph4j Hooks and OpenTelemetry](https://medium.com/dev-genius/langgraph4j-hooks-and-opentelemetry-3bd8de02f9d1)
+* [LangGraph4j Hooks and OpenTelemetry](https://medium.com/dev-genius/langgraph4j-hooks-and-opentelemetry-3bd8de02f9d1)
 * [LangGraph4j Deep Agents (Agent 2.0)](https://bsorrentino.github.io/bsorrentino/ai/2025/10/17/langgraph4j-deepagents.html)
 * [LangGraph4j Meets AG-UI - Building UI/UX in AI Agents era](https://bsorrentino.github.io/bsorrentino/ai/2025/08/21/LangGraph4j-meets-AG-UI.html)
 * [LangGraph4j - Implementing Human-in-the-Loop at ease](https://bsorrentino.github.io/bsorrentino/ai/2025/07/13/LangGraph4j-Agent-with-approval.html)
@@ -499,16 +511,15 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 * [AI Agent in Java with LangGraph4j](https://bsorrentino.github.io/bsorrentino/ai/2024/05/20/langgraph-for-java.html)
 * [Building Stateful Multi AI Agents -LangGraph4J & Spring AI](https://medium.com/@ganeshmoorthy5999/building-stateful-multi-ai-agents-langgraph4j-spring-ai-c0046e293d00)
 
-## Projects
+## Useful links
 
-* [An ACP bridge to langraph4j and langchain4j](https://github.com/OsgiliathEnterprise/acp-langgraph-langchain-bridge)
-* [A deep research assistant based on the Langgraph4j](https://github.com/imfangs/langgraph4j-deep-researcher)
-* [research4j - Build your own perplexity for your applications](https://github.com/bhavuklabs/research4j)
-* [Multi Agent Banking Assistant with Java using Langraph4j](https://github.com/Azure-Samples/agent-openai-java-banking-assistant-langgraph4j)
-* [Java Async Generator, a Java version of Javascript async generator](https://github.com/bsorrentino/java-async-generator)
-* [AIDEEPIN: Ai-based productivity tools (Chat,Draw,RAG,Workflow etc)](https://github.com/moyangzhan/langchain4j-aideepin)
-* [Dynamo Multi AI Agent POC: Unlock the Power of Spring AI and LangGraph4J](https://github.com/Breezeware-OS/dynamo-multi-ai-agent-langgraph4j-starter)
-* [LangChain4j & LangGraph4j Integrate LangFuse](https://github.com/Kugaaa/langchain4j-langfuse)
+* [Shypd (_The largest open index of AI tools_)](https://shypd.ai/tools/langgraph4j)
+* [DeepWiki](https://deepwiki.com/langgraph4j/langgraph4j)
+* [Content7](https://context7.com/langgraph4j/langgraph4j)
+
+## Books
+
+* [Applied AI for Enterprise Java Development(Red Hat Developer e-books)](https://developers.redhat.com/e-books/applied-ai-enterprise-java-development)
 
 <!--
 * [LangGraph - LangChain Blog][langgraph.blog]

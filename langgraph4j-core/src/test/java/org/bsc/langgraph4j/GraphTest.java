@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.state.*;
 import org.bsc.langgraph4j.utils.EdgeMappings;
+import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncCommandAction.command_async;
@@ -166,7 +168,9 @@ public class GraphTest implements LG4JLoggable {
 
         CompiledGraph<AgentState> app = workflow.compile();
 
-        Optional<AgentState> result = app.invoke(Map.of("input", "test1"));
+        Optional<AgentState> result = app.invoke(
+                        GraphInput.args(Map.of("input", "test1")),
+                        RunnableConfig.empty());
         assertTrue(result.isPresent());
 
         Map<String, String> expected = Map.of("input", "test1", "prop1", "test");
@@ -199,7 +203,7 @@ public class GraphTest implements LG4JLoggable {
                 .addMetadata("configData", "test")
                 .build();
 
-        var result = app.invoke(Map.of("input", "test1"), config);
+        var result = app.invoke(GraphInput.args(Map.of("input", "test1")), config);
         assertTrue(result.isPresent());
 
         Map<String, String> expected = Map.of("input", "test1", "prop1", "test");
@@ -228,7 +232,9 @@ public class GraphTest implements LG4JLoggable {
 
         CompiledGraph<AgentState> app = workflow.compile();
 
-        Optional<AgentState> result = app.invoke(Map.of("input", "test1", "prop1", "test"));
+        Optional<AgentState> result = app.invoke(
+                GraphInput.args(Map.of("input", "test1", "prop1", "test")),
+                RunnableConfig.empty());
         assertTrue(result.isPresent());
 
         Map<String, String> expected = Map.of("input", "test1");
@@ -272,7 +278,7 @@ public class GraphTest implements LG4JLoggable {
 
         CompiledGraph<State> app = workflow.compile();
 
-        Optional<State> result = app.invoke(Map.of());
+        Optional<State> result = app.invoke(GraphInput.noArgs(), RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         log.info( "{}",result.get().data());
@@ -306,7 +312,7 @@ public class GraphTest implements LG4JLoggable {
 
         CompiledGraph<State> app = workflow.compile();
 
-        Optional<State> result = app.invoke(Map.of());
+        Optional<State> result = app.invoke(GraphInput.noArgs(), RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         log.info("{}", result.get().data());
@@ -342,7 +348,7 @@ public class GraphTest implements LG4JLoggable {
 
         CompiledGraph<State> app = workflow.compile();
 
-        Optional<State> result = app.invoke(Map.of());
+        Optional<State> result = app.invoke(GraphInput.noArgs(), RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         System.out.println(result.get().data());
@@ -401,7 +407,7 @@ public class GraphTest implements LG4JLoggable {
                 .addEdge("step_3", END)
                 .compile();
 
-        var result = workflowParent.stream(Map.of())
+        var result = workflowParent.stream(GraphInput.noArgs(), RunnableConfig.empty())
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -445,7 +451,7 @@ public class GraphTest implements LG4JLoggable {
                 .addParallelNodeExecutor( "A", ForkJoinPool.commonPool() )
                 .build( );
 
-        var result = app.stream(Map.of(), runnableConfig)
+        var result = app.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -475,7 +481,7 @@ public class GraphTest implements LG4JLoggable {
                 .addParallelNodeExecutor( START, Executors.newSingleThreadExecutor() )
                 .build( );
 
-        result = app.stream(Map.of(), runnableConfig)
+        result = app.stream(GraphInput.noArgs(), runnableConfig)
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -585,7 +591,7 @@ public class GraphTest implements LG4JLoggable {
 
         var app = workflow.compile();
 
-        var iterator = app.stream(Map.of());
+        var iterator = app.stream(GraphInput.noArgs(), RunnableConfig.empty());
         for (var i : iterator) {
             System.out.println(i);
         }
@@ -619,7 +625,7 @@ public class GraphTest implements LG4JLoggable {
                 .addEdge( "C2", END )
                 .compile();
 
-        var steps = graph.stream(Map.of()).stream()
+        var steps = graph.stream(GraphInput.noArgs(), RunnableConfig.empty()).stream()
                 .peek(System.out::println)
                 .toList();
 
@@ -651,7 +657,7 @@ public class GraphTest implements LG4JLoggable {
                 .compile();
 
         var result = workflow.invoke(   GraphInput.args(Map.of("input", "test1")),
-                RunnableConfig.builder().build());
+                RunnableConfig.empty());
         assertTrue( result.isPresent() );
         var state = result.get();
         assertIterableEquals( List.of("node_1", "node_2", "node_3", "node_4"), state.messages());
@@ -702,7 +708,7 @@ public class GraphTest implements LG4JLoggable {
                 .compile();
 
         var result = workflow.invoke(   GraphInput.args(Map.of("input", "test1")),
-                RunnableConfig.builder().build());
+                RunnableConfig.empty());
         assertTrue( result.isPresent() );
         var state = result.get();
         assertIterableEquals( List.of("node_1", "node_2"), state.messages());
@@ -741,5 +747,67 @@ public class GraphTest implements LG4JLoggable {
 
         assertEquals(sourceMap,result);
 
+    }
+
+    @Test
+    void testHandleRuntimeException() throws GraphStateException {
+        final var workflow = new StateGraph<>(MessagesState.SCHEMA, State::new)
+                .addNode( "node_with_exception", ( state, config ) ->
+                    failedFuture(new RuntimeException("test exception"))
+                )
+                .addEdge(START, "node_with_exception")
+                .addEdge("node_with_exception", END)
+                .compile();
+                ;
+
+        try {
+            workflow.invoke( GraphInput.noArgs(), RunnableConfig.builder()
+                                                    .addMetadata(RunnableConfig.GRAPH_ID, "handle_exception")
+                                                    .build() );
+        }
+        catch( Exception ex ) {
+
+            final var runException = ExceptionUtils.findCauseByType(ex, GraphRunException.class);
+            assertTrue( runException.isPresent() );
+            final var config = runException.get().config();
+            assertEquals("node_with_exception", config.nodeId() );
+            assertTrue( config.graphId().isPresent() );
+            assertEquals("handle_exception", config.graphId().orElse(null) );
+
+            final var rootCause = ExceptionUtils.getRootCause( runException.get() );
+
+            assertEquals( "test exception", rootCause.getMessage() );
+
+        }
+    }
+    @Test
+
+    void testHandleGraphRunException() throws GraphStateException {
+        final var workflow = new StateGraph<>(MessagesState.SCHEMA, State::new)
+                .addNode( "node_with_exception", ( state, config ) ->
+                        failedFuture(new GraphRunException( config, "test exception"))
+                )
+                .addEdge(START, "node_with_exception")
+                .addEdge("node_with_exception", END)
+                .compile();
+        ;
+
+        try {
+            workflow.invoke( GraphInput.noArgs(), RunnableConfig.builder()
+                    .addMetadata(RunnableConfig.GRAPH_ID, "handle_exception")
+                    .build() );
+        }
+        catch( Exception ex ) {
+
+            final var rootException = ExceptionUtils.getRootCause(ex);
+            assertInstanceOf( GraphRunException.class, rootException);
+            final var runException = (GraphRunException)rootException;
+            final var config = runException.config();
+            assertEquals("node_with_exception", config.nodeId() );
+            assertTrue( config.graphId().isPresent() );
+            assertEquals("handle_exception", config.graphId().orElse(null) );
+            assertEquals( "test exception", runException.getMessage() );
+
+        }
     }
 }

@@ -3,7 +3,6 @@ package org.bsc.langgraph4j.agentexecutor;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,9 @@ public abstract class AbstractAgentExecutorTest {
 
         final var graph = newGraph(serializer).compile( compileConfig );
 
-        final var iterator = graph.stream( Map.of( "messages", UserMessage.from(prompt)), runnableConfig );
+        final var iterator = graph.stream(
+                GraphInput.args(Map.of( "messages", UserMessage.from(prompt))),
+                runnableConfig );
 
         return iterator.stream().toList();
     }
@@ -51,7 +52,9 @@ public abstract class AbstractAgentExecutorTest {
 
         final var graph = newGraphWithStreaming(serializer, emitStreamingOutputEnd).compile( compileConfig );
 
-        final var iterator = graph.stream( Map.of( "messages", UserMessage.from(prompt)), runnableConfig );
+        final var iterator = graph.stream(
+                    GraphInput.args(Map.of( "messages", UserMessage.from(prompt))),
+                    runnableConfig );
 
         return iterator.stream()
                 .filter( output -> {
@@ -76,7 +79,7 @@ public abstract class AbstractAgentExecutorTest {
     void executeAgentWithSingleToolInvocation( newGraphEnum type ) throws Exception {
 
         final var cConfig = CompileConfig.builder().build();
-        final var rConfig = RunnableConfig.builder().build();
+        final var rConfig = RunnableConfig.empty();
 
         final var prompt = "what is the result of test with messages: 'MY FIRST TEST'";
 
@@ -103,7 +106,7 @@ public abstract class AbstractAgentExecutorTest {
     @EnumSource(newGraphEnum.class)
     void executeAgentWithDoubleToolInvocation( newGraphEnum type ) throws Exception {
         final var cConfig = CompileConfig.builder().build();
-        final var rConfig = RunnableConfig.builder().build();
+        final var rConfig = RunnableConfig.empty();
 
         final var prompt = "what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'";
 
@@ -141,8 +144,8 @@ public abstract class AbstractAgentExecutorTest {
         final var graph = newGraph(AgentExecutor.Serializers.JSON).compile( compileConfig );
 
         var iterator = graph.stream(
-                Map.of( "messages",
-                        UserMessage.from("what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'")),
+                GraphInput.args(Map.of( "messages",
+                        UserMessage.from("what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'"))),
                 config );
 
         var states = iterator.stream()
@@ -159,9 +162,9 @@ public abstract class AbstractAgentExecutorTest {
         //var stateHistory = graph.lastStateOf( config ).orElseThrow();
 
         iterator = graph.stream(
-                Map.of( "messages",
+                GraphInput.args(Map.of( "messages",
                         UserMessage.from(
-                                "what are the results of tests?")),
+                                "what are the results of tests?"))),
                 config );
 
         states = iterator.stream()

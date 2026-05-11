@@ -42,7 +42,10 @@ public class AgentExecutorStreamingITest {
 
     private List<AgentExecutor.State> executeAgent( String prompt )  throws Exception {
 
-        return toStateList( newGraph().compile().stream( Map.of( "messages", UserMessage.from(prompt) ) ) );
+        return toStateList( newGraph()
+                            .compile()
+                            .stream( GraphInput.args(Map.of( "messages", UserMessage.from(prompt)) ),
+                                     RunnableConfig.empty() ));
     }
 
     private List<AgentExecutor.State> executeAgent( String prompt,
@@ -58,7 +61,7 @@ public class AgentExecutorStreamingITest {
 
         var graph = newGraph().compile( compileConfig );
 
-        return toStateList(  graph.stream(  Map.of( "messages", UserMessage.from(prompt) ), config ) );
+        return toStateList(  graph.stream(  GraphInput.args(Map.of( "messages", UserMessage.from(prompt)) ), config ) );
     }
 
     private List<AgentExecutor.State> toStateList(AsyncGenerator<NodeOutput<AgentExecutor.State>> generator ) {
@@ -103,7 +106,7 @@ public class AgentExecutorStreamingITest {
 
         var graph = newGraph().compile( compileConfig );
 
-        var generator = graph.stream(  Map.of( "messages", UserMessage.from(prompt) ), config );
+        var generator = graph.stream(  GraphInput.args(Map.of( "messages", UserMessage.from(prompt)) ), config );
 
         CompletableFuture.runAsync(() -> {
             try {

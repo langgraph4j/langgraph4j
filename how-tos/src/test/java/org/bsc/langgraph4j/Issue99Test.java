@@ -101,7 +101,7 @@ public class Issue99Test {
 
         // EXPLAIN
         intentRecognizeNode.setIntent("explain");
-        var result = workflow.stream( Map.of("input", "explain me") )
+        var result = workflow.stream( GraphInput.args(Map.of("input", "explain me")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -112,7 +112,7 @@ public class Issue99Test {
 
         // QUERY
         intentRecognizeNode.setIntent("query");
-        result = workflow.stream( Map.of("input", "search for") )
+        result = workflow.stream( GraphInput.args(Map.of("input", "search for")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -153,7 +153,7 @@ public class Issue99Test {
 
         // EXPLAIN
         intentRecognizeNode.setIntent("explain");
-        var result = workflow.stream( Map.of("input", "explain me") )
+        var result = workflow.stream( GraphInput.args(Map.of("input", "explain me")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -164,7 +164,7 @@ public class Issue99Test {
 
         // QUERY
         intentRecognizeNode.setIntent("query");
-        result = workflow.stream( Map.of("input", "search for") )
+        result = workflow.stream( GraphInput.args(Map.of("input", "search for")), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)
@@ -181,7 +181,7 @@ public class Issue99Test {
     private <S extends AgentState> NodeOutput<S> evaluateWithConfig( StateGraph<S> graph, CompileConfig config ) throws GraphStateException {
         var workflow = graph.compile(config);
 
-        var result = workflow.stream( Map.of() )
+        var result = workflow.stream( GraphInput.noArgs(), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)

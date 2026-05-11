@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 
@@ -46,11 +45,11 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
 
         if (targetFolderAsFile.exists()) {
             if (targetFolderAsFile.isFile()) {
-                throw new IllegalArgumentException(format("targetFolder '%s' must be a folder", targetFolder)); // TODO: format"targetFolder must be a directory");
+                throw new IllegalArgumentException("targetFolder '%s' must be a folder".formatted( targetFolder)); // TODO: format"targetFolder must be a directory");
             }
         } else {
             if (!targetFolderAsFile.mkdirs()) {
-                throw new IllegalArgumentException(format("targetFolder '%s' cannot be created", targetFolder)); // TODO: format"targetFolder cannot be created");
+                throw new IllegalArgumentException("targetFolder '%s' cannot be created".formatted( targetFolder)); // TODO: format"targetFolder cannot be created");
             }
         }
 
@@ -143,7 +142,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
             return new Tag( threadId(config), List.of());
         }
 
-        final var versionPattern = Pattern.compile(format("%s-v(\\d+)\\%s$", getBaseName(config), extension));
+        final var versionPattern = Pattern.compile("%s-v(\\d+)\\%s$".formatted( getBaseName(config), extension));
 
         int maxVersion = 0;
         try (var stream = Files.list(targetFolder)) {
@@ -160,14 +159,14 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         }
 
         int nextVersion = maxVersion + 1;
-        var backupFilename = format("%s-v%d%s", getBaseName(config), nextVersion, extension);
+        var backupFilename = "%s-v%d%s".formatted( getBaseName(config), nextVersion, extension);
         Path backupPath = targetFolder.resolve(backupFilename);
 
         Files.copy(currentPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
 
         Files.delete(currentPath);
 
-        return new Tag( threadId(config), checkpoints );
+        return new Tag( threadId(config), checkpoints, nextVersion );
     }
 
     /**

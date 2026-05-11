@@ -12,9 +12,15 @@ cp -r src/site/mkdocs target/mkdocs
 cp how-tos/*.ipynb target/mkdocs/how-tos
 cp -r target/staging/apidocs target/mkdocs/apidocs
 
+# Copy Spring AI docs
+rsync -avm \
+  --include='*/' \
+  --include='README.md' \
+  --exclude='*' \
+  spring-ai/ target/mkdocs/integrations/spring-ai/
+
 source .docsenv/bin/activate
 
 mkdocs build
 
 mkdocs serve 
-

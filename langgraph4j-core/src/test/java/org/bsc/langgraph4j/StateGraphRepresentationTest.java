@@ -1,5 +1,7 @@
 package org.bsc.langgraph4j;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
@@ -14,9 +16,12 @@ import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class StateGraphRepresentationTest {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     CompletableFuture<Map<String, Object>> dummyNodeAction(AgentState state) {
         return CompletableFuture.completedFuture(Map.of());
@@ -620,5 +625,41 @@ end
                 	classDef __START__ fill:black,stroke-width:1px,font-size:xx-small;
                 	classDef __END__ fill:black,stroke-width:1px,font-size:xx-small;
                 """, result.content());
+    }
+
+    private JsonNode firstNodeById(JsonNode json, String id) {
+        for (JsonNode node : json.get("nodes")) {
+            if (id.equals(node.get("id").asText())) {
+                return node;
+            }
+        }
+        throw new AssertionError("node not found: " + id);
+    }
+
+    private JsonNode firstEdgeByLabel(JsonNode json, String label) {
+        for (JsonNode edge : json.get("edges")) {
+            if (edge.has("label") && label.equals(edge.get("label").asText())) {
+                return edge;
+            }
+        }
+        throw new AssertionError("edge not found with label: " + label);
+    }
+
+    private JsonNode firstEdge(JsonNode json, String source, String target) {
+        for (JsonNode edge : json.get("edges")) {
+            if (source.equals(edge.get("source").asText()) && target.equals(edge.get("target").asText())) {
+                return edge;
+            }
+        }
+        throw new AssertionError("edge not found: " + source + " -> " + target);
+    }
+
+    private boolean arrayContains(JsonNode array, String value) {
+        for (JsonNode item : array) {
+            if (value.equals(item.asText())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

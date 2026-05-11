@@ -210,8 +210,7 @@ public record GraphResult( Object result, Type type ) {
     }
 
     public Map<String,Object> asLastCheckpointStateData() {
-        return asCheckpointSaverTag().checkpoints().stream()
-                    .findFirst()
+        return asCheckpointSaverTag().lastCheckpoint()
                     .map( Checkpoint::getState )
                     .orElseThrow(() -> new IllegalStateException("Checkpoint saver tag doesn't contain any checkpoint"));
     }

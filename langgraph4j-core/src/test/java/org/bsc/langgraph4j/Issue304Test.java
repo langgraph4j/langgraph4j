@@ -81,7 +81,7 @@ public class Issue304Test {
         @SuppressWarnings("unchecked")
         final var interruptableAction = (InterruptableAction<AgentState>)proxyInstance;
 
-        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.builder().build() );
+        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.empty() );
         assertInstanceOf(Optional.class, resultMetadata);
         assertTrue( resultMetadata.isPresent() );
         assertInstanceOf(InterruptionMetadata.class, resultMetadata.get());
@@ -104,7 +104,7 @@ public class Issue304Test {
         @SuppressWarnings("unchecked")
         final var interruptableAction = (InterruptableAction<AgentState>)nodeAction;
 
-        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.builder().build() );
+        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.empty() );
         assertInstanceOf(Optional.class, resultMetadata);
         assertTrue( resultMetadata.isPresent() );
         assertInstanceOf(InterruptionMetadata.class, resultMetadata.get());
@@ -119,7 +119,7 @@ public class Issue304Test {
 
         var nodeAction = AsyncNodeActionWithConfig.node_async( new NodeActionWithConfigTest() );
 
-        var result = nodeAction.apply( state, RunnableConfig.builder().build() ).join();
+        var result = nodeAction.apply( state, RunnableConfig.empty() ).join();
         assertInstanceOf(Map.class, result);
         assertIterableEquals( Map.of("k1", "v1").entrySet(), result.entrySet() );
 
@@ -128,7 +128,7 @@ public class Issue304Test {
         @SuppressWarnings("unchecked")
         final var interruptableAction = (InterruptableAction<AgentState>)nodeAction;
 
-        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.builder().build() );
+        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.empty() );
         assertInstanceOf(Optional.class, resultMetadata);
         assertTrue( resultMetadata.isPresent() );
         assertInstanceOf(InterruptionMetadata.class, resultMetadata.get());
@@ -143,7 +143,7 @@ public class Issue304Test {
 
         var asyncNodeAction = AsyncNodeActionWithConfig.of( new AsyncNodeActionTest() );
 
-        var result = asyncNodeAction.apply( state, RunnableConfig.builder().build() ).join();
+        var result = asyncNodeAction.apply( state, RunnableConfig.empty() ).join();
         assertInstanceOf(Map.class, result);
         assertIterableEquals( Map.of("k1", "v1").entrySet(), result.entrySet() );
 
@@ -152,7 +152,7 @@ public class Issue304Test {
         @SuppressWarnings("unchecked")
         final var interruptableAction = (InterruptableAction<AgentState>)asyncNodeAction;
 
-        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.builder().build() );
+        var resultMetadata = interruptableAction.interrupt( "node1", state, RunnableConfig.empty() );
         assertInstanceOf(Optional.class, resultMetadata);
         assertTrue( resultMetadata.isPresent() );
         assertInstanceOf(InterruptionMetadata.class, resultMetadata.get());

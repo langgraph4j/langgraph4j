@@ -2,10 +2,7 @@ package org.bsc.langgraph4j.agentexecutor.app;
 
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
-import org.bsc.langgraph4j.CompileConfig;
-import org.bsc.langgraph4j.GraphRepresentation;
-import org.bsc.langgraph4j.GraphResult;
-import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.agent.AgentEx;
 import org.bsc.langgraph4j.agentexecutor.AgentExecutor;
@@ -83,10 +80,10 @@ public class DemoConsoleController implements CommandLineRunner {
 
         Map<String,Object> input = Map.of("messages", UserMessage.from(userMessage) );
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
         while( true ) {
-            var result = agent.stream(input, runnableConfig );
+            var result = agent.stream( GraphInput.args(input), runnableConfig );
 
             var output = result.stream()
                     .peek(s -> {
@@ -147,9 +144,9 @@ public class DemoConsoleController implements CommandLineRunner {
         log.info( "{}", agent.getGraph( GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
         Map<String,Object> input = Map.of("messages", new UserMessage(userMessage) );
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.empty();
 
-        var result = agent.stream(input, runnableConfig );
+        var result = agent.stream( GraphInput.args(input), runnableConfig );
 
         var output = result.stream()
                 .peek(s -> {

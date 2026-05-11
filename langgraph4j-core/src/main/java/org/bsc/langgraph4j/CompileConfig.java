@@ -164,7 +164,7 @@ public class CompileConfig {
     private BaseCheckpointSaver checkpointSaver;
     private Set<String> interruptsBefore = Set.of();
     private Set<String> interruptsAfter = Set.of();
-    private boolean releaseThread = false;
+    private boolean releaseThread = true;
     private boolean interruptBeforeEdge = false;
     private int recursionLimit = 25;
 

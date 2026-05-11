@@ -1,13 +1,19 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
+import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
+import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.exception.SubGraphInterruptionException;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.hook.WrapCallHookSubgraphAware;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.jackson.TypeMapper;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.Channel;
@@ -17,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -29,8 +36,7 @@ import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CompiledSubGraphTest {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CompiledSubGraphTest.class);
+public class CompiledSubGraphTest implements LG4JLoggable {
 
     static class MyState extends MessagesState<String> {
 
@@ -41,6 +47,30 @@ public class CompiledSubGraphTest {
         boolean resumeSubgraph() {
             return this.<Boolean>value("resume_subgraph")
                     .orElse(false);
+        }
+    }
+
+    static final  StateSerializer<MyState> jsonStateSerializer = new JacksonStateSerializer<>(MyState::new) {};
+    static final  StateSerializer<MyState> binStateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
+
+    public enum InterruptionTypeEnum {
+        DECLARED_INTERRUPTION_WITH_VALUES_JSON( jsonStateSerializer, CompiledGraph.StreamMode.VALUES ),
+        DECLARED_INTERRUPTION_WITH_VALUES_BIN( binStateSerializer, CompiledGraph.StreamMode.VALUES ),
+        INTERRUPTABLE_ACTION_WITH_VALUES_JSON( jsonStateSerializer, CompiledGraph.StreamMode.VALUES  ),
+        INTERRUPTABLE_ACTION_WITH_VALUES_BIN( binStateSerializer, CompiledGraph.StreamMode.VALUES  ),
+        DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON( jsonStateSerializer, CompiledGraph.StreamMode.SNAPSHOTS ),
+        DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN( binStateSerializer, CompiledGraph.StreamMode.SNAPSHOTS ),
+        INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON( jsonStateSerializer, CompiledGraph.StreamMode.SNAPSHOTS  ),
+        INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN( binStateSerializer, CompiledGraph.StreamMode.SNAPSHOTS  )
+        ;
+
+        final StateSerializer<MyState> stateSerializer;
+        final CompiledGraph.StreamMode streamMode;
+
+        InterruptionTypeEnum( StateSerializer<MyState> stateSerializer,
+                              CompiledGraph.StreamMode streamMode) {
+            this.stateSerializer = stateSerializer;
+            this.streamMode = streamMode;
         }
     }
 
@@ -122,6 +152,58 @@ public class CompiledSubGraphTest {
             };
 
         }
+
+        static abstract class InterruptableNodeAction implements AsyncNodeActionWithConfig<MyState>, InterruptableAction<MyState> {
+
+            @Override
+            public Optional<InterruptionMetadata<MyState>> interrupt(String nodeId, MyState state, RunnableConfig config) {
+                if( state.<Boolean>value("interrupt_subgraph").orElse(false) ) {
+                    return Optional.of( InterruptionMetadata.builder( nodeId, state).build() );
+                }
+                return Optional.empty();
+            }
+        }
+
+        public Node.ActionFactory<MyState> buildInterruptable() {
+            assertNotNull( nodeId );
+            return ( CompileConfig compileConfig ) ->
+
+                new InterruptableNodeAction()  {
+
+                    @Override
+                    public CompletableFuture<Map<String,Object>> apply( MyState state, RunnableConfig config) {
+
+                        assertEquals(nodeId, config.nodeId());
+
+                        if( basePath != null ) {
+                            if( enableLog ) log.info("graphPath: {}", config.graphPath());
+                            assertEquals( basePath, config.graphPath() );
+                        }
+
+                        if(  compileConfig.graphId().isPresent() ) {
+                            if( enableLog ) log.info("graphId: {} config.graphId: {}", compileConfig.graphId().get(), config.graphId().orElse("<NONE>>"));
+                            assertTrue( config.graphId().isPresent() );
+                            assertEquals(compileConfig.graphId().get(), config.graphId().get() );
+                        }
+
+                        if( attributeKey != null ) {
+                            var attributeValue = state.value(attributeKey).orElse("");
+                            return completedFuture(Map.of("messages", "[%s%s]".formatted( nodeId, attributeValue )));
+                        }
+
+                        return completedFuture(Map.of("messages", "[%s]".formatted( nodeId )));
+
+                }};
+
+        }
+
+        public Node.ActionFactory<MyState> build( boolean asInterruptable ) {
+            if( asInterruptable ) {
+                return buildInterruptable();
+            }
+            return build();
+        }
+
     }
 
     private NodeActionBuilder actionBuilder() {
@@ -151,9 +233,7 @@ public class CompiledSubGraphTest {
                     .orElseThrow();
 
             if (!output.isEND()) {
-                throw new SubGraphInterruptionException(
-                        config,
-                        parentNodeId,
+                throw new SubGraphInterruptionException(config, parentNodeId,
                         output.node(),
                         mergeMap(output.state().data(), Map.of("resume_subgraph", true)));
             }
@@ -161,20 +241,23 @@ public class CompiledSubGraphTest {
         });
     }
 
-    private CompiledGraph<MyState> subGraphWithInterruption( GraphPath graphPath, BaseCheckpointSaver saver) throws Exception {
+    private CompiledGraph<MyState> subGraphWithInterruption(GraphPath graphPath, BaseCheckpointSaver saver, StateSerializer<MyState> stateSerializer, boolean asInterruptable) throws Exception {
 
-        var compileConfig = CompileConfig.builder()
+        final var compileConfigBuilder = CompileConfig.builder()
                 .checkpointSaver(saver)
-                .interruptAfter("NODE3.2")
-                .build();
+                ;
 
-        var stateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
+        if( !asInterruptable ) {
+            compileConfigBuilder.interruptAfter("NODE3.2");
+        }
+
+        final var compileConfig = compileConfigBuilder.build();
 
         return new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE3.1")
                 .addNode("NODE3.1", actionBuilder().nodeId("NODE3.1").path(graphPath).build())
                 .addNode("NODE3.2", actionBuilder().nodeId("NODE3.2").path(graphPath).build())
-                .addNode("NODE3.3", actionBuilder().nodeId("NODE3.3").path(graphPath).build())
+                .addNode("NODE3.3", actionBuilder().nodeId("NODE3.3").path(graphPath).build(asInterruptable))
                 .addNode("NODE3.4", actionBuilder().nodeId("NODE3.4")
                                                         .path(graphPath)
                                                         .attributeKey("newAttribute").build())
@@ -197,7 +280,11 @@ public class CompiledSubGraphTest {
                 .checkpointSaver(saver)
                 .build();
 
-        var subGraph = subGraphWithInterruption( GraphPath.of("NODE3"), saver); // create subgraph
+        var subGraph = subGraphWithInterruption(
+                    GraphPath.of("NODE3"),
+                    saver,
+                    stateSerializer,
+                    false); // create subgraph
 
         var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE1")
@@ -262,20 +349,37 @@ public class CompiledSubGraphTest {
     }
 
     @ParameterizedTest
-    @EnumSource( CompiledGraph.StreamMode.class )
-    public void testCompileSubGraphInterruptionSharingSaver(  CompiledGraph.StreamMode mode ) throws Exception {
+    @EnumSource( InterruptionTypeEnum.class )
+    public void testCompileSubGraphInterruptionSharingSaver(  InterruptionTypeEnum mode ) throws Exception {
 
-        var saver = new MemorySaver();
+        final var asInterruptable = switch( mode ) {
+            case INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON,
+                 INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN,
+                 INTERRUPTABLE_ACTION_WITH_VALUES_JSON,
+                 INTERRUPTABLE_ACTION_WITH_VALUES_BIN -> true;
+            case DECLARED_INTERRUPTION_WITH_VALUES_JSON,
+                 DECLARED_INTERRUPTION_WITH_VALUES_BIN,
+                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON,
+                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN -> false;
+        };
 
-        var stateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
+        final var saver = new FileSystemSaver(
+                Paths.get( "target", "testCompileSubGraphInterruptionSharingSaver") ,
+                mode.stateSerializer);
+
+        //var saver = new MemorySaver();
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
-        var subGraph = subGraphWithInterruption(GraphPath.of("NODE3"), saver); // create subgraph
+        var subGraph = subGraphWithInterruption(
+                GraphPath.of("NODE3"),
+                saver,
+                mode.stateSerializer,
+                asInterruptable); // create subgraph
 
-        var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
+        var parentGraph =  new StateGraph<>(MyState.SCHEMA, mode.stateSerializer)
                 .addEdge(START, "NODE1")
                 .addNode("NODE1", buildActionFactory("NODE1"))
                 .addNode("NODE2", buildActionFactory("NODE2"))
@@ -291,10 +395,13 @@ public class CompiledSubGraphTest {
 
         var runnableConfig = RunnableConfig.builder()
                 .threadId("1")
-                .streamMode(mode)
+                .streamMode(mode.streamMode)
                 .build();
+        //saver.release( runnableConfig );
 
-        var input = GraphInput.args(Map.of());
+        var input = (asInterruptable) ?
+                            GraphInput.args(Map.of("interrupt_subgraph", true)) :
+                            GraphInput.noArgs();
 
         var graphIterator = parentGraph.stream(input, runnableConfig);
 
@@ -307,6 +414,12 @@ public class CompiledSubGraphTest {
         assertFalse( output.get().isEND() );
         assertInstanceOf(SubGraphOutput.class,  output.get() );
 
+        assertIterableEquals(List.of(
+                "[NODE1]",
+                "[NODE2]",
+                "[NODE3.1]",
+                "[NODE3.2]"), output.get().state().messages() );
+
         var iteratorResult = GraphResult.from(graphIterator);
 
         assertFalse( iteratorResult.isEmpty() );
@@ -315,7 +428,9 @@ public class CompiledSubGraphTest {
         // runnableConfig = parentGraph.updateState( runnableConfig, Map.of( "newAttribute", "<myNewValue>") );
         //input = GraphInput.resume();
 
-        input = GraphInput.resume(Map.of( "newAttribute", "<myNewValue>"));
+        input = (asInterruptable ) ?
+                    GraphInput.resume(Map.of( "newAttribute", "<myNewValue>", "interrupt_subgraph", false)) :
+                    GraphInput.resume(Map.of( "newAttribute", "<myNewValue>"));
 
         graphIterator = parentGraph.stream(input, runnableConfig);
 
@@ -338,22 +453,37 @@ public class CompiledSubGraphTest {
     }
 
     @ParameterizedTest
-    @EnumSource( CompiledGraph.StreamMode.class     )
-    public void testCompileSubGraphInterruptionWithDifferentSaver( CompiledGraph.StreamMode mode ) throws Exception {
+    @EnumSource( InterruptionTypeEnum.class     )
+    public void testCompileSubGraphInterruptionWithDifferentSaver( InterruptionTypeEnum mode ) throws Exception {
 
-        var parentSaver = new MemorySaver();
+        final var asInterruptable = switch( mode ) {
+            case INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON,
+                 INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN,
+                 INTERRUPTABLE_ACTION_WITH_VALUES_JSON,
+                 INTERRUPTABLE_ACTION_WITH_VALUES_BIN -> true;
+            case DECLARED_INTERRUPTION_WITH_VALUES_JSON,
+                 DECLARED_INTERRUPTION_WITH_VALUES_BIN,
+                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON,
+                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN -> false;
+        };
 
-        var stateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
+        final var parentSaver = new FileSystemSaver(
+                Paths.get( "target", "testCompileSubGraphInterruptionWithDifferentSaver") ,
+                mode.stateSerializer);
 
         BaseCheckpointSaver childSaver = new MemorySaver();
 
-        var subGraph = subGraphWithInterruption( GraphPath.of("NODE3"), childSaver ); // create subgraph
+        var subGraph = subGraphWithInterruption(
+                GraphPath.of("NODE3"),
+                childSaver,
+                mode.stateSerializer,
+                asInterruptable ); // create subgraph
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(parentSaver)
                 .build();
 
-        var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
+        var parentGraph =  new StateGraph<>(MyState.SCHEMA, mode.stateSerializer)
                 .addEdge(START, "NODE1")
                 .addNode("NODE1", buildActionFactory("NODE1"))
                 .addNode("NODE2", buildActionFactory("NODE2"))
@@ -368,10 +498,13 @@ public class CompiledSubGraphTest {
                 .compile(compileConfig);
 
         var runnableConfig = RunnableConfig.builder()
-                                .streamMode(mode)
+                                .streamMode(mode.streamMode)
                                 .build();
 
-        var input = GraphInput.args(Map.of());
+        var input = (asInterruptable) ?
+                GraphInput.args(Map.of("interrupt_subgraph", true)) :
+                GraphInput.noArgs();
+
 
         var graphIterator = parentGraph.stream(input, runnableConfig);
 
@@ -384,15 +517,21 @@ public class CompiledSubGraphTest {
         assertFalse( output.get().isEND() );
         assertInstanceOf( SubGraphOutput.class, output.get() );
 
+        assertIterableEquals(List.of(
+                "[NODE1]",
+                "[NODE2]",
+                "[NODE3.1]",
+                "[NODE3.2]"), output.get().state().messages() );
+
         var iteratorResult = GraphResult.from(graphIterator);
 
         assertFalse( iteratorResult.isEmpty() );
         assertTrue( iteratorResult.isInterruptionMetadata() );
 
-        // runnableConfig = parentGraph.updateState( runnableConfig, Map.of( "newAttribute", "<myNewValue>") );
-        // input = GraphInput.resume();
+        input = (asInterruptable ) ?
+                GraphInput.resume(Map.of( "newAttribute", "<myNewValue>", "interrupt_subgraph", false)) :
+                GraphInput.resume(Map.of( "newAttribute", "<myNewValue>"));
 
-        input = GraphInput.resume( Map.of( "newAttribute", "<myNewValue>") );
         graphIterator = parentGraph.stream(input, runnableConfig);
 
         output = graphIterator.stream()

@@ -57,7 +57,7 @@ class CallModelConversationContextPolicyTest {
         );
         var state = new TestState(Map.of("messages", graphMessages));
 
-        callModel.applySync(state, RunnableConfig.builder().build());
+        callModel.applySync(state, RunnableConfig.empty());
 
         assertEquals(4, chatModel.lastRequest.messages().size());
         assertEquals(SystemMessage.class, chatModel.lastRequest.messages().get(0).getClass());
@@ -81,7 +81,7 @@ class CallModelConversationContextPolicyTest {
         );
         var state = new TestState(Map.of("messages", graphMessages));
 
-        callModel.applySync(state, RunnableConfig.builder().build());
+        callModel.applySync(state, RunnableConfig.empty());
 
         assertEquals(3, chatModel.lastRequest.messages().size());
         assertEquals(SystemMessage.class, chatModel.lastRequest.messages().get(0).getClass());

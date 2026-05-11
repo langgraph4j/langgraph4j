@@ -149,9 +149,10 @@ public class StreamingTestITest {
                         Map.of("next", "tools", "exit", END))
                 .addEdge("tools", "agent");
 
-        var app = workflow.compile();
+        var iterator = workflow.compile()
+                .stream( GraphInput.args(Map.of( "messages", UserMessage.from( "what is the whether today?"))), RunnableConfig.empty() );
 
-        for( var out : app.stream( Map.of( "messages", UserMessage.from( "what is the whether today?")) ) ) {
+        for( var out : iterator ) {
             log.info( "{}", out );
         }
 

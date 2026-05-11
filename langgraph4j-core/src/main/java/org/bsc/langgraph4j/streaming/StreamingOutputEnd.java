@@ -10,11 +10,6 @@ public final class StreamingOutputEnd<State extends AgentState> extends Streamin
     }
 
     @Override
-    public boolean isEnd() {
-        return true;
-    }
-
-    @Override
     public boolean isStreamingEnd() {
         return true;
     }

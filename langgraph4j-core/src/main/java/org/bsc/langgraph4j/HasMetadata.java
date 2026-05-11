@@ -78,6 +78,7 @@ public interface HasMetadata {
 
         public B putMetadata( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
+            requireNonNull(value, "value cannot be null");
             if( metadata == null ) {
                 // Lazy initialization of metadata map
                 metadata = new HashMap<>();
@@ -88,6 +89,7 @@ public interface HasMetadata {
 
         public B putMetadataIfAbsent( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
+            requireNonNull(value, "value cannot be null");
             if( metadata == null ) {
                 // Lazy initialization of metadata map
                 metadata = new HashMap<>();
@@ -98,6 +100,7 @@ public interface HasMetadata {
 
         public B addMetadata( String key, Object value ) {
             requireNonNull(key, "key cannot be null");
+            requireNonNull(value, "value cannot be null");
             if( metadata == null ) {
                 // Lazy initialization of metadata map
                 metadata = new HashMap<>();

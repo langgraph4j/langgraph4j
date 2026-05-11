@@ -273,13 +273,13 @@ public class MultiAgentSupervisorITest {
                 ;
         var graph = workflow.compile();
 
-        for( var event : graph.stream( Map.of( "messages", UserMessage.from("what are the result of 1 + 1 ?"))) ) {
-
+        for( var event : graph.stream( GraphInput.args(Map.of( "messages", UserMessage.from("what are the result of 1 + 1 ?"))),
+                                        RunnableConfig.empty() ) )  {
             log.info( "{}", event );
         }
 
-        for( var event : graph.stream( Map.of( "messages", UserMessage.from("where are next winter olympic games ?" ))) ) {
-
+        for( var event : graph.stream( GraphInput.args(Map.of( "messages", UserMessage.from("where are next winter olympic games ?" ))),
+                                        RunnableConfig.empty()) ) {
             log.info( "{}", event );
         }
 

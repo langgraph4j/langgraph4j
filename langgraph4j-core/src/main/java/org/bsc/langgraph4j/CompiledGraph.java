@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -46,7 +45,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     /**
      * Enum representing various error messages related to graph runner.
      */
-    public enum RunnableErrors {
+    public enum RunErrors {
         missingNodeInEdgeMapping("cannot find edge mapping for id: '%s' in conditional edge with sourceId: '%s' "),
         missingNode("node with id: '%s' doesn't exist!"),
         missingEdge("edge with sourceId: '%s' doesn't exist!"),
@@ -54,7 +53,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         private final String errorMessage;
 
-        RunnableErrors(String errorMessage) {
+        RunErrors(String errorMessage) {
             this.errorMessage = errorMessage;
         }
 
@@ -64,8 +63,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
          * @param args the arguments to format the error message
          * @return a new GraphRunnerException
          */
-        GraphRunnerException exception(RunnableConfig config, String... args) {
-            return new GraphRunnerException( config, errorMessage.formatted( (Object[]) args));
+        GraphRunException exception(RunnableConfig config, String... args) {
+            return new GraphRunException( config, errorMessage.formatted( (Object[]) args));
         }
     }
 
@@ -120,7 +119,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         // EVALUATES NODES
         for (var n : processedData.nodes().elements ) {
             var factory = n.actionFactory();
-            requireNonNull(factory, format("action factory for node id '%s' is null!", n.id()));
+            requireNonNull(factory, "action factory for node id '%s' is null!".formatted( n.id()));
             nodes.put(n.id(), factory.apply(compileConfig));
         }
 
@@ -325,7 +324,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     private Command nextNodeId(EdgeValue<State> route , Map<String,Object> state, String nodeId, RunnableConfig config ) throws Exception {
 
         if( route == null ) {
-            throw RunnableErrors.missingEdge.exception(config,nodeId);
+            throw RunErrors.missingEdge.exception( config, nodeId);
         }
         if( route.id() != null ) {
             return new Command(route.id(), state);
@@ -350,14 +349,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             final String result = route.value().mappings().get(newRoute);
             if( result == null ) {
-                throw RunnableErrors.missingNodeInEdgeMapping.exception(config, nodeId, newRoute);
+                throw RunErrors.missingNodeInEdgeMapping.exception(config, nodeId, newRoute);
             }
 
             final var currentState = AgentState.updateState(state, command.update(), stateGraph.getChannels());
 
             return new Command(result, currentState);
         }
-        throw RunnableErrors.executionError.exception( config, format("invalid edge value for nodeId: [%s] !", nodeId) );
+        throw RunErrors.executionError.exception( config, "invalid edge value for nodeId: [%s] !".formatted(nodeId) );
     }
 
     /**
@@ -415,7 +414,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     Map<String,Object> initialState(Map<String,Object> inputs, RunnableConfig config) {
 
         return compileConfig.checkpointSaver()
-                .filter( $1 -> !compileConfig.releaseThread() )
                 .flatMap( saver -> saver.get( config ) )
                 .map( cp -> AgentState.updateState( cp.getState(), inputs, stateGraph.getChannels() ))
                 .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.getChannels() ));
@@ -444,7 +442,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #stream(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( Map<String,Object> inputs, RunnableConfig config ) {
         return stream(  ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), config );
     }
@@ -454,9 +454,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      *
      * @param inputs the input map
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #stream(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator<NodeOutput<State>> stream(Map<String,Object> inputs ) {
-        return this.stream( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() );
+        return this.stream( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() );
     }
 
     /**
@@ -480,7 +482,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an AsyncGenerator stream of NodeOutput
+     * @deprecated use {@link #streamSnapshots(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration and to prepare for future changes that may require a config parameter.
      */
+    @Deprecated(forRemoval = true)
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( Map<String,Object> inputs, RunnableConfig config )  {
         return streamSnapshots( ( inputs == null ) ? GraphInput.resume() : GraphInput.args(inputs), config );
     }
@@ -520,7 +524,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param inputs the input map
      * @param config the invoke configuration
      * @return an Optional containing the final state if present, otherwise an empty Optional
+     * @deprecated use {@link #invoke(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
+    @Deprecated(forRemoval = true)
     public Optional<State> invoke(Map<String,Object> inputs, RunnableConfig config ) {
         return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), config ).map( NodeOutput::state);
     }
@@ -530,11 +536,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      *
      * @param inputs the input map
      * @return an Optional containing the final state if present, otherwise an empty Optional
+     * @deprecated use {@link #invoke(GraphInput, RunnableConfig)}  instead to have more control over the execution configuration.
      */
-    public Optional<State> invoke(Map<String,Object> inputs )  {
-        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.builder().build() ).map( NodeOutput::state);
+    @Deprecated(forRemoval = true)
+    public Optional<State> invoke( Map<String,Object> inputs )  {
+        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() ).map( NodeOutput::state);
     }
-
 
     /**
      * Generates a drawable graph representation of the state graph.
@@ -571,6 +578,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     public GraphRepresentation getGraph( GraphRepresentation.Type type ) {
         return getGraph(type, "Graph Diagram", true);
     }
+
 
     /**
      * Applies a reducer function to process the nodes and edges of this graph.
@@ -666,8 +674,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         }
 
-        final Context context;
         int iteration = 0;
+        private final Context context;
         private RunnableConfig config;
 
         protected AsyncNodeGenerator(GraphInput input, RunnableConfig config )  {
@@ -705,9 +713,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 }
                 else {
                     final var stateData = optionalResumeUpdateData.orElseGet(resumeRequest::value);
+
                     this.config = configBuilder
-                            .removeMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA )
+                    //        .removeMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA )
                             .build();
+
                     // FIX ISSUE #302
                     context.setCurrentState( AgentState.updateState( startCheckpoint.getState(),
                             stateData,
@@ -726,7 +736,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 State initializedState = stateGraph.getStateFactory().apply(initState);
                 this.context = new Context( initializedState.data() );
                 this.config = configBuilder
-                                .removeMetadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA)
+                                //.removeMetadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA)
                                 .build();
             }
         }
@@ -855,7 +865,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 // GUARD: CHECK MAX ITERATION REACHED
                 if( ++iteration > maxIterations ) {
                     // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
-                    return Data.error( new IllegalStateException( format("Maximum number of iterations (%d) reached!", maxIterations)) );
+                    return Data.error( new IllegalStateException( "Maximum number of iterations (%d) reached!".formatted( maxIterations)) );
                 }
 
                 // GUARD: CHECK IF IT IS END
@@ -949,7 +959,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 context.setCurrentNodeId( context.nextNodeId() );
 
-                // final var newConfig = updateRunnableConfigMetadata( config, context.currentNodeId() );
+                //final var newConfig = updateRunnableConfigMetadata( config, context.currentNodeId() );
                 config = updateRunnableConfigMetadata( config, context.currentNodeId() );
 
                 //
@@ -958,7 +968,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 final var action = nodes.get( context.currentNodeId() );
 
                 if (action == null)
-                    throw RunnableErrors.missingNode.exception(config, context.currentNodeId());
+                    throw RunErrors.missingNode.exception( config, context.currentNodeId());
 
                 final var clonedState = cloneState(context.currentState());
 
@@ -973,13 +983,13 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 }
 
             }
-            catch( GraphRunnerException e ) {
+            catch( GraphRunException e ) {
                 log.error( e.getMessage(), e );
                 return Data.error( e );
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
-                return Data.error( new GraphRunnerException( config, e) );
+                return Data.error( new GraphRunException( config, e) );
             }
 
         }
@@ -1034,7 +1044,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 var sgEdgeStartTarget = sgEdgeStart.target();
 
                 if( sgEdgeStartTarget.id() == null && sgEdgeStartTarget.value() == null ) {
-                    throw new GraphStateException( format("the target for node '%s' is null!", subgraphNode.id())  );
+                    throw new GraphStateException( "the target for node '%s' is null!".formatted( subgraphNode.id())  );
                 }
 
                 String sgEdgeStartRealTargetId;
@@ -1105,15 +1115,15 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     var exceptionMessage = ( edgeWithSubgraphSourceId.target().id()==null ) ?
                             "'interruption after' on subgraph is not supported yet!" :
-                            format("'interruption after' on subgraph is not supported yet! consider to use 'interruption before' node: '%s'",
-                                    edgeWithSubgraphSourceId.target().id());
+                            "'interruption after' on subgraph is not supported yet! consider to use 'interruption before' node: '%s'"
+                                .formatted( edgeWithSubgraphSourceId.target().id() );
                     throw new GraphStateException( exceptionMessage );
 
                 }
 
                 var sgEdgeEndTarget = edgeWithSubgraphSourceId.target();
                 if( sgEdgeEndTarget.id() == null && sgEdgeEndTarget.value() == null ) {
-                    throw new GraphStateException( format("the target for node '%s' is null!", subgraphNode.id())  );
+                    throw new GraphStateException( "the target for node '%s' is null!".formatted( subgraphNode.id())  );
                 }
 
                 String sgEdgeEndRealTargetId;

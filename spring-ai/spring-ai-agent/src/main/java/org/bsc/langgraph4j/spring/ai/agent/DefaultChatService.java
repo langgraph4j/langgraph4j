@@ -5,10 +5,10 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 import java.util.Objects;
 
-class DefaultChatService implements ReactAgent.ChatService {
+class DefaultChatService implements ChatService {
     final ChatClient chatClient;
 
-    public DefaultChatService(ReactAgentBuilder<?,?> builder ) {
+    public DefaultChatService(BaseReactAgentBuilder<?,?> builder ) {
         Objects.requireNonNull(builder.chatModel,"chatModel cannot be null!");
         var toolOptions = ToolCallingChatOptions.builder()
                 .internalToolExecutionEnabled(false) // MANDATORY: Disable automatic tool execution

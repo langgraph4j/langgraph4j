@@ -204,7 +204,7 @@ public class HookTest implements LG4JLoggable {
 
         var state = stateFactory().apply(Map.of());
 
-        var config = RunnableConfig.builder().build();
+        var config = RunnableConfig.empty();
 
         var hooks = new EdgeHooks<State>();
 

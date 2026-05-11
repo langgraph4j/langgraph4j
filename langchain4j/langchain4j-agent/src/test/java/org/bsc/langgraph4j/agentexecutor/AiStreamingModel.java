@@ -15,6 +15,7 @@ public enum AiStreamingModel {
     OPENAI( (model, extra) ->
             OpenAiStreamingChatModel.builder()
                 .apiKey( extraAttribute( extra, "OPENAI_API_KEY" ) )
+                //.modelName( "gpt-4o-mini" )
                 .modelName(model)
                 .logResponses(true)
                 .temperature(0.0)
@@ -23,6 +24,7 @@ public enum AiStreamingModel {
             OpenAiStreamingChatModel.builder()
                     .baseUrl("https://models.github.ai/inference")
                     .apiKey( extraAttribute( extra, "GITHUB_MODELS_TOKEN" ) )
+                    //.modelName( "gpt-4o-mini" )
                     .modelName(model)
                     .logResponses(true)
                     .temperature(0.0)

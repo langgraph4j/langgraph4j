@@ -15,7 +15,7 @@ public class Issue100Test {
     private <S extends AgentState> NodeOutput<S> evaluateWithConfig( StateGraph<S> graph, CompileConfig config ) throws GraphStateException {
         var workflow = graph.compile(config);
 
-        var result = workflow.stream( Map.of() )
+        var result = workflow.stream( GraphInput.noArgs(), RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .reduce((a, b) -> b)

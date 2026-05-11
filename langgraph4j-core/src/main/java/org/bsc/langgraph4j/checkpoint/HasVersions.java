@@ -26,7 +26,7 @@ public interface HasVersions {
      * @return A {@code Collection<Integer>} representing the versions associated with the thread ID, or an empty collection if not specified.
      */
     default Collection<Integer> versionsByThreadId( RunnableConfig config ) {
-        return versionsByThreadId( config.threadId().orElse(null) );
+        return versionsByThreadId( threadId(config) );
     }
 
     /**
@@ -44,7 +44,9 @@ public interface HasVersions {
          * @return An {@link Optional} containing the last version if found, or an empty {@link Optional} otherwise.
          */
     default Optional<Integer> lastVersionByThreadId( RunnableConfig config ) {
-        return lastVersionByThreadId( config.threadId().orElse(null) );
+        return lastVersionByThreadId( threadId(config) );
     }
+
+    String threadId( RunnableConfig config );
 
 }

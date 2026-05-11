@@ -3,18 +3,23 @@ package org.bsc.langgraph4j.agent;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.action.*;
+import org.bsc.langgraph4j.action.AsyncCommandAction;
+import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
+import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
+import org.bsc.langgraph4j.internal.hook.EdgeHooks;
+import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.Channel;
+import org.bsc.langgraph4j.state.Channels;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -48,8 +53,6 @@ public interface AgentEx {
     String CONTINUE_LABEL = "continue";
     String END_LABEL = "end";
     String APPROVAL_RESULT = "approval_result";
-    @Deprecated
-    String APPROVAL_RESULT_PROPERTY = APPROVAL_RESULT;
 
     String CALL_MODEL_NODE = "model";
     String ACTION_DISPATCHER_NODE = "action_dispatcher";
@@ -59,6 +62,19 @@ public interface AgentEx {
         APPROVED,
         REJECTED
     }
+
+    Map.Entry<String,Channel<?>> ApprovalResultChannelEntry = Map.entry( APPROVAL_RESULT, Channels.base( (prevValue, newValue ) -> {
+        if( newValue instanceof ApprovalState approval ) {
+            return approval.name();
+        }
+        return newValue;
+    }) );
+
+    interface ToolBehaviour<M, State extends MessagesState<M>>   {
+        String name();
+        void addToGraph( StateGraph<State> graph ) throws GraphStateException;
+    }
+
 
     final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptableAction<State> {
 
@@ -75,7 +91,7 @@ public interface AgentEx {
 
         @Override
         public Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state, RunnableConfig config) {
-            if( state.<String>value( APPROVAL_RESULT ).map(String::isEmpty).orElse(true) ) {
+            if( state.<String>value(APPROVAL_RESULT).map(String::isEmpty).orElse(true) ) {
                 var metadata = interruptionMetadataProvider.apply(nodeId,state);
                 return Optional.of(metadata);
             }
@@ -108,18 +124,17 @@ public interface AgentEx {
     }
 
     class Builder<M, S extends MessagesState<M>, TOOL> {
+
         private StateSerializer<S> stateSerializer;
         private AsyncNodeActionWithConfig<S> callModelAction;
         private AsyncNodeActionWithConfig<S> dispatchToolsAction;
         private AsyncCommandAction<S> dispatchActionEdge;
-        private Function<String,AsyncNodeActionWithConfig<S>> executeToolFactory;
         private AsyncCommandAction<S> shouldContinueEdge;
         private AsyncCommandAction<S> approvalActionEdge;
         private Map<String, Channel<?>> schema;
-        private Function<TOOL, String> toolName;
 
-        final Map<String, List<NodeHook.WrapCall<S>>> nodeHookMap = new HashMap<>(2);
-        final Map<String, List<EdgeHook.WrapCall<S>>> edgeHookMap = new HashMap<>(3);
+        private final NodeHooks<S> nodeHooks = new NodeHooks<>();
+        private final EdgeHooks<S> edgeHooks = new EdgeHooks<>();
 
         private static <H> void addHook( Map<String,List<H>> map, String id, H hook) {
             map.computeIfAbsent(id, k -> new LinkedList<>()).add(hook);
@@ -136,18 +151,57 @@ public interface AgentEx {
             return this;
         }
 
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.WrapCall<S> wrapCall ) {
+            nodeHooks.wrapCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.WrapCall<S> wrapCall ) {
+            nodeHooks.wrapCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.BeforeCall<S> wrapCall ) {
+            nodeHooks.beforeCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.BeforeCall<S> wrapCall ) {
+            nodeHooks.beforeCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook(NodeHook.AfterCall<S> wrapCall ) {
+            nodeHooks.afterCalls.add(wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addNodeHook( String nodeId, NodeHook.AfterCall<S> wrapCall ) {
+            nodeHooks.afterCalls.add(nodeId, wrapCall);
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.WrapCall<S> wrapCall ) {
+            edgeHooks.wrapCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.WrapCall<S> wrapCall ) {
+            edgeHooks.wrapCalls.add( nodeId, wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.BeforeCall<S> wrapCall ) {
+            edgeHooks.beforeCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.BeforeCall<S> wrapCall ) {
+            edgeHooks.beforeCalls.add( nodeId, wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook(EdgeHook.AfterCall<S> wrapCall ) {
+            edgeHooks.afterCalls.add( wrapCall );
+            return this;
+        }
+        public Builder<M, S, TOOL> addEdgeHook( String nodeId, EdgeHook.AfterCall<S> wrapCall ) {
+            edgeHooks.afterCalls.add( nodeId, wrapCall );
+            return this;
+        }
+
         public Builder<M, S, TOOL> callModelAction(AsyncNodeActionWithConfig<S> callModelAction) {
             this.callModelAction = callModelAction;
-            return this;
-        }
-
-        public Builder<M, S, TOOL> addCallModelHook(NodeHook.WrapCall<S> wrapCall ) {
-            addHook(nodeHookMap, CALL_MODEL_NODE, wrapCall);
-            return this;
-        }
-
-        public Builder<M, S, TOOL> executeToolFactory( Function<String,AsyncNodeActionWithConfig<S>> executeToolFactory) {
-            this.executeToolFactory = executeToolFactory;
             return this;
         }
 
@@ -156,18 +210,8 @@ public interface AgentEx {
             return this;
         }
 
-        public Builder<M, S, TOOL> addDispatchToolsHook(NodeHook.WrapCall<S> wrapCall ) {
-            addHook(nodeHookMap, ACTION_DISPATCHER_NODE, wrapCall);
-            return this;
-        }
-
         public Builder<M, S, TOOL> shouldContinueEdge(AsyncCommandAction<S> shouldContinueEdge) {
             this.shouldContinueEdge = shouldContinueEdge;
-            return this;
-        }
-
-        public Builder<M, S, TOOL> addShouldContinueHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, CALL_MODEL_NODE, wrapCall);
             return this;
         }
 
@@ -176,35 +220,18 @@ public interface AgentEx {
             return this;
         }
 
-        public Builder<M, S, TOOL> addDispatchActionHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, ACTION_DISPATCHER_NODE, wrapCall);
-            return this;
-        }
-
         public Builder<M, S, TOOL> approvalActionEdge(AsyncCommandAction<S> approvalActionEdge) {
             this.approvalActionEdge = approvalActionEdge;
             return this;
         }
 
-        public Builder<M, S, TOOL> addApprovalActionHook(EdgeHook.WrapCall<S> wrapCall ) {
-            addHook(edgeHookMap, APPROVAL_ACTION, wrapCall);
-            return this;
-        }
-
-        public Builder<M, S, TOOL> toolName(Function<TOOL, String> toolName) {
-            this.toolName = toolName;
-            return this;
-        }
-
-        public StateGraph<S> build(Collection<TOOL> tools, Map<String, ApprovalNodeAction<M, S>> approvals) throws GraphStateException {
-
-            requireNonNull(toolName, "toolName is required!");
+        public StateGraph<S> build(Collection<? extends ToolBehaviour<M, S>> tools, Map<String, ApprovalNodeAction<M, S>> approvals) throws GraphStateException {
 
             // verify approval
             for (var approval : approvals.keySet()) {
 
                 tools.stream()
-                        .filter(tool -> Objects.equals(toolName.apply(tool), approval))
+                        .filter(tool -> Objects.equals(tool.name(), approval))
                         .findAny()
                         .orElseThrow(() -> new IllegalArgumentException(format("approval action %s not found!", approval)));
             }
@@ -216,16 +243,16 @@ public interface AgentEx {
                     .addNode(ACTION_DISPATCHER_NODE, requireNonNull(dispatchToolsAction, "dispatchToolsAction is required!"))
                     .addAfterCallNodeHook(ACTION_DISPATCHER_NODE, (nodeId, state, config, lastResult ) -> {
                         final Map<String,Object> result = ( config.isRunningInStudio() ) ?
-                            mergeMap( lastResult, Map.of( APPROVAL_RESULT, ""), (left,right) -> right):
-                            lastResult;
+                                mergeMap( lastResult, Map.of(APPROVAL_RESULT, ""), (left, right) -> right):
+                                lastResult;
                         return completedFuture( result );
                     })
                     .addEdge(START, CALL_MODEL_NODE)
                     .addConditionalEdges(CALL_MODEL_NODE,
                             requireNonNull(shouldContinueEdge, "shouldContinueEdge is required!"),
                             EdgeMappings.builder()
-                                    .to(ACTION_DISPATCHER_NODE, CONTINUE_LABEL)
-                                    .toEND(END_LABEL)
+                                    .to(ACTION_DISPATCHER_NODE, "continue")
+                                    .toEND("end")
                                     .build());
 
             var actionMappingBuilder = EdgeMappings.builder()
@@ -233,48 +260,73 @@ public interface AgentEx {
                     .toEND();
 
             // apply hooks
-            nodeHookMap.forEach((key, value) ->
-                    value.forEach(hook -> graph.addWrapCallNodeHook(key, hook)));
 
-            final var approvalActionHook = edgeHookMap.remove(APPROVAL_ACTION);
+            // apply global node hooks
+            nodeHooks.beforeCalls.callListAsStream().forEach(graph::addBeforeCallNodeHook);
+            nodeHooks.wrapCalls.callListAsStream().forEach(graph::addWrapCallNodeHook);
+            nodeHooks.afterCalls.callListAsStream().forEach(graph::addAfterCallNodeHook);
+            // apply node hooks by node id
+            nodeHooks.beforeCalls.callMapAsStream().forEach( entry ->
+                    entry.getValue().forEach( hook -> graph.addBeforeCallNodeHook(entry.getKey(), hook)));
+            nodeHooks.wrapCalls.callMapAsStream().forEach( entry ->
+                     entry.getValue().forEach( hook -> graph.addWrapCallNodeHook(entry.getKey(), hook)));
+            nodeHooks.afterCalls.callMapAsStream().forEach( entry ->
+                    entry.getValue().forEach( hook -> graph.addAfterCallNodeHook(entry.getKey(), hook)));
 
-            edgeHookMap.forEach( (key, values) ->
-                    values.forEach(hook -> graph.addWrapCallEdgeHook(key, hook)));
+            // apply global edge hooks
+            edgeHooks.beforeCalls.callListAsStream().forEach(graph::addBeforeCallEdgeHook);
+            edgeHooks.wrapCalls.callListAsStream().forEach(graph::addWrapCallEdgeHook);
+            edgeHooks.afterCalls.callListAsStream().forEach(graph::addAfterCallEdgeHook);
+            // apply edge hooks by node id
+            edgeHooks.beforeCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addBeforeCallEdgeHook(entry.getKey(), hook)));
+            edgeHooks.wrapCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addWrapCallEdgeHook(entry.getKey(), hook)));
+            edgeHooks.afterCalls.callMapAsStream()
+                    .filter(entry -> !entry.getKey().equals(APPROVAL_ACTION))
+                    .forEach( entry ->
+                            entry.getValue().forEach( hook -> graph.addAfterCallEdgeHook(entry.getKey(), hook)));
 
             for (var tool : tools) {
 
-                var tool_name = toolName.apply(tool);
+                final var toolName = tool.name();
 
-                if (approvals.containsKey(tool_name)) {
+                if (approvals.containsKey(toolName)) {
 
-                    var approval_nodeId = "approval_%s".formatted( tool_name );
+                    var approval_nodeId = "approval_%s".formatted( toolName );
 
-                    var approvalAction = approvals.get(tool_name);
+                    var approvalAction = approvals.get(toolName);
 
                     // apply approval action hooks
-                    if( approvalActionHook != null ) {
-                        approvalActionHook.forEach(hook -> graph.addWrapCallEdgeHook(approval_nodeId, hook));
-                    }
+                    edgeHooks.beforeCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addBeforeCallEdgeHook(approval_nodeId, hook));
+                    edgeHooks.wrapCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addWrapCallEdgeHook(approval_nodeId, hook));
+                    edgeHooks.afterCalls.callMapAsStream(APPROVAL_ACTION)
+                            .forEach( hook -> graph.addAfterCallEdgeHook(approval_nodeId, hook));
 
                     graph.addNode(approval_nodeId, approvalAction);
 
-                    graph.addConditionalEdges(approval_nodeId, requireNonNull(approvalActionEdge, "approvalActionEdge is required!"),
+                    graph.addConditionalEdges(approval_nodeId,
+                            requireNonNull(approvalActionEdge, "approvalActionEdge is required!"),
                             EdgeMappings.builder()
                                     .to(CALL_MODEL_NODE)
                                     .to(ACTION_DISPATCHER_NODE)
-                                    .to(tool_name, ApprovalState.APPROVED.name())
+                                    .to(toolName, ApprovalState.APPROVED.name())
                                     .build()
                     );
 
                     actionMappingBuilder.to(approval_nodeId);
                 } else {
-                    actionMappingBuilder.to(tool_name);
+                    actionMappingBuilder.to(toolName);
                 }
 
-                graph.addNode(tool_name,
-                        requireNonNull( executeToolFactory, "executeToolsAction is required!" )
-                        .apply( tool_name ));
-                graph.addEdge(tool_name, ACTION_DISPATCHER_NODE);
+                tool.addToGraph(graph);
+                graph.addEdge(toolName, ACTION_DISPATCHER_NODE);
 
             }
 

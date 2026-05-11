@@ -88,8 +88,8 @@ public class Issue118ITest {
 
         var app = workflow.compile();
 
-        for( var out : app.stream( Map.of( "messages", UserMessage.from( "generate a UUID for me")) ) ) {
-            if( out instanceof StreamingOutput streaming ) {
+        for( var out : app.stream( GraphInput.args(Map.of( "messages", UserMessage.from( "generate a UUID for me"))), RunnableConfig.empty() ) ) {
+            if( out instanceof StreamingOutput<?> streaming ) {
                 log.info( "StreamingOutput{node={}, chunk={} }", streaming.node(), streaming.chunk() );
             }
             else {

@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.agent.ConversationContextPolicy;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.spring.ai.generators.StreamingChatGenerator;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.Generation;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -18,14 +19,14 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 
 public class CallModelAction<State extends MessagesState<Message>> implements AsyncNodeActionWithConfig<State> {
 
-    private final ReactAgent.ChatService chatService;
+    private final ChatService chatService;
     private final boolean streaming;
     private final boolean emitStreamingOutputEnd;
     private final ConversationContextPolicy<Message> conversationContextPolicy;
 
-    public CallModelAction(Function<ReactAgentBuilder<?,?>, ReactAgent.ChatService> chatServiceFactory, ReactAgentBuilder<?,?> builder ) {
+    public <B extends BaseReactAgentBuilder<?,?>> CallModelAction( B builder ) {
 
-        this.chatService = requireNonNull(chatServiceFactory, "chatServiceFactory cannot be null!").apply(builder);
+        this.chatService = ofNullable(builder.chatService).orElseGet( () -> new DefaultChatService(builder) );
         this.conversationContextPolicy = builder.conversationContextPolicy;
         this.streaming = builder.streaming;
         this.emitStreamingOutputEnd = builder.emitStreamingOutputEnd;
@@ -62,11 +63,13 @@ public class CallModelAction<State extends MessagesState<Message>> implements As
 
             return completedFuture(Map.of("messages", generator));
         } else {
-            var response = chatService.execute(messages);
+            final var output = ofNullable(chatService.execute(messages).getResult())
+                    .map(Generation::getOutput);
 
-            var output = response.getResult().getOutput();
-
-            return completedFuture(Map.of("messages", output));
+            return output
+                    .map( o -> completedFuture(Map.<String,Object>of("messages", o)) )
+                    .orElseGet( () -> failedFuture( new IllegalStateException("no output returned from chat service!")) )
+                    ;
         }
 
     }

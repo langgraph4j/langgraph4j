@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.CompileConfig;
+import org.bsc.langgraph4j.GraphInput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -14,18 +15,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.StreamSupport;
 import java.util.logging.LogManager;
 
 import static org.bsc.langgraph4j.StateGraph.END;
@@ -46,22 +44,32 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @Testcontainers
 public class DynamoDBSaverTest {
+    static class State extends AgentState {
+        public State(Map<String, Object> initData) {
+            super(initData);
+        }
+
+        public Optional<List<String>> history() {
+            return this.value("history");
+        }
+
+    }
 
     // ─── Serializer variants ─────────────────────────────────────────────────────
 
-    static class MyJacksonStateSerializer extends JacksonStateSerializer<AgentState> {
-        public MyJacksonStateSerializer(AgentStateFactory<AgentState> stateFactory) {
+    static class MyJacksonStateSerializer extends JacksonStateSerializer<State> {
+        public MyJacksonStateSerializer(AgentStateFactory<State> stateFactory) {
             super(stateFactory);
         }
     }
 
     public enum StateSerializerEnum {
-        BINARY(new ObjectStreamStateSerializer<>(AgentState::new)),
-        JSON(new MyJacksonStateSerializer(AgentState::new));
+        BINARY(new ObjectStreamStateSerializer<>(State::new)),
+        JSON(new MyJacksonStateSerializer(State::new));
 
-        final StateSerializer<AgentState> stateSerializer;
+        final StateSerializer<State> stateSerializer;
 
-        StateSerializerEnum(StateSerializer<AgentState> stateSerializer) {
+        StateSerializerEnum(StateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
         }
     }
@@ -139,18 +147,18 @@ public class DynamoDBSaverTest {
 
     // ─── Test graph helper ───────────────────────────────────────────────────────
 
-    static StateGraph<AgentState> singleNodeGraph() throws Exception {
-        NodeAction<AgentState> agent1 = state -> Map.of("agent_1:prop1", "agent_1:test");
-        return new StateGraph<>(AgentState::new)
+    static StateGraph<State> singleNodeGraph() throws Exception {
+        NodeAction<State> agent1 = state -> Map.of("agent_1:prop1", "agent_1:test");
+        return new StateGraph<>(State::new)
             .addNode("agent_1", node_async(agent1))
             .addEdge(START, "agent_1")
             .addEdge("agent_1", END);
     }
 
-    static StateGraph<AgentState> chatGraph() throws Exception {
-        NodeAction<AgentState> chatbot = state -> {
+    static StateGraph<State> chatGraph() throws Exception {
+        NodeAction<State> chatbot = state -> {
             String userInput = (String) state.value("user_input").orElse("");
-            List<String> history = new ArrayList<>(state.value("history").map(v -> (List<String>) v).orElse(Collections.emptyList()));
+            List<String> history = new ArrayList<>(state.history().orElseGet(List::of));
 
             history.add("User: " + userInput);
 
@@ -165,7 +173,7 @@ public class DynamoDBSaverTest {
             return Map.of("history", history);
         };
 
-        return new StateGraph<>(AgentState::new)
+        return new StateGraph<>(State::new)
                 .addNode("chatbot", node_async(chatbot))
                 .addEdge(START, "chatbot")
                 .addEdge("chatbot", END);
@@ -190,7 +198,7 @@ public class DynamoDBSaverTest {
         var runnableConfig = RunnableConfig.builder().threadId("thread-released").build();
         var workflow = singleNodeGraph().compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
 
         assertTrue(result.isPresent(), "Workflow must produce a result");
 
@@ -216,7 +224,7 @@ public class DynamoDBSaverTest {
         var workflow = singleNodeGraph().compile(compileConfig);
 
         // ── Step 1: invoke ──
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
         assertTrue(result.isPresent());
 
         // ── Step 2: verify history ──
@@ -274,19 +282,19 @@ public class DynamoDBSaverTest {
         var workflow = chatGraph().compile(compileConfig);
 
         // --- Turn 1: "Hi" ---
-        workflow.invoke(Map.of("user_input", "Hi"), runnableConfig);
+        workflow.invoke(GraphInput.args(Map.of("user_input", "Hi")), runnableConfig);
 
         var state1 = workflow.lastStateOf(runnableConfig).orElseThrow();
-        List<String> history1 = (List<String>) state1.state().value("history").orElseThrow();
+        List<String> history1 = state1.state().history().orElseThrow();
         assertEquals(2, history1.size());
         assertEquals("User: Hi", history1.get(0));
         assertEquals("AI: Hi there", history1.get(1));
 
         // --- Turn 2: "how's the weather" ---
-        workflow.invoke(Map.of("user_input", "how's the weather"), runnableConfig);
+        workflow.invoke(GraphInput.args(Map.of("user_input", "how's the weather")), runnableConfig);
 
         var state2 = workflow.lastStateOf(runnableConfig).orElseThrow();
-        List<String> history2 = (List<String>) state2.state().value("history").orElseThrow();
+        List<String> history2 = state2.state().history().orElseThrow();
         assertEquals(4, history2.size());
         // Verify accumulation
         assertEquals("User: Hi", history2.get(0));
@@ -296,7 +304,7 @@ public class DynamoDBSaverTest {
 
         // Verify history depth (2 turns * 2 nodes per turn = 4 checkpoints)
         var fullHistory = workflow.getStateHistory(runnableConfig);
-        assertEquals(4, StreamSupport.stream(fullHistory.spliterator(), false).count());
+        assertEquals(4, fullHistory.size());
 
         saver.release(runnableConfig);
     }
@@ -316,7 +324,7 @@ public class DynamoDBSaverTest {
             .endpointUrl(endpoint)
             .credentialsProvider(StaticCredentialsProvider.create(
                 AwsBasicCredentials.create("dummy", "dummy")))
-            .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
+            .stateSerializer(new ObjectStreamStateSerializer<>(State::new))
             .dropTableFirst(true)
             .ttlSeconds(3600) // 1 hour — items will be available throughout the test
             .build();
@@ -329,7 +337,7 @@ public class DynamoDBSaverTest {
         var runnableConfig = RunnableConfig.builder().threadId("thread-ttl").build();
         var workflow = singleNodeGraph().compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "ttl-test"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "ttl-test")), runnableConfig);
         assertTrue(result.isPresent(), "Workflow must produce a result with TTL enabled");
 
         var history = workflow.getStateHistory(runnableConfig);
@@ -359,7 +367,7 @@ public class DynamoDBSaverTest {
 
         var saver = DynamoDBSaver.builder()
             .tableName(TABLE_NAME)
-            .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
+            .stateSerializer(new ObjectStreamStateSerializer<>(State::new))
             .dynamoDbClient(externalClient)  // inject — region/endpoint settings ignored
             .dropTableFirst(true)
             .build();
@@ -372,7 +380,7 @@ public class DynamoDBSaverTest {
         var runnableConfig = RunnableConfig.builder().threadId("thread-injected-client").build();
         var workflow = singleNodeGraph().compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "injected-client"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "injected-client")), runnableConfig);
         assertTrue(result.isPresent());
 
         var history = workflow.getStateHistory(runnableConfig);

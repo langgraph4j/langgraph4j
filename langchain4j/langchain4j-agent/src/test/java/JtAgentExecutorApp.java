@@ -1,5 +1,5 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.8.15
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.15
+//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.9-SNAPSHOT
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9-SNAPSHOT
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS dev.langchain4j:langchain4j-bom:1.9.1@pom
 //DEPS dev.langchain4j:langchain4j-github-models
@@ -19,10 +19,7 @@ import io.javelit.core.JtComponent;
 import org.bsc.javelit.JtPlantUMLImage;
 import org.bsc.javelit.JtSelectAiModel;
 import org.bsc.javelit.JtSpinner;
-import org.bsc.langgraph4j.CompileConfig;
-import org.bsc.langgraph4j.CompiledGraph;
-import org.bsc.langgraph4j.GraphRepresentation;
-import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.agentexecutor.AgentExecutor;
 import org.bsc.langgraph4j.agentexecutor.AiModel;
 import org.bsc.langgraph4j.agentexecutor.TestTools;
@@ -103,7 +100,7 @@ public class JtAgentExecutorApp {
                         .threadId("test-01")
                         .build();
 
-                var generator = agent.stream(input, runnableConfig);
+                var generator = agent.stream( GraphInput.args(input), runnableConfig);
 
 
                 try {

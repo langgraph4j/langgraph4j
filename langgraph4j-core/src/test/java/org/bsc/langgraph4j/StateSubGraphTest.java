@@ -82,7 +82,7 @@ public class StateSubGraphTest {
 
     private List<String> _execute(CompiledGraph<?> workflow,
                                   GraphInput input ) throws Exception {
-        return workflow.stream(input, RunnableConfig.builder().build() )
+        return workflow.stream(input, RunnableConfig.empty() )
                 .stream()
                 .peek(System.out::println)
                 .map(NodeOutput::node)
@@ -672,7 +672,7 @@ public class StateSubGraphTest {
                 .compile(compileConfig);
 
 
-        var result = workflowParent.stream(Map.of())
+        var result = workflowParent.stream(GraphInput.noArgs(), RunnableConfig.empty() )
                 .stream()
                 .peek( n -> log.info("{}", n) )
                 .reduce((a, b) -> b)

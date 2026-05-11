@@ -22,7 +22,7 @@ class MessageWindowConversationContextPolicyTest {
     @Test
     void shouldKeepMostRecentMessagesWithinWindow() {
 
-        final var config = RunnableConfig.builder().build();
+        final var config = RunnableConfig.empty();
 
         var strategy = new MessageWindowConversationContextPolicy(3);
         List<ChatMessage> messages = List.of(
@@ -45,7 +45,7 @@ class MessageWindowConversationContextPolicyTest {
 
     @Test
     void shouldPreserveLeadingSystemMessageWhenEvicting() {
-        final var config = RunnableConfig.builder().build();
+        final var config = RunnableConfig.empty();
 
         var strategy = new MessageWindowConversationContextPolicy(2);
         var messages = List.of(
@@ -65,7 +65,7 @@ class MessageWindowConversationContextPolicyTest {
 
     @Test
     void shouldRemoveOrphanToolResultsWhenEvictingAiToolRequest() {
-        final var config = RunnableConfig.builder().build();
+        final var config = RunnableConfig.empty();
 
         var strategy = new MessageWindowConversationContextPolicy(1);
         var toolRequest = ToolExecutionRequest.builder()
@@ -90,7 +90,7 @@ class MessageWindowConversationContextPolicyTest {
 
     @Test
     void shouldNotMutateInputMessages() {
-        final var config = RunnableConfig.builder().build();
+        final var config = RunnableConfig.empty();
 
         var strategy = new MessageWindowConversationContextPolicy(2);
         List<ChatMessage> original = new ArrayList<>(List.of(

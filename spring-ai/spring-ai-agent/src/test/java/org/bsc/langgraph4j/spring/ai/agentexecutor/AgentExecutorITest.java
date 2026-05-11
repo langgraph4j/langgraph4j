@@ -190,8 +190,7 @@ public class AgentExecutorITest {
                         (chatModel instanceof GoogleGenAiChatModel ) ?
                             new TestTools4Gemini() :
                             new TestTools())
-                .build()
-                .compile(compileConfig);
+                .build(compileConfig);
 
         System.out.println(agent.getGraph(GraphRepresentation.Type.MERMAID, "ReAct Agent", false));
 
