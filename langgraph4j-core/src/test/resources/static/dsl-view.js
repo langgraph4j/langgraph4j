@@ -261,18 +261,13 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
 }
 
 function App({ sampleUrl }) {
-  const [source, setSource] = useState('');
-  const [status, setStatus] = useState('Load a sample graph or paste DSL JSON.');
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const savedPositionsRef = React.useRef(new Map());
   const savedSizesRef = React.useRef(new Map());
+  const flowRef = React.useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
-  const graphReady = nodes.length > 0;
 
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
@@ -295,8 +290,6 @@ function App({ sampleUrl }) {
     const layoutNodes = autoLayoutNodes(visibleNodes, nextDsl.edges, savedPositionsRef.current);
     setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current)));
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
-    setStatus(`${nextDsl.nodes.length} nodes, ${nextDsl.edges.length} edges, ${nextDsl.subgraphs?.length || 0} subgraphs`);
-    setError(false);
   }, [setEdges, setNodes, toggleSubgraph]);
 
   const handleNodesChange = useCallback((changes) => {
@@ -326,22 +319,16 @@ function App({ sampleUrl }) {
   }, [applyDsl, collapsedSubgraphs, dsl]);
 
   const loadSample = useCallback(async () => {
-    setLoading(true);
     try {
       const response = await fetch(sampleUrl);
       if (!response.ok) {
         throw new Error(`Sample graph request failed: ${response.status}`);
       }
       const text = await response.text();
-      setSource(JSON.stringify(JSON.parse(text), null, 2));
       renderDsl(text);
     }
     catch (caught) {
-      setStatus(caught.message);
-      setError(true);
-    }
-    finally {
-      setLoading(false);
+      console.error(caught);
     }
   }, [renderDsl, sampleUrl]);
 
@@ -349,15 +336,8 @@ function App({ sampleUrl }) {
     loadSample();
   }, [loadSample]);
 
-  const renderPasted = useCallback(() => {
-    try {
-      renderDsl(source);
-    }
-    catch (caught) {
-      setStatus(caught.message);
-      setError(true);
-    }
-  }, [renderDsl, source]);
+  React.useEffect(() => {
+  }, [edges.length, nodes.length]);
 
   const flow = useMemo(() => h(ReactFlow, {
     nodes,
@@ -365,34 +345,20 @@ function App({ sampleUrl }) {
     nodeTypes,
     onNodesChange: handleNodesChange,
     onEdgesChange,
-    fitView: graphReady,
+    onInit: (instance) => {
+      flowRef.current = instance;
+    },
+    fitView: true,
+    fitViewOptions: { padding: 0.16 },
     minZoom: 0.2,
     maxZoom: 1.5
   },
     h(MiniMap, null),
     h(Controls, null),
     h(Background, { gap: 18, size: 1 })
-  ), [edges, graphReady, handleNodesChange, nodes, onEdgesChange]);
+  ), [edges, handleNodesChange, nodes, onEdgesChange]);
 
   return h('main', { className: 'app' },
-    h('section', { className: 'sidebar' },
-      h('div', { className: 'header' },
-        h('h1', null, 'Langgraph4j DSL Visualizer'),
-        h('p', null, 'Load a Langgraph4j JSON DSL document and inspect it as an interactive React Flow graph.')
-      ),
-      h('div', { className: 'actions' },
-        h('button', { className: 'button primary', onClick: loadSample, disabled: loading }, loading ? 'Loading...' : 'Load sample'),
-        h('button', { className: 'button', onClick: renderPasted, disabled: loading || source.trim().length === 0 }, 'Render JSON')
-      ),
-      h('textarea', {
-        className: 'editor',
-        value: source,
-        onChange: (event) => setSource(event.target.value),
-        spellCheck: 'false',
-        placeholder: 'Paste Langgraph4j DSL JSON here...'
-      }),
-      h('div', { className: error ? 'status error' : 'status' }, status)
-    ),
     h('section', { className: 'graph' }, flow)
   );
 }
@@ -403,6 +369,8 @@ function componentStyles() {
 
     :host {
       display: block;
+      width: 100%;
+      height: 100vh;
       min-height: 100vh;
       color-scheme: light;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -414,91 +382,16 @@ function componentStyles() {
       box-sizing: border-box;
     }
 
-    button, textarea {
-      font: inherit;
-    }
-
     .app {
+      width: 100%;
+      height: 100vh;
       min-height: 100vh;
-      display: grid;
-      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-    }
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 20px;
-      border-right: 1px solid #d8dde5;
-      background: #ffffff;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 20px;
-      line-height: 1.2;
-      font-weight: 700;
-    }
-
-    .header p {
-      margin: 6px 0 0;
-      color: #5c6675;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .button {
-      border: 1px solid #c9d1dc;
-      border-radius: 6px;
-      background: #ffffff;
-      color: #1f2933;
-      min-height: 36px;
-      padding: 0 12px;
-      cursor: pointer;
-    }
-
-    .button.primary {
-      border-color: #2563eb;
-      background: #2563eb;
-      color: #ffffff;
-    }
-
-    .button:disabled {
-      cursor: progress;
-      opacity: 0.65;
-    }
-
-    .editor {
-      flex: 1;
-      min-height: 260px;
-      resize: none;
-      border: 1px solid #c9d1dc;
-      border-radius: 6px;
-      padding: 12px;
-      color: #17212f;
-      background: #fbfcfd;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .status {
-      min-height: 22px;
-      color: #52606d;
-      font-size: 13px;
-    }
-
-    .status.error {
-      color: #b42318;
+      display: block;
     }
 
     .graph {
+      width: 100%;
+      height: 100vh;
       min-width: 0;
       min-height: 100vh;
       background: #eef2f7;
@@ -580,21 +473,6 @@ function componentStyles() {
       min-height: 56px;
     }
 
-    @media (max-width: 820px) {
-      .app {
-        grid-template-columns: 1fr;
-        grid-template-rows: minmax(360px, 46vh) minmax(420px, 54vh);
-      }
-
-      .sidebar {
-        border-right: 0;
-        border-bottom: 1px solid #d8dde5;
-      }
-
-      .graph {
-        min-height: 420px;
-      }
-    }
   `;
 }
 
