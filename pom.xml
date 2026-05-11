@@ -221,6 +221,7 @@
 
     <modules>
         <module>langgraph4j-core</module>
+        <module>langgraph4j-dsl</module>
         <module>langgraph4j-bom</module>
 
         <!-- Integrating LangGraph4j with LangChain4j -->

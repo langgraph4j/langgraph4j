@@ -1,5 +1,8 @@
-package org.bsc.langgraph4j;
+package org.bsc.langgraph4j.dsl;
 
+import org.bsc.langgraph4j.GraphDefinition;
+import org.bsc.langgraph4j.StateGraph;
+import org.bsc.langgraph4j.SubGraphNode;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.state.AgentState;
@@ -62,7 +65,10 @@ public class JsonDslGenerator<State extends AgentState> implements GraphDefiniti
                 @SuppressWarnings("unchecked")
                 var subGraph = (StateGraph<State>) subGraphNode.subGraph();
 
-                appendGraph(subGraph.nodes, subGraph.edges, currentNodeId + "-", currentNodeId, depth + 1);
+                subGraph.reduce( ( nodes, edges ) -> {
+                    appendGraph(nodes, edges, currentNodeId + "-", currentNodeId, depth + 1);
+                    return null;
+                });
             }
             else {
                 appendNode(currentNodeId, node.id(), parentId, nodeKind(node), "default", depth, index++);

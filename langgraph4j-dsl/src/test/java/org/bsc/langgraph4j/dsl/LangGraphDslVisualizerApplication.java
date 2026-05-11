@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.dsl;
 
+import org.bsc.langgraph4j.GraphDefinition;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
@@ -20,6 +21,8 @@ import static org.bsc.langgraph4j.StateGraph.START;
 
 @SpringBootApplication
 public class LangGraphDslVisualizerApplication {
+
+    private static final GraphDefinition.Reducer<AgentState,String> jsonDslGenerator = new JsonDslGenerator<>();
 
     public static void main(String[] args) {
         SpringApplication.run(LangGraphDslVisualizerApplication.class, args);
@@ -69,7 +72,7 @@ public class LangGraphDslVisualizerApplication {
                     .addEdge("tool_executor", "responder")
                     .addEdge("responder", END)
                     .compile()
-                    .toJSON();
+                    .reduce( jsonDslGenerator );
         }
     }
 }
