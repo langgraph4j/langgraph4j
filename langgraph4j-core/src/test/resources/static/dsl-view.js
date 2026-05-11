@@ -345,6 +345,10 @@ function App({ sampleUrl }) {
     }
   }, [renderDsl, sampleUrl]);
 
+  React.useEffect(() => {
+    loadSample();
+  }, [loadSample]);
+
   const renderPasted = useCallback(() => {
     try {
       renderDsl(source);
