@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langgraph4j.github.io/schema/langgraph4j-dsl.schema.json",
+  "title": "Langgraph4j JSON DSL",
+  "description": "JSON DSL emitted by CompiledGraph.toJSON() for React Flow based graph renderers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "version",
+    "nodes",
+    "edges",
+    "subgraphs"
+  ],
+  "properties": {
+    "type": {
+      "const": "langgraph4j"
+    },
+    "version": {
+      "const": "1.0"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "subgraphs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/subgraph"
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "data"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "input",
+            "output",
+            "default",
+            "group"
+          ]
+        },
+        "data": {
+          "$ref": "#/$defs/nodeData"
+        },
+        "parentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extent": {
+          "const": "parent"
+        }
+      },
+      "dependentRequired": {
+        "parentId": [
+          "extent"
+        ],
+        "extent": [
+          "parentId"
+        ]
+      }
+    },
+    "nodeData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "kind"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "start",
+            "end",
+            "node",
+            "parallel",
+            "subgraph"
+          ]
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "target",
+        "type",
+        "data"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^e[0-9]+$"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "default",
+            "conditional",
+            "parallel"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {
+          "$ref": "#/$defs/edgeData"
+        }
+      }
+    },
+    "edgeData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "default",
+            "conditional",
+            "parallel"
+          ]
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "subgraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parentId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

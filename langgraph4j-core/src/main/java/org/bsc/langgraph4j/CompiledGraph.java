@@ -579,6 +579,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         return getGraph(type, "Graph Diagram", true);
     }
 
+
     /**
      * Applies a reducer function to process the nodes and edges of this graph.
      *
