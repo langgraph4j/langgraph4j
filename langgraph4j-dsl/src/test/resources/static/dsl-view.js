@@ -488,24 +488,41 @@ function componentStyles() {
 }
 
 export class LG4JDSLViewElement extends HTMLElement {
-  connectedCallback() {
-    if (this.root) {
-      return;
-    }
 
+  constructor() {
+    super();
+    
     const shadow = this.attachShadow({ mode: 'open' });
     const style = document.createElement('style');
     style.textContent = componentStyles();
-    const mount = document.createElement('div');
-    shadow.append(style, mount);
+    this.mount = document.createElement('div');
+    shadow.append(style, this.mount);
 
-    this.root = createRoot(mount);
-    this.root.render(h(App, { sampleUrl: this.getAttribute('api-url') || '/api/graph' }));
+
+  }
+
+  connectedCallback() {
+
+    // mount root
+    if( !this.root ) {
+      this.root = createRoot(this.mount);
+    }
+
+    this.addEventListener('graph', this.render);
+
   }
 
   disconnectedCallback() {
+
+    this.removeEventListener('graph', this.render);
+
+    // unmount root
     this.root?.unmount();
     this.root = null;
+  }
+
+  render() {
+    this.root?.render(h(App, { sampleUrl: this.getAttribute('api-url') || '/api/graph' }));
   }
 }
 
