@@ -260,6 +260,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
   return nextNodes;
 }
 
+
 function App({ source }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
@@ -269,14 +270,34 @@ function App({ source }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const fitView = useCallback(() => {
+  // const fitView = useCallback(() => {
+  //   requestAnimationFrame(() => {
+  //     if( flowRef.current ) {
+  //         flowRef.current.fitView({
+  //           padding: 0.16,
+  //           duration: 300
+  //         });
+  //         return true;
+  //     }
+  //     requestAnimationFrame(fitView);
+  //     return false
+  //   });
+  // }, []);
+
+  const fitView = useCallback(() =>  {
     requestAnimationFrame(() => {
-        flowRef.current?.fitView({
+      console.log('Attempting to fit view...', flowRef.current);
+      if( flowRef.current ) {
+        flowRef.current.fitView({
           padding: 0.16,
           duration: 300
-      });
+        });
+        return;
+      }
+      
+      requestAnimationFrame(fitView);
     });
-  }, [flowRef.current]);
+  }, []);
 
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
@@ -340,7 +361,7 @@ function App({ source }) {
     catch (caught) {
       console.error(caught);
     }
-  }, [fitView, renderDsl, source]);
+  }, [renderDsl, source]);
 
   const flow = useMemo(() => h(ReactFlow, {
     nodes,
