@@ -260,7 +260,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
   return nextNodes;
 }
 
-function App({ sampleUrl }) {
+function App({ source }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const savedPositionsRef = React.useRef(new Map());
@@ -270,16 +270,13 @@ function App({ sampleUrl }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const fitView = useCallback(() => {
-    // Wait two frames so React Flow has committed and measured async-loaded nodes before fitting.
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
         flowRef.current?.fitView({
           padding: 0.16,
-          duration: 200
-        });
+          duration: 300
       });
     });
-  }, []);
+  }, [flowRef.current]);
 
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
@@ -332,23 +329,18 @@ function App({ sampleUrl }) {
     }
   }, [applyDsl, collapsedSubgraphs, dsl]);
 
-  const loadSample = useCallback(async () => {
+  React.useEffect(() => {
+    if (!source) {
+      return;
+    }
     try {
-      const response = await fetch(sampleUrl);
-      if (!response.ok) {
-        throw new Error(`Sample graph request failed: ${response.status}`);
-      }
-      const text = await response.text();
-      renderDsl(text);
+      renderDsl(source);
+      fitView();
     }
     catch (caught) {
       console.error(caught);
     }
-  }, [renderDsl, sampleUrl]);
-
-  React.useEffect(() => {
-    loadSample().then(fitView);
-  }, [fitView, loadSample]);
+  }, [fitView, renderDsl, source]);
 
   const flow = useMemo(() => h(ReactFlow, {
     nodes,
@@ -497,8 +489,7 @@ export class LG4JDSLViewElement extends HTMLElement {
     style.textContent = componentStyles();
     this.mount = document.createElement('div');
     shadow.append(style, this.mount);
-
-
+    this.render = this.render.bind(this);
   }
 
   connectedCallback() {
@@ -521,8 +512,8 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.root = null;
   }
 
-  render() {
-    this.root?.render(h(App, { sampleUrl: this.getAttribute('api-url') || '/api/graph' }));
+  render(event) {
+    this.root?.render(h(App, { source: event.detail }));
   }
 }
 

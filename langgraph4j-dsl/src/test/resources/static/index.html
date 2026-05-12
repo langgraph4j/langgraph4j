@@ -5,8 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Langgraph4j DSL Visualizer</title>
   <script type="module" src="/dsl-view.js"></script>
+  <script type="module">
+    async function loadGraph() {
+      const view = document.querySelector('lg4j-dsl-view');
+      const response = await fetch('/api/graph');
+      if (!response.ok) {
+        throw new Error(`Graph request failed: ${response.status}`);
+      }
+      const source = await response.text();
+      view.dispatchEvent(new CustomEvent('graph', { detail: source }));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGraph().catch((caught) => console.error(caught));
+    });
+  </script>
 </head>
 <body>
-  <lg4j-dsl-view api-url="/api/graph"></lg4j-dsl-view>
+  <lg4j-dsl-view></lg4j-dsl-view>
 </body>
 </html>

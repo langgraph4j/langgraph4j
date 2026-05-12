@@ -26,7 +26,9 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().contentTypeCompatibleWith("text/html"))
                 .andExpect(content().string(containsString("Langgraph4j DSL Visualizer")))
                 .andExpect(content().string(containsString("<script type=\"module\" src=\"/dsl-view.js\"></script>")))
-                .andExpect(content().string(containsString("<lg4j-dsl-view api-url=\"/api/graph\"></lg4j-dsl-view>")));
+                .andExpect(content().string(containsString("fetch('/api/graph')")))
+                .andExpect(content().string(containsString("new CustomEvent('graph', { detail: source })")))
+                .andExpect(content().string(containsString("<lg4j-dsl-view></lg4j-dsl-view>")));
     }
 
     @Test
@@ -57,7 +59,8 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().string(containsString("handleNodesChange")))
                 .andExpect(content().string(containsString("onResizeEnd")))
                 .andExpect(content().string(containsString("savedSizes.set(node.id")))
-                .andExpect(content().string(containsString("fetch(sampleUrl)")));
+                .andExpect(content().string(containsString("this.addEventListener('graph', this.render)")))
+                .andExpect(content().string(containsString("source: event.detail")));
     }
 
     @Test

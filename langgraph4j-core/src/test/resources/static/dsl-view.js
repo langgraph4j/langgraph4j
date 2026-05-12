@@ -260,7 +260,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
   return nextNodes;
 }
 
-function App({ sampleUrl }) {
+function App({ source }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const savedPositionsRef = React.useRef(new Map());
@@ -332,23 +332,18 @@ function App({ sampleUrl }) {
     }
   }, [applyDsl, collapsedSubgraphs, dsl]);
 
-  const loadSample = useCallback(async () => {
+  React.useEffect(() => {
+    if (!source) {
+      return;
+    }
     try {
-      const response = await fetch(sampleUrl);
-      if (!response.ok) {
-        throw new Error(`Sample graph request failed: ${response.status}`);
-      }
-      const text = await response.text();
-      renderDsl(text);
+      renderDsl(source);
+      fitView();
     }
     catch (caught) {
       console.error(caught);
     }
-  }, [renderDsl, sampleUrl]);
-
-  React.useEffect(() => {
-    loadSample().then(fitView);
-  }, [fitView, loadSample]);
+  }, [fitView, renderDsl, source]);
 
   const flow = useMemo(() => h(ReactFlow, {
     nodes,
@@ -488,6 +483,11 @@ function componentStyles() {
 }
 
 export class LG4JDSLViewElement extends HTMLElement {
+  constructor() {
+    super();
+    this.render = this.render.bind(this);
+  }
+
   connectedCallback() {
     if (this.root) {
       return;
@@ -500,12 +500,17 @@ export class LG4JDSLViewElement extends HTMLElement {
     shadow.append(style, mount);
 
     this.root = createRoot(mount);
-    this.root.render(h(App, { sampleUrl: this.getAttribute('api-url') || '/api/graph' }));
+    this.addEventListener('graph', this.render);
   }
 
   disconnectedCallback() {
+    this.removeEventListener('graph', this.render);
     this.root?.unmount();
     this.root = null;
+  }
+
+  render(event) {
+    this.root?.render(h(App, { source: event.detail }));
   }
 }
 
