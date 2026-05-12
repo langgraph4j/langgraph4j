@@ -28,6 +28,9 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().string(containsString("<script type=\"module\" src=\"/dsl-view.js\"></script>")))
                 .andExpect(content().string(containsString("fetch('/api/graph')")))
                 .andExpect(content().string(containsString("new CustomEvent('graph', { detail: source })")))
+                .andExpect(content().string(containsString("textarea id=\"dsl-source\" readonly")))
+                .andExpect(content().string(containsString("input id=\"active-node\"")))
+                .andExpect(content().string(containsString("new CustomEvent('graph-active'")))
                 .andExpect(content().string(containsString("<lg4j-dsl-view></lg4j-dsl-view>")));
     }
 
@@ -60,7 +63,11 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().string(containsString("onResizeEnd")))
                 .andExpect(content().string(containsString("savedSizes.set(node.id")))
                 .andExpect(content().string(containsString("this.addEventListener('graph', this.render)")))
-                .andExpect(content().string(containsString("source: event.detail")));
+                .andExpect(content().string(containsString("this.addEventListener('graph-active', this.onActive)")))
+                .andExpect(content().string(containsString("source: this.source")))
+                .andExpect(content().string(containsString("activeNodeId: this.activeNodeId")))
+                .andExpect(content().string(containsString("active-node")))
+                .andExpect(content().string(containsString("@keyframes lg4j-spin")));
     }
 
     @Test

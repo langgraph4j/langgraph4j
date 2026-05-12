@@ -68,16 +68,18 @@ function nodeSize(node, collapsedSubgraphs) {
   };
 }
 
-function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes) {
+function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId) {
   const size = nodeSize(node, collapsedSubgraphs);
   const savedSize = savedSizes.get(node.id);
   const renderedSize = node.data?.kind === 'subgraph' && savedSize && !collapsedSubgraphs.has(node.id)
     ? savedSize
     : size;
   const savedPosition = savedPositions.get(node.id);
+  const active = activeNodeId === node.id;
   return {
     ...node,
     type: node.data?.kind === 'subgraph' ? 'subgraph' : node.data?.kind === 'start' || node.data?.kind === 'end' ? 'circle' : node.type,
+    className: active ? [node.className, 'active-node'].filter(Boolean).join(' ') : node.className,
     draggable: true,
     extent: node.parentId ? 'parent' : node.extent,
     position: savedPosition || node.position,
@@ -90,6 +92,7 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
     },
     data: {
       ...node.data,
+      active,
       collapsed: node.data?.kind === 'subgraph' && collapsedSubgraphs.has(node.id),
       onToggle: node.data?.kind === 'subgraph' ? () => toggleSubgraph(node.id) : undefined,
       onResizeEnd: node.data?.kind === 'subgraph' ? (_, params) => {
@@ -260,7 +263,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
   return nextNodes;
 }
 
-function App({ source }) {
+function App({ source, activeNodeId }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const savedPositionsRef = React.useRef(new Map());
@@ -300,9 +303,9 @@ function App({ source }) {
     const visibleNodes = nextDsl.nodes
       .filter((node) => !isHiddenByCollapsedParent(node, parentIndex, nextCollapsedSubgraphs));
     const layoutNodes = autoLayoutNodes(visibleNodes, nextDsl.edges, savedPositionsRef.current);
-    setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current)));
+    setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current, activeNodeId)));
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
-  }, [setEdges, setNodes, toggleSubgraph]);
+  }, [activeNodeId, setEdges, setNodes, toggleSubgraph]);
 
   const handleNodesChange = useCallback((changes) => {
     for (const change of changes) {
@@ -479,6 +482,42 @@ function componentStyles() {
       min-height: 56px;
     }
 
+    .react-flow__node.active-node {
+      filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.35));
+    }
+
+    .react-flow__node.active-node::after {
+      content: "";
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 18px;
+      height: 18px;
+      border: 3px solid #bfdbfe;
+      border-top-color: #2563eb;
+      border-radius: 999px;
+      background: #ffffff;
+      animation: lg4j-spin 0.8s linear infinite;
+      z-index: 2;
+    }
+
+    .react-flow__node.active-node.react-flow__node-default {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .react-flow__node.active-node .circle-node,
+    .react-flow__node.active-node .subgraph-node {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    @keyframes lg4j-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
   `;
 }
 
@@ -486,6 +525,7 @@ export class LG4JDSLViewElement extends HTMLElement {
   constructor() {
     super();
     this.render = this.render.bind(this);
+    this.onActive = this.onActive.bind(this);
   }
 
   connectedCallback() {
@@ -501,16 +541,32 @@ export class LG4JDSLViewElement extends HTMLElement {
 
     this.root = createRoot(mount);
     this.addEventListener('graph', this.render);
+    this.addEventListener('graph-active', this.onActive);
   }
 
   disconnectedCallback() {
     this.removeEventListener('graph', this.render);
+    this.removeEventListener('graph-active', this.onActive);
     this.root?.unmount();
     this.root = null;
   }
 
   render(event) {
-    this.root?.render(h(App, { source: event.detail }));
+    this.source = event.detail;
+    this.update();
+  }
+
+  onActive(event) {
+    const detail = event.detail;
+    this.activeNodeId = typeof detail === 'string' ? detail : detail?.node;
+    this.update();
+  }
+
+  update() {
+    this.root?.render(h(App, {
+      source: this.source,
+      activeNodeId: this.activeNodeId
+    }));
   }
 }
 
