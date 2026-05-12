@@ -35,6 +35,12 @@
       color: #334155;
     }
 
+    label:has(#dsl-source) {
+      height: 80%;
+      min-height: 0;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
     textarea,
     input {
       width: 100%;
@@ -46,7 +52,6 @@
     }
 
     textarea {
-      flex: 1;
       min-height: 0;
       resize: none;
       padding: 10px;
