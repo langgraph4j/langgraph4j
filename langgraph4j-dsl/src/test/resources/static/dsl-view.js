@@ -76,10 +76,11 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
     : size;
   const savedPosition = savedPositions.get(node.id);
   const active = activeNodeId === node.id;
+  const activeBoundary = active && (node.data?.kind === 'start' || node.data?.kind === 'end');
   return {
     ...node,
     type: node.data?.kind === 'subgraph' ? 'subgraph' : node.data?.kind === 'start' || node.data?.kind === 'end' ? 'circle' : node.type,
-    className: active ? [node.className, 'active-node'].filter(Boolean).join(' ') : node.className,
+    className: active ? [node.className, 'active-node', activeBoundary ? 'active-boundary-node' : null].filter(Boolean).join(' ') : node.className,
     draggable: true,
     extent: node.parentId ? 'parent' : node.extent,
     position: savedPosition || node.position,
@@ -503,6 +504,10 @@ function componentStyles() {
       background: #ffffff;
       animation: lg4j-spin 0.8s linear infinite;
       z-index: 2;
+    }
+
+    .react-flow__node.active-boundary-node::after {
+      content: none;
     }
 
     .react-flow__node.active-node.react-flow__node-default {
