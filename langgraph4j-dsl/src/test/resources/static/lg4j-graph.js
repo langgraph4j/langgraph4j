@@ -11,7 +11,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState
-} from 'https://esm.sh/@xyflow/react@12?deps=react@19,react-dom@19';
+} from 'https://esm.sh/@xyflow/react@12.10.2?deps=react@19,react-dom@19';
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
@@ -274,20 +274,19 @@ function App({ source, activeNodeId }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const fitView = useCallback(() =>  {
+  
+  const fitView = useCallback(() => 
     requestAnimationFrame(() => {
       console.log('Attempting to fit view...', flowRef.current);
       if( flowRef.current ) {
-        flowRef.current.fitView({
+        requestAnimationFrame(() => flowRef.current.fitView({
           padding: 0.16,
-          duration: 300
-        });
+          duration: 200 }));
         return;
       }
-      
       requestAnimationFrame(fitView);
-    });
-  }, []);
+    }), []);
+    
 
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
@@ -367,7 +366,7 @@ function App({ source, activeNodeId }) {
     minZoom: 0.2,
     maxZoom: 1.5
   },
-    h(MiniMap, null),
+    // h(MiniMap, null),
     h(Controls, null),
     h(Background, { gap: 18, size: 1 })
   ), [edges, handleNodesChange, nodes, onEdgesChange]);
@@ -384,8 +383,8 @@ function componentStyles() {
     :host {
       display: block;
       width: 100%;
-      height: 100vh;
-      min-height: 100vh;
+      height: 100%;
+      min-height: 100%;
       color-scheme: light;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f6f7f9;
@@ -399,15 +398,15 @@ function componentStyles() {
     .app {
       width: 100%;
       height: 100vh;
-      min-height: 100vh;
+      min-height: 100%;
       display: block;
     }
 
     .graph {
       width: 100%;
-      height: 100vh;
+      height: 100%;
       min-width: 0;
-      min-height: 100vh;
+      min-height: 100%;
       background: #eef2f7;
     }
 
@@ -586,4 +585,4 @@ export class LG4JDSLViewElement extends HTMLElement {
   }
 }
 
-customElements.define('lg4j-dsl-view', LG4JDSLViewElement);
+customElements.define('lg4j-graph', LG4JDSLViewElement);
