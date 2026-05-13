@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'https://esm.sh/react@19';
 import { createRoot } from 'https://esm.sh/react-dom@19/client';
 import {
+  ReactFlowProvider,
   Background,
   Controls,
   Handle,
@@ -10,8 +11,9 @@ import {
   Position,
   ReactFlow,
   useEdgesState,
-  useNodesState
-} from 'https://esm.sh/@xyflow/react@12.10.2?deps=react@19,react-dom@19';
+  useNodesState,
+  useReactFlow
+} from 'https://esm.sh/@xyflow/react@12?deps=react@19,react-dom@19';
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
@@ -265,29 +267,16 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
 }
 
 
-function App({ source, activeNodeId }) {
+function GraphFlow({ source, activeNodeId }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
-  const savedPositionsRef = React.useRef(new Map());
-  const savedSizesRef = React.useRef(new Map());
-  const flowRef = React.useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const savedPositionsRef = React.useRef(new Map());
+  const savedSizesRef = React.useRef(new Map());
 
-  
-  const fitView = useCallback(() => 
-    requestAnimationFrame(() => {
-      console.log('Attempting to fit view...', flowRef.current);
-      if( flowRef.current ) {
-        requestAnimationFrame(() => flowRef.current.fitView({
-          padding: 0.16,
-          duration: 200 }));
-        return;
-      }
-      requestAnimationFrame(fitView);
-    }), []);
-    
-
+  const { fitView } = useReactFlow();
+      
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
       const next = new Set(current);
@@ -345,7 +334,7 @@ function App({ source, activeNodeId }) {
     }
     try {
       renderDsl(source);
-      fitView();
+      fitView({ padding: 0.16, duration: 200 });
     }
     catch (caught) {
       console.error(caught);
@@ -353,27 +342,23 @@ function App({ source, activeNodeId }) {
   }, [renderDsl, source]);
 
   const flow = useMemo(() => h(ReactFlow, {
-    nodes,
-    edges,
-    nodeTypes,
-    onNodesChange: handleNodesChange,
-    onEdgesChange,
-    onInit: (instance) => {
-      flowRef.current = instance;
+      nodes,
+      edges,
+      nodeTypes,
+      onNodesChange: handleNodesChange,
+      onEdgesChange,
+      //onInit: (instance) => {},
+      fitView: true,
+      fitViewOptions: { padding: 0.16 },
+      minZoom: 0.2,
+      maxZoom: 1.5
     },
-    fitView: true,
-    fitViewOptions: { padding: 0.16 },
-    minZoom: 0.2,
-    maxZoom: 1.5
-  },
     // h(MiniMap, null),
     h(Controls, null),
     h(Background, { gap: 18, size: 1 })
   ), [edges, handleNodesChange, nodes, onEdgesChange]);
 
-  return h('main', { className: 'app' },
-    h('section', { className: 'graph' }, flow)
-  );
+  return flow;
 }
 
 function componentStyles() {
@@ -578,10 +563,16 @@ export class LG4JDSLViewElement extends HTMLElement {
   }
 
   update() {
-    this.root?.render(h(App, {
-      source: this.source,
-      activeNodeId: this.activeNodeId
-    }));
+
+    this.root?.render( 
+      h('main', { className: 'app' },
+        h('section', { className: 'graph' }, 
+          h( ReactFlowProvider, null,
+             h( GraphFlow, { source: this.source, activeNodeId: this.activeNodeId } )
+          )
+        )
+      )
+    );
   }
 }
 
