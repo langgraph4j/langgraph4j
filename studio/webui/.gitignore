@@ -22,7 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-bun.lockb
+bun.lock
 package-lock.json
 yarn.lock
 .parcel-cache/
