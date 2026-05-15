@@ -25,23 +25,25 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/html"))
                 .andExpect(content().string(containsString("Langgraph4j DSL Visualizer")))
-                .andExpect(content().string(containsString("<script type=\"module\" src=\"/dsl-view.js\"></script>")))
+                .andExpect(content().string(containsString("<script type=\"module\" src=\"/lg4j-graph.js\"></script>")))
                 .andExpect(content().string(containsString("<script type=\"module\" src=\"/lg4j-workbench.js\"></script>")))
+                .andExpect(content().string(containsString("<script type=\"module\" src=\"/lg4j-result.js\"></script>")))
                 .andExpect(content().string(containsString("<script type=\"module\" src=\"/lg4j-executor.js\"></script>")))
                 .andExpect(content().string(containsString("<lg4j-workbench>")))
-                .andExpect(content().string(containsString("<lg4j-dsl-view slot=\"graph\"></lg4j-dsl-view>")))
+                .andExpect(content().string(containsString("<lg4j-graph slot=\"graph\"></lg4j-graph>")))
+                .andExpect(content().string(containsString("<lg4j-result slot=\"result\"></lg4j-result>")))
                 .andExpect(content().string(containsString("<lg4j-executor slot=\"executor\"></lg4j-executor>")));
     }
 
     @Test
     void dslViewServesWebComponentModule() throws Exception {
-        mockMvc.perform(get("/dsl-view.js"))
+        mockMvc.perform(get("/lg4j-graph.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/javascript"))
                 .andExpect(content().string(containsString("@xyflow/react")))
                 .andExpect(content().string(containsString("react@19")))
                 .andExpect(content().string(containsString("export class LG4JDSLViewElement extends HTMLElement")))
-                .andExpect(content().string(containsString("customElements.define('lg4j-dsl-view', LG4JDSLViewElement)")))
+                .andExpect(content().string(containsString("customElements.define('lg4j-graph', LG4JDSLViewElement)")))
                 .andExpect(content().string(containsString("CircleNode")))
                 .andExpect(content().string(containsString("NodeResizer")))
                 .andExpect(content().string(containsString("SubgraphNode")))
@@ -75,11 +77,14 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().contentTypeCompatibleWith("text/javascript"))
                 .andExpect(content().string(containsString("export class LG4JWorkbenchElement extends HTMLElement")))
                 .andExpect(content().string(containsString("grid-template-columns: minmax(0, 1fr) minmax(280px, 28vw)")))
+                .andExpect(content().string(containsString("grid-template-rows: minmax(0, 1fr) minmax(180px, 32vh)")))
                 .andExpect(content().string(containsString("<slot name=\"graph\"></slot>")))
+                .andExpect(content().string(containsString("<slot name=\"result\"></slot>")))
                 .andExpect(content().string(containsString("<slot name=\"executor\"></slot>")))
                 .andExpect(content().string(containsString("this.addEventListener('graph', this.forwardGraph)")))
                 .andExpect(content().string(containsString("this.addEventListener('graph-active', this.forwardGraphActive)")))
                 .andExpect(content().string(containsString("this.addEventListener('graph-acive', this.forwardGraphActive)")))
+                .andExpect(content().string(containsString("this.resultElement?.dispatchEvent(new CustomEvent(type, { detail }))")))
                 .andExpect(content().string(containsString("customElements.define('lg4j-workbench', LG4JWorkbenchElement)")));
     }
 
@@ -90,13 +95,24 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().contentTypeCompatibleWith("text/javascript"))
                 .andExpect(content().string(containsString("export class LG4JExecutorElement extends HTMLElement")))
                 .andExpect(content().string(containsString("fetch('/api/graph')")))
-                .andExpect(content().string(containsString("textarea id=\"dsl-source\" readonly")))
                 .andExpect(content().string(containsString("input id=\"active-node\"")))
                 .andExpect(content().string(containsString("this.dispatchGraphEvent('graph', source)")))
                 .andExpect(content().string(containsString("this.dispatchGraphEvent('graph-active'")))
                 .andExpect(content().string(containsString("bubbles: true")))
                 .andExpect(content().string(containsString("composed: true")))
                 .andExpect(content().string(containsString("customElements.define('lg4j-executor', LG4JExecutorElement)")));
+    }
+
+    @Test
+    void resultServesDslJsonPanelWebComponentModule() throws Exception {
+        mockMvc.perform(get("/lg4j-result.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/javascript"))
+                .andExpect(content().string(containsString("export class LG4JResultElement extends HTMLElement")))
+                .andExpect(content().string(containsString("textarea id=\"dsl-source\" readonly")))
+                .andExpect(content().string(containsString("this.addEventListener('graph', this.renderGraph)")))
+                .andExpect(content().string(containsString("JSON.stringify(JSON.parse(source), null, 2)")))
+                .andExpect(content().string(containsString("customElements.define('lg4j-result', LG4JResultElement)")));
     }
 
     @Test

@@ -23,6 +23,8 @@ template.innerHTML = `
     }
 
     .graph,
+    .side,
+    .result,
     .executor {
       min-width: 0;
       min-height: 100vh;
@@ -32,9 +34,20 @@ template.innerHTML = `
       background: #eef2f7;
     }
 
-    .executor {
+    .side {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(180px, 32vh);
       border-left: 1px solid #d8dee8;
+    }
+
+    .result,
+    .executor {
+      min-height: 0;
       background: #ffffff;
+    }
+
+    .executor {
+      border-top: 1px solid #d8dee8;
     }
 
     slot[name="graph"]::slotted(*) {
@@ -43,18 +56,29 @@ template.innerHTML = `
       min-height: 100vh;
     }
 
+    slot[name="result"]::slotted(*) {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
     slot[name="executor"]::slotted(*) {
       width: 100%;
       height: 100%;
-      min-height: 100vh;
+      min-height: 0;
     }
   </style>
   <div class="workbench">
     <section class="graph">
       <slot name="graph"></slot>
     </section>
-    <aside class="executor">
-      <slot name="executor"></slot>
+    <aside class="side">
+      <section class="result">
+        <slot name="result"></slot>
+      </section>
+      <section class="executor">
+        <slot name="executor"></slot>
+      </section>
     </aside>
   </div>
 `;
@@ -81,24 +105,31 @@ export class LG4JWorkbenchElement extends HTMLElement {
   }
 
   forwardGraph(event) {
-    this.dispatchToGraph('graph', event.detail, event);
+    this.dispatchGraphEvent('graph', event.detail, event);
   }
 
   forwardGraphActive(event) {
-    this.dispatchToGraph('graph-active', event.detail, event);
+    this.dispatchGraphEvent('graph-active', event.detail, event);
   }
 
-  dispatchToGraph(type, detail, originalEvent) {
-    if (originalEvent.target === this.graphElement) {
+  dispatchGraphEvent(type, detail, originalEvent) {
+    if (originalEvent.target === this.graphElement || originalEvent.target === this.resultElement) {
       return;
     }
 
     originalEvent.stopPropagation();
     this.graphElement?.dispatchEvent(new CustomEvent(type, { detail }));
+    if (type === 'graph') {
+      this.resultElement?.dispatchEvent(new CustomEvent(type, { detail }));
+    }
   }
 
   get graphElement() {
     return this.querySelector('[slot="graph"]');
+  }
+
+  get resultElement() {
+    return this.querySelector('[slot="result"]');
   }
 }
 
