@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'https://esm.sh/react@19';
-import { createRoot } from 'https://esm.sh/react-dom@19/client';
+import React, { useCallback, useMemo, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import * as reactFlowStyles from "bundle-text:@xyflow/react/dist/style.css";
 import {
   ReactFlowProvider,
   Background,
@@ -13,7 +14,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow
-} from 'https://esm.sh/@xyflow/react@12?deps=react@19,react-dom@19';
+} from '@xyflow/react';
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
@@ -363,7 +364,7 @@ function GraphFlow({ source, activeNodeId }) {
 
 function componentStyles() {
   return `
-    @import url("https://unpkg.com/@xyflow/react@12/dist/style.css");
+    ${reactFlowStyles}
 
     :host {
       display: block;
