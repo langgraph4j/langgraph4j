@@ -205,18 +205,21 @@ function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
   for (const edge of layoutEdges) {
     if (ids.has(edge.source) && ids.has(edge.target)) {
       const next = outgoing.get(edge.source) || [];
-      next.push(edge.target);
-      outgoing.set(edge.source, next);
+      if (!next.includes(edge.target)) {
+        next.push(edge.target);
+        outgoing.set(edge.source, next);
+      }
     }
   }
 
+  const acyclicOutgoing = removeCycleEdges(outgoing, groupNodes, groupKey);
   const ranks = new Map();
   const queue = [startNodeId(groupKey)];
   ranks.set(startNodeId(groupKey), 0);
   while (queue.length > 0) {
     const current = queue.shift();
     const nextRank = (ranks.get(current) || 0) + 1;
-    for (const target of outgoing.get(current) || []) {
+    for (const target of acyclicOutgoing.get(current) || []) {
       if (!ranks.has(target) || nextRank > ranks.get(target)) {
         ranks.set(target, nextRank);
         queue.push(target);
@@ -231,6 +234,52 @@ function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
     }
   }
   return ranks;
+}
+
+function removeCycleEdges(outgoing, groupNodes, groupKey) {
+  const visiting = new Set();
+  const visited = new Set();
+  const skippedEdges = new Set();
+  const nodeIds = groupNodes.map((node) => node.id);
+  const start = startNodeId(groupKey);
+  const orderedIds = [
+    ...(nodeIds.includes(start) ? [start] : []),
+    ...nodeIds.filter((id) => id !== start).sort()
+  ];
+
+  const visit = (id) => {
+    if (visited.has(id)) {
+      return;
+    }
+    visiting.add(id);
+    for (const target of outgoing.get(id) || []) {
+      const edgeKey = `${id}\u0000${target}`;
+      if (visiting.has(target)) {
+        skippedEdges.add(edgeKey);
+        continue;
+      }
+      visit(target);
+    }
+    visiting.delete(id);
+    visited.add(id);
+  };
+
+  for (const id of orderedIds) {
+    visit(id);
+  }
+
+  if (skippedEdges.size === 0) {
+    return outgoing;
+  }
+
+  const acyclicOutgoing = new Map();
+  for (const [source, targets] of outgoing.entries()) {
+    const acyclicTargets = targets.filter((target) => !skippedEdges.has(`${source}\u0000${target}`));
+    if (acyclicTargets.length > 0) {
+      acyclicOutgoing.set(source, acyclicTargets);
+    }
+  }
+  return acyclicOutgoing;
 }
 
 function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
