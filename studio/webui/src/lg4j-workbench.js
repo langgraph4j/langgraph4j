@@ -91,26 +91,31 @@ export class LG4JWorkbenchElement extends LitElement {
       min-height: 0;
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-rows: repeat(5, minmax(0, 1fr));
       column-gap: 0.5rem;
-      row-gap: 2.25rem;
       padding: 0.5rem;
     }
 
+    .left-column {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
     .graph-panel {
-      grid-row: span 3;
+      flex: 1;
       min-height: 0;
       border: 1px solid #d1d5db;
       overflow: auto;
     }
 
     .result-panel {
-      grid-row: span 5;
       min-height: 0;
       overflow: hidden;
     }
 
     .executor-panel {
+      flex-shrink: 0;
       min-height: 0;
       overflow: auto;
     }
@@ -277,9 +282,11 @@ export class LG4JWorkbenchElement extends LitElement {
 </div>
 
   <div class="layout">    
-    <div class="graph-panel"><slot name="graph">LEFT</slot></div>
+    <div class="left-column">
+      <div class="graph-panel"><slot name="graph">LEFT</slot></div>
+      <div class="executor-panel"><slot name="executor">BOTTOM</slot></div>
+    </div>
     <div class="result-panel"><slot name="result">RIGHT</slot></div>
-    <div class="executor-panel"><slot name="executor">BOTTOM</slot></div>
   </div>
 </div>
     `;
