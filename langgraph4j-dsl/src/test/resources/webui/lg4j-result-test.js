@@ -53,7 +53,7 @@ template.innerHTML = `
   </div>
 `;
 
-export class LG4JResultElement extends HTMLElement {
+export class LG4JResultTestElement extends HTMLElement {
 
   constructor() {
     super();
@@ -77,4 +77,4 @@ export class LG4JResultElement extends HTMLElement {
   }
 }
 
-customElements.define('lg4j-result', LG4JResultElement);
+customElements.define('lg4j-result-test', LG4JResultTestElement);
