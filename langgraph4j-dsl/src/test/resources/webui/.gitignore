@@ -2,3 +2,5 @@ node_modules/
 .parcel-cache/
 dist/
 package-lock.json
+bun.lock
+yarn.lock
