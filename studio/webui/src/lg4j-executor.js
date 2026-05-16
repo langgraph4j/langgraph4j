@@ -1,6 +1,4 @@
 
-import TWStyles from './twlit.js';
-
 import { html, css, LitElement, CSSResult } from 'lit';
 
 //import { imageToDiagram as test } from './lg4j-executor-test.js';
@@ -76,7 +74,13 @@ export class LG4JExecutorElement extends LitElement {
    * @static
    * @type {Array<CSSResult>}
    */
-  static styles = [TWStyles, css`
+  static styles = [css`
+    :host {
+      display: block;
+      color: #e5e7eb;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
     .container {
       display: flex;
       flex-direction: column;
@@ -98,6 +102,128 @@ export class LG4JExecutorElement extends LitElement {
     }
     .item3 {
       flex-grow: 2;
+    }
+
+    textarea {
+      min-height: 6rem;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.75rem 1rem;
+      resize: vertical;
+      border: 1px solid #38bdf8;
+      border-radius: 0.5rem;
+      color: #e5e7eb;
+      background: #111827;
+      font: inherit;
+      line-height: 1.4;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 2.75rem;
+      padding: 0.65rem 1rem;
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .primary {
+      background: #2563eb;
+    }
+
+    .primary:not(:disabled):hover {
+      background: #1d4ed8;
+    }
+
+    .secondary {
+      background: #7c3aed;
+    }
+
+    .secondary:not(:disabled):hover {
+      background: #6d28d9;
+    }
+
+    .danger {
+      background: #dc2626;
+    }
+
+    .danger:not(:disabled):hover {
+      background: #b91c1c;
+    }
+
+    .icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      flex-shrink: 0;
+      stroke: currentColor;
+    }
+
+    dialog {
+      width: min(32rem, calc(100vw - 2rem));
+      padding: 0;
+      border: 0;
+      border-radius: 0.75rem;
+      color: #e5e7eb;
+      background: #111827;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 42, 0.72);
+    }
+
+    .modal-box {
+      position: relative;
+      padding: 1.5rem;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 2rem;
+      height: 2rem;
+      min-height: 2rem;
+      padding: 0;
+      border-radius: 999px;
+      color: #e5e7eb;
+      background: transparent;
+    }
+
+    .close-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .error-content {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 2rem 0 0;
+      color: #f87171;
+    }
+
+    #error_message {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 700;
     }
   `];
 
@@ -509,19 +635,19 @@ export class LG4JExecutorElement extends LitElement {
           ${this.formMetaData.map(({ name, type }) => {
             switch (type) {
               case 'STRING':
-                return html`<textarea id="${name}" class="textarea textarea-primary" placeholder="${name}"></textarea>`
+                return html`<textarea id="${name}" placeholder="${name}"></textarea>`
               case 'IMAGE':
                 return html`<lg4j-image-uploader id="${name}"></lg4j-image-uploader>`
             }
           })}
           <div class="commands">
-            <button id="submit" ?disabled=${this._executing} @click="${this.#callSubmit}" class="btn btn-primary item1">Submit</button>
-            <button id="resume" ?disabled=${!this.#updatedState || this._executing} @click="${this.#callResume}" class="btn btn-secondary item2">
+            <button id="submit" ?disabled=${this._executing} @click="${this.#callSubmit}" class="primary item1">Submit</button>
+            <button id="resume" ?disabled=${!this.#updatedState || this._executing} @click="${this.#callResume}" class="secondary item2">
             Resume ${this.#updatedState ? '(from ' + this.#updatedState?.node + ')' : ''}
             </button>
-            <button id="cancel" @click="${this.#callCancel}" ?disabled=${!this._executing} class="btn btn-error item3 text-white" aria-label="Stop">
+            <button id="cancel" @click="${this.#callCancel}" ?disabled=${!this._executing} class="danger item3" aria-label="Stop">
               Cancel
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24">
                 <rect x="5" y="5" width="14" height="14" rx="2" ry="2" />
               </svg>
             </button>
@@ -532,15 +658,15 @@ export class LG4JExecutorElement extends LitElement {
         ERROR DIALOG 
         ==============
         -->
-        <dialog id="error_dialog" class="modal">
+        <dialog id="error_dialog">
           <div class="modal-box">
             <form method="dialog">
-              <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+              <button class="close-button">x</button>
             </form>
-              <div class="flex items-center gap-2 mb-4 text-error">
+              <div class="error-content">
               <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 shrink-0 stroke-current"
+              class="icon"
               fill="none"
               viewBox="0 0 24 24">
               <path
@@ -549,7 +675,7 @@ export class LG4JExecutorElement extends LitElement {
                 stroke-width="2"
                 d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p id="error_message" class="text-lg font-bold">ERROR</p>
+            <p id="error_message">ERROR</p>
           </div>
           </div>
         </dialog>        

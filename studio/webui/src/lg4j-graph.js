@@ -42,40 +42,24 @@ export class LG4jMermaid extends HTMLElement {
 
     const style = document.createElement("style");
     style.textContent = `
-    // :host {
-    //   display: block;
-    //   width: 100%;
-    //   height: 100%;
-    // }
-    .h-full {
+    :host {
+      display: block;
+      width: 100%;
       height: 100%;
     }
-    .w-full {
+
+    .mermaid {
       width: 100%;
-    }
-    // .flex {
-    //   display: flex;
-    // }
-    .items-center {
+      height: 100%;
+      display: flex;
       align-items: center;
-    }
-    .justify-center {
       justify-content: center;
+      background: #171717;
     }
-    .bg-neutral {
-      --tw-bg-opacity: 1;
-      background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity)));
-  }
     `
     shadowRoot.appendChild(style);
 
     const container = document.createElement('div')
-    container.classList.add("h-full");
-    container.classList.add("w-full");
-    container.classList.add("flex");
-    container.classList.add("items-center");
-    container.classList.add("justify-center");
-    container.classList.add("bg-neutral");
     container.classList.add("mermaid");
 
     // const pre = document.createElement('pre')

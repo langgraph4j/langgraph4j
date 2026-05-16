@@ -1,6 +1,4 @@
-import TWStyles from './twlit.js';
-
-import { html, css, LitElement,nothing } from 'lit';
+import { html, css, LitElement } from 'lit';
 import { Stack } from './stack.js';
 import { debug } from './debug.js';
 
@@ -17,10 +15,130 @@ const _DBG = debug( { on: false, topic: 'LG4JResult' } )
 // @ts-ignore
 export class LG4JResultElement extends LitElement {
 
-  static styles = [TWStyles, css`
-  json-viewer {
-    --font-size: .8rem;
-  }`]
+  static styles = [css`
+    :host {
+      display: block;
+      height: 100%;
+      color: #e5e7eb;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    json-viewer {
+      --font-size: .8rem;
+    }
+
+    .result-root {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      border-bottom: 1px solid #374151;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.5rem;
+      padding: 0 1rem;
+      border-bottom: 2px solid transparent;
+      color: #cbd5e1;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab:hover,
+    .tab-active {
+      color: #ffffff;
+      border-bottom-color: #60a5fa;
+    }
+
+    .add-tab {
+      padding: 0 0.75rem;
+    }
+
+    .add-tab svg {
+      display: block;
+    }
+
+    .results-panel {
+      flex: 1;
+      min-height: 0;
+      max-height: 95%;
+      overflow: auto;
+      padding: 0.5rem;
+      background: #475569;
+    }
+
+    .alert {
+      padding: 1rem;
+      border: 1px solid #f59e0b;
+      border-radius: 0.5rem;
+      color: #fef3c7;
+      background: rgba(245, 158, 11, 0.16);
+    }
+
+    details {
+      margin-bottom: 0.5rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background: #1f2937;
+    }
+
+    details.execution {
+      background: #334155;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      min-height: 3rem;
+      padding: 0.75rem 2.5rem 0.75rem 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+      position: relative;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "+";
+      position: absolute;
+      right: 1rem;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    details[open] > summary::after {
+      content: "-";
+    }
+
+    .details-content {
+      padding: 0 1rem 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 0.35rem 0;
+      vertical-align: top;
+    }
+  `]
 
   static properties = {}
 
@@ -223,37 +341,35 @@ export class LG4JResultElement extends LitElement {
   #renderResult(result, index) {
     
     return html`
-    <div class="collapse collapse-arrow bg-base-200">
-      <input type="radio" name="item-${index}" checked="checked" />
-      <div class="collapse-title text-ml font-bold">${result.cancelled ? '"CANCELLED"' : result.node}</div>
-      <div class="collapse-content">
+    <details open>
+      <summary>${result.cancelled ? '"CANCELLED"' : result.node}</summary>
+      <div class="details-content">
         <lg4j-node-output id="(${result.node})[${index}]" value="${JSON.stringify(result).trim()}"></lg4j-node-output>
       </div>
-    </div>
+    </details>
     `
   }
 
   #renderResults() {
     if( !this.selectedTab ) {
-      return html`<div class="alert alert-warning">No Data</div>`
+      return html`<div class="alert">No Data</div>`
     }   
 
     return this.threadMap.get(this.selectedTab)?.elements
       .filter( results => results.length > 0 )
       .map( (results,index ) => 
         html`
-          <div class="collapse collapse-plus bg-neutral-500">
-            <input type="radio" name="execution-${ index === 0 ? '0' : '1'}" checked="${ index === 0 ? 'checked' : nothing }" />
-            <div class="collapse-title text-ml font-bold">${ index === 0 ? 'Last Execution' : `Execution (${index})`}</div>
-            <div class="collapse-content">
-              <table class="table table-pin-rows">
+          <details class="execution" ?open="${index === 0}">
+            <summary>${ index === 0 ? 'Last Execution' : `Execution (${index})`}</summary>
+            <div class="details-content">
+              <table>
                 <tbody>
                   ${results.map( result => 
                     html`<tr><td>${this.#renderResult(result, index)}</td></tr>`) }
                 </tbody>
               </table>
             </div>
-          </div>`)
+          </details>`)
 
   }
   
@@ -270,10 +386,10 @@ export class LG4JResultElement extends LitElement {
   
     return html`
       
-      <div class="h-full">
-        <div role="tablist" class="tabs tabs-bordered">
+      <div class="result-root">
+        <div role="tablist" class="tabs">
             ${this.#renderTabs()}
-            <a role="tab" class="tab" @click="${this.#onNewTab}">
+            <a role="tab" class="tab add-tab" @click="${this.#onNewTab}">
               <svg  xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
                 <circle cx="10" cy="10" r="9" fill="none" stroke="white" stroke-width="1.5"/>
                 <line x1="5" y1="10" x2="15" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
@@ -281,7 +397,7 @@ export class LG4JResultElement extends LitElement {
               </svg>
             </a>
           </div>
-            <div class="max-h-[95%] overflow-x-auto bg-slate-500">
+            <div class="results-panel">
             ${ this.#renderResults() }
             </div>
         </div> 
@@ -298,16 +414,15 @@ export class LG4JResultElement extends LitElement {
     #renderResultDeprecated(result, index) {
 
       return html`
-      <div class="collapse collapse-arrow bg-base-200">
-        <input type="radio" name="item-1" checked="checked" />
-        <div class="collapse-title text-ml font-bold">${result.node}</div>
-        <div class="collapse-content">
+      <details open>
+        <summary>${result.node}</summary>
+        <div class="details-content">
         ${Object.entries(result.
 // @ts-ignore
         state).map(([key, value]) => html`
             <div>
-                <h4 class="italic">${key}</h4>
-                <p class="my-3">
+                <h4 class="field-title">${key}</h4>
+                <p>
                   <json-viewer id="json${index}">
                     ${JSON.stringify(value)}
                   </json-viewer>
@@ -315,7 +430,7 @@ export class LG4JResultElement extends LitElement {
               </div>
           `)}
         </div>
-      </div>
+      </details>
       `
     }
   
@@ -323,16 +438,16 @@ export class LG4JResultElement extends LitElement {
   // @ts-ignore
   #renderResultWithCard(result, index) {
     return html`
-    <div class="card bg-neutral text-neutral-content">
+    <div class="card">
     <div class="card-body">
       <h2 class="card-title">${result.node}</h2>
-      <div class="collapse collapse-arrow bg-base-200">
-        <input type="radio" name="item-1" checked="checked" />
-        <div class="collapse-content">
+      <details open>
+        <summary>${result.node}</summary>
+        <div class="details-content">
         ${Object.entries(result.state).map(([key, value]) => html`
           <div>
-              <h4 class="italic">${key}</h4>
-              <p class="my-3">
+              <h4 class="field-title">${key}</h4>
+              <p>
                 <json-viewer id="json${index}">
                 ${JSON.stringify(value)}
                 </json-viewer>
@@ -340,7 +455,7 @@ export class LG4JResultElement extends LitElement {
             </div>
         `)}
         </div>
-        </div>
+        </details>
     </div>
   </div>   `
   }

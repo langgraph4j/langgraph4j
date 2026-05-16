@@ -1,4 +1,3 @@
-import TWStyles from './twlit.js';
 import { html, css, LitElement } from 'lit';
 import { debug } from './debug.js';
 
@@ -14,7 +13,108 @@ const _LOG = debug( { on: true, topic: 'LG4JWorkbench' } )
 
 export class LG4JWorkbenchElement extends LitElement {
 
-  static styles = [css``, TWStyles];
+  static styles = [css`
+    :host {
+      display: block;
+      min-height: 100vh;
+      color: #e5e7eb;
+      background: #0f172a;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      min-height: 4rem;
+      padding: 0 1rem;
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      flex-shrink: 0;
+    }
+
+    .title {
+      display: inline-flex;
+      align-items: center;
+      min-height: 3rem;
+      padding: 0 0.5rem;
+      color: #f9fafb;
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      margin-left: 2.5rem;
+    }
+
+    #message {
+      margin-left: 1rem;
+      font-style: italic;
+      color: #cbd5e1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 3px solid rgba(96, 165, 250, 0.25);
+      border-top-color: #60a5fa;
+      border-radius: 999px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+      column-gap: 0.5rem;
+      row-gap: 2.25rem;
+      padding: 0.5rem;
+    }
+
+    .graph-panel {
+      grid-row: span 3;
+      min-height: 0;
+      border: 1px solid #d1d5db;
+      overflow: auto;
+    }
+
+    .result-panel {
+      grid-row: span 5;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .executor-panel {
+      min-height: 0;
+      overflow: auto;
+    }
+  `];
 
   static properties = {
     title: {},
@@ -160,26 +260,26 @@ export class LG4JWorkbenchElement extends LitElement {
   
   render() {
     return html`
-<div class="h-screen">
+<div class="shell">
 
-  <div class="navbar bg-base-100">
+  <div class="navbar">
 
-    <div class="flex-none">
-      <a class="btn btn-ghost text-xl">${this.title}</a>
+    <div>
+      <a class="title">${this.title}</a>
     </div>
 
-    <div class="flex-1 ml-10">
-      <span id="spinner" class="hidden loading loading-spinner text-primary"></span>
-      <span id="message" class="ml-4 italic"></span>
+    <div class="status">
+      <span id="spinner" class="hidden spinner"></span>
+      <span id="message"></span>
     </div>
 
 
 </div>
 
-  <div class="h-full grid gap-x-2 gap-y-9 grid-cols-2 grid-rows-5 ">    
-    <div class="row-span-3 border border-gray-300"><slot name="graph">LEFT</slot></div>
-    <div class="row-span-5"><slot name="result">RIGHT</slot></div>
-    <div class=" border-slate-50"><slot name="executor">BOTTOM</slot></div>
+  <div class="layout">    
+    <div class="graph-panel"><slot name="graph">LEFT</slot></div>
+    <div class="result-panel"><slot name="result">RIGHT</slot></div>
+    <div class="executor-panel"><slot name="executor">BOTTOM</slot></div>
   </div>
 </div>
     `;

@@ -1,6 +1,4 @@
 bun build.sh
-bun twgen.ts --no-watch
-bun build.sh
 
 rm ../jetty/src/main/resources/webapp/*
 cp dist/* ../jetty/src/main/resources/webapp
