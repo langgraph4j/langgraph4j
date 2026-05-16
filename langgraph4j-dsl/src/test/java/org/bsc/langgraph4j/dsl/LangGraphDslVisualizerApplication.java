@@ -39,14 +39,33 @@ public class LangGraphDslVisualizerApplication {
 
         @GetMapping(value = "/api/graph", produces = MediaType.APPLICATION_JSON_VALUE)
         String graph() throws GraphStateException {
-            return sampleGraphDslService.sampleGraphJson();
+            return sampleGraphDslService.agentExecutor();
         }
     }
 
     @Service
     static class SampleGraphDslService {
 
-        String sampleGraphJson() throws GraphStateException {
+        String agentExecutor() throws GraphStateException {
+            AsyncNodeAction<AgentState> action = state -> CompletableFuture.completedFuture(Map.of());
+
+            return new StateGraph<>(AgentState::new)
+                    .addNode("model", action)
+                    .addNode("tools", action)
+                    .addEdge(START, "model")
+                    .addConditionalEdges(
+                            "model",
+                            state -> CompletableFuture.completedFuture(""),
+                            EdgeMappings.builder()
+                                    .to("tools")
+                                    .toEND()
+                                    .build())
+                    .addEdge("tools", "model")
+                    .compile()
+                    .reduce( jsonDslGenerator );
+        }
+
+        String graphWithSubgraph() throws GraphStateException {
             AsyncNodeAction<AgentState> action = state -> CompletableFuture.completedFuture(Map.of());
 
             var toolSubgraph = new StateGraph<>(AgentState::new)
@@ -74,5 +93,6 @@ public class LangGraphDslVisualizerApplication {
                     .compile()
                     .reduce( jsonDslGenerator );
         }
+
     }
 }
