@@ -4,23 +4,22 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.ChatResponseMetadata;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.async.AsyncGeneratorFlow;
+import org.bsc.async.BlockingQueueProcessor;
 import org.bsc.langgraph4j.HasMetadata;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.streaming.StreamingOutputEnd;
 
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
 
 
-public class StreamingChatGenerator<State extends AgentState> extends AsyncGenerator.WithResult<StreamingOutput<State>> {
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StreamingChatGenerator.class);
+public class StreamingChatGenerator<State extends AgentState> implements AsyncGenerator<StreamingOutput<State>>, AsyncGenerator.HasResultValue, LG4JLoggable {
 
     private static class Metadata implements HasMetadata {
 
@@ -63,7 +62,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
      * @param <State> the type of the state extending AgentState
      */
     public static class Builder<State extends AgentState> {
-        private BlockingQueue<AsyncGenerator.Data<StreamingOutput<State>>> queue;
         private Function<ChatResponse,  Map<String,Object>> mapResult;
         private String startingNode;
         private State startingState;
@@ -71,17 +69,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
 
         public Builder<State> emitStreamingOutputEnd( boolean emitStreamingOutputEnd ) {
             this.emitStreamingOutputEnd = emitStreamingOutputEnd;
-            return this;
-        }
-
-        /**
-         * Sets the queue for the builder.
-         *
-         * @param queue the blocking queue for async generator data
-         * @return the builder instance
-         */
-        public Builder<State> queue(BlockingQueue<AsyncGenerator.Data<StreamingOutput<State>>> queue ) {
-            this.queue = queue;
             return this;
         }
 
@@ -124,8 +111,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
          * @return a new instance of LLMStreamingGenerator
          */
         public StreamingChatGenerator<State> build() {
-            if( queue == null )
-                queue = new LinkedBlockingQueue<>();
             return new StreamingChatGenerator<>( this );
         }
     }
@@ -141,6 +126,7 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
     }
 
     final StreamingChatResponseHandler handler;
+    final AsyncGeneratorFlow.Generator<StreamingOutput<State>> delegate;
 
     /**
      * Constructs an LLMStreamingGenerator with the specified parameters.
@@ -148,7 +134,8 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
      * @param builder a builder for constructing the  async generator
      */
     private StreamingChatGenerator( Builder<State> builder) {
-        super(new AsyncGeneratorQueue.Generator<>( Objects.requireNonNull(builder.queue, "queue cannot be null" )  ));
+
+        final var processor = new BlockingQueueProcessor<StreamingOutput<State>>();
 
         this.handler = new StreamingChatResponseHandler() {
 
@@ -159,7 +146,7 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
                         builder.startingNode,
                         builder.startingState,
                         null );
-                builder.queue.add( AsyncGenerator.Data.of( output ) );
+                processor.dispatchAsync( AsyncGenerator.Data.of( output ) );
 
             }
 
@@ -175,18 +162,20 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
                             builder.startingState,
                             Metadata.of( chatResponse ) );
 
-                    builder.queue.add(AsyncGenerator.Data.of(output));
+                    processor.dispatchAsync(AsyncGenerator.Data.of(output));
                 }
-                builder.queue.add(AsyncGenerator.Data.done( builder.mapResult.apply(chatResponse) ));
+                processor.dispatchAsync(AsyncGenerator.Data.done( builder.mapResult.apply(chatResponse) ));
 
             }
 
             @Override
             public void onError(Throwable error) {
                 log.trace("onError", error);
-                builder.queue.add( AsyncGenerator.Data.error(error) );
+                processor.dispatchAsync( AsyncGenerator.Data.error(error) );
             }
         };
+
+        this.delegate = AsyncGeneratorFlow.create( processor );
     }
 
     /**
@@ -197,5 +186,22 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
     public StreamingChatResponseHandler handler() {
         return handler;
     }
+
+    @Override
+    public Data<StreamingOutput<State>> next() {
+        return delegate.next();
+    }
+
+    @Override
+    public Executor executor() {
+        return delegate.executor();
+    }
+
+    @Override
+    public Optional<Object> resultValue() {
+        return delegate.resultValue();
+    }
+
+
 
 }
