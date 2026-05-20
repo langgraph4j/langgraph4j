@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j.spring.ai.generators;
 
-    import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.async.AsyncGenerator;
+import org.bsc.async.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.state.AgentState;
@@ -17,8 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -26,7 +25,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.ofNullable;
 
-public class StreamingChatGenerator<State extends AgentState> extends AsyncGenerator.WithResult<StreamingOutput<State>> {
+public class StreamingChatGenerator<State extends AgentState> implements AsyncGenerator<StreamingOutput<State>>, AsyncGenerator.HasResultValue {
 
     private static class Metadata implements HasMetadata {
 
@@ -42,14 +41,8 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
             this.responseMetadata = response.getMetadata();
 
             final var generation = response.getResult();
-            if( generation != null ) {
-                this.generationMetadata = generation.getMetadata();
-                this.assistantMessageMetadata = generation.getOutput().getMetadata();
-            }
-            else {
-                this.generationMetadata = null;
-                this.assistantMessageMetadata = null;
-            }
+            this.generationMetadata = generation.getMetadata();
+            this.assistantMessageMetadata = generation.getOutput().getMetadata();
         }
 
         @Override
@@ -79,7 +72,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
 
     }
     public static class Builder<State extends AgentState> {
-        private BlockingQueue<Data<StreamingOutput<State>>> queue;
         private Function<ChatResponse, Map<String,Object>> mapResult;
         private String startingNode;
         private State startingState;
@@ -87,17 +79,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
 
         public Builder<State> emitStreamingOutputEnd( boolean emitStreamingOutputEnd ) {
             this.emitStreamingOutputEnd = emitStreamingOutputEnd;
-            return this;
-        }
-
-        /**
-         * Sets the queue for the builder.
-         *
-         * @param queue the blocking queue for async generator data
-         * @return the builder instance
-         */
-        public Builder<State> queue(BlockingQueue<Data<StreamingOutput<State>>> queue ) {
-            this.queue = queue;
             return this;
         }
 
@@ -142,9 +123,6 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
         public AsyncGenerator<? extends NodeOutput<State>> build( Flux<ChatResponse> flux ) {
             requireNonNull(mapResult, "mapResult cannot be null");
 
-            if( queue == null )
-                queue = new LinkedBlockingQueue<>();
-
             return new StreamingChatGenerator<>(this,
                     requireNonNull(flux, "flux cannot be null"));
 
@@ -155,52 +133,71 @@ public class StreamingChatGenerator<State extends AgentState> extends AsyncGener
         return new Builder<>();
     }
 
+    private final AsyncGeneratorFlow.Generator<StreamingOutput<State>> delegate;
 
     private StreamingChatGenerator(Builder<State> builder, Flux<ChatResponse> flux ) {
-        super(new AsyncGeneratorQueue.Generator<>(Objects.requireNonNull(builder.queue, "queue cannot be null")));
+        this.delegate = AsyncGeneratorFlow.create( d -> {
+            flux
+                    .filter( response -> !response.getResults().isEmpty())
+                    .handle(new BiConsumer<ChatResponse, SynchronousSink<ChatResponse>>() {
+                        ChatResponse last = null;
 
-        flux
-                .filter( response -> !response.getResults().isEmpty())
-                .handle(new BiConsumer<ChatResponse, SynchronousSink<ChatResponse>>() {
-                    ChatResponse last = null;
-
-                    @Override
-                    public void accept(ChatResponse current, SynchronousSink<ChatResponse> sink) {
-                        last = mergeResponses(last, current);
+                        @Override
+                        public void accept(ChatResponse current, SynchronousSink<ChatResponse> sink) {
+                            last = mergeResponses(last, current);
 
 
-                        builder.queue.add( Data.of(
-                                new StreamingOutput<>( textFromResponse(current).orElse(""),
-                                        builder.startingNode,
-                                        builder.startingState,
-                                        Metadata.of(current) )));
+                            d.dispatchAsync( Data.of(
+                                    new StreamingOutput<>( textFromResponse(current).orElse(""),
+                                            builder.startingNode,
+                                            builder.startingState,
+                                            Metadata.of(current) )));
 
-                        sink.next(last);
+                            sink.next(last);
 
-                    }
-                })
-                .last()
-                .doOnSuccess( last -> {
-                    if( builder.emitStreamingOutputEnd ) {
-                        builder.queue.add(Data.of(
-                                new StreamingOutputEnd<>(  textFromResponse(last).orElse(null),
-                                        builder.startingNode,
-                                        builder.startingState,
-                                        Metadata.of(last) )));
-                    }
-                    builder.queue.add(Data.done( builder.mapResult.apply(last) ));
-                })
-                .doOnError( error -> builder.queue.add( Data.error(error) ))
-                .subscribe( ) ;
+                        }
+                    })
+                    .last()
+                    .doOnSuccess( last -> {
+                        if( builder.emitStreamingOutputEnd ) {
+                            d.dispatchAsync(Data.of(
+                                    new StreamingOutputEnd<>(  textFromResponse(last).orElse(null),
+                                            builder.startingNode,
+                                            builder.startingState,
+                                            Metadata.of(last) )));
+                        }
+                        d.dispatchAsync(Data.done( builder.mapResult.apply(last) ));
+                    })
+                    .doOnError( error -> d.dispatchAsync( Data.error(error) ))
+                    .subscribe();
+
+        });
+
 
     }
+
+    @Override
+    public Data<StreamingOutput<State>> next() {
+        return delegate.next();
+    }
+
+    @Override
+    public Executor executor() {
+        return delegate.executor();
+    }
+
+    @Override
+    public Optional<Object> resultValue() {
+        return delegate.resultValue();
+    }
+
 
     private static Optional<String> textFromResponse( ChatResponse response ) {
         if( response.getResults().isEmpty() ) {
             return Optional.empty();
         }
 
-        return ofNullable( response.getResult() )
+        return Optional.of( response.getResult() )
                     .map(Generation::getOutput)
                     .map(AbstractMessage::getText);
     }
