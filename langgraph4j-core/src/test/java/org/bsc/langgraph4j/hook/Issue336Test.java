@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j.hook;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.async.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.state.AgentState;
@@ -94,23 +94,20 @@ public class Issue336Test implements LG4JLoggable {
 
     private static AsyncNodeActionWithConfig<State> createAsyncStreamingNode(String nodeId, List<String> tokens) {
         return (state, config) -> {
-            BlockingQueue<AsyncGenerator.Data<StreamingOutput<State>>> queue = new LinkedBlockingQueue<>();
 
-            // Start streaming in a separate thread
-            CompletableFuture.runAsync(() -> {
-                try {
-                    for (String token : tokens) {
-                        queue.add(AsyncGenerator.Data.of(new StreamingOutput<>(token, nodeId, state, null)));
-                        Thread.sleep(10);
+            final var generator = AsyncGeneratorFlow.<StreamingOutput<State>>create( d -> {
+                    try {
+                        for (String token : tokens) {
+                            d.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>(token, nodeId, state, null)));
+                            Thread.sleep(10);
+                        }
+                        // Send completion with final result
+                        d.dispatchAsync(AsyncGenerator.Data.done(Map.of("VALUE", "streaming_completed")));
+                    } catch (InterruptedException e) {
+                        d.dispatchAsync(AsyncGenerator.Data.error(e));
                     }
-                    // Send completion with final result
-                    queue.add(AsyncGenerator.Data.done(Map.of("VALUE", "streaming_completed")));
-                } catch (InterruptedException e) {
-                    queue.add(AsyncGenerator.Data.error(e));
-                }
-            });
+                });
 
-            var generator = new AsyncGeneratorQueue.Generator<>(queue);
             return completedFuture(Map.of("content", generator));
         };
     }
