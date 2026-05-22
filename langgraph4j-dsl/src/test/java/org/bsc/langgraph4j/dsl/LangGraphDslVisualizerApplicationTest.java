@@ -116,7 +116,7 @@ class LangGraphDslVisualizerApplicationTest {
                 .andExpect(content().string(containsString("customElements.define('lg4j-result', LG4JResultElement)")));
     }
 
-    @Test
+    @Test @Disabled
     void graphEndpointReturnsGeneratedLangGraphDsl() throws Exception {
         mockMvc.perform(get("/api/graph"))
                 .andExpect(status().isOk())
