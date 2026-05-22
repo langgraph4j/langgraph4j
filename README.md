@@ -122,6 +122,8 @@ langgraph4j/
 ├── langgraph4j-mysql-saver              # LangGraph4j persistent checkpoint saver based on MySQL
 ├── langgraph4j-oracle-saver             # LangGraph4j persistent checkpoint saver based on OracleDB
 ├── langgraph4j-postgres-saver           # LangGraph4j persistent checkpoint saver based on PostgresSQL
+├── langgraph4j-dynamodb-saver           # LangGraph4j persistent checkpoint saver based on Amazon DynamoDB
+├── langgraph4j-cockroachdb-saver        # LangGraph4j persistent checkpoint saver based on CockroachDB
 ├── langchain4j/                         # LangChain4j integration
 │   ├── langchain4j-core/                # LangChain4j core components (integration required)
 │   └── langchain4j-agent/               # LangChain4j agent executor

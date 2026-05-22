@@ -107,6 +107,16 @@
                 <artifactId>langgraph4j-redis-saver</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-dynamodb-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-cockroachdb-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- studio -->
             <dependency>
