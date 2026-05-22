@@ -9,7 +9,7 @@ For more details, see the [LangGraph4j Studio documentation]().
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-springboot</artifactId>
-    <version>1.8.16</version>
+    <version>1.8.17</version>
 </dependency>
 ```
 

@@ -29,7 +29,7 @@
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-spring-ai</artifactId>
-    <version>1.8.16</version>
+    <version>1.8.17</version>
 </dependency>
 ```
 

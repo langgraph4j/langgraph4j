@@ -35,7 +35,7 @@ edges:
 **Pull image**
 
 ```bash
-docker pull bsorrentino/langgraph4j-builder:1.8.16
+docker pull bsorrentino/langgraph4j-builder:1.8.17
 ```
 
 **Run container**
@@ -46,9 +46,9 @@ docker run --rm \
   -p 3000:3000 \
   -v .:/app/workspace \
   -e NODE_ENV=production \
-  -e LANGRAPH4J_GEN=generator-1.8.16-jar-with-dependencies.jar \
+  -e LANGRAPH4J_GEN=generator-1.8.17-jar-with-dependencies.jar \
   -e RUNNING_IN_DOCKER=true \
-  bsorrentino/langgraph4j-builder:1.8.16
+  bsorrentino/langgraph4j-builder:1.8.17
 ```
 
 open browser on address [http://localhost:3000][localhost]

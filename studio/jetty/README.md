@@ -8,7 +8,7 @@ This module provides the class `LangGraphStudioServer4Jetty` that provides basic
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-jetty</artifactId>
-    <version>1.8.16</version>
+    <version>1.8.17</version>
 </dependency>
 ```
 
