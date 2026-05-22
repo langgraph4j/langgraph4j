@@ -2,6 +2,41 @@
 
 
 
+<!-- "name: v1.8.17" is a release tag -->
+
+## [v1.8.17](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.17) (2026-05-22)
+
+
+
+
+### Test 
+
+ -  verification and proposed resolution ([d8f875266895ce4](https://github.com/bsorrentino/langgraph4j/commit/d8f875266895ce4b72da4838c906d033e0553918))
+    > work on #401
+
+
+### Documentation
+
+ -  update changelog ([0adfb47897937b6](https://github.com/bsorrentino/langgraph4j/commit/0adfb47897937b6657085764baf143412cbf7408))
+
+
+### ALM 
+
+ -  bump to next version 1.8.17 ([e62acf513599204](https://github.com/bsorrentino/langgraph4j/commit/e62acf513599204e719768f54fca967d8d3ede3c))
+   
+
+### Continuous Integration
+
+ -  **deploy-snapshot**  target develop branch for snapshot deployment ([28ae0c867272984](https://github.com/bsorrentino/langgraph4j/commit/28ae0c8672729843292bd6615b51be7d6fd2abaa))
+    > Update the snapshot deployment workflow trigger and checkout references from develop-1.8 to develop.
+
+ -  **deploy**  upload build outputs for deployment jobs ([409f7773c763119](https://github.com/bsorrentino/langgraph4j/commit/409f7773c763119c9ed54645b1ccf48fa153ca5b))
+    > Persist target directories as workflow artifacts for both deploy jobs to make build outputs available for inspection even when execution fails
+
+
+
+
+
 <!-- "name: v1.8.16" is a release tag -->
 
 ## [v1.8.16](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.16) (2026-05-11)
