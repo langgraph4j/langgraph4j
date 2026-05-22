@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorFlow;
+import org.bsc.async.AsyncGeneratorQueue;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.InterruptableAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static java.util.Objects.requireNonNull;
@@ -30,37 +29,19 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 public class InterruptionTest {
 
-    static class StreamingGenerator implements AsyncGenerator<StreamingOutput<MessagesState<String>>>, AsyncGenerator.HasResultValue {
-
-        private final AsyncGeneratorFlow.Generator<StreamingOutput<MessagesState<String>>> delegate;
+    static class StreamingGenerator extends AsyncGenerator.WithResult<StreamingOutput<MessagesState<String>>>{
 
 
         public StreamingGenerator(BlockingQueue<Data<StreamingOutput<MessagesState<String>>>> queue,
                                   MessagesState<String> startingState,
                                   String startingNode) {
+            super(new AsyncGeneratorQueue.Generator<>(queue));
 
-            this.delegate = AsyncGeneratorFlow.create( d -> {
-
-                d.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>("Test1", startingNode, startingState, null)));
-                d.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>("Test2", startingNode, startingState, null)));
-                d.dispatchAsync(AsyncGenerator.Data.done(Map.of("messages", "Test1Test2")));
-            });
+            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test1", startingNode, startingState,null ) ) );
+            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test2", startingNode, startingState, null ) ) );
+            queue.add(AsyncGenerator.Data.done( Map.of("messages", "Test1Test2") ));
         }
 
-        @Override
-        public Data<StreamingOutput<MessagesState<String>>> next() {
-            return delegate.next();
-        }
-
-        @Override
-        public Executor executor() {
-            return delegate.executor();
-        }
-
-        @Override
-        public Optional<Object> resultValue() {
-            return delegate.resultValue();
-        }
     }
 
     static class CustomAction implements AsyncNodeActionWithConfig<MessagesState<String>> {
