@@ -108,11 +108,6 @@ public class StreamingTestITest {
     }
 
 
-    public <T> AsyncGenerator<T> toGenerator( Flux<T> stream ) {
-
-        return FlowGenerator.fromPublisher(FlowAdapters.toFlowPublisher(stream) );
-    }
-
     @Test
     public void llmStreamingTest() throws InterruptedException {
         var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen2.5:7b"))
@@ -131,6 +126,12 @@ public class StreamingTestITest {
             .blockLast();
 
     }
+
+    public <T> AsyncGenerator<T> toGenerator( Flux<T> stream ) {
+
+        return FlowGenerator.fromPublisher(FlowAdapters.toFlowPublisher(stream) );
+    }
+
 
     @Test
     public void llmStreamingGeneratorTest() throws InterruptedException {
