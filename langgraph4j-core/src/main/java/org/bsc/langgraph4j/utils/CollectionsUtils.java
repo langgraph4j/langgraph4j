@@ -25,7 +25,10 @@ public final class CollectionsUtils {
     }
 
     public static String toString( Map<?,?> map ) {
-        if(map.isEmpty()) {
+        if( map == null ) {
+            return "null";
+        }
+        if( map.isEmpty()) {
             return "{}";
         }
         return map.entrySet().stream()
