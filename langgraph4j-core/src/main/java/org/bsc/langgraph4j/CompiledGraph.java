@@ -2,6 +2,7 @@ package org.bsc.langgraph4j;
 
 import java.util.Map.Entry;
 import org.bsc.async.AsyncGenerator;
+import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -431,9 +433,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
+/*
         return new AsyncNodeGeneratorWithEmbed<>(
                 requireNonNull( input, "input cannot be null" ),
                 requireNonNull( config, "config cannot be null"));
+ */
+        return AsyncGeneratorFlow.create( new Emitter<>( input, config ));
     }
 
     /**
@@ -593,6 +598,341 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     @Override
     public <Output> Output reduce(Reducer<State, Output> reducer ) {
         return reducer.apply( processedData.nodes(), processedData.edges() );
+    }
+
+    class Emitter<Output extends NodeOutput<State>> implements Consumer<AsyncGeneratorFlow.Dispatcher<Output>> {
+
+        private final AsyncNodeGenerator.Context context;
+        private RunnableConfig config;
+
+        protected Emitter(GraphInput input, RunnableConfig config )  {
+            final var configBuilder = RunnableConfig.builder(config)
+                    .checkPointId(null); // Reset checkpoint id
+
+            if( input instanceof GraphResume resumeRequest ) {
+                log.trace( "RESUME REQUEST" );
+
+                final var saver = compileConfig.checkpointSaver()
+                        .orElseThrow(() -> (new IllegalStateException("Resume request without a configured checkpoint saver!")));
+                final var startCheckpoint = saver.get( config )
+                        .orElseThrow( () -> (new IllegalStateException("Resume request without a valid checkpoint!")) );
+
+                final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
+
+                context = new AsyncNodeGenerator.Context(startCheckpoint);
+
+                final var startCheckpointNextNodeAction = nodes.get(startCheckpoint.getNextNodeId());
+                if( startCheckpointNextNodeAction instanceof SubCompiledGraphNodeAction<State> action ) {
+
+                    // RESUME FORM SUBGRAPH DETECTED
+                    final var resumeUpdateData = optionalResumeUpdateData
+                            .map( data -> mergeMap( data, resumeRequest.value() ))
+                            .orElseGet(resumeRequest::value);
+
+                    // RESUME FORM SUBGRAPH DETECTED
+                    this.config = configBuilder
+                            .addMetadata( action.resumeSubGraphId(), true)
+                            .putMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, resumeUpdateData )
+                            .build();
+
+                    context.setCurrentState( startCheckpoint.getState() );
+
+                }
+                else {
+                    final var stateData = optionalResumeUpdateData.orElseGet(resumeRequest::value);
+
+                    this.config = configBuilder.build();
+
+                    // FIX ISSUE #302
+                    context.setCurrentState( AgentState.updateState( startCheckpoint.getState(),
+                            stateData,
+                            stateGraph.getChannels() ));
+
+                }
+
+                log.trace( "RESUME FROM {}", startCheckpoint.getNodeId() );
+            }
+            else {
+
+                log.trace( "START" );
+
+                final var initState = initialState( ((GraphArgs)input).value(), config );
+                // patch for backward support of AppendableValue
+                State initializedState = stateGraph.getStateFactory().apply(initState);
+                this.context = new AsyncNodeGenerator.Context( initializedState.data() );
+                this.config = configBuilder.build();
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        protected Output buildNodeOutput(String nodeId ) throws Exception {
+            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState()) );
+        }
+
+        @SuppressWarnings("unchecked")
+        protected Output buildStateSnapshot( Checkpoint checkpoint ) throws Exception {
+            return (Output)StateSnapshot.of( checkpoint, config, stateGraph.getStateFactory() ) ;
+        }
+
+        @SuppressWarnings("unchecked")
+        private Optional<GraphResult> embedGenerator( AsyncGeneratorFlow.Dispatcher<Output> $1,
+                                                                      AsyncNodeActionWithConfig<State> action,
+                                                                      String nodeId,
+                                                                      State state,
+                                                                      RunnableConfig runnableConfig,
+                                                                      Map<String,Object> partialState )
+        {
+            final var generatorEntry = partialState.entrySet().stream()
+                    .filter( e -> e.getValue() instanceof AsyncGenerator)
+                    .findFirst();
+
+
+            return generatorEntry.map( entry -> (AsyncGenerator<Output>) entry.getValue())
+                    .map( generator ->
+                        generator.reduce((a, b) -> {
+                                    $1.dispatchAsync(AsyncGenerator.Data.of(b));
+                                    return b;
+                                })
+                                .thenApply(reduceResult -> {
+
+                                    final var returnFromEmbed = GraphResult.from(reduceResult.resultValue());
+
+                                    if (returnFromEmbed.isInterruptionMetadata()) {
+                                        return returnFromEmbed;
+                                    }
+
+                                    // FIX #336
+                                    // Streaming completed: call AfterHook here
+                                    final Map<String,Object> partialResultAfterHook;
+                                    if( !stateGraph.nodeHooks.afterCalls.isEmpty() ) {
+                                        partialResultAfterHook = stateGraph.nodeHooks.afterCalls.apply(
+                                                context.currentNodeId(),
+                                                stateGraph.getStateFactory().apply(context.currentState()),
+                                                config,
+                                                returnFromEmbed.asStateDataOrLastCheckpointStateData())
+                                                .join();
+                                    }
+                                    else {
+                                        partialResultAfterHook = returnFromEmbed.asStateDataOrLastCheckpointStateData();
+                                    }
+
+                                    // FIX #102
+                                    // Assume that the whatever used appender channel doesn't accept duplicates
+                                    // FIX #104: remove generator
+                                    final Map<String, Object> partialStateWithoutGenerator = partialState.entrySet().stream()
+                                            .filter(e -> e.getKey() != null &&
+                                                    !Objects.equals(e.getKey(), generatorEntry.get().getKey()))
+                                            .collect(LinkedHashMap::new,
+                                                    (map, entry) ->
+                                                            map.put(entry.getKey(), entry.getValue()),
+                                                    Map::putAll);
+
+                                    final var generatorStateMerged = AgentState.updateState(partialResultAfterHook,
+                                            partialStateWithoutGenerator,
+                                            stateGraph.getChannels());
+
+                                    final var intermediateState = AgentState.updateState(context.currentState(),
+                                            generatorStateMerged,
+                                            stateGraph.getChannels());
+
+                                    context.setCurrentState(intermediateState);
+
+                                    return returnFromEmbed;
+
+                                })
+                                .join()
+
+                    );
+
+        }
+
+        private AsyncGenerator.Data<Output> applyAction( AsyncGeneratorFlow.Dispatcher<Output> $1,
+                                                         AsyncNodeActionWithConfig<State> action,
+                                                         String nodeId,
+                                                         State clonedState,
+                                                         RunnableConfig runnableConfig ) throws ExecutionException, InterruptedException
+        {
+            final AgentStateFactory<State> stateFactory = ( data ) -> {
+                context.setCurrentState( data );
+                return stateGraph.getStateFactory().apply( data);
+            };
+
+            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, runnableConfig, stateFactory, stateGraph.getChannels() )
+                    .thenApply(TryFunction.Try(result -> {
+                        if( result.hasPartialState() ) {
+                            return result.partialState().thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
+                                final var embedResult = embedGenerator( $1, action, nodeId, clonedState, runnableConfig, partial);
+
+                                if( embedResult.isEmpty() ) {
+                                    context.setCurrentState(AgentState.updateState(context.currentState(), partial, stateGraph.getChannels()));
+                                }
+
+                                if (compileConfig.interruptBeforeEdge() && compileConfig.interruptsAfter().contains(context.currentNodeId())) {
+                                    context.setNextNodeId(INTERRUPT_AFTER);
+                                } else {
+                                    var nextNodeCommand = nextNodeId(context.currentNodeId(), context.currentState(), runnableConfig);
+                                    context.setNextNodeId(nextNodeCommand.gotoNode());
+                                    context.setCurrentState( nextNodeCommand.update() );
+                                }
+
+                                return ( embedResult.isEmpty() ) ?
+                                        AsyncGenerator.Data.of( nodeOutput()) :
+                                        AsyncGenerator.Data.done( embedResult.get() ) ;
+
+                            }));
+                        }
+                        return result.interruptionMetadata().thenApply(AsyncGenerator.Data::<Output>done);
+                    }))
+                    .thenCompose( result -> result )
+                    .get();
+        }
+
+
+
+        private CompletableFuture<Output> nodeOutput() throws Exception {
+            Optional<Checkpoint>  cp = addCheckpoint(config, context.currentNodeId(), context.currentState(), context.nextNodeId());
+            return completedFuture(( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
+                    buildStateSnapshot(cp.get()) :
+                    buildNodeOutput( context.currentNodeId() ))
+                    ;
+        }
+
+        private Optional<BaseCheckpointSaver.Tag> releaseThread() throws Exception {
+            if(compileConfig.releaseThread() && compileConfig.checkpointSaver().isPresent() ) {
+                return Optional.of(compileConfig.checkpointSaver().get().release( config ));
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public void accept(AsyncGeneratorFlow.Dispatcher<Output> $1 ) {
+
+            try {
+
+                var iteration = 0;
+                for(;;) {
+                    // GUARD: CHECK MAX ITERATION REACHED
+                    if( ++iteration > maxIterations ) {
+                        // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
+                        $1.dispatchAsync(
+                                AsyncGenerator.Data.error( new IllegalStateException( "Maximum number of iterations (%d) reached!".formatted( maxIterations)) ));
+                        break;
+                    }
+
+                    // GUARD: CHECK IF IT IS END
+                    if( context.nextNodeId() == null && context.currentNodeId() == null  ) {
+                        $1.dispatchAsync(
+                            releaseThread()
+                                .map(AsyncGenerator.Data::<Output>done)
+                                .orElseGet( () -> AsyncGenerator.Data.done(context.currentState()) ));
+                        break;
+                    }
+
+                    if( START.equals(context.currentNodeId()) ) {
+                        var nextNodeCommand = entryPoint(context.currentState(), config) ;
+                        context.setNextNodeId(nextNodeCommand.gotoNode());
+                        context.setCurrentState( nextNodeCommand.update() );
+
+                        var cp = addCheckpoint( config, START, context.currentState(), context.nextNodeId() );
+
+                        var output =  ( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
+                                buildStateSnapshot(cp.get()) :
+                                buildNodeOutput( context.currentNodeId() );
+
+                        context.setCurrentNodeId(context.nextNodeId());
+
+                        $1.dispatchAsync(
+                            AsyncGenerator.Data.of( output ));
+                        continue;
+                    }
+
+                    if( END.equals(context.nextNodeId()) ) {
+                        context.reset();
+                        $1.dispatchAsync(
+                                AsyncGenerator.Data.of( buildNodeOutput( END ) ));
+                        continue;
+                    }
+
+                    final var resumeFrom = context.getResumeFromAndReset();
+                    if( resumeFrom.isPresent() ) {
+
+                        if(compileConfig.interruptBeforeEdge() && Objects.equals( context.nextNodeId(), INTERRUPT_AFTER)) {
+                            var nextNodeCommand = nextNodeId( resumeFrom.get(), context.currentState(), config);
+                            context.setNextNodeId( nextNodeCommand.gotoNode() );
+                            context.setCurrentState(  nextNodeCommand.update() );
+                            context.setCurrentNodeId( null );
+                        }
+                    }
+
+                    // CHECK ON PREVIOUS NODE
+                    if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build();
+                        $1.dispatchAsync(
+                                AsyncGenerator.Data.done( interruptionMetadata ));
+                        break;
+                    }
+
+                    if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build();
+                        $1.dispatchAsync(
+                                AsyncGenerator.Data.done(interruptionMetadata ));
+                        break;
+                    }
+
+                    context.setCurrentNodeId( context.nextNodeId() );
+
+                    config = updateRunnableConfigMetadata( config, context.currentNodeId() );
+
+                    //
+                    // EVALUATE ACTION
+                    //
+                    final var action = ofNullable(nodes.get( context.currentNodeId() ))
+                            .orElseThrow( () -> RunErrors.missingNode.exception( config, context.currentNodeId()));
+
+                    final var clonedState = cloneState(context.currentState());
+
+                    try {
+
+                        final var actionResult = applyAction( $1, action, context.currentNodeId(), clonedState, config );
+
+                        if( actionResult.isDone() ) {
+
+                            final var embedResult  = GraphResult.from(actionResult.resultValue());
+
+                            if (embedResult.isInterruptionMetadata()) {
+                                $1.dispatchAsync(actionResult);
+                                break;
+                            }
+
+                            addCheckpoint(  config,
+                                            context.currentNodeId(),
+                                            context.currentState(),
+                                            context.nextNodeId());
+
+                        }
+                        else {
+                            $1.dispatchAsync( actionResult );
+                        }
+                    }
+                    catch( InterruptedException ex ) {
+                        if( action instanceof ParallelNode.AsyncParallelNodeAction<?> parallelNodeAction ) {
+                            log.info( "PARALLEL NODE {} INTERRUPTED!", context.currentNodeId() );
+                        }
+                        throw ex;
+                    }
+
+                }
+            }
+            catch( GraphRunException e ) {
+                log.error( e.getMessage(), e );
+                $1.dispatchAsync( AsyncGenerator.Data.error( e ) );
+            }
+            catch( Throwable e ) {
+                log.error( e.getMessage(), e );
+                $1.dispatchAsync( AsyncGenerator.Data.error( new GraphRunException( config, e) ));
+            }
+
+        }
     }
 
     /**
