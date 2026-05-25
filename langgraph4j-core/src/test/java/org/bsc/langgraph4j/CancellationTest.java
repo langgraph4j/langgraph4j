@@ -88,14 +88,13 @@ public class CancellationTest {
             }).exceptionally(ex -> {
                 assertTrue(generator.isCancelled());
                 assertInstanceOf(InterruptedException.class, ExceptionUtils.getRootCause(ex));
-                return "CANCELLED";
+                return AsyncGenerator.IsCancellable.CANCELLED;
             });
 
-            var genericResult = futureResult.get(5, TimeUnit.SECONDS);
+            final var graphResult = GraphResult.from(futureResult.get(5, TimeUnit.SECONDS));
 
             assertTrue(generator.isCancelled());
-            assertNotNull(genericResult);
-            assertEquals("CANCELLED", genericResult);
+            assertTrue(graphResult.isCancelled());
         }
         //////////////////////////////////////////////////////////////
         // CANCEL TEST USING ITERATOR
@@ -117,7 +116,7 @@ public class CancellationTest {
             assertNotNull(currentOutput);
             assertNotEquals(END, currentOutput.node());
             assertTrue(generator.isCancelled());
-            assertTrue(result.isEmpty());
+            assertTrue(result.isCancelled());
         }
     }
 
@@ -178,14 +177,13 @@ public class CancellationTest {
             }).exceptionally(ex -> {
                 assertTrue(generator.isCancelled());
                 assertInstanceOf(InterruptedException.class, ExceptionUtils.getRootCause(ex));
-                return "CANCELLED";
+                return AsyncGenerator.IsCancellable.CANCELLED;
             });
 
-            var genericResult = futureResult.get(5, TimeUnit.SECONDS);
+            final var graphResult = GraphResult.from(futureResult.get(5, TimeUnit.SECONDS));
 
             assertTrue(generator.isCancelled());
-            assertNotNull(genericResult);
-            assertEquals("CANCELLED", genericResult);
+            assertTrue(graphResult.isCancelled());
         }
 
         //////////////////////////////////////////////////////////////
@@ -208,7 +206,7 @@ public class CancellationTest {
             assertNotNull(currentOutput);
             assertNotEquals(END, currentOutput.node());
             assertTrue(generator.isCancelled());
-            assertTrue(result.isEmpty());
+            assertTrue(result.isCancelled());
         }
     }
 
@@ -264,14 +262,13 @@ public class CancellationTest {
                 assertInstanceOf(GraphRunException.class, ex.getCause());
                 assertInstanceOf(InterruptedException.class, ExceptionUtils.getRootCause(ex));
                 assertEquals( 2, taskExecuted.get() );
-                return "CANCELLED";
+                return AsyncGenerator.IsCancellable.CANCELLED;
             });
 
-            var genericResult = futureResult.get(5, TimeUnit.SECONDS);
+            final var graphResult = GraphResult.from(futureResult.get(5, TimeUnit.SECONDS));
 
             assertTrue(generator.isCancelled());
-            assertNotNull(genericResult);
-            assertEquals("CANCELLED", genericResult);
+            assertTrue(graphResult.isCancelled());
         }
 
         //////////////////////////////////////////////////////////////
@@ -299,9 +296,10 @@ public class CancellationTest {
                         ExceptionUtils.findCauseByType(ex, InterruptedException.class)
                                 .map( root -> AsyncGenerator.IsCancellable.CANCELLED )
                                 .orElse(null)
-                    ).thenAccept( result -> {
-                        assertEquals(AsyncGenerator.IsCancellable.CANCELLED, result);
-                    })
+                    )
+                   .thenApply( GraphResult::from )
+                   .thenAccept( result ->
+                        assertTrue( result.isCancelled() ))
                    .join();
 
             assertTrue(generator.isCancelled());
