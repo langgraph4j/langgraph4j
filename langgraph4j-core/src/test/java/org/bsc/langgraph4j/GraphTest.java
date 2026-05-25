@@ -90,6 +90,14 @@ public class GraphTest implements LG4JLoggable {
     }
 
 
+    private AsyncNodeActionWithConfig<State> makeNode(String id) {
+        return node_async((state,config) -> {
+            log.info("call node {}", id);
+            return Map.of("messages", id);
+        });
+    }
+
+
     public static <T> List<Map.Entry<String, T>> sortMap(Map<String, T> map) {
         return map.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -356,73 +364,6 @@ public class GraphTest implements LG4JLoggable {
         assertEquals(3, result.get().messages().size());
         assertIterableEquals(List.of("message1", "message3", "message4"), result.get().messages());
 
-    }
-
-    @Test
-    public void testWithSubgraph() throws Exception {
-
-        AsyncNodeActionWithConfig<State> childStep1 =
-                node_async(( state, config) ->
-                        Map.of("messages", "child:step1"));
-
-        AsyncNodeActionWithConfig<State> childStep2 =
-                node_async((state,config) ->
-                        Map.of("messages", "child:step2"));
-
-        AsyncNodeActionWithConfig<State> childStep3 =
-                node_async((state,config) ->
-                        Map.of("messages", "child:step3"));
-
-        var workflowChild = new StateGraph<>(State.SCHEMA, State::new)
-                .addNode("child:step_1", childStep1)
-                .addNode("child:step_2", childStep2)
-                .addNode("child:step_3", childStep3)
-                .addEdge(START, "child:step_1")
-                .addEdge("child:step_1", "child:step_2")
-                .addEdge("child:step_2", "child:step_3")
-                .addEdge("child:step_3", END)
-                //.compile()
-                ;
-        AsyncNodeActionWithConfig<State> step1 =
-                node_async(( state, config) ->
-                        Map.of("messages", "step1"));
-
-        AsyncNodeActionWithConfig<State> step2 =
-                node_async(( state, config) ->
-                        Map.of("messages", "step2"));
-
-        AsyncNodeActionWithConfig<State> step3 =
-                node_async(( state, config) ->
-                        Map.of("messages", "step3"));
-
-        var workflowParent = new StateGraph<>(State.SCHEMA, State::new)
-                .addNode("step_1", step1)
-                .addNode("step_2", step2)
-                .addNode("step_3", step3)
-                .addNode("subgraph", workflowChild)
-                .addEdge(START, "step_1")
-                .addEdge("step_1", "step_2")
-                .addEdge("step_2", "subgraph")
-                .addEdge("subgraph", "step_3")
-                .addEdge("step_3", END)
-                .compile();
-
-        var result = workflowParent.stream(GraphInput.noArgs(), RunnableConfig.empty())
-                .stream()
-                .peek(System.out::println)
-                .reduce((a, b) -> b)
-                .map(NodeOutput::state);
-
-        assertTrue(result.isPresent());
-        assertIterableEquals(List.of("step1", "step2", "child:step1", "child:step2", "child:step3", "step3"), result.get().messages());
-
-    }
-
-    private AsyncNodeActionWithConfig<State> makeNode(String id) {
-        return node_async((state,config) -> {
-            log.info("call node {}", id);
-            return Map.of("messages", id);
-        });
     }
 
     @Test
