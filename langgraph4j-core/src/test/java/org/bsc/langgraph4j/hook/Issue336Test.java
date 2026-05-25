@@ -30,7 +30,8 @@ import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test for Issue #336: AfterHook should be called after streaming completes
+ * Test for Issue <a href="https://github.com/langgraph4j/langgraph4j/issues/336">#336</a>:
+ * AfterHook should be called after streaming completes
  *
  * Problem: When a Node returns an AsyncGenerator (streaming), the AfterHook.applyAfter()
  * was called immediately when the generator was created, before any streaming had occurred.
