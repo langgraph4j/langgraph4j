@@ -602,7 +602,64 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
     class Emitter<Output extends NodeOutput<State>> implements Consumer<AsyncGeneratorFlow.Dispatcher<Output>> {
 
-        private final AsyncNodeGenerator.Context context;
+        static class Context {
+            private Map<String,Object> currentState;
+            private String currentNodeId;
+            private String nextNodeId;
+            private String resumeFrom;
+
+            Context( Map<String,Object> initState ) {
+                currentNodeId = START;
+                nextNodeId = null;
+                resumeFrom = null;
+                currentState = initState;
+            }
+
+            Context( Checkpoint cp ) {
+                currentNodeId = null;
+                nextNodeId = cp.getNextNodeId();
+                resumeFrom = cp.getNodeId();
+                currentState = cp.getState();
+            }
+
+            void reset() {
+                currentNodeId = null;
+                nextNodeId = null;
+                resumeFrom = null;
+            }
+
+            Map<String,Object> currentState() {
+                return currentState;
+            }
+
+            void setCurrentState( Map<String,Object> value ) {
+                currentState = value;
+            }
+
+            String nextNodeId() {
+                return nextNodeId;
+            }
+
+            void setNextNodeId( String value ) {
+                nextNodeId = value;
+            }
+
+            String currentNodeId() {
+                return currentNodeId;
+            }
+
+            void setCurrentNodeId( String value ) {
+                currentNodeId = value;
+            }
+
+            Optional<String> getResumeFromAndReset() {
+                final var  result = ofNullable(resumeFrom);
+                resumeFrom = null;
+                return result;
+            }
+        }
+
+        private final Context context;
         private RunnableConfig config;
 
         protected Emitter(GraphInput input, RunnableConfig config )  {
@@ -619,7 +676,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
-                context = new AsyncNodeGenerator.Context(startCheckpoint);
+                context = new Context(startCheckpoint);
 
                 final var startCheckpointNextNodeAction = nodes.get(startCheckpoint.getNextNodeId());
                 if( startCheckpointNextNodeAction instanceof SubCompiledGraphNodeAction<State> action ) {
@@ -659,7 +716,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 final var initState = initialState( ((GraphArgs)input).value(), config );
                 // patch for backward support of AppendableValue
                 State initializedState = stateGraph.getStateFactory().apply(initState);
-                this.context = new AsyncNodeGenerator.Context( initializedState.data() );
+                this.context = new Context( initializedState.data() );
                 this.config = configBuilder.build();
             }
         }
@@ -715,6 +772,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     else {
                                         partialResultAfterHook = returnFromEmbed.asStateDataOrLastCheckpointStateData();
                                     }
+
+                                    config = config.removeMetadata(
+                                            resumeSubGraphId( context.currentNodeId() ),
+                                            RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA );
 
                                     // FIX #102
                                     // Assume that the whatever used appender channel doesn't accept duplicates
@@ -775,10 +836,15 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     context.setCurrentState( nextNodeCommand.update() );
                                 }
 
-                                return ( embedResult.isEmpty() ) ?
-                                        AsyncGenerator.Data.of( nodeOutput()) :
-                                        AsyncGenerator.Data.done( embedResult.get() ) ;
+                                if( embedResult.isPresent() ) {
+                                    final var res = GraphResult.from(embedResult.get());
 
+                                    if( res.isInterruptionMetadata() ) {
+                                        return AsyncGenerator.Data.done(embedResult.get());
+                                    }
+                                }
+
+                                return AsyncGenerator.Data.of( nodeOutput());
                             }));
                         }
                         return result.interruptionMetadata().thenApply(AsyncGenerator.Data::<Output>done);
@@ -895,24 +961,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                         final var actionResult = applyAction( $1, action, context.currentNodeId(), clonedState, config );
 
+                        $1.dispatchAsync(actionResult);
+
                         if( actionResult.isDone() ) {
-
-                            final var embedResult  = GraphResult.from(actionResult.resultValue());
-
-                            if (embedResult.isInterruptionMetadata()) {
-                                $1.dispatchAsync(actionResult);
-                                break;
-                            }
-
-                            addCheckpoint(  config,
-                                            context.currentNodeId(),
-                                            context.currentState(),
-                                            context.nextNodeId());
-
+                            break;
                         }
-                        else {
-                            $1.dispatchAsync( actionResult );
-                        }
+
                     }
                     catch( InterruptedException ex ) {
                         if( action instanceof ParallelNode.AsyncParallelNodeAction<?> parallelNodeAction ) {
