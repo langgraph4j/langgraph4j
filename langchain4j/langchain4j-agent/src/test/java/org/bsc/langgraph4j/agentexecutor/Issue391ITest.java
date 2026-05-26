@@ -97,18 +97,23 @@ public class Issue391ITest implements LG4JLoggable {
                                     UserMessage.from("Tell me a joke"))),
                 RunnableConfig.empty());
 
-        iterator.forEachAsync( output -> {
+        final var graphResult = iterator.forEachAsync( output -> {
             log.info("Output: {}", output);
-        }).thenAccept( result -> {
+        })
+        .thenApply( GraphResult::from )
+        .whenComplete( ($1, throwable) -> {
             log.info("""
         Stream completed: {}
         ---------------------------
         
-        """, result);
-        }).join();
+        """, $1);
+        })
+        .join();
+
+        assertTrue( graphResult.isCheckpointSaverTag() );
 
 
-        final var checkpoints = saver.list(RunnableConfig.empty());
+        final var checkpoints = graphResult.asCheckpointSaverTag().checkpoints();
 
         assertEquals( 2, checkpoints.size() );
 
