@@ -344,7 +344,7 @@ public class InterruptionTest {
                 .toList();
         assertIterableEquals(List.of(
                 "A",
-                //"A",
+                "A",
                 "A"
         ), results );
 
