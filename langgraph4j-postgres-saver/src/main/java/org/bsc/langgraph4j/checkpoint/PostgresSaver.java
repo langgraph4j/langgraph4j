@@ -31,6 +31,7 @@ public class PostgresSaver extends AbstractCheckpointSaver {
         private boolean dropTablesFirst;
         private DataSource datasource;
         private boolean plainTextStateSerializerLegacyMode = false;
+        private final Properties additionalProperties = new Properties();
 
         public <State extends AgentState> Builder stateSerializer(StateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
@@ -79,6 +80,16 @@ public class PostgresSaver extends AbstractCheckpointSaver {
             return this;
         }
 
+        public Builder property(String name, String value) {
+            this.additionalProperties.setProperty(name, value);
+            return this;
+        }
+
+        public Builder properties(Properties properties) {
+            this.additionalProperties.putAll(properties);
+            return this;
+        }
+
         public Builder createTables(boolean createTables) {
             this.createTables = createTables;
             return this;
@@ -110,6 +121,9 @@ public class PostgresSaver extends AbstractCheckpointSaver {
                 ds.setPassword(requireNonNull(password, "password cannot be null"));
                 ds.setPortNumbers( new int[] {port} );
                 ds.setServerNames( new String[] { requireNotBlank(host, "host") } );
+                for (var entry : additionalProperties.entrySet()) {
+                    ds.setProperty(entry.getKey().toString(), entry.getValue().toString());
+                }
                 datasource = ds;
             }
 
