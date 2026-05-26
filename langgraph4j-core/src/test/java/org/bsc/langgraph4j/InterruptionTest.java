@@ -1,7 +1,8 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.async.AsyncGeneratorQueue;
+import org.bsc.async.v5.AsyncGeneratorFlow;
+import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.InterruptableAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
@@ -15,9 +16,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Executor;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -29,19 +29,38 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 public class InterruptionTest {
 
-    static class StreamingGenerator extends AsyncGenerator.WithResult<StreamingOutput<MessagesState<String>>>{
+    static class StreamingGenerator implements AsyncGenerator<StreamingOutput<MessagesState<String>>>, AsyncGenerator.HasResultValue {
 
+        final AsyncGeneratorFlow.Generator<StreamingOutput<MessagesState<String>>> delegate;
 
-        public StreamingGenerator(BlockingQueue<Data<StreamingOutput<MessagesState<String>>>> queue,
-                                  MessagesState<String> startingState,
+        public StreamingGenerator(MessagesState<String> startingState,
                                   String startingNode) {
-            super(new AsyncGeneratorQueue.Generator<>(queue));
 
-            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test1", startingNode, startingState,null ) ) );
-            queue.add(AsyncGenerator.Data.of( new StreamingOutput<>( "Test2", startingNode, startingState, null ) ) );
-            queue.add(AsyncGenerator.Data.done( Map.of("messages", "Test1Test2") ));
+            final var processor = new BlockingQueueProcessor<StreamingOutput<MessagesState<String>>>();
+            this.delegate = AsyncGeneratorFlow.builder()
+                    .processor(processor)
+                    .executor(Runnable::run)
+                    .build();
+
+            processor.dispatchAsync(AsyncGenerator.Data.of( new StreamingOutput<>( "Test1", startingNode, startingState,null ) ) );
+            processor.dispatchAsync(AsyncGenerator.Data.of( new StreamingOutput<>( "Test2", startingNode, startingState, null ) ) );
+            processor.dispatchAsync(AsyncGenerator.Data.done( Map.of("messages", "Test1Test2") ));
         }
 
+        @Override
+        public Data<StreamingOutput<MessagesState<String>>> next() {
+            return delegate.next();
+        }
+
+        @Override
+        public Executor executor() {
+            return delegate.executor();
+        }
+
+        @Override
+        public Optional<Object> resultValue() {
+            return delegate.resultValue();
+        }
     }
 
     static class CustomAction implements AsyncNodeActionWithConfig<MessagesState<String>> {
@@ -115,9 +134,7 @@ public class InterruptionTest {
         @Override
         public CompletableFuture<Map<String, Object>> apply(MessagesState<String> state, RunnableConfig config) {
             if (streaming) {
-                return completedFuture(Map.of("_streaming_messages", new StreamingGenerator(new LinkedBlockingQueue<>(),
-                        state,
-                        nodeId)));
+                return completedFuture(Map.of("_streaming_messages", new StreamingGenerator(state, nodeId)));
             }
             return completedFuture(Map.of("messages", nodeId));
         }

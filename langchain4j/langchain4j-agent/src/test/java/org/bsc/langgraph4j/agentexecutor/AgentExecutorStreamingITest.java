@@ -56,6 +56,13 @@ public class AgentExecutorStreamingITest {
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver( saver )
                 .build();
+        return executeAgent( prompt, threadId, compileConfig);
+    }
+
+    private List<AgentExecutor.State> executeAgent( String prompt,
+                                                    String threadId,
+                                                    CompileConfig compileConfig)  throws Exception
+    {
 
         var config = RunnableConfig.builder().threadId(threadId).build();
 
@@ -154,10 +161,16 @@ public class AgentExecutorStreamingITest {
     void executeAgentWithDoubleToolInvocationWithCheckpoint() throws Exception {
 
         var saver = new MemorySaver();
+
+        final var compileConfig = CompileConfig.builder()
+                        .checkpointSaver(saver)
+                        .releaseThread(false)
+                        .build();
+
         var states = executeAgent(
                 "what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'",
                 "thread_1",
-                saver
+                compileConfig
                 );
         assertEquals( 6, states.size() );
         var state = CollectionsUtils.lastOf(states).orElse(null);

@@ -112,7 +112,6 @@ public class Issue391ITest implements LG4JLoggable {
 
         assertTrue( graphResult.isCheckpointSaverTag() );
 
-
         final var checkpoints = graphResult.asCheckpointSaverTag().checkpoints();
 
         assertEquals( 2, checkpoints.size() );
