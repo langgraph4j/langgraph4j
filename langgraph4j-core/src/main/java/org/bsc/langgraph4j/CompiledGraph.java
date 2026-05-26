@@ -291,21 +291,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     /**
-     * Sets the maximum number of iterations for the graph execution.
-     *
-     * @param maxIterations the maximum number of iterations
-     * @throws IllegalArgumentException if maxIterations is less than or equal to 0
-     * @deprecated use CompileConfig.recursionLimit() instead
-     */
-    @Deprecated(forRemoval = true)
-    public void setMaxIterations(int maxIterations) {
-        if( maxIterations <= 0 ) {
-            throw new IllegalArgumentException("maxIterations must be > 0!");
-        }
-        this.maxIterations = maxIterations;
-    }
-
-    /**
      * UPDATE RUNNABLE CONFIG METADATA
      */
     private RunnableConfig updateRunnableConfigMetadata( RunnableConfig config, String currentNodeId ) {
@@ -433,11 +418,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
-/*
-        return new AsyncNodeGeneratorWithEmbed<>(
-                requireNonNull( input, "input cannot be null" ),
-                requireNonNull( config, "config cannot be null"));
- */
         return AsyncGeneratorFlow.create( new Emitter<>( input, config ));
     }
 
@@ -474,10 +454,18 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( GraphInput input, RunnableConfig config )  {
+/*
         requireNonNull(config, "config cannot be null");
         return new AsyncNodeGeneratorWithEmbed<>(
                 requireNonNull( input, "input cannot be null" ),
                 requireNonNull( config, "config cannot be null").withStreamMode(StreamMode.SNAPSHOTS));
+
+ */
+        return AsyncGeneratorFlow.create(
+                new Emitter<>(
+                        requireNonNull( input, "input cannot be null" ),
+                        requireNonNull( config, "config cannot be null")
+                                .withStreamMode(StreamMode.SNAPSHOTS) ));
 
     }
 
@@ -508,7 +496,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @since 1.6.1
      */
     public Optional<NodeOutput<State>> invokeFinal( GraphInput input, RunnableConfig config ) {
-        return stream(input, config).stream()
+        return stream(input, config)
+                .stream()
                 .reduce((a, b) -> b);
     }
 
@@ -994,6 +983,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      *
      * @param <Output> the type of the output
      */
+    @Deprecated( since = "1.9.0", forRemoval = true)
     class AsyncNodeGenerator<Output extends NodeOutput<State>> extends AsyncGenerator.BaseCancellable<Output> {
 
         static class Context {
@@ -1388,13 +1378,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         }
     }
-
-    class AsyncNodeGeneratorWithEmbed<Output extends NodeOutput<State>> extends AsyncGenerator.WithEmbed<Output> {
-        public AsyncNodeGeneratorWithEmbed(GraphInput input, RunnableConfig config ) {
-            super( new AsyncNodeGenerator<>( input, config ) );
-        }
-    }
-
 
     record ProcessedNodesEdgesAndConfig<State extends AgentState>(
             StateGraph.Nodes<State> nodes,
