@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.bsc.langgraph4j</groupId>
+        <artifactId>langgraph4j-parent</artifactId>
+        <version>1.8.17</version>
+    </parent>
+
+    <artifactId>langgraph4j-cockroachdb-saver</artifactId>
+    <packaging>jar</packaging>
+
+    <description>CockroachDB Saver for LangGraph4j</description>
+    <name>langgraph4j::cockroachdb-saver</name>
+    <url>https://github.com/langgraph4j/langgraph4j</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/langgraph4j/langgraph4j.git</connection>
+        <developerConnection>scm:git:https://github.com/langgraph4j/langgraph4j.git</developerConnection>
+        <url>https://github.com/langgraph4j/langgraph4j</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <testcontainers.version>1.21.3</testcontainers.version>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>langgraph4j-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- CockroachDB speaks the PostgreSQL wire protocol, so the standard PgJDBC
+             driver is used unchanged. -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>cockroachdb</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- langgraph4j-core declares jackson-databind as provided. The Jackson
+             state serializer used in the parameterized tests needs it on the
+             test classpath. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.21.1</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*ITest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

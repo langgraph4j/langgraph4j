@@ -244,6 +244,7 @@
         <module>langgraph4j-mysql-saver</module>
         <module>langgraph4j-redis-saver</module>
         <module>langgraph4j-dynamodb-saver</module>
+        <module>langgraph4j-cockroachdb-saver</module>
 
         <module>langgraph4j-opentelemetry</module>
 
