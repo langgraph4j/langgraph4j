@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -63,8 +64,12 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
             new CheckpointListSerializer(stateSerializer));
     }
 
+    private String getBaseName(String threadId) {
+        return "thread-%s".formatted( threadId );
+    }
+
     private String getBaseName(RunnableConfig config) {
-        return "thread-%s".formatted( threadId(config));
+        return getBaseName( threadId(config));
     }
 
     private Path getPath(RunnableConfig config) {
@@ -122,6 +127,20 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
 
     }
 
+    private OptionalInt lastVersion( String ThreadId ) throws IOException  {
+        final var versionPattern = Pattern.compile("%s-v(\\d+)\\%s$".formatted( getBaseName(ThreadId), extension));
+
+        try (var stream = Files.list(targetFolder)) {
+            return stream
+                    .map(path -> path.getFileName().toString())
+                    .map(versionPattern::matcher)
+                    .filter(Matcher::matches)
+                    .mapToInt(matcher -> Integer.parseInt(matcher.group(1)))
+                    .max();
+        }
+
+    }
+
     /**
      * Releases the checkpoints associated with the given configuration.
      * This involves copying the current checkpoint file (e.g., "thread-123.saver")
@@ -142,31 +161,59 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
             return new Tag( threadId(config), List.of());
         }
 
-        final var versionPattern = Pattern.compile("%s-v(\\d+)\\%s$".formatted( getBaseName(config), extension));
+        int lastVersion;
+        try {
+            lastVersion = lastVersion( threadId(config) ).orElse(0);
 
-        int maxVersion = 0;
-        try (var stream = Files.list(targetFolder)) {
-            maxVersion = stream
-                    .map(path -> path.getFileName().toString())
-                    .map(versionPattern::matcher)
-                    .filter(Matcher::matches)
-                    .mapToInt(matcher -> Integer.parseInt(matcher.group(1)))
-                    .max()
-                    .orElse(0); // Default to 0 if no versioned files found
         } catch (IOException e) {
             log.error("Failed to list directory {} to determine next version number for backup. Skipping file operations.", targetFolder, e);
             return new Tag( threadId(config), List.of());
         }
 
-        int nextVersion = maxVersion + 1;
-        var backupFilename = "%s-v%d%s".formatted( getBaseName(config), nextVersion, extension);
-        Path backupPath = targetFolder.resolve(backupFilename);
+        var backupFilename = "%s-v%d%s".formatted( getBaseName(config), ++lastVersion, extension);
+
+        final Path backupPath = targetFolder.resolve(backupFilename);
 
         Files.copy(currentPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
 
         Files.delete(currentPath);
 
-        return new Tag( threadId(config), checkpoints, nextVersion );
+        return new Tag( threadId(config), lastVersion, checkpoints );
+
+
+    }
+
+    @Override
+    public Optional<Tag> tag( RunnableConfig config, Integer version) throws Exception {
+        requireNonNull(config, "config cannot be null");
+
+        final int version$;
+        final var threadId = threadId(config);
+
+        if( version != null ) {
+            version$ = version;
+        } else {
+            final var lastVersion = lastVersion( threadId );
+
+            if(lastVersion.isEmpty()) {
+                log.warn("No versions found for threadId '{}'", threadId );
+                return Optional.empty();
+            }
+
+            version = lastVersion.getAsInt();
+        }
+
+        final var backupFilename = "%s-v%d%s".formatted( getBaseName(threadId), version, extension);
+
+        final Path backupPath = targetFolder.resolve(backupFilename);
+
+        if (!Files.exists(backupPath)) {
+            log.warn("Backup file {} does not exist", backupPath);
+            return Optional.empty();
+        }
+
+        final var checkpoints = deserialize(backupPath.toFile());
+        return Optional.of(new Tag(threadId, version, checkpoints));
     }
 
     /**
