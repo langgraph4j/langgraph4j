@@ -99,4 +99,9 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
             releaseCheckpoints( config, checkpoints ));
     }
 
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
+    }
+
 }
