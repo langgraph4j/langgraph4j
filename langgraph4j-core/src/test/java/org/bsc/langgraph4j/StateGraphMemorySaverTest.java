@@ -4,7 +4,6 @@ import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
-import org.bsc.langgraph4j.checkpoint.VersionedMemorySaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.StateSnapshot;
@@ -180,7 +179,7 @@ public class StateGraphMemorySaverTest
                         edge_async( shouldContinue),
                         Map.of( "next", "agent_1", "exit", END) );;
 
-        var saver = new VersionedMemorySaver();
+        var saver = new MemorySaver();
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -210,7 +209,8 @@ public class StateGraphMemorySaverTest
             assertEquals( format("agent_1:step %d", i+1), messages.get(i) );
         }
 
-        assertTrue( saver.lastVersionByThreadId(runnableConfig).isEmpty() );
+        final var tag = saver.tag( runnableConfig, null  );
+        assertTrue( tag.isEmpty() ) ;
 
         var snapshot = app.getState( runnableConfig );
 
@@ -390,7 +390,7 @@ public class StateGraphMemorySaverTest
 
         var threadId = "thread_1";
 
-        var saver = new VersionedMemorySaver();
+        var saver = new MemorySaver();
 
         // Check for error
         var configWithVersion = RunnableConfig.builder()
@@ -414,13 +414,12 @@ public class StateGraphMemorySaverTest
 
         assertEquals(1, list.size());
 
-        var tag = saver.release(newConfig);
+        final var tag = saver.release(newConfig);
 
         assertEquals(1, tag.checkpoints().size());
 
-        var versions = saver.versionsByThreadId( threadId );
-
-        assertEquals(1, versions.size());
+        assertTrue( tag.version().isPresent() );
+        assertEquals(1, tag.version().get());
 
         // Check if checkpoints collection  is immutable
         assertThrowsExactly(UnsupportedOperationException.class, () -> tag.checkpoints().remove(checkpoint));
@@ -431,9 +430,8 @@ public class StateGraphMemorySaverTest
 
         assertEquals(1, tag.checkpoints().size());
 
-        versions = saver.versionsByThreadId(configWithVersion);
-
-        assertEquals(1, versions.size());
+        assertTrue( tag.version().isPresent() );
+        assertEquals(1, tag.version().get());
         assertEquals( checkpoint.getId(), list.stream().findFirst().map(Checkpoint::getId).orElseThrow() );
 
         var checkpoint_1 = Checkpoint.builder()
@@ -451,9 +449,8 @@ public class StateGraphMemorySaverTest
 
         configWithVersion1 = saver.put( configWithVersion1.withCheckPointId(null), checkpoint_2 );
 
-        versions = saver.versionsByThreadId( threadId );
-
-        assertEquals(1, versions.size());
+        assertTrue( tag.version().isPresent() );
+        assertEquals(1, tag.version().get());
 
         var tag2 = saver.release(configWithVersion1);
 
