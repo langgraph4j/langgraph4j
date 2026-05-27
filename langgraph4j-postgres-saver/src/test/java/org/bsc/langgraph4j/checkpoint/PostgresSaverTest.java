@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.CompileConfig;
+import org.bsc.langgraph4j.GraphInput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -140,7 +141,7 @@ public class PostgresSaverTest {
 
         Map<String, Object> inputs = Map.of( "input", "test1");
 
-        var result = workflow.invoke( inputs, runnableConfig );
+        var result = workflow.invoke( GraphInput.args(inputs), runnableConfig );
 
         assertTrue( result.isPresent() );
 
@@ -180,7 +181,7 @@ public class PostgresSaverTest {
 
         Map<String, Object> inputs = Map.of( "input", "test1");
 
-        var result = workflow.invoke( inputs, runnableConfig );
+        var result = workflow.invoke( GraphInput.args(inputs), runnableConfig );
 
         assertTrue( result.isPresent() );
 
