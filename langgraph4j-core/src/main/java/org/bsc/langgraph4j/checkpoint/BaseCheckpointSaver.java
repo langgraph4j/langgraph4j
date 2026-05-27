@@ -4,25 +4,41 @@ import org.bsc.langgraph4j.RunnableConfig;
 
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 public interface BaseCheckpointSaver {
     String THREAD_ID_DEFAULT = "$default";
 
-    record Tag(String threadId, Collection<Checkpoint> checkpoints, int version ) {
-        public Tag(String threadId, Collection<Checkpoint> checkpoints, int version ) {
-            this.threadId = threadId;
+    final class Tag  {
+        private final String threadId;
+        private final Integer version;
+        private final List<Checkpoint> checkpoints;
+
+        public Tag(String threadId, Integer version, Collection<Checkpoint> checkpoints) {
+            this.threadId = requireNonNull(threadId, "threadId cannot be null");
             this.checkpoints = ofNullable(checkpoints).map(List::copyOf).orElseGet(List::of);
             this.version = version;
         }
         public Tag(String threadId, Collection<Checkpoint> checkpoints) {
-            this(threadId, checkpoints,0);
+            this(threadId, null, checkpoints );
+        }
+
+        public Collection<Checkpoint> checkpoints() {
+            return checkpoints;
         }
 
         public Optional<Checkpoint> lastCheckpoint() {
-            return checkpoints().stream().findFirst();
+            return checkpoints.stream().findFirst();
         }
 
+        public String threadId() {
+            return threadId;
+        }
+
+        public Optional<Integer> version() {
+            return ofNullable(version);
+        }
     }
 
     Collection<Checkpoint> list(RunnableConfig config);
@@ -32,6 +48,13 @@ public interface BaseCheckpointSaver {
     RunnableConfig put(RunnableConfig config, Checkpoint checkpoint) throws Exception;
 
     Tag release(RunnableConfig config) throws Exception;
+
+    Optional<Tag> tag( RunnableConfig config, Integer version ) throws Exception;
+
+
+    default Optional<Tag> lastTag(  RunnableConfig config ) throws Exception {
+        return tag( config, null );
+    }
 
     default String threadId( RunnableConfig config ) {
         return config.threadId().orElse(THREAD_ID_DEFAULT);
