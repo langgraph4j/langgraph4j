@@ -8,6 +8,8 @@ import org.bsc.langgraph4j.state.AgentState;
 import java.util.*;
 import java.util.function.BiFunction;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Defines the contract for graph structures that manage state and control flow.
  *
@@ -87,6 +89,21 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
             return elements.stream()
                     .filter(n ->  !(n instanceof SubStateGraphNode<State>) )
                     .toList();
+        }
+
+        /**
+         * Checks whether the node with the specified id is a subgraph node.
+         *
+         * @param nodeId the node id to check
+         * @return {@code true} if a matching node exists and is a {@link SubGraphNode},
+         *         {@code false} otherwise
+         * @throws NullPointerException if {@code nodeId} is null
+         */
+        public boolean isSubgraphNode( String nodeId ) {
+            requireNonNull( nodeId, "nodeId cannot be null");
+            return elements.stream()
+                    .filter( n -> Objects.equals(n.id(),nodeId))
+                    .anyMatch(n -> n instanceof SubGraphNode<?> );
         }
     }
 
