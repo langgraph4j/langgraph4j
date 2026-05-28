@@ -7,6 +7,7 @@ import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.exception.SubGraphInterruptionException;
+import org.bsc.langgraph4j.hook.LogNodeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.hook.WrapCallHookSubgraphAware;
 import org.bsc.langgraph4j.internal.node.Node;
@@ -121,7 +122,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                                                                 AsyncNodeActionWithConfig<MyState> action) {
 
             isSubgraphEnded( config ).ifPresent(
-                    item -> System.out.printf("[%s] ended%n", item.nodeId()));
+                    item -> System.out.printf("[%s] ended%n", item));
 
             System.out.printf("[%s] start%n", nodeId);
 
@@ -170,8 +171,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 assertEquals(nodeId, config.nodeId());
 
                 if( basePath != null ) {
-                    if( enableLog ) log.info("graphPath: {}", config.graphPath());
-                    //assertEquals( basePath, config.graphPath() );
+                    if( enableLog ) log.info("nodePath: {}", config.nodePath());
                 }
 
                 if(  compileConfig.graphId().isPresent() ) {
@@ -214,8 +214,8 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                         assertEquals(nodeId, config.nodeId());
 
                         if( basePath != null ) {
-                            if( enableLog ) log.info("graphPath: {}", config.graphPath());
-                            assertEquals( basePath, config.graphPath() );
+                            if( enableLog ) log.info("nodePath: {}", config.nodePath());
+                            assertEquals( basePath, config.nodePath().root() );
                         }
 
                         if(  compileConfig.graphId().isPresent() ) {
@@ -322,6 +322,8 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                         Map.of("messages", "child:step3"));
 
         var workflowChild = new StateGraph<>(GraphTest.State.SCHEMA, GraphTest.State::new)
+                .addBeforeCallNodeHook(LogNodeHook.applyBeforeHook() )
+                .addAfterCallNodeHook(LogNodeHook.applyAfterHook() )
                 .addNode("child:step_1", childStep1)
                 .addNode("child:step_2", childStep2)
                 .addNode("child:step_3", childStep3)
@@ -344,6 +346,8 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                         Map.of("messages", "step3"));
 
         var workflowParent = new StateGraph<>(GraphTest.State.SCHEMA, GraphTest.State::new)
+                .addBeforeCallNodeHook(LogNodeHook.applyBeforeHook() )
+                .addAfterCallNodeHook(LogNodeHook.applyAfterHook() )
                 .addNode("step_1", step1)
                 .addNode("step_2", step2)
                 .addNode("step_3", step3)
@@ -786,7 +790,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .addEdge("foo2", "foo3")
                 .addEdge("foo3", StateGraph.END)
                 .compile( CompileConfig.builder()
-                        .graphId("subSubGraph")
+                        //.graphId("subSubGraph")
                         .build());
 
         var subGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
@@ -799,7 +803,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .addEdge(subSubGraphNodeId, "bar2")
                 .addEdge("bar2", StateGraph.END)
                 .compile( CompileConfig.builder()
-                        .graphId("subGraph")
+                        //.graphId("subGraph")
                         .build());
 
         var stateGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)

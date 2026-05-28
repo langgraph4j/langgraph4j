@@ -39,4 +39,21 @@ public class GraphPathTest {
         assertThrowsExactly( IllegalArgumentException.class,
                 () -> path2.append("path 3/ path4" ));
     }
+
+    @Test
+    public void replaceLast() {
+
+        var path = GraphPath.of("path1", "path2");
+        var replaced = path.replaceLast("path3");
+
+        assertEquals(GraphPath.of("path1", "path3"), replaced);
+        assertEquals(GraphPath.of("path1", "path2"), path);
+
+        assertEquals(GraphPath.of("path1"), GraphPath.empty().replaceLast("path1"));
+        assertSame(path, path.replaceLast(null));
+        assertSame(path, path.replaceLast(""));
+
+        assertThrowsExactly(IllegalArgumentException.class,
+                () -> path.replaceLast("path 3/path4"));
+    }
 }

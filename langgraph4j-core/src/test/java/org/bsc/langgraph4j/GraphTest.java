@@ -68,8 +68,8 @@ public class GraphTest implements LG4JLoggable {
                     assertEquals(nodeId, config.nodeId());
 
                     if( basePath != null ) {
-                        log.info("graphPath: {}", config.graphPath());
-                        assertEquals( basePath, config.graphPath() );
+                        log.info("nodePath: {}", config.nodePath());
+                        assertEquals( basePath, config.nodePath().root() );
                     }
 
                     if(  compileConfig.graphId().isPresent() ) {
