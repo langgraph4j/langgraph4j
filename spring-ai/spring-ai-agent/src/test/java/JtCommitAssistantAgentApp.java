@@ -21,7 +21,7 @@ import org.bsc.langgraph4j.agent.skill.SkillPath;
 import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.spring.ai.agent.AgentCommitAssistant;
 import org.bsc.langgraph4j.spring.ai.agent.AiModel;
-import org.bsc.langgraph4j.spring.ai.agent.LogHook;
+import org.bsc.langgraph4j.spring.ai.agent.LogNodeHook;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -167,7 +167,7 @@ public class JtCommitAssistantAgentApp {
 
     public CompiledGraph<AgentExecutorEx.State> buildAgent(ChatModel chatModel, boolean streaming, Consumer<String> logConsumer )  {
 
-        final var logHook = new LogHook(logConsumer);
+        final var logHook = new LogNodeHook(logConsumer);
 
         try {
             final var rootPath = Paths.get("target", "checkpoint");
