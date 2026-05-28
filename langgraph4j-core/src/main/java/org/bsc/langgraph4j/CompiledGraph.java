@@ -303,6 +303,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                         newMetadata.put(RunnableConfig.GRAPH_PATH, config.graphPath().append(graphId) );
                     }
                 });
+        newMetadata.put(RunnableConfig.GRAPH_NODE_PATH, config.nodePath().replaceLast(currentNodeId));
 
         return config.updateMetadata( newMetadata );
 
