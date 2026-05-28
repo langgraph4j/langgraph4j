@@ -182,9 +182,25 @@ public final class GraphPath implements Iterable<String> {
 
         validateElement(element);
 
+
         var newElements = new ArrayList<String>(elements.size() + 1);
         newElements.addAll(elements);
         newElements.add(element);
+        return new GraphPath(newElements);
+    }
+
+    public GraphPath replaceLast(String element) {
+        if (element == null || element.isEmpty()) return this;
+
+        validateElement(element);
+
+        if( elements.isEmpty() ) {
+            return GraphPath.of(element);
+        }
+
+        final var newElements = new ArrayList<>(elements);
+        newElements.set(elements.size() - 1, element);
+
         return new GraphPath(newElements);
     }
 
