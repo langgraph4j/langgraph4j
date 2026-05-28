@@ -118,7 +118,7 @@ public interface AgentCommitAssistant {
                                          CompileConfig compileConfig,
                                          SkillSource skillSource,
                                          Consumer<String> logConsumer) throws Exception {
-        final var logHook = new LogHook(logConsumer);
+        final var logHook = new LogNodeHook(logConsumer);
 
         return SkilledReactSubAgent.builder()
                 .chatModel(chatModel)

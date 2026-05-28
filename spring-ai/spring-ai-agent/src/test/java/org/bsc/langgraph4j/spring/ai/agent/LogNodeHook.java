@@ -6,14 +6,13 @@ import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public record LogHook(Consumer<String> consumer)  implements NodeHook.BeforeCall<AgentExecutorEx.State>, NodeHook.AfterCall<AgentExecutorEx.State> {
+public record LogNodeHook(Consumer<String> consumer)  implements NodeHook.BeforeCall<AgentExecutorEx.State>, NodeHook.AfterCall<AgentExecutorEx.State> {
 
     public NodeHook.BeforeCall<AgentExecutorEx.State> asBeforeCall() {
         return this;
@@ -25,15 +24,12 @@ public record LogHook(Consumer<String> consumer)  implements NodeHook.BeforeCall
     @Override
     public CompletableFuture<Map<String, Object>> applyBefore(String nodeId, AgentExecutorEx.State state, RunnableConfig config) {
         consumer.accept( """
-                    #### %s:%s `STARTED`
+                    #### %s `STARTED`
                     ```
                     %s
                     ```
                     """.formatted(
-                        config.graphId()
-                                .map( id -> "%s:%s".formatted(id, config.graphPath()))
-                                .orElse( Objects.toString(config.graphPath())),
-                        nodeId,
+                        config.nodePath(),
                         state.messages().stream()
                                 .map(Object::toString)
                                 .collect(Collectors.joining("\n\n"))) );
@@ -44,15 +40,12 @@ public record LogHook(Consumer<String> consumer)  implements NodeHook.BeforeCall
     public CompletableFuture<Map<String, Object>> applyAfter(String nodeId, AgentExecutorEx.State state, RunnableConfig config, Map<String, Object> partialResult) {
 
         consumer.accept("""
-                #### %s:%s `FINISHED`
+                #### %s `FINISHED`
                 ```
                 %s
                 ```
                 """.formatted(
-                config.graphId()
-                        .map( id -> "%s:%s".formatted(id, config.graphPath()))
-                        .orElse( Objects.toString(config.graphPath())),
-                    nodeId,
+                    config.nodePath(),
                     CollectionsUtils.toString( partialResult )));
 
         return completedFuture(partialResult);

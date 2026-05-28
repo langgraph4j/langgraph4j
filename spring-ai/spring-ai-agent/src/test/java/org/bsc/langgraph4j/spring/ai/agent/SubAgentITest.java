@@ -77,7 +77,7 @@ public class SubAgentITest {
     @Test
     public void testCommitAssistantAgent() throws Exception {
 
-        final var logHook = new LogHook(System.out::println);
+        final var logHook = new LogNodeHook(System.out::println);
 
 
         final var rootPath = Paths.get( "target", "testCommitSubAgent" );
