@@ -62,7 +62,9 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
                                         .orElse( false );
 
         final var subGraphRunnableConfigBuilder = RunnableConfig.builder(config)
-                    .putMetadata(RunnableConfig.GRAPH_PATH, config.graphPath().append(nodeId));
+                    .putMetadata(RunnableConfig.GRAPH_PATH, config.graphPath().append(nodeId))
+                    .putMetadata(RunnableConfig.GRAPH_NODE_PATH, config.nodePath().append(nodeId))
+                ;
         subGraph.compileConfig.graphId()
                 .ifPresent( id ->
                         subGraphRunnableConfigBuilder.putMetadata(RunnableConfig.GRAPH_ID, id));
