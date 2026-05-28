@@ -152,6 +152,7 @@ public final class RunnableConfig implements HasMetadata {
     public static final String STUDIO_METADATA_KEY = "LG4j_STUDIO_MDK";
     public static final String NODE_ID = "LG4j_NODE_ID";
     public static final String GRAPH_PATH = "LG4j_GRAPH_PATH";
+    public static final String GRAPH_NODE_PATH = "LG4j_GRAPH_NODE_PATH";
     public static final String GRAPH_ID = "LG4j_GRAPH_ID";
     public static final String SUBGRAPH_RESUME_UPDATE_DATA = "LG4j_SUBGRAPH_UPDATE_DATA";
 
@@ -310,8 +311,13 @@ public final class RunnableConfig implements HasMetadata {
         return metadata(GRAPH_ID).map(Object::toString);
     }
 
+    @Deprecated(since = "1.9")
     public GraphPath graphPath() {
         return metadata(GRAPH_PATH, new TypeRef<GraphPath>() {})
+                .orElseGet(GraphPath::empty);
+    }
+    public GraphPath nodePath() {
+        return metadata(GRAPH_NODE_PATH, new TypeRef<GraphPath>() {})
                 .orElseGet(GraphPath::empty);
     }
 
