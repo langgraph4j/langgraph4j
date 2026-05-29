@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class StateGraphRepresentationTest {
+public class LG4JRepresentationTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

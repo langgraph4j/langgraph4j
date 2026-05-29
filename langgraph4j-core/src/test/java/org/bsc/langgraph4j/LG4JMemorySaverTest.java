@@ -26,9 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit test for simple App.
  */
-public class StateGraphMemorySaverTest
+public class LG4JMemorySaverTest
 {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StateGraphMemorySaverTest.class);
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LG4JMemorySaverTest.class);
     static class State extends MessagesState<String> {
 
         public State(Map<String, Object> initData) {
@@ -70,7 +70,7 @@ public class StateGraphMemorySaverTest
 
     @BeforeAll
     public static void initLogging() throws IOException {
-        try( var is = StateGraphMemorySaverTest.class.getResourceAsStream("/logging.properties") ) {
+        try( var is = LG4JMemorySaverTest.class.getResourceAsStream("/logging.properties") ) {
             LogManager.getLogManager().readConfiguration(is);
         }
     }

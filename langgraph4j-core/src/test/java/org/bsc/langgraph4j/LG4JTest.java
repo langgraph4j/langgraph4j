@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit test for simple App.
  */
-public class GraphTest implements LG4JLoggable {
+public class LG4JTest implements LG4JLoggable {
 
     static class State extends MessagesState<String> {
 

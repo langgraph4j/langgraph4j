@@ -91,19 +91,19 @@ public class StateSubGraphTest {
     @Test
     public void testStateSubgraphSimple() throws Exception {
 
-        AsyncNodeActionWithConfig<GraphTest.State> childStep1 =
+        AsyncNodeActionWithConfig<LG4JTest.State> childStep1 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step1"));
 
-        AsyncNodeActionWithConfig<GraphTest.State> childStep2 =
+        AsyncNodeActionWithConfig<LG4JTest.State> childStep2 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step2"));
 
-        AsyncNodeActionWithConfig<GraphTest.State> childStep3 =
+        AsyncNodeActionWithConfig<LG4JTest.State> childStep3 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step3"));
 
-        var workflowChild = new StateGraph<>(GraphTest.State.SCHEMA, GraphTest.State::new)
+        var workflowChild = new StateGraph<>(LG4JTest.State.SCHEMA, LG4JTest.State::new)
                 .addNode("child:step_1", childStep1)
                 .addNode("child:step_2", childStep2)
                 .addNode("child:step_3", childStep3)
@@ -112,19 +112,19 @@ public class StateSubGraphTest {
                 .addEdge("child:step_2", "child:step_3")
                 .addEdge("child:step_3", END)
                 ;
-        AsyncNodeActionWithConfig<GraphTest.State> step1 =
+        AsyncNodeActionWithConfig<LG4JTest.State> step1 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step1"));
 
-        AsyncNodeActionWithConfig<GraphTest.State> step2 =
+        AsyncNodeActionWithConfig<LG4JTest.State> step2 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step2"));
 
-        AsyncNodeActionWithConfig<GraphTest.State> step3 =
+        AsyncNodeActionWithConfig<LG4JTest.State> step3 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step3"));
 
-        var workflowParent = new StateGraph<>(GraphTest.State.SCHEMA, GraphTest.State::new)
+        var workflowParent = new StateGraph<>(LG4JTest.State.SCHEMA, LG4JTest.State::new)
                 .addNode("step_1", step1)
                 .addNode("step_2", step2)
                 .addNode("step_3", step3)
