@@ -90,29 +90,6 @@ public class CompiledSubGraphTest implements LG4JLoggable {
         GRAPH_RESUME;
     }
 
-    static class ResetLogsInSubgraphHook implements NodeHook.WrapCall<AgentState> {
-        final Map<String, Channel<?>> schema;
-
-        public ResetLogsInSubgraphHook(Map<String, Channel<?>> schema ) {
-            this.schema = requireNonNull(schema);
-        }
-
-        @Override
-        public CompletableFuture<Map<String, Object>> applyWrap(String nodeId, AgentState state, RunnableConfig config, AsyncNodeActionWithConfig<AgentState> action) {
-
-            log.info("\nnode '{}' start with config: {} and state: {}", nodeId, config, state);
-
-            return action.apply(state, config).thenApply( result -> {
-
-                if( config.isResumeSubgraph() & state.<List<String>>value("logs").orElseGet( List::of ).isEmpty() ) {
-                    return Map.of( "logs", AgentState.MARK_FOR_RESET );
-                }
-
-                return result;
-            });
-        }
-    }
-
     static class WrapCallHook extends WrapCallHookSubgraphAware<MyState> {
 
         @Override
@@ -531,7 +508,6 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .reduce((a, b) -> b)
                 .thenAccept( output -> {
                     assertTrue( output.result().isEND() );
-
                     assertIterableEquals(List.of(
                             "[NODE1]",
                             "[NODE2]",
