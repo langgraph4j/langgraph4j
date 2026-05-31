@@ -15,8 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
@@ -128,14 +130,15 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     }
 
     private OptionalInt lastVersion( String ThreadId ) throws IOException  {
-        final var versionPattern = Pattern.compile("%s-v(\\d+)\\%s$".formatted( getBaseName(ThreadId), extension));
+        final var versionPattern = Pattern.compile("thread-(.+)-v(\\d+)%s$".formatted(  extension));
 
         try (var stream = Files.list(targetFolder)) {
             return stream
                     .map(path -> path.getFileName().toString())
                     .map(versionPattern::matcher)
                     .filter(Matcher::matches)
-                    .mapToInt(matcher -> Integer.parseInt(matcher.group(1)))
+                    .filter(matcher -> matcher.group(1).equals(ThreadId))
+                    .mapToInt(matcher -> Integer.parseInt(matcher.group(2)))
                     .max();
         }
 
@@ -200,10 +203,10 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
                 return Optional.empty();
             }
 
-            version = lastVersion.getAsInt();
+            version$ = lastVersion.getAsInt();
         }
 
-        final var backupFilename = "%s-v%d%s".formatted( getBaseName(threadId), version, extension);
+        final var backupFilename = "%s-v%d%s".formatted( getBaseName(threadId), version$, extension);
 
         final Path backupPath = targetFolder.resolve(backupFilename);
 
@@ -213,7 +216,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         }
 
         final var checkpoints = deserialize(backupPath.toFile());
-        return Optional.of(new Tag(threadId, version, checkpoints));
+        return Optional.of(new Tag(threadId, version$, checkpoints));
     }
 
     /**
@@ -225,6 +228,20 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     public boolean deleteFile(RunnableConfig config) {
         File targetFile = getFile(config);
         return targetFile.exists() && targetFile.delete();
+    }
+
+    public static Stream<Path> list(Path targetFolder, BiPredicate<String,Integer> filter ) throws IOException {
+        requireNonNull(targetFolder, "targetFolder cannot be null");
+        requireNonNull(filter, "filter cannot be null");
+
+        final var versionPattern = Pattern.compile("^thread-(.+)-v(\\d+)-saver.(?:json|bin)$");
+
+        return Files.list(targetFolder)
+                        .filter( path -> {
+                            final var matcher = versionPattern.matcher(path.getFileName().toString());
+                            if( !matcher.matches() ) return false;
+                            return filter.test( matcher.group(1), Integer.parseInt(matcher.group(2)) );
+                        });
     }
 }
 
