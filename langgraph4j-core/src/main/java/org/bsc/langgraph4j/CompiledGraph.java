@@ -657,12 +657,13 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     .checkPointId(null); // Reset checkpoint id
 
             if( input instanceof GraphResume resumeRequest ) {
-                log.trace( "RESUME REQUEST" );
+                log.trace( "RESUME REQUEST: {}", resumeRequest );
 
                 final var saver = compileConfig.checkpointSaver()
-                        .orElseThrow(() -> (new IllegalStateException("Resume request without a configured checkpoint saver!")));
-                final var startCheckpoint = saver.get( config )
-                        .orElseThrow( () -> (new IllegalStateException("Resume request without a valid checkpoint!")) );
+                        .orElseThrow(() -> new IllegalStateException("Resume request without a configured checkpoint saver!"));
+                final var startCheckpoint = ofNullable(resumeRequest.checkpoint()).
+                                                orElseGet( () -> saver.get( config )
+                                                        .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") ));
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
@@ -1072,8 +1073,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var saver = compileConfig.checkpointSaver()
                         .orElseThrow(() -> (new IllegalStateException("Resume request without a configured checkpoint saver!")));
-                final var startCheckpoint = saver.get( config )
-                        .orElseThrow( () -> (new IllegalStateException("Resume request without a valid checkpoint!")) );
+                final var startCheckpoint = ofNullable(resumeRequest.checkpoint()).
+                        orElseGet( () -> saver.get( config )
+                                .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") ));
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
