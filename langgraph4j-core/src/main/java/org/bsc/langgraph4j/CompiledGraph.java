@@ -655,9 +655,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var saver = compileConfig.checkpointSaver()
                         .orElseThrow(() -> new IllegalStateException("Resume request without a configured checkpoint saver!"));
-                final var startCheckpoint = ofNullable(resumeRequest.checkpoint()).
-                                                orElseGet( () -> saver.get( config )
-                                                        .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") ));
+                final var startCheckpoint = saver.get( config )
+                                                        .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") );
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
@@ -1067,9 +1066,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var saver = compileConfig.checkpointSaver()
                         .orElseThrow(() -> (new IllegalStateException("Resume request without a configured checkpoint saver!")));
-                final var startCheckpoint = ofNullable(resumeRequest.checkpoint()).
-                        orElseGet( () -> saver.get( config )
-                                .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") ));
+                final var startCheckpoint = saver.get( config )
+                                .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") );
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
