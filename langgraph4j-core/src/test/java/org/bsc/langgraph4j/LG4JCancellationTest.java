@@ -20,7 +20,7 @@ import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CancellationTest {
+public class LG4JCancellationTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("test");
 
     private AsyncNodeActionWithConfig<MessagesState<String>> _makeWaitingNode(String id, Duration delay) {
