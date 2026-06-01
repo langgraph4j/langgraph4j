@@ -105,6 +105,18 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
                     .filter( n -> Objects.equals(n.id(),nodeId))
                     .anyMatch(n -> n instanceof SubGraphNode<?> );
         }
+
+        /**
+         * Checks whether this container includes any subgraph nodes.
+         *
+         * @return {@code true} if at least one node is a {@link SubGraphNode},
+         *         {@code false} otherwise
+         */
+        public boolean hasSubGraphs() {
+            return elements.stream()
+                    .anyMatch(node -> node instanceof SubGraphNode);
+        }
+
     }
 
     /**

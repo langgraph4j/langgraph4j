@@ -177,11 +177,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
     }
 
-    private boolean hasSubGraphs() {
-        return stateGraph.nodes.elements.stream()
-                .anyMatch(node -> node instanceof SubGraphNode);
-    }
-
     /**
      * Gets the history of graph states relate to a specific Thread ID. Useful for:
      * - Debugging execution history
@@ -198,7 +193,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.getStateFactory() ) )
                 .toList();
     }
-
 
     /**
      * Same of {@link #stateOf(RunnableConfig)} but throws an IllegalStateException if checkpoint is not found.
@@ -271,7 +265,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 .checkPointId( branchCheckpoint.getId() )
                 .nextNode( nextNodeId );
 
-        if( hasSubGraphs() ) {
+        if( stateGraph.nodes.hasSubGraphs() ) {
             runnableConfigBuilder.putMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, values ) ;
         }
 
