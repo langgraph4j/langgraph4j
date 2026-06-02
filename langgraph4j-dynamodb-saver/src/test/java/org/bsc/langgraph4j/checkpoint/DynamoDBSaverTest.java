@@ -392,4 +392,233 @@ public class DynamoDBSaverTest {
         // Caller is responsible for closing the externally managed client
         externalClient.close();
     }
+
+    // ─── Phase 1.5 Tests ─────────────────────────────────────────────────────
+
+    /**
+     * Verify that {@code deleteThread()} removes all checkpoint metadata,
+     * payload chunks, and the released marker from DynamoDB.
+     */
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testDeleteThread(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(false)
+            .build();
+
+        var threadId = "thread-delete-test";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = singleNodeGraph().compile(compileConfig);
+
+        // Run the graph to create checkpoints
+        workflow.invoke(Map.of("input", "test-delete"), runnableConfig);
+
+        // Verify checkpoints exist
+        var history = workflow.getStateHistory(runnableConfig);
+        assertFalse(history.isEmpty(), "Checkpoints should exist before delete");
+
+        // Delete the thread
+        saver.deleteThread(threadId);
+
+        // Verify all checkpoints are gone
+        var historyAfter = workflow.getStateHistory(runnableConfig);
+        assertTrue(historyAfter.isEmpty(), "All checkpoints must be removed after deleteThread");
+
+        // Verify via raw DynamoDB scan that no items remain for this thread
+        var scanResponse = saver.getDynamoDbClient().scan(r -> r
+                .tableName(TABLE_NAME)
+                .filterExpression("contains(PK, :tid)")
+                .expressionAttributeValues(Map.of(
+                        ":tid", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                                .s(threadId).build()
+                ))
+        );
+        assertEquals(0, scanResponse.count(),
+                "No DynamoDB items should remain for the deleted thread");
+    }
+
+    /**
+     * Verify that calling {@code deleteThread()} on a non-existent thread
+     * is a no-op (idempotent).
+     */
+    @Test
+    void testDeleteThreadIdempotent() throws Exception {
+        var saver = buildSaver(StateSerializerEnum.BINARY);
+
+        // Should not throw
+        assertDoesNotThrow(() -> saver.deleteThread("non-existent-thread-id"));
+    }
+
+    /**
+     * Verify that checkpoint metadata items carry the correct
+     * {@code ref_loc} and {@code ref_key} attributes.
+     */
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testRefLocRefKeyAttributes(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(false)
+            .build();
+
+        var threadId = "thread-refkey-test";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = singleNodeGraph().compile(compileConfig);
+
+        workflow.invoke(Map.of("input", "refkey-test"), runnableConfig);
+
+        // Query checkpoint metadata items directly
+        var queryResponse = saver.getDynamoDbClient().query(r -> r
+                .tableName(TABLE_NAME)
+                .keyConditionExpression("PK = :pk")
+                .expressionAttributeValues(Map.of(
+                        ":pk", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                                .s("CHECKPOINT_" + threadId).build()
+                ))
+        );
+
+        assertFalse(queryResponse.items().isEmpty(), "Should have checkpoint metadata items");
+
+        for (var item : queryResponse.items()) {
+            // Verify ref_loc is present and set to DYNAMODB
+            assertTrue(item.containsKey("ref_loc"), "Item should have ref_loc attribute");
+            assertEquals("DYNAMODB", item.get("ref_loc").s());
+
+            // Verify ref_key is present and follows CHUNK_{threadId}#{checkpointId} pattern
+            assertTrue(item.containsKey("ref_key"), "Item should have ref_key attribute");
+            String refKey = item.get("ref_key").s();
+            assertTrue(refKey.startsWith("CHUNK_" + threadId + "#"),
+                    "ref_key should follow CHUNK_{threadId}#{checkpointId} pattern, got: " + refKey);
+        }
+
+        saver.deleteThread(threadId);
+    }
+
+    /**
+     * Verify that the {@code parentCheckpointId} attribute tracks lineage
+     * correctly across multiple graph executions.
+     */
+    @org.junit.jupiter.api.Disabled("Pending upstream langgraph4j-core support for checkpoint lineage")
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testParentCheckpointIdLineage(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(false)
+            .build();
+
+        var threadId = "thread-lineage-test";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = chatGraph().compile(compileConfig);
+
+        // Run two turns to create a chain of checkpoints
+        workflow.invoke(Map.of("user_input", "Hi"), runnableConfig);
+        workflow.invoke(Map.of("user_input", "weather"), runnableConfig);
+
+        // Query all checkpoint metadata items, sorted by savedAt
+        var queryResponse = saver.getDynamoDbClient().query(r -> r
+                .tableName(TABLE_NAME)
+                .keyConditionExpression("PK = :pk")
+                .expressionAttributeValues(Map.of(
+                        ":pk", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                                .s("CHECKPOINT_" + threadId).build()
+                ))
+        );
+
+        var items = new ArrayList<>(queryResponse.items());
+        assertTrue(items.size() >= 2, "Should have at least 2 checkpoints from 2 turns");
+
+        // Sort by savedAt to establish chronological order
+        items.sort((a, b) -> {
+            long aTime = Long.parseLong(a.get("savedAt").n());
+            long bTime = Long.parseLong(b.get("savedAt").n());
+            return Long.compare(aTime, bTime);
+        });
+
+        // First checkpoint should have no parent
+        var firstItem = items.get(0);
+        assertFalse(firstItem.containsKey("parentCheckpointId"),
+                "First checkpoint should not have a parentCheckpointId");
+
+        // Subsequent checkpoints should have a parentCheckpointId
+        boolean foundParent = false;
+        for (int i = 1; i < items.size(); i++) {
+            if (items.get(i).containsKey("parentCheckpointId")) {
+                foundParent = true;
+                String parentId = items.get(i).get("parentCheckpointId").s();
+                assertNotNull(parentId, "parentCheckpointId should not be null");
+                assertFalse(parentId.isEmpty(), "parentCheckpointId should not be empty");
+            }
+        }
+        assertTrue(foundParent, "At least one non-first checkpoint should have a parentCheckpointId");
+
+        saver.deleteThread(threadId);
+    }
+
+    /**
+     * Verify that conditional writes prevent silent overwrites during inserts,
+     * but allow updates when explicitly requested.
+     */
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testConditionalWrites(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+        var threadId = "thread-conditional-write";
+        var config = RunnableConfig.builder().threadId(threadId).build();
+
+        var state1 = Map.<String, Object>of("key", "value1");
+        var state2 = Map.<String, Object>of("key", "value2");
+
+        var checkpoint = Checkpoint.builder()
+            .id("fixed-checkpoint-id")
+            .nodeId("node1")
+            .nextNodeId("node2")
+            .state(state1)
+            .build();
+
+        // 1. Insert checkpoint (routes to insertedCheckpoint, allowOverwrite=false)
+        saver.put(config, checkpoint);
+
+        var getConfig = RunnableConfig.builder()
+                .threadId(threadId)
+                .checkPointId("fixed-checkpoint-id")
+                .build();
+
+        // Verify state is value1
+        var loaded = saver.get(getConfig);
+        assertTrue(loaded.isPresent());
+        assertEquals("value1", loaded.get().getState().get("key"));
+
+        // 2. Try to insert same checkpoint ID with different state
+        var modifiedCheckpoint = Checkpoint.builder()
+            .id("fixed-checkpoint-id") // same ID!
+            .nodeId("node1")
+            .nextNodeId("node2")
+            .state(state2) // modified state
+            .build();
+
+        // config has no checkpointId, routes to insertedCheckpoint (allowOverwrite=false)
+        saver.put(config, modifiedCheckpoint);
+
+        // Verify state is still value1, because the conditional write prevented overwrite
+        var loaded2 = saver.get(getConfig);
+        assertEquals("value1", loaded2.get().getState().get("key"));
+
+        // 3. Now test updatedCheckpoint (allowOverwrite=true)
+        // config with checkpointId routes to updatedCheckpoint
+        saver.put(getConfig, modifiedCheckpoint);
+
+        // Verify state is now value2
+        var loaded3 = saver.get(getConfig);
+        assertEquals("value2", loaded3.get().getState().get("key"));
+
+        saver.deleteThread(threadId);
+    }
 }

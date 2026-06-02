@@ -8,9 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -81,6 +88,11 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         private boolean dropTableFirst = false;
         /** Inject a fully configured client (useful for tests or shared clients). */
         private DynamoDbClient dynamoDbClient;
+        private String s3Bucket;
+        private String s3KeyPrefix;
+        private String s3EndpointUrl;
+        /** Inject a pre-configured S3 client. */
+        private S3Client s3Client;
 
         Builder() {}
 
@@ -170,6 +182,42 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             return this;
         }
 
+        /**
+         * S3 bucket name for large-payload offloading. When set (along with
+         * {@link #region}), payloads exceeding 350KB are automatically stored
+         * in S3 instead of DynamoDB.
+         */
+        public Builder s3Bucket(String s3Bucket) {
+            this.s3Bucket = s3Bucket;
+            return this;
+        }
+
+        /**
+         * Optional prefix prepended to all S3 keys. Useful for bucket-level
+         * isolation between environments or applications.
+         */
+        public Builder s3KeyPrefix(String s3KeyPrefix) {
+            this.s3KeyPrefix = s3KeyPrefix;
+            return this;
+        }
+
+        /**
+         * Override the S3 service endpoint URL. Useful for MinIO or LocalStack.
+         */
+        public Builder s3EndpointUrl(String s3EndpointUrl) {
+            this.s3EndpointUrl = s3EndpointUrl;
+            return this;
+        }
+
+        /**
+         * Inject a pre-configured {@link S3Client}. When provided, the S3 client
+         * is not built internally.
+         */
+        public Builder s3Client(S3Client s3Client) {
+            this.s3Client = s3Client;
+            return this;
+        }
+
         /** Build the {@link DynamoDBSaver}. */
         public DynamoDBSaver build() {
             requireNonNull(tableName, "'tableName' must not be null");
@@ -187,7 +235,34 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
                 builder.credentialsProvider(
                     credentialsProvider != null ? credentialsProvider : DefaultCredentialsProvider.create()
                 );
+
+                // User-agent + adaptive retry for observability and resilience
+                ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+                    .putAdvancedOption(
+                        SdkAdvancedClientOption.USER_AGENT_SUFFIX,
+                        "x-client-framework:langgraph4j-dynamodb")
+                    .retryStrategy(RetryMode.ADAPTIVE)
+                    .build();
+                builder.overrideConfiguration(overrideConfig);
+
                 dynamoDbClient = builder.build();
+            }
+
+            // Build S3 client if bucket is configured
+            if (s3Client == null && s3Bucket != null) {
+                S3ClientBuilder s3Builder = S3Client.builder()
+                    .forcePathStyle(true);
+
+                if (region != null) {
+                    s3Builder.region(Region.of(region));
+                }
+                if (s3EndpointUrl != null) {
+                    s3Builder.endpointOverride(URI.create(s3EndpointUrl));
+                }
+                s3Builder.credentialsProvider(
+                    credentialsProvider != null ? credentialsProvider : DefaultCredentialsProvider.create()
+                );
+                s3Client = s3Builder.build();
             }
 
             // dropTableFirst implies createTableIfNotExists
@@ -218,10 +293,21 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         this.stateSerializer = builder.stateSerializer;
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
+        // Create StorageStrategy for payload routing (DynamoDB vs S3)
+        StorageStrategy storageStrategy = new StorageStrategy(
+            this.client,
+            builder.tableName,
+            builder.s3Client,
+            builder.s3Bucket,
+            builder.s3KeyPrefix,
+            builder.ttlSeconds
+        );
+
         this.repository = new DynamoDBRepository(
             this.client,
             builder.tableName,
-            builder.ttlSeconds
+            builder.ttlSeconds,
+            storageStrategy
         );
 
         // Table initialization
@@ -307,7 +393,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
                                       LinkedList<Checkpoint> checkpoints,
                                       Checkpoint checkpoint) throws Exception {
         final String threadId = threadId(config);
-        log.debug("Inserting checkpoint '{}' for thread '{}'", checkpoint.getId(), threadId);
+        final String parentCheckpointId = config.checkPointId().orElse(null);
+        log.debug("Inserting checkpoint '{}' for thread '{}' (parent='{}')",
+                checkpoint.getId(), threadId, parentCheckpointId);
 
         final byte[] payload = encodeState(checkpoint.getState());
         repository.putCheckpoint(
@@ -316,7 +404,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             checkpoint.getNodeId(),
             checkpoint.getNextNodeId(),
             payload,
-            stateSerializer.contentType()
+            stateSerializer.contentType(),
+            parentCheckpointId,
+            false  // insert-only: conditional write
         );
     }
 
@@ -332,7 +422,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             repository.deleteCheckpoint(threadId, oldId);
         });
 
-        log.debug("Updating checkpoint '{}' for thread '{}'", checkpoint.getId(), threadId);
+        final String parentCheckpointId = config.checkPointId().orElse(null);
+        log.debug("Updating checkpoint '{}' for thread '{}' (parent='{}')",
+                checkpoint.getId(), threadId, parentCheckpointId);
         final byte[] payload = encodeState(checkpoint.getState());
         repository.putCheckpoint(
             threadId,
@@ -340,7 +432,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             checkpoint.getNodeId(),
             checkpoint.getNextNodeId(),
             payload,
-            stateSerializer.contentType()
+            stateSerializer.contentType(),
+            parentCheckpointId,
+            true  // update path: allow overwrite
         );
     }
 
@@ -350,6 +444,23 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         log.debug("Releasing thread '{}'", threadId);
         repository.markThreadReleased(threadId);
         return new Tag(threadId, checkpoints);
+    }
+
+    /**
+     * Deletes all checkpoints and associated data for the given thread.
+     *
+     * <p>This is a <em>hard delete</em> that permanently removes all checkpoint
+     * metadata items, payload chunk items, and the released sentinel (if present)
+     * from DynamoDB. The operation is idempotent: calling it on a non-existent
+     * or already-deleted thread is a no-op.
+     *
+     * <p>Note: this method is specific to {@link DynamoDBSaver} and is not part
+     * of the {@link BaseCheckpointSaver} contract.
+     *
+     * @param threadId the thread identifier whose data should be deleted
+     */
+    public void deleteThread(String threadId) {
+        repository.deleteThread(threadId);
     }
 
     /**
