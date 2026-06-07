@@ -4,13 +4,17 @@ import org.bsc.langgraph4j.GraphRunException;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.utils.ExceptionUtils;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 public class SubGraphInterruptionException extends GraphRunException {
+
+    public static Optional<SubGraphInterruptionException> of(Throwable throwable) {
+        return ExceptionUtils.findCauseByType( throwable, SubGraphInterruptionException.class );
+    }
+
     final String parentNodeId;
     final String nodeId;
     final Map<String, Object> state;
@@ -46,17 +50,6 @@ public class SubGraphInterruptionException extends GraphRunException {
 
     public Map<String, Object> state() {
         return state;
-    }
-
-    public static Optional<SubGraphInterruptionException> from(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (current instanceof SubGraphInterruptionException ex) {
-                return Optional.of(ex);
-            }
-            current = current.getCause();
-        }
-        return Optional.empty();
     }
 
 }

@@ -8,7 +8,6 @@ import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.exception.SubGraphInterruptionException;
 import org.bsc.langgraph4j.hook.LogNodeHook;
-import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.hook.WrapCallHookSubgraphAware;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -30,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -124,10 +124,6 @@ public class CompiledSubGraphTest implements LG4JLoggable {
 
         public NodeActionBuilder nodeId( String nodeId ) {
             this.nodeId = nodeId;
-            return this;
-        }
-        public NodeActionBuilder path(GraphPath path ) {
-            this.basePath = path;
             return this;
         }
         public NodeActionBuilder attributeKey(String attributeKey ) {
@@ -233,30 +229,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
         return actionBuilder().nodeId( nodeId ).attributeKey( attributeKey ).build();
     }
 
-    private AsyncNodeActionWithConfig<MyState> buildSubgraphAction(String parentNodeId, CompiledGraph<MyState> subGraph) {
-        final var runnableConfig = RunnableConfig.builder()
-                .threadId(format("%s_subgraph", parentNodeId))
-                .build();
-        return node_async((state,config) -> {
-
-            var input = (state.resumeSubgraph()) ?
-                    GraphInput.resume() :
-                    GraphInput.args(state.data());
-
-            var output = subGraph.stream(input, runnableConfig).stream()
-                    .reduce((a, b) -> b)
-                    .orElseThrow();
-
-            if (!output.isEND()) {
-                throw new SubGraphInterruptionException(config, parentNodeId,
-                        output.node(),
-                        mergeMap(output.state().data(), Map.of("resume_subgraph", true)));
-            }
-            return mergeMap(output.state().data(), Map.of("resume_subgraph", AgentState.MARK_FOR_REMOVAL));
-        });
-    }
-
-    private CompiledGraph<MyState> subGraphWithInterruption(GraphPath graphPath, BaseCheckpointSaver saver, StateSerializer<MyState> stateSerializer, boolean asInterruptable) throws Exception {
+    private CompiledGraph<MyState> subGraphWithInterruption( BaseCheckpointSaver saver, StateSerializer<MyState> stateSerializer, boolean asInterruptable) throws Exception {
 
         final var compileConfigBuilder = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -270,12 +243,40 @@ public class CompiledSubGraphTest implements LG4JLoggable {
 
         return new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE3.1")
-                .addNode("NODE3.1", actionBuilder().nodeId("NODE3.1").path(graphPath).build())
-                .addNode("NODE3.2", actionBuilder().nodeId("NODE3.2").path(graphPath).build())
-                .addNode("NODE3.3", actionBuilder().nodeId("NODE3.3").path(graphPath).build(asInterruptable))
-                .addNode("NODE3.4", actionBuilder().nodeId("NODE3.4")
-                                                        .path(graphPath)
-                                                        .attributeKey("newAttribute").build())
+                .addNode("NODE3.1", actionBuilder().nodeId("NODE3.1").build())
+                .addNode("NODE3.2", actionBuilder().nodeId("NODE3.2").build())
+                .addNode("NODE3.3", actionBuilder().nodeId("NODE3.3").build(asInterruptable))
+                .addNode("NODE3.4", actionBuilder().nodeId("NODE3.4").attributeKey("newAttribute").build())
+                .addEdge("NODE3.1", "NODE3.2")
+                .addEdge("NODE3.2", "NODE3.3")
+                .addEdge("NODE3.3", "NODE3.4")
+                .addEdge("NODE3.4", END)
+                .compile(compileConfig);
+    }
+
+    private CompiledGraph<MyState> subGraphWithException( BaseCheckpointSaver saver, StateSerializer<MyState> stateSerializer) throws Exception {
+
+        final var compileConfig = CompileConfig.builder()
+                .checkpointSaver(saver)
+                .build();
+
+        final Node.ActionFactory<MyState> nodeWithExceptionFactory = ( $1 ) ->
+                (state, config) -> {
+                    if( config.isResumeSubgraph() ) {
+                        return completedFuture(Map.of("messages", "[%s]".formatted( config.nodeId() )));
+                    }
+                    return failedFuture(new SubGraphInterruptionException(config,
+                            config.nodePath().rootElement().orElseThrow(),
+                            config.nodePath().lastElement().orElseThrow(),
+                            state.data()));
+                };
+
+        return new StateGraph<>(MyState.SCHEMA, stateSerializer)
+                .addEdge(START, "NODE3.1")
+                .addNode("NODE3.1", actionBuilder().nodeId("NODE3.1").build())
+                .addNode("NODE3.2", nodeWithExceptionFactory)
+                .addNode("NODE3.3", actionBuilder().nodeId("NODE3.3").build())
+                .addNode("NODE3.4", actionBuilder().nodeId("NODE3.4").attributeKey("newAttribute").build())
                 .addEdge("NODE3.1", "NODE3.2")
                 .addEdge("NODE3.2", "NODE3.3")
                 .addEdge("NODE3.3", "NODE3.4")
@@ -286,19 +287,19 @@ public class CompiledSubGraphTest implements LG4JLoggable {
     @Test
     public void testCompiledSubGraphSimple() throws Exception {
 
-        AsyncNodeActionWithConfig<LG4JTest.State> childStep1 =
+        AsyncNodeActionWithConfig<MyState> childStep1 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step1"));
 
-        AsyncNodeActionWithConfig<LG4JTest.State> childStep2 =
+        AsyncNodeActionWithConfig<MyState> childStep2 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step2"));
 
-        AsyncNodeActionWithConfig<LG4JTest.State> childStep3 =
+        AsyncNodeActionWithConfig<MyState> childStep3 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "child:step3"));
 
-        var workflowChild = new StateGraph<>(LG4JTest.State.SCHEMA, LG4JTest.State::new)
+        var workflowChild = new StateGraph<>(MyState.SCHEMA, MyState::new)
                 .addBeforeCallNodeHook(LogNodeHook.applyBeforeHook() )
                 .addAfterCallNodeHook(LogNodeHook.applyAfterHook() )
                 .addNode("child:step_1", childStep1)
@@ -310,19 +311,19 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .addEdge("child:step_3", END)
                 .compile()
                 ;
-        AsyncNodeActionWithConfig<LG4JTest.State> step1 =
+        AsyncNodeActionWithConfig<MyState> step1 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step1"));
 
-        AsyncNodeActionWithConfig<LG4JTest.State> step2 =
+        AsyncNodeActionWithConfig<MyState> step2 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step2"));
 
-        AsyncNodeActionWithConfig<LG4JTest.State> step3 =
+        AsyncNodeActionWithConfig<MyState> step3 =
                 AsyncNodeActionWithConfig.node_async((state, config) ->
                         Map.of("messages", "step3"));
 
-        var workflowParent = new StateGraph<>(LG4JTest.State.SCHEMA, LG4JTest.State::new)
+        var workflowParent = new StateGraph<>(MyState.SCHEMA, MyState::new)
                 .addBeforeCallNodeHook(LogNodeHook.applyBeforeHook() )
                 .addAfterCallNodeHook(LogNodeHook.applyAfterHook() )
                 .addNode("step_1", step1)
@@ -348,28 +349,25 @@ public class CompiledSubGraphTest implements LG4JLoggable {
     }
 
     @ParameterizedTest
-    @EnumSource( CompiledGraph.StreamMode.class     )
-    void testCompiledSubGraphInterruptionUsingException(CompiledGraph.StreamMode mode ) throws Exception {
+    @EnumSource( CompiledGraph.StreamMode.class )
+    void testCompiledSubGraphInterruptionUsingException( CompiledGraph.StreamMode mode ) throws Exception {
 
-        var saver = new MemorySaver();
-
-        var stateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
+        final var saver = new MemorySaver();
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
-        var subGraph = subGraphWithInterruption(
-                    GraphPath.of("NODE3"),
-                    saver,
-                    stateSerializer,
-                    false); // create subgraph
+        final var subGraph = subGraphWithException(
+                saver,
+                jsonStateSerializer); // create subgraph
 
-        var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
+        var parentGraph =  new StateGraph<>(MyState.SCHEMA, jsonStateSerializer)
                 .addEdge(START, "NODE1")
                 .addNode("NODE1", buildActionFactory("NODE1"))
                 .addNode("NODE2", buildActionFactory("NODE2"))
-                .addNode("NODE3", buildSubgraphAction("NODE3", subGraph))
+                //.addNode("NODE3", buildSubgraphAction("NODE3", subGraph))
+                .addNode("NODE3", subGraph )
                 .addNode("NODE4", buildActionFactory("NODE4"))
                 .addNode("NODE5", buildActionFactory("NODE5"))
                 .addEdge("NODE1", "NODE2")
@@ -380,23 +378,42 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .compile(compileConfig);
 
         var runnableConfig = RunnableConfig.builder()
-                                .streamMode(mode)
-                                .build();
+                .streamMode(mode)
+                .build();
 
         var input = GraphInput.args(Map.of());
 
         do {
             try {
-                parentGraph.stream(input, runnableConfig).toCompletableFuture().join();
+                parentGraph.stream(input, runnableConfig)
+                        .reduce( (a,b) -> b )
+                        .thenAccept(output -> {
+                            assertTrue(output.result().isEND());
+                            assertIterableEquals(List.of(
+                                    "[NODE1]",
+                                    "[NODE2]",
+                                    "[NODE3.1]",
+                                    "[NODE3.2]",
+                                    "[NODE3.3]",
+                                    "[NODE3.4<myNewValue>]",
+                                    "[NODE4]",
+                                    "[NODE5<myNewValue>]"), output.result().state().messages());
+
+                        })
+                        .join();
                 break;
             }
             catch( Exception ex ) {
-                var interruptException = SubGraphInterruptionException.from(ex);
+                var interruptException = SubGraphInterruptionException.of(ex);
                 if( interruptException.isPresent() ) {
 
                     log.info("SubGraphInterruptionException: {}", interruptException.get().getMessage());
-                    var interruptionState = interruptException.get().state();
+                    var interruptionState = new MyState(interruptException.get().state());
 
+                    assertIterableEquals(List.of(
+                            "[NODE1]",
+                            "[NODE2]",
+                            "[NODE3.1]"), interruptionState.messages());
 
                     // ==== METHOD 1 =====
                     // FIND NODE BEFORE SUBGRAPH AND RESUME
@@ -412,22 +429,23 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                     // ===== METHOD 2 =======
                     // UPDATE STATE ASSUMING TO BE ON NODE BEFORE SUBGRAPH ('NODE2') AND RESUME
                     var nodeBeforeSubgraph = "NODE2";
-                    runnableConfig = parentGraph.updateState( runnableConfig, interruptionState, nodeBeforeSubgraph );
+                    runnableConfig = parentGraph.updateState( runnableConfig, interruptionState.data(), nodeBeforeSubgraph );
                     input = GraphInput.resume();
 
                     log.info( "RESUME GRAPH FROM END OF NODE: {}", nodeBeforeSubgraph);
                     continue;
                 }
 
-                throw ex;
+                saver.release( runnableConfig );
+                break;
             }
         } while( true );
 
     }
 
     @ParameterizedTest
-    @EnumSource( InterruptionTypeEnum.class )
-    public void testCompiledSubGraphInterruptionSharingSaver(  InterruptionTypeEnum mode ) throws Exception {
+    @EnumSource( value = InterruptionTypeEnum.class )
+    public void testCompiledSubGraphInterruptionSharingSaver( InterruptionTypeEnum mode ) throws Exception {
 
         final var asInterruptable = switch( mode ) {
             case INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON,
@@ -440,18 +458,22 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                  DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN -> false;
         };
 
-        final var saver01 = new FileSystemSaver(
-                Paths.get( "target", "testInterruptionSharingSaver") ,
+        final var saverFS = new FileSystemSaver(
+                Paths.get( "target", "testCompiledSubGraphInterruptionSharingSaver") ,
                 mode.stateSerializer);
 
-        var saver = new MemorySaver();
+        final var saver = new MemorySaver();
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
                 .build();
 
+        var runnableConfig = RunnableConfig.builder()
+                .threadId("thread01")
+                .streamMode(mode.streamMode)
+                .build();
+
         var subGraph = subGraphWithInterruption(
-                GraphPath.of("NODE3"),
                 saver,
                 mode.stateSerializer,
                 asInterruptable); // create subgraph
@@ -470,57 +492,57 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 .addEdge("NODE5", END)
                 .compile(compileConfig);
 
-        var runnableConfig = RunnableConfig.builder()
-                .threadId("1")
-                .streamMode(mode.streamMode)
-                .build();
-        //saver.release( runnableConfig );
 
         var input = (asInterruptable) ?
                             GraphInput.args(Map.of("interrupt_subgraph", true)) :
                             GraphInput.noArgs();
 
-        parentGraph.stream(input, runnableConfig).reduce((a, b) -> b)
-                .thenAccept( output -> {
-                    assertFalse( output.result().isEND() );
-                    assertInstanceOf(SubGraphOutput.class,  output.result() );
+        try {
+            parentGraph.stream(input, runnableConfig)
+                    .reduce((a, b) -> b)
+                    .thenAccept(output -> {
+                        assertFalse(output.result().isEND());
+                        assertInstanceOf(SubGraphOutput.class, output.result());
 
-                    assertIterableEquals(List.of(
-                            "[NODE1]",
-                            "[NODE2]",
-                            "[NODE3.1]",
-                            "[NODE3.2]"), output.result().state().messages() );
+                        assertIterableEquals(List.of(
+                                "[NODE1]",
+                                "[NODE2]",
+                                "[NODE3.1]",
+                                "[NODE3.2]"), output.result().state().messages());
 
-                    var iteratorResult = GraphResult.from(output.resultValue());
+                        var iteratorResult = GraphResult.from(output.resultValue());
 
-                    assertFalse( iteratorResult.isEmpty() );
-                    assertTrue(iteratorResult.isInterruptionMetadata());
+                        assertFalse(iteratorResult.isEmpty());
+                        assertTrue(iteratorResult.isInterruptionMetadata());
 
-                })
-                .join();
+                    })
+                    .join();
 
 
-        input = (asInterruptable ) ?
-                    GraphInput.resume(Map.of( "newAttribute", "<myNewValue>", "interrupt_subgraph", false)) :
-                    GraphInput.resume(Map.of( "newAttribute", "<myNewValue>"));
+            input = (asInterruptable) ?
+                    GraphInput.resume(Map.of("newAttribute", "<myNewValue>", "interrupt_subgraph", false)) :
+                    GraphInput.resume(Map.of("newAttribute", "<myNewValue>"));
 
-        parentGraph.stream(input, runnableConfig)
-                .reduce((a, b) -> b)
-                .thenAccept( output -> {
-                    assertTrue( output.result().isEND() );
-                    assertIterableEquals(List.of(
-                            "[NODE1]",
-                            "[NODE2]",
-                            "[NODE3.1]",
-                            "[NODE3.2]",
-                            "[NODE3.3]",
-                            "[NODE3.4<myNewValue>]",
-                            "[NODE4]",
-                            "[NODE5<myNewValue>]"), output.result().state().messages() );
+            parentGraph.stream(input, runnableConfig)
+                    .reduce((a, b) -> b)
+                    .thenAccept(output -> {
+                        assertTrue(output.result().isEND());
+                        assertIterableEquals(List.of(
+                                "[NODE1]",
+                                "[NODE2]",
+                                "[NODE3.1]",
+                                "[NODE3.2]",
+                                "[NODE3.3]",
+                                "[NODE3.4<myNewValue>]",
+                                "[NODE4]",
+                                "[NODE5<myNewValue>]"), output.result().state().messages());
 
-                })
-                .join();
-
+                    })
+                    .join();
+        }
+        finally {
+            saver.release(runnableConfig);
+        }
     }
 
     @ParameterizedTest
@@ -545,7 +567,6 @@ public class CompiledSubGraphTest implements LG4JLoggable {
         BaseCheckpointSaver childSaver = new MemorySaver();
 
         var subGraph = subGraphWithInterruption(
-                GraphPath.of("NODE3"),
                 childSaver,
                 mode.stateSerializer,
                 asInterruptable ); // create subgraph
@@ -684,9 +705,9 @@ public class CompiledSubGraphTest implements LG4JLoggable {
         var subSubGraphBasePath = subGraphBasePath.append( subSubGraphNodeId );
 
         var subSubGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
-                .addNode("foo1", actionBuilder().nodeId("foo1").path(subSubGraphBasePath).build())
-                .addNode("foo2", actionBuilder().nodeId("foo2").path(subSubGraphBasePath).build())
-                .addNode("foo3", actionBuilder().nodeId("foo3").path(subSubGraphBasePath).build())
+                .addNode("foo1", actionBuilder().nodeId("foo1").build())
+                .addNode("foo2", actionBuilder().nodeId("foo2").build())
+                .addNode("foo3", actionBuilder().nodeId("foo3").build())
                 .addEdge(StateGraph.START, "foo1")
                 .addEdge("foo1", "foo2")
                 .addEdge("foo2", "foo3")
@@ -696,9 +717,9 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                         .build());
 
         var subGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
-                .addNode("bar1", actionBuilder().nodeId("bar1").path(subGraphBasePath).build())
+                .addNode("bar1", actionBuilder().nodeId("bar1").build())
                 .addNode(subSubGraphNodeId, subSubGraph)
-                .addNode("bar2", actionBuilder().nodeId("bar2").path(subGraphBasePath).build())
+                .addNode("bar2", actionBuilder().nodeId("bar2").build())
                 .addEdge(StateGraph.START, "bar1")
                 .addEdge("bar1", subSubGraphNodeId)
                 .addEdge(subSubGraphNodeId, "bar2")
@@ -758,9 +779,9 @@ public class CompiledSubGraphTest implements LG4JLoggable {
 
         var subSubGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
                 .addWrapCallNodeHook( new WrapCallHook() )
-                .addNode("foo1", actionBuilder().enableLog(false).nodeId("foo1").path(subSubGraphBasePath).build())
-                .addNode("foo2", actionBuilder().enableLog(false).nodeId("foo2").path(subSubGraphBasePath).build())
-                .addNode("foo3", actionBuilder().enableLog(false).nodeId("foo3").path(subSubGraphBasePath).build())
+                .addNode("foo1", actionBuilder().enableLog(false).nodeId("foo1").build())
+                .addNode("foo2", actionBuilder().enableLog(false).nodeId("foo2").build())
+                .addNode("foo3", actionBuilder().enableLog(false).nodeId("foo3").build())
                 .addEdge(StateGraph.START, "foo1")
                 .addEdge("foo1", "foo2")
                 .addEdge("foo2", "foo3")
@@ -771,9 +792,9 @@ public class CompiledSubGraphTest implements LG4JLoggable {
 
         var subGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
                 .addWrapCallNodeHook( new WrapCallHook() )
-                .addNode("bar1", actionBuilder().enableLog(false).nodeId("bar1").path(subGraphBasePath).build())
+                .addNode("bar1", actionBuilder().enableLog(false).nodeId("bar1").build())
                 .addNode(subSubGraphNodeId, subSubGraph)
-                .addNode("bar2", actionBuilder().enableLog(false).nodeId("bar2").path(subGraphBasePath).build())
+                .addNode("bar2", actionBuilder().enableLog(false).nodeId("bar2").build())
                 .addEdge(StateGraph.START, "bar1")
                 .addEdge("bar1", subSubGraphNodeId)
                 .addEdge(subSubGraphNodeId, "bar2")
