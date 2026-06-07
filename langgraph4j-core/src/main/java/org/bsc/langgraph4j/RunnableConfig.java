@@ -322,7 +322,12 @@ public final class RunnableConfig implements HasMetadata {
     }
 
     public boolean isResumeSubgraph() {
-        return metadata( SubCompiledGraphNodeAction.resumeSubGraphId( nodeId() )).isPresent();
+        final var  nodeDepth = nodePath().elementCount();
+        if( nodeDepth < 2 ) {
+            return false;
+        }
+        final var subGraphId = nodePath().elementAt( nodeDepth - 2 );
+        return metadata( SubCompiledGraphNodeAction.resumeSubGraphId( subGraphId )).isPresent();
     }
 
     @Override
