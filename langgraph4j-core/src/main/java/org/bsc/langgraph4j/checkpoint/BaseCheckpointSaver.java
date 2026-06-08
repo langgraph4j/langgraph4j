@@ -41,6 +41,13 @@ public interface BaseCheckpointSaver {
         }
     }
 
+    record SubGraphSaver( String threadId, BaseCheckpointSaver saver ) {
+        public SubGraphSaver {
+            requireNonNull(threadId, "threadId cannot be null");
+            requireNonNull(saver, "saver cannot be null");
+        }
+    }
+
     Collection<Checkpoint> list(RunnableConfig config);
 
     Optional<Checkpoint> get(RunnableConfig config);
@@ -59,4 +66,9 @@ public interface BaseCheckpointSaver {
     default String threadId( RunnableConfig config ) {
         return config.threadId().orElse(THREAD_ID_DEFAULT);
     }
+
+    void putSubGraphSaver( RunnableConfig parentConfig, RunnableConfig subGraphConfig, BaseCheckpointSaver subGraphSaver );
+
+    Collection<SubGraphSaver> listSubGraphSaver( RunnableConfig parentConfig );
+
 }
