@@ -8,10 +8,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
     private final ReentrantLock _lock = new ReentrantLock();
+    private final Map<String, TreeMap<String,BaseCheckpointSaver>> _subGraphSaversByThread = new HashMap<>();
 
     protected abstract LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception;
 
@@ -95,8 +97,23 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
     @Override
     public final Tag release(RunnableConfig config) throws Exception {
 
-        return loadOrInitCheckpoints( config, checkpoints ->
-            releaseCheckpoints( config, checkpoints ));
+        return loadOrInitCheckpoints( config, checkpoints -> {
+
+            final var subGraphSaversByThread = _subGraphSaversByThread.remove( threadId(config) );
+            if( subGraphSaversByThread != null ) {
+                for( var entry: subGraphSaversByThread.entrySet() ) {
+                    final var subThreadId = entry.getKey();
+                    final var subGraphSaver = entry.getValue();
+
+                    final var subGraphConfig = RunnableConfig.builder(config)
+                            .threadId(subThreadId)
+                            .build();
+
+                    subGraphSaver.release( subGraphConfig );
+                }
+            }
+            return releaseCheckpoints( config, checkpoints );
+        });
     }
 
     @Override
@@ -104,4 +121,35 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
         return Optional.empty();
     }
 
+    @Override
+    public void putSubGraphSaver(RunnableConfig parentConfig, RunnableConfig subGraphConfig, BaseCheckpointSaver subGraphSaver) {
+        requireNonNull( subGraphSaver, "subGraphSaver cannot be null" );
+        final var parentThreadId = threadId( requireNonNull(parentConfig, "parentConfig cannot be null"));
+        final var subThreadId = threadId( requireNonNull(subGraphConfig, "subGraphConfig cannot be null") );
+
+        _lock.lock();
+        try {
+            final var subGraphSaversByThread = _subGraphSaversByThread
+                    .computeIfAbsent( parentThreadId, k -> new TreeMap<>() );
+
+            subGraphSaversByThread.put( subThreadId,subGraphSaver );
+        } finally {
+            _lock.unlock();
+        }
+    }
+
+    @Override
+    public Collection<SubGraphSaver> listSubGraphSaver(RunnableConfig parentConfig) {
+        final var parentThreadId = threadId( requireNonNull(parentConfig, "parentConfig cannot be null"));
+
+        final var subGraphSaversByThread = _subGraphSaversByThread.get( parentThreadId );
+
+        if( subGraphSaversByThread == null ) {
+            return List.of();
+        }
+
+        return subGraphSaversByThread.entrySet().stream()
+                .map( entry -> new SubGraphSaver( entry.getKey(), entry.getValue() ) )
+                .toList();
+    }
 }
