@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.action;
 
 import org.bsc.langgraph4j.*;
+import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.subgraph.SubGraphOutputFactory;
 import org.bsc.langgraph4j.utils.TypeRef;
@@ -68,25 +69,26 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
         subGraph.compileConfig.graphId()
                 .ifPresent( id ->
                         subGraphRunnableConfigBuilder.putMetadata(RunnableConfig.GRAPH_ID, id));
-        var subGraphRunnableConfig = subGraphRunnableConfigBuilder.build();
 
         final var parentSaver   = parentCompileConfig.checkpointSaver();
         final var subGraphSaver = subGraph.compileConfig.checkpointSaver();
 
+        final RunnableConfig subGraphRunnableConfig;
         if( subGraphSaver.isPresent() ) {
             if( parentSaver.isEmpty() ) {
                 return failedFuture(new IllegalStateException("Missing CheckpointSaver in parent graph!"));
             }
 
-            // Check saver are the same instance
-            if( parentSaver.get() == subGraphSaver.get() ) {
-                subGraphRunnableConfig = RunnableConfig.builder(subGraphRunnableConfig)
-                        .threadId( config.threadId()
-                                            .map( threadId -> "%s_%s".formatted( threadId, subGraphId()))
-                                            .orElseGet(this::subGraphId))
-                        .streamMode( config.streamMode() )
-                        .build();
-            }
+            subGraphRunnableConfig = subGraphRunnableConfigBuilder
+                    .threadId( "%s_%s".formatted(
+                            config.threadId().orElse(BaseCheckpointSaver.THREAD_ID_DEFAULT),
+                            subGraphId()))
+                    .build();
+
+            parentSaver.get().putSubGraphSaver( config, subGraphRunnableConfig, subGraphSaver.get() );
+        }
+        else {
+            subGraphRunnableConfig = subGraphRunnableConfigBuilder.build();
         }
 
         try {
