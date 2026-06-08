@@ -234,6 +234,10 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         requireNonNull(targetFolder, "targetFolder cannot be null");
         requireNonNull(filter, "filter cannot be null");
 
+        if( Files.notExists(targetFolder) || !Files.isDirectory(targetFolder) ) {
+            return Stream.empty();
+        }
+
         final var versionPattern = Pattern.compile("^thread-(.+)-v(\\d+)-saver.(?:json|bin)$");
 
         return Files.list(targetFolder)
