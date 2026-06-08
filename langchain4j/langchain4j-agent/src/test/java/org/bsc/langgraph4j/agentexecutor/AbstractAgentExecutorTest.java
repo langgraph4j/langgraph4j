@@ -135,6 +135,7 @@ public abstract class AbstractAgentExecutorTest {
 
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver( saver )
+                .releaseThread(false)
                 .build();
 
         final var config = RunnableConfig.builder().
@@ -143,41 +144,46 @@ public abstract class AbstractAgentExecutorTest {
 
         final var graph = newGraph(AgentExecutor.Serializers.JSON).compile( compileConfig );
 
-        var iterator = graph.stream(
-                GraphInput.args(Map.of( "messages",
-                        UserMessage.from("what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'"))),
-                config );
+        try {
+            var iterator = graph.stream(
+                    GraphInput.args(Map.of("messages",
+                            UserMessage.from("what is the result of test with messages: 'MY FIRST TEST' and the result of test with message: 'MY SECOND TEST'"))),
+                    config);
 
-        var states = iterator.stream()
-                .peek( s -> System.out.println( s.node() ) )
-                .map( NodeOutput::state)
-                .toList();
+            var states = iterator.stream()
+                    .peek(s -> System.out.println(s.node()))
+                    .map(NodeOutput::state)
+                    .toList();
 
-        assertEquals( 6, states.size() ); // iterations
-        var state = lastOf(states).orElse(null);
-        assertNotNull(state);
-        assertTrue(state.lastMessage().isPresent());
-        System.out.printf( "final response: %s\n", state.lastMessage().get());
+            assertEquals(6, states.size()); // iterations
+            var state = lastOf(states).orElse(null);
+            assertNotNull(state);
+            assertTrue(state.lastMessage().isPresent());
+            System.out.printf("final response: %s\n", state.lastMessage().get());
 
-        //var stateHistory = graph.lastStateOf( config ).orElseThrow();
+            //var stateHistory = graph.lastStateOf( config ).orElseThrow();
 
-        iterator = graph.stream(
-                GraphInput.args(Map.of( "messages",
-                        UserMessage.from(
-                                "what are the results of tests?"))),
-                config );
+            iterator = graph.stream(
+                    GraphInput.args(Map.of("messages",
+                            UserMessage.from(
+                                    "what are the results of tests?"))),
+                    config);
 
-        states = iterator.stream()
-                .peek( s -> System.out.println( s.node() ) )
-                .map( NodeOutput::state)
-                .toList();
+            states = iterator.stream()
+                    .peek(s -> System.out.println(s.node()))
+                    .map(NodeOutput::state)
+                    .toList();
 
-        assertEquals( 4, states.size() ); // iterations
-        state = lastOf(states).orElse(null);
-        assertNotNull(state);
-        assertTrue(state.lastMessage().isPresent());
-        System.out.printf( "final response: %s\n", state.lastMessage().get());
+            assertEquals(4, states.size()); // iterations
+            state = lastOf(states).orElse(null);
+            assertNotNull(state);
+            assertTrue(state.lastMessage().isPresent());
+            System.out.printf("final response: %s\n", state.lastMessage().get());
 
+        }
+        finally {
+            saver.release(config);
+        }
     }
 
     @Test
