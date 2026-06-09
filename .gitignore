@@ -41,12 +41,11 @@ build/
 
 
 ### Jupyter
+.cache/
 .venv/
+.docsenv/
 how-tos/log.*
-
 
 ### Postegres VSCode plugin
 *.session.sql
 
-### genaiscript
-.genaiscript/
