@@ -6,21 +6,10 @@ import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
-import software.amazon.awssdk.core.retry.RetryMode;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -46,9 +35,13 @@ import static java.util.Objects.requireNonNull;
  *
  * <h2>Usage</h2>
  * <pre>{@code
+ * DynamoDbClient client = DynamoDbClient.builder()
+ *     .region(Region.US_EAST_1)
+ *     .build();
+ * 
  * DynamoDBSaver saver = DynamoDBSaver.builder()
  *     .tableName("lg4j-checkpoints")
- *     .region("us-east-1")
+ *     .dynamoDbClient(client)
  *     .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
  *     .createTableIfNotExists(true)
  *     .build();
@@ -56,10 +49,14 @@ import static java.util.Objects.requireNonNull;
  *
  * <p>For local development / testing, point to a local DynamoDB endpoint:
  * <pre>{@code
+ * DynamoDbClient localClient = DynamoDbClient.builder()
+ *     .endpointOverride(URI.create("http://localhost:8000"))
+ *     .region(Region.US_EAST_1)
+ *     .build();
+ *
  * DynamoDBSaver saver = DynamoDBSaver.builder()
  *     .tableName("lg4j-checkpoints")
- *     .endpointUrl("http://localhost:8000")
- *     .region("us-east-1")
+ *     .dynamoDbClient(localClient)
  *     .stateSerializer(serializer)
  *     .createTableIfNotExists(true)
  *     .dropTableFirst(true)
@@ -78,20 +75,16 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
     public static class Builder {
 
         private String tableName;
-        private String region;
-        private String endpointUrl;
-        private AwsCredentialsProvider credentialsProvider;
         private StateSerializer<? extends AgentState> stateSerializer;
         private boolean plainTextStateSerializerLegacyMode = false;
         private Long ttlSeconds;
         private boolean createTableIfNotExists = false;
         private boolean dropTableFirst = false;
-        /** Inject a fully configured client (useful for tests or shared clients). */
+        /** Inject a fully configured client (required). */
         private DynamoDbClient dynamoDbClient;
         private String s3Bucket;
         private String s3KeyPrefix;
-        private String s3EndpointUrl;
-        /** Inject a pre-configured S3 client. */
+        /** Inject a pre-configured S3 client (required if s3Bucket is set). */
         private S3Client s3Client;
 
         Builder() {}
@@ -99,27 +92,6 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         /** Name of the DynamoDB table. Required. */
         public Builder tableName(String tableName) {
             this.tableName = tableName;
-            return this;
-        }
-
-        /** AWS region (e.g. {@code "us-east-1"}). Ignored when a custom client is provided. */
-        public Builder region(String region) {
-            this.region = region;
-            return this;
-        }
-
-        /**
-         * Override the DynamoDB service endpoint URL.
-         * Useful for local DynamoDB ({@code "http://localhost:8000"}) and LocalStack.
-         */
-        public Builder endpointUrl(String endpointUrl) {
-            this.endpointUrl = endpointUrl;
-            return this;
-        }
-
-        /** Custom AWS credentials provider. Defaults to {@link DefaultCredentialsProvider}. */
-        public Builder credentialsProvider(AwsCredentialsProvider credentialsProvider) {
-            this.credentialsProvider = credentialsProvider;
             return this;
         }
 
@@ -173,9 +145,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         }
 
         /**
-         * Inject a pre-configured {@link DynamoDbClient}. When provided, the
-         * {@link #region}, {@link #endpointUrl}, and {@link #credentialsProvider}
-         * settings are ignored.
+         * Inject a fully configured {@link DynamoDbClient}. Required.
          */
         public Builder dynamoDbClient(DynamoDbClient client) {
             this.dynamoDbClient = client;
@@ -183,8 +153,8 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         }
 
         /**
-         * S3 bucket name for large-payload offloading. When set (along with
-         * {@link #region}), payloads exceeding 350KB are automatically stored
+         * S3 bucket name for large-payload offloading. When set,
+         * payloads exceeding 350KB are automatically stored
          * in S3 instead of DynamoDB.
          */
         public Builder s3Bucket(String s3Bucket) {
@@ -202,16 +172,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         }
 
         /**
-         * Override the S3 service endpoint URL. Useful for MinIO or LocalStack.
-         */
-        public Builder s3EndpointUrl(String s3EndpointUrl) {
-            this.s3EndpointUrl = s3EndpointUrl;
-            return this;
-        }
-
-        /**
-         * Inject a pre-configured {@link S3Client}. When provided, the S3 client
-         * is not built internally.
+         * Inject a pre-configured {@link S3Client}. Required if an s3Bucket is configured.
          */
         public Builder s3Client(S3Client s3Client) {
             this.s3Client = s3Client;
@@ -222,47 +183,10 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         public DynamoDBSaver build() {
             requireNonNull(tableName, "'tableName' must not be null");
             requireNonNull(stateSerializer, "'stateSerializer' must not be null");
+            requireNonNull(dynamoDbClient, "'dynamoDbClient' must not be null");
 
-            if (dynamoDbClient == null) {
-                DynamoDbClientBuilder builder = DynamoDbClient.builder();
-
-                if (region != null) {
-                    builder.region(Region.of(region));
-                }
-                if (endpointUrl != null) {
-                    builder.endpointOverride(URI.create(endpointUrl));
-                }
-                builder.credentialsProvider(
-                    credentialsProvider != null ? credentialsProvider : DefaultCredentialsProvider.create()
-                );
-
-                // User-agent + adaptive retry for observability and resilience
-                ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
-                    .putAdvancedOption(
-                        SdkAdvancedClientOption.USER_AGENT_SUFFIX,
-                        "x-client-framework:langgraph4j-dynamodb")
-                    .retryStrategy(RetryMode.ADAPTIVE)
-                    .build();
-                builder.overrideConfiguration(overrideConfig);
-
-                dynamoDbClient = builder.build();
-            }
-
-            // Build S3 client if bucket is configured
-            if (s3Client == null && s3Bucket != null) {
-                S3ClientBuilder s3Builder = S3Client.builder()
-                    .forcePathStyle(true);
-
-                if (region != null) {
-                    s3Builder.region(Region.of(region));
-                }
-                if (s3EndpointUrl != null) {
-                    s3Builder.endpointOverride(URI.create(s3EndpointUrl));
-                }
-                s3Builder.credentialsProvider(
-                    credentialsProvider != null ? credentialsProvider : DefaultCredentialsProvider.create()
-                );
-                s3Client = s3Builder.build();
+            if (s3Bucket != null) {
+                requireNonNull(s3Client, "'s3Client' must not be null when 's3Bucket' is configured");
             }
 
             // dropTableFirst implies createTableIfNotExists

@@ -20,8 +20,16 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import org.testcontainers.containers.MinIOContainer;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.StreamSupport;
 import java.util.logging.LogManager;
@@ -85,6 +93,11 @@ public class DynamoDBSaverTest {
             .withFixedExposedPort(8344, DYNAMODB_PORT)
             .waitingFor(Wait.forLogMessage(".*Initializing DynamoDB Local.*\\n", 1));
 
+    @Container
+    static final MinIOContainer minioContainer = new MinIOContainer("minio/minio:latest")
+        .withUserName("minioadmin")
+        .withPassword("minioadmin");
+
     // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
     @BeforeAll
@@ -95,11 +108,13 @@ public class DynamoDBSaverTest {
             }
         }
         assertTrue(dynamoContainer.isRunning(), "DynamoDB Local container should be running");
+        assertTrue(minioContainer.isRunning(), "MinIO container should be running");
     }
 
     @AfterAll
     static void shutdown() {
         dynamoContainer.close();
+        minioContainer.close();
     }
 
     // ─── Saver factory ───────────────────────────────────────────────────────────
@@ -112,13 +127,24 @@ public class DynamoDBSaverTest {
         String endpoint = "http://" + dynamoContainer.getHost()
                         + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
 
+        var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
+            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+            .endpointOverride(java.net.URI.create(endpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy")))
+            .httpClientBuilder(ApacheHttpClient.builder()
+                // Prevent connection reset errors by aggressively expiring idle connections
+                .connectionMaxIdleTime(Duration.ofSeconds(1))
+                .connectionTimeToLive(Duration.ofSeconds(10))
+                .connectionTimeout(Duration.ofSeconds(5))
+                .socketTimeout(Duration.ofSeconds(5)))
+            .overrideConfiguration(b -> b
+                .apiCallAttemptTimeout(Duration.ofSeconds(6))
+                .apiCallTimeout(Duration.ofSeconds(20)))
+            .build();
+
         return DynamoDBSaver.builder()
             .tableName(TABLE_NAME)
-            .region("us-east-1")   // required by the SDK even for local DynamoDB
-            .endpointUrl(endpoint)
-            .credentialsProvider(  // DynamoDB Local accepts any non-null credentials
-                StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create("dummy", "dummy")))
+            .dynamoDbClient(client)
             .stateSerializer(param.stateSerializer)
             .dropTableFirst(true)
             .build();
@@ -133,13 +159,23 @@ public class DynamoDBSaverTest {
         String endpoint = "http://" + dynamoContainer.getHost()
                         + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
 
+        var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
+            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+            .endpointOverride(java.net.URI.create(endpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy")))
+            .httpClientBuilder(ApacheHttpClient.builder()
+                .connectionMaxIdleTime(Duration.ofSeconds(1))
+                .connectionTimeToLive(Duration.ofSeconds(10))
+                .connectionTimeout(Duration.ofSeconds(5))
+                .socketTimeout(Duration.ofSeconds(5)))
+            .overrideConfiguration(b -> b
+                .apiCallAttemptTimeout(Duration.ofSeconds(6))
+                .apiCallTimeout(Duration.ofSeconds(20)))
+            .build();
+
         return DynamoDBSaver.builder()
             .tableName(TABLE_NAME)
-            .region("us-east-1")
-            .endpointUrl(endpoint)
-            .credentialsProvider(
-                StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create("dummy", "dummy")))
+            .dynamoDbClient(client)
             .stateSerializer(param.stateSerializer)
             .createTableIfNotExists(false)  // table already exists
             .build();
@@ -318,12 +354,15 @@ public class DynamoDBSaverTest {
         String endpoint = "http://" + dynamoContainer.getHost()
                         + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
 
+        var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
+            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+            .endpointOverride(java.net.URI.create(endpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy")))
+            .build();
+
         var saver = DynamoDBSaver.builder()
             .tableName(TABLE_NAME)
-            .region("us-east-1")
-            .endpointUrl(endpoint)
-            .credentialsProvider(StaticCredentialsProvider.create(
-                AwsBasicCredentials.create("dummy", "dummy")))
+            .dynamoDbClient(client)
             .stateSerializer(new ObjectStreamStateSerializer<>(State::new))
             .dropTableFirst(true)
             .ttlSeconds(3600) // 1 hour — items will be available throughout the test
@@ -345,52 +384,6 @@ public class DynamoDBSaverTest {
         assertEquals(2, history.size());
 
         saver.release(runnableConfig);
-    }
-
-    /**
-     * Verify that a pre-built {@link software.amazon.awssdk.services.dynamodb.DynamoDbClient}
-     * injected via {@code .dynamoDbClient(...)} works correctly (e.g. for shared clients
-     * managed by the application container).
-     */
-    @Test
-    void testWithInjectedDynamoDbClient() throws Exception {
-        String endpoint = "http://" + dynamoContainer.getHost()
-                        + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
-
-        // Build the client externally
-        var externalClient = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
-            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
-            .endpointOverride(java.net.URI.create(endpoint))
-            .credentialsProvider(StaticCredentialsProvider.create(
-                AwsBasicCredentials.create("dummy", "dummy")))
-            .build();
-
-        var saver = DynamoDBSaver.builder()
-            .tableName(TABLE_NAME)
-            .stateSerializer(new ObjectStreamStateSerializer<>(State::new))
-            .dynamoDbClient(externalClient)  // inject — region/endpoint settings ignored
-            .dropTableFirst(true)
-            .build();
-
-        var compileConfig = CompileConfig.builder()
-            .checkpointSaver(saver)
-            .releaseThread(false)
-            .build();
-
-        var runnableConfig = RunnableConfig.builder().threadId("thread-injected-client").build();
-        var workflow = singleNodeGraph().compile(compileConfig);
-
-        var result = workflow.invoke(Map.of("input", "injected-client"), runnableConfig);
-        assertTrue(result.isPresent());
-
-        var history = workflow.getStateHistory(runnableConfig);
-        assertFalse(history.isEmpty(), "Checkpoints must persist with injected client");
-        assertEquals(2, history.size());
-
-        saver.release(runnableConfig);
-
-        // Caller is responsible for closing the externally managed client
-        externalClient.close();
     }
 
     // ─── Phase 1.5 Tests ─────────────────────────────────────────────────────
@@ -620,5 +613,77 @@ public class DynamoDBSaverTest {
         assertEquals("value2", loaded3.get().getState().get("key"));
 
         saver.deleteThread(threadId);
+    }
+
+    /**
+     * Verify that payloads larger than 350KB are automatically offloaded to S3.
+     */
+    @Test
+    void testWithS3Offloading() throws Exception {
+        String dynamoEndpoint = "http://" + dynamoContainer.getHost()
+                        + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
+
+        var dynamoClient = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
+            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+            .endpointOverride(java.net.URI.create(dynamoEndpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy")))
+            .build();
+
+        var s3Client = S3Client.builder()
+            .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+            .endpointOverride(java.net.URI.create(minioContainer.getS3URL()))
+            .credentialsProvider(StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(minioContainer.getUserName(), minioContainer.getPassword())))
+            .forcePathStyle(true) // Required for MinIO
+            .build();
+
+        String s3Bucket = "test-checkpoints-bucket";
+        try {
+            s3Client.headBucket(HeadBucketRequest.builder().bucket(s3Bucket).build());
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                s3Client.createBucket(CreateBucketRequest.builder().bucket(s3Bucket).build());
+            } else {
+                throw e;
+            }
+        }
+
+        var saver = DynamoDBSaver.builder()
+            .tableName(TABLE_NAME)
+            .dynamoDbClient(dynamoClient)
+            .s3Bucket(s3Bucket)
+            .s3Client(s3Client)
+            .stateSerializer(new ObjectStreamStateSerializer<>(State::new))
+            .dropTableFirst(true)
+            .build();
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(false)
+            .build();
+
+        var threadId = "thread-s3-offload";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = singleNodeGraph().compile(compileConfig);
+
+        // Create a large payload > 350KB to trigger offload
+        byte[] largeData = new byte[400 * 1024];
+        Arrays.fill(largeData, (byte) 'a');
+        String largeString = new String(largeData, StandardCharsets.UTF_8);
+
+        var result = workflow.invoke(Map.of("input", largeString), runnableConfig);
+        assertTrue(result.isPresent());
+
+        // Verify history is retrievable (meaning it successfully fetches from S3)
+        var history = workflow.getStateHistory(runnableConfig);
+        assertFalse(history.isEmpty(), "History must be retrievable");
+        
+        // Ensure state contains largeString
+        var lastState = workflow.lastStateOf(runnableConfig).orElseThrow();
+        assertEquals(largeString, lastState.state().value("input").orElse(""));
+
+        // Cleanup
+        saver.deleteThread(threadId);
+        s3Client.close();
     }
 }
