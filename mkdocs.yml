@@ -10,6 +10,9 @@ theme:
     - toc.integrate
     - toc.integrate.toc
     - toc.integrate.toc.inline
+extra:
+  version:
+    provider: mike
 plugins:
   - mkdocs-jupyter
   - search
