@@ -57,6 +57,14 @@
             <version>${aws.sdk.version}</version>
         </dependency>
 
+        <!-- AWS SDK v2 – S3 (optional, for large-payload offloading) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws.sdk.version}</version>
+            <optional>true</optional>
+        </dependency>
+
         <!-- AWS SDK v2 – URL Connection HTTP client (lightweight, no Netty) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -102,6 +110,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>minio</artifactId>
             <scope>test</scope>
         </dependency>
 
