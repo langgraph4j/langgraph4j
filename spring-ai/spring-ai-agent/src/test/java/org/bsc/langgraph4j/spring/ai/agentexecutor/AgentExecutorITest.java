@@ -31,10 +31,8 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,7 +68,6 @@ public class AgentExecutorITest {
 
         @Override
         public CompletableFuture<Command> applyWrap(String nodeId, S state, RunnableConfig config, AsyncCommandAction<S> action) {
-
             System.out.printf("\nnode start: '%s' with state: %s%n", nodeId, state);
 
             return action.apply(state, config).whenComplete((result, ex) -> {
