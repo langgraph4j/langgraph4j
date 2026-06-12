@@ -53,18 +53,6 @@
 
 
     <distributionManagement>
-        <!--
-           <repository>
-              <id>${release.repo.id}</id>
-              <name>central</name>
-              <url>${release.repo.url}</url>
-            </repository>
-            <snapshotRepository>
-              <id>${snapshot.repo.id}</id>
-              <name>snapshots</name>
-              <url>${snapshot.repo.url}</url>
-            </snapshotRepository>
-         -->
         <site>
             <id>${project.artifactId}-site</id>
             <url>${project.baseUri}</url>
