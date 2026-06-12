@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.spring.ai.agentexecutor;
 
 import com.google.genai.Client;
+import com.openai.client.OpenAIClient;
 import com.openai.client.OpenAIClientImpl;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
@@ -20,7 +21,7 @@ public enum AiModel {
 
     OPENAI( (model, extra) ->
             OpenAiChatModel.builder()
-                    .openAiClient( new OpenAIClientImpl( com.openai.core.ClientOptions.builder()
+                    .openAiClient( new OpenAIClientImpl(com.openai.core.ClientOptions.builder()
                             .apiKey( extraAttribute( extra, "OPENAI_API_KEY" ) )
                             .build()))
                     .options(OpenAiChatOptions.builder()
