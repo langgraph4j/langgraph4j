@@ -1,35 +1,37 @@
 package org.bsc.langgraph4j.spring.ai.agent;
 
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
-import java.util.Objects;
+import java.util.Optional;
+
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 
 class DefaultChatService implements ReactAgent.ChatService {
-    final ChatClient chatClient;
+    final ChatModel chatModel;
+    final ChatOptions chatOptions;
 
     public DefaultChatService(ReactAgentBuilder<?,?> builder ) {
-        Objects.requireNonNull(builder.chatModel,"chatModel cannot be null!");
-        var toolOptions = ToolCallingChatOptions.builder()
-                .internalToolExecutionEnabled(false) // MANDATORY: Disable automatic tool execution
-                .build();
+        this.chatModel = requireNonNull(builder.chatModel, "chatModel cannot be null!");
 
-        var chatClientBuilder = ChatClient.builder(builder.chatModel)
-                .defaultOptions(toolOptions)
-                .defaultSystem( builder.systemMessage().orElse(
-                        "You are a helpful AI Assistant answering questions." ));
-                        
-        if (!builder.tools.isEmpty()) {
-            chatClientBuilder.defaultToolCallbacks(builder.tools());
-
+        if (!builder.tools.isEmpty() && chatModel.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
+            chatOptions = toolCallingChatOptions.mutate().toolCallbacks(builder.tools()).build();
         }
-
-        this.chatClient = chatClientBuilder.build();
+        else {
+            chatOptions = null;
+        }
     }
 
     @Override
-    public final ChatClient chatClient() {
-        return chatClient;
+    public final ChatModel chatModel() {
+        return chatModel;
+    }
+
+    @Override
+    public Optional<ChatOptions> chatOptions() {
+        return ofNullable(chatOptions);
     }
 
 }

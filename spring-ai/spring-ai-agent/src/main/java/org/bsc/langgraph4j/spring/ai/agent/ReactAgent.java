@@ -1,43 +1,50 @@
 package org.bsc.langgraph4j.spring.ai.agent;
 
 import org.bsc.langgraph4j.GraphStateException;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.agent.Agent;
 import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.Prompt;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
-public interface ReactAgent {
-    org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReactAgent.class);
+public interface ReactAgent extends LG4JLoggable {
 
     interface ChatService {
 
-        ChatClient chatClient();
+        ChatModel chatModel();
+        default Optional<ChatOptions> chatOptions() {
+            return Optional.empty();
+        };
 
         default ChatResponse execute(List<Message> messages) {
-            return chatClient()
-                    .prompt()
+            final var  prompt = Prompt.builder()
                     .messages( messages )
-                    .call()
-                    .chatResponse();
+                    .chatOptions( chatOptions().orElseGet( () -> chatModel().getOptions()))
+                    .build();
+
+            return chatModel().call( prompt );
         }
 
         default Flux<ChatResponse> streamingExecute(List<Message> messages) {
-            return chatClient()
-                    .prompt()
-                    .messages( messages )
-                    .stream()
-                    .chatResponse();
+            final var  prompt = Prompt.builder()
+                    .messages(messages)
+                    .chatOptions( chatOptions().orElseGet( () -> chatModel().getOptions()))
+                    .build();
+
+            return chatModel().stream( prompt );
         }
     }
 
