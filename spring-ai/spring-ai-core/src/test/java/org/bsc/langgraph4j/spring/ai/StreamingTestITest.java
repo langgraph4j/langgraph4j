@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.spring.ai;
 
+import com.openai.client.OpenAIClientImpl;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.FlowGenerator;
 import org.bsc.langgraph4j.GraphInput;
@@ -19,13 +20,11 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -64,11 +63,11 @@ public class StreamingTestITest {
 
         OPENAI( ( model ) ->
                 OpenAiChatModel.builder()
-                        .openAiApi(OpenAiApi.builder()
+                        .openAiClient( new OpenAIClientImpl( com.openai.core.ClientOptions.builder()
                                 .baseUrl("https://api.openai.com")
                                 .apiKey(System.getenv("OPENAI_API_KEY"))
-                                .build())
-                        .defaultOptions(OpenAiChatOptions.builder()
+                                .build()))
+                        .options(OpenAiChatOptions.builder()
                                 .model(model)
                                 .logprobs(false)
                                 .temperature(0.1)
@@ -76,11 +75,11 @@ public class StreamingTestITest {
                         .build()),
         DEEPSEEK( ( model ) ->
                 OpenAiChatModel.builder()
-                        .openAiApi(OpenAiApi.builder()
+                        .openAiClient(new OpenAIClientImpl( com.openai.core.ClientOptions.builder()
                                 .baseUrl("https://api.deepseek.com/")
                                 .apiKey(System.getenv("DEEPSEEK_API_KEY"))
-                                .build())
-                        .defaultOptions(OpenAiChatOptions.builder()
+                                .build()))
+                        .options(OpenAiChatOptions.builder()
                                 .model(model)
                                 .logprobs(false)
                                 .temperature(0.1)
@@ -89,7 +88,7 @@ public class StreamingTestITest {
         OLLAMA( ( model ) ->
                 OllamaChatModel.builder()
                         .ollamaApi( OllamaApi.builder().baseUrl("http://localhost:11434").build() )
-                        .defaultOptions(OllamaChatOptions.builder()
+                        .options(OllamaChatOptions.builder()
                                 .model(model)
                                 .temperature(0.1)
                                 .build())
@@ -111,9 +110,6 @@ public class StreamingTestITest {
     @Test
     public void llmStreamingTest() throws InterruptedException {
         var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen2.5:7b"))
-                .defaultOptions(ToolCallingChatOptions.builder()
-                        .internalToolExecutionEnabled(false) // Disable automatic tool execution
-                        .build())
                 .defaultSystem("You are a helpful AI Assistant answering questions." )
                 .build();
 
@@ -136,9 +132,6 @@ public class StreamingTestITest {
     @Test
     public void llmStreamingGeneratorTest() throws InterruptedException {
         var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen2.5:7b" ))
-                .defaultOptions(ToolCallingChatOptions.builder()
-                        .internalToolExecutionEnabled(false) // Disable automatic tool execution
-                        .build())
                 .defaultSystem("You are a helpful AI Assistant answering questions." )
                 .build();
 
@@ -158,9 +151,6 @@ public class StreamingTestITest {
     @Test
     public void llmStreamingGeneratorIteratorTest() throws InterruptedException {
         var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen2.5:7b" ))
-                .defaultOptions(ToolCallingChatOptions.builder()
-                        .internalToolExecutionEnabled(false) // Disable automatic tool execution
-                        .build())
                 .defaultSystem("You are a helpful AI Assistant answering questions." )
                 .build();
 
@@ -184,10 +174,6 @@ public class StreamingTestITest {
         final var tools = ToolCallbacks.from(new SearchTool());
 
         final var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen3"))
-                .defaultOptions(ToolCallingChatOptions.builder()
-                        .internalToolExecutionEnabled(false) // Disable automatic tool execution
-                        .build())
-                .defaultToolCallbacks( tools )
                 .defaultSystem("You are a helpful AI Assistant answering questions." )
                 .build();
 
@@ -276,9 +262,6 @@ public class StreamingTestITest {
     public void simpleStreamingGraphTest() throws Exception {
 
         var chatClient = ChatClient.builder(AiModel.OLLAMA.model( "qwen3.5"))
-                .defaultOptions(ToolCallingChatOptions.builder()
-                        .internalToolExecutionEnabled(false)
-                        .build())
                 .defaultSystem("You are a helpful AI Assistant answering questions.")
                 .build();
 

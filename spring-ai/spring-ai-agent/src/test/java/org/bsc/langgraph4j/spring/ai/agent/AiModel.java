@@ -1,12 +1,12 @@
 package org.bsc.langgraph4j.spring.ai.agent;
 
+import com.openai.client.OpenAIClientImpl;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 //import io.netty.channel.ChannelOption;
 //import org.springframework.http.client.SimpleClientHttpRequestFactory;
 //import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -19,10 +19,10 @@ import java.util.function.Function;
 public enum AiModel {
     OPENAI( model ->
             OpenAiChatModel.builder()
-                    .openAiApi(OpenAiApi.builder()
-                            .apiKey(System.getenv("OPENAI_API_KEY"))
-                            .build())
-                    .defaultOptions(OpenAiChatOptions.builder()
+                    .openAiClient( new OpenAIClientImpl(com.openai.core.ClientOptions.builder()
+                            .apiKey( System.getenv( "OPENAI_API_KEY" ) )
+                            .build()))
+                    .options(OpenAiChatOptions.builder()
                             .model(model)
                             .logprobs(false)
                             .build())
@@ -36,7 +36,7 @@ public enum AiModel {
                             //.webClientBuilder(WebClient.builder()
                             //        .clientConnector(new ReactorClientHttpConnector(ollamaHttpClient())))
                             .build())
-                    .defaultOptions(OllamaChatOptions.builder()
+                    .options(OllamaChatOptions.builder()
                             .model(model)
                             .temperature(0.0)
                             .build())
