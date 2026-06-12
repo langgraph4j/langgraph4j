@@ -1,6 +1,8 @@
 package org.bsc.langgraph4j.spring.ai.agentexecutor;
 
 import com.google.genai.Client;
+import com.openai.client.OpenAIClient;
+import com.openai.client.OpenAIClientImpl;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
@@ -9,7 +11,6 @@ import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -20,10 +21,10 @@ public enum AiModel {
 
     OPENAI( (model, extra) ->
             OpenAiChatModel.builder()
-                    .openAiApi(OpenAiApi.builder()
+                    .openAiClient( new OpenAIClientImpl(com.openai.core.ClientOptions.builder()
                             .apiKey( extraAttribute( extra, "OPENAI_API_KEY" ) )
-                            .build())
-                    .defaultOptions(OpenAiChatOptions.builder()
+                            .build()))
+                    .options(OpenAiChatOptions.builder()
                             .model(model)
                             .logprobs(false)
                             //.temperature(0.0)
@@ -34,18 +35,18 @@ public enum AiModel {
                     .ollamaApi(OllamaApi.builder()
                         .baseUrl("http://localhost:11434")
                         .build())
-                    .defaultOptions(OllamaChatOptions.builder()
+                    .options(OllamaChatOptions.builder()
                             .model(model)
                             .temperature(0.0)
                             .build())
                     .build()),
     GITHUB_MODEL( (model, extra) ->
             OpenAiChatModel.builder()
-                .openAiApi(OpenAiApi.builder()
+                .openAiClient( new OpenAIClientImpl( com.openai.core.ClientOptions.builder()
                         .baseUrl("https://models.github.ai/inference")
                         .apiKey( extraAttribute( extra,"GITHUB_MODELS_TOKEN") )
-                        .build())
-                .defaultOptions(OpenAiChatOptions.builder()
+                        .build()))
+                .options(OpenAiChatOptions.builder()
                         .model(model)
                         .logprobs(false)
                         .temperature(0.1)
@@ -58,7 +59,7 @@ public enum AiModel {
                         .project( extraAttribute(extra,"GOOGLE_CLOUD_PROJECT") )
                         .location( extraAttribute(extra,"GOOGLE_CLOUD_LOCATION") )
                         .build())
-            .defaultOptions(GoogleGenAiChatOptions.builder()
+            .options(GoogleGenAiChatOptions.builder()
                     .model(model)
                     .temperature(0.0)
                     .build())

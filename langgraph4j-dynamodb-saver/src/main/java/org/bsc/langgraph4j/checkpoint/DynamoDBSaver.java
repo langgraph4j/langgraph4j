@@ -6,14 +6,10 @@ import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -39,9 +35,13 @@ import static java.util.Objects.requireNonNull;
  *
  * <h2>Usage</h2>
  * <pre>{@code
+ * DynamoDbClient client = DynamoDbClient.builder()
+ *     .region(Region.US_EAST_1)
+ *     .build();
+ * 
  * DynamoDBSaver saver = DynamoDBSaver.builder()
  *     .tableName("lg4j-checkpoints")
- *     .region("us-east-1")
+ *     .dynamoDbClient(client)
  *     .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
  *     .createTableIfNotExists(true)
  *     .build();
@@ -49,10 +49,14 @@ import static java.util.Objects.requireNonNull;
  *
  * <p>For local development / testing, point to a local DynamoDB endpoint:
  * <pre>{@code
+ * DynamoDbClient localClient = DynamoDbClient.builder()
+ *     .endpointOverride(URI.create("http://localhost:8000"))
+ *     .region(Region.US_EAST_1)
+ *     .build();
+ *
  * DynamoDBSaver saver = DynamoDBSaver.builder()
  *     .tableName("lg4j-checkpoints")
- *     .endpointUrl("http://localhost:8000")
- *     .region("us-east-1")
+ *     .dynamoDbClient(localClient)
  *     .stateSerializer(serializer)
  *     .createTableIfNotExists(true)
  *     .dropTableFirst(true)
@@ -71,43 +75,23 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
     public static class Builder {
 
         private String tableName;
-        private String region;
-        private String endpointUrl;
-        private AwsCredentialsProvider credentialsProvider;
         private StateSerializer<? extends AgentState> stateSerializer;
         private boolean plainTextStateSerializerLegacyMode = false;
         private Long ttlSeconds;
         private boolean createTableIfNotExists = false;
         private boolean dropTableFirst = false;
-        /** Inject a fully configured client (useful for tests or shared clients). */
+        /** Inject a fully configured client (required). */
         private DynamoDbClient dynamoDbClient;
+        private String s3Bucket;
+        private String s3KeyPrefix;
+        /** Inject a pre-configured S3 client (required if s3Bucket is set). */
+        private S3Client s3Client;
 
         Builder() {}
 
         /** Name of the DynamoDB table. Required. */
         public Builder tableName(String tableName) {
             this.tableName = tableName;
-            return this;
-        }
-
-        /** AWS region (e.g. {@code "us-east-1"}). Ignored when a custom client is provided. */
-        public Builder region(String region) {
-            this.region = region;
-            return this;
-        }
-
-        /**
-         * Override the DynamoDB service endpoint URL.
-         * Useful for local DynamoDB ({@code "http://localhost:8000"}) and LocalStack.
-         */
-        public Builder endpointUrl(String endpointUrl) {
-            this.endpointUrl = endpointUrl;
-            return this;
-        }
-
-        /** Custom AWS credentials provider. Defaults to {@link DefaultCredentialsProvider}. */
-        public Builder credentialsProvider(AwsCredentialsProvider credentialsProvider) {
-            this.credentialsProvider = credentialsProvider;
             return this;
         }
 
@@ -161,12 +145,37 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         }
 
         /**
-         * Inject a pre-configured {@link DynamoDbClient}. When provided, the
-         * {@link #region}, {@link #endpointUrl}, and {@link #credentialsProvider}
-         * settings are ignored.
+         * Inject a fully configured {@link DynamoDbClient}. Required.
          */
         public Builder dynamoDbClient(DynamoDbClient client) {
             this.dynamoDbClient = client;
+            return this;
+        }
+
+        /**
+         * S3 bucket name for large-payload offloading. When set,
+         * payloads exceeding 350KB are automatically stored
+         * in S3 instead of DynamoDB.
+         */
+        public Builder s3Bucket(String s3Bucket) {
+            this.s3Bucket = s3Bucket;
+            return this;
+        }
+
+        /**
+         * Optional prefix prepended to all S3 keys. Useful for bucket-level
+         * isolation between environments or applications.
+         */
+        public Builder s3KeyPrefix(String s3KeyPrefix) {
+            this.s3KeyPrefix = s3KeyPrefix;
+            return this;
+        }
+
+        /**
+         * Inject a pre-configured {@link S3Client}. Required if an s3Bucket is configured.
+         */
+        public Builder s3Client(S3Client s3Client) {
+            this.s3Client = s3Client;
             return this;
         }
 
@@ -174,20 +183,10 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         public DynamoDBSaver build() {
             requireNonNull(tableName, "'tableName' must not be null");
             requireNonNull(stateSerializer, "'stateSerializer' must not be null");
+            requireNonNull(dynamoDbClient, "'dynamoDbClient' must not be null");
 
-            if (dynamoDbClient == null) {
-                DynamoDbClientBuilder builder = DynamoDbClient.builder();
-
-                if (region != null) {
-                    builder.region(Region.of(region));
-                }
-                if (endpointUrl != null) {
-                    builder.endpointOverride(URI.create(endpointUrl));
-                }
-                builder.credentialsProvider(
-                    credentialsProvider != null ? credentialsProvider : DefaultCredentialsProvider.create()
-                );
-                dynamoDbClient = builder.build();
+            if (s3Bucket != null) {
+                requireNonNull(s3Client, "'s3Client' must not be null when 's3Bucket' is configured");
             }
 
             // dropTableFirst implies createTableIfNotExists
@@ -218,10 +217,21 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         this.stateSerializer = builder.stateSerializer;
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
+        // Create StorageStrategy for payload routing (DynamoDB vs S3)
+        StorageStrategy storageStrategy = new StorageStrategy(
+            this.client,
+            builder.tableName,
+            builder.s3Client,
+            builder.s3Bucket,
+            builder.s3KeyPrefix,
+            builder.ttlSeconds
+        );
+
         this.repository = new DynamoDBRepository(
             this.client,
             builder.tableName,
-            builder.ttlSeconds
+            builder.ttlSeconds,
+            storageStrategy
         );
 
         // Table initialization
@@ -307,7 +317,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
                                       LinkedList<Checkpoint> checkpoints,
                                       Checkpoint checkpoint) throws Exception {
         final String threadId = threadId(config);
-        log.debug("Inserting checkpoint '{}' for thread '{}'", checkpoint.getId(), threadId);
+        final String parentCheckpointId = config.checkPointId().orElse(null);
+        log.debug("Inserting checkpoint '{}' for thread '{}' (parent='{}')",
+                checkpoint.getId(), threadId, parentCheckpointId);
 
         final byte[] payload = encodeState(checkpoint.getState());
         repository.putCheckpoint(
@@ -316,7 +328,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             checkpoint.getNodeId(),
             checkpoint.getNextNodeId(),
             payload,
-            stateSerializer.contentType()
+            stateSerializer.contentType(),
+            parentCheckpointId,
+            false  // insert-only: conditional write
         );
     }
 
@@ -332,7 +346,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             repository.deleteCheckpoint(threadId, oldId);
         });
 
-        log.debug("Updating checkpoint '{}' for thread '{}'", checkpoint.getId(), threadId);
+        final String parentCheckpointId = config.checkPointId().orElse(null);
+        log.debug("Updating checkpoint '{}' for thread '{}' (parent='{}')",
+                checkpoint.getId(), threadId, parentCheckpointId);
         final byte[] payload = encodeState(checkpoint.getState());
         repository.putCheckpoint(
             threadId,
@@ -340,7 +356,9 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
             checkpoint.getNodeId(),
             checkpoint.getNextNodeId(),
             payload,
-            stateSerializer.contentType()
+            stateSerializer.contentType(),
+            parentCheckpointId,
+            true  // update path: allow overwrite
         );
     }
 
@@ -350,6 +368,23 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
         log.debug("Releasing thread '{}'", threadId);
         repository.markThreadReleased(threadId);
         return new Tag(threadId, checkpoints);
+    }
+
+    /**
+     * Deletes all checkpoints and associated data for the given thread.
+     *
+     * <p>This is a <em>hard delete</em> that permanently removes all checkpoint
+     * metadata items, payload chunk items, and the released sentinel (if present)
+     * from DynamoDB. The operation is idempotent: calling it on a non-existent
+     * or already-deleted thread is a no-op.
+     *
+     * <p>Note: this method is specific to {@link DynamoDBSaver} and is not part
+     * of the {@link BaseCheckpointSaver} contract.
+     *
+     * @param threadId the thread identifier whose data should be deleted
+     */
+    public void deleteThread(String threadId) {
+        repository.deleteThread(threadId);
     }
 
     /**
