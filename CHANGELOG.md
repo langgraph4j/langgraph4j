@@ -2,6 +2,44 @@
 
 
 
+<!-- "name: v1.8.18" is a release tag -->
+
+## [v1.8.18](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.18) (2026-06-12)
+
+
+### Bug Fixes
+
+ -  **spring-ai-agent**  reintroduce default system message ([4a4679540d5c476](https://github.com/bsorrentino/langgraph4j/commit/4a4679540d5c47689a8de5c2637f55993f43a819))
+     > work on #410
+
+ -  replace usage of internalToolExecutionEnabled(9 with introduction of ChatOptions and avoid use of ChatClient ([a6ce4b7815c383a](https://github.com/bsorrentino/langgraph4j/commit/a6ce4b7815c383a5f7154d242ea2f7670b060a8c))
+     > resolve #410
+
+
+
+
+### Documentation
+
+ -  add dynamodb-saver and ockroachdb-saver ([fd60db55ded6914](https://github.com/bsorrentino/langgraph4j/commit/fd60db55ded69146d142fac62535ea7681512228))
+
+ -  update changelog ([15d816e911a75ac](https://github.com/bsorrentino/langgraph4j/commit/15d816e911a75acea1538032eccd898751538aba))
+
+
+### ALM 
+
+ -  bump to next version 1.8.18 ([0821ff8155048f5](https://github.com/bsorrentino/langgraph4j/commit/0821ff8155048f563a93dc57e1944198d90e9ddc))
+   
+ -  **spring-ai-agent**  remove unused spring-ai-azure-openai dependency from pom.xml ([ff34cf184ed85d1](https://github.com/bsorrentino/langgraph4j/commit/ff34cf184ed85d1a668486b07eb28778e5a8dc61))
+   
+ -  update langchain4j version to 1.16.1 and beta version to 1.16.1-beta26 ([b845b4554db0c00](https://github.com/bsorrentino/langgraph4j/commit/b845b4554db0c001d0a704b7b6796e4c7cad3c80))
+   
+ -  **bom**  add dynamodb-saver and ockroachdb-saver ([32321e250eb3827](https://github.com/bsorrentino/langgraph4j/commit/32321e250eb38276c61cbd775ff58297554e4af0))
+   
+
+
+
+
+
 <!-- "name: v1.8.17" is a release tag -->
 
 ## [v1.8.17](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.17) (2026-05-22)
