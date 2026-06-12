@@ -69,12 +69,6 @@
 
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-azure-openai</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-google-genai</artifactId>
 			<scope>test</scope>
 		</dependency>
