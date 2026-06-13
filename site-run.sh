@@ -24,3 +24,6 @@ source .docsenv/bin/activate
 mkdocs build
 
 mkdocs serve 
+
+# Site deploy with version
+# mike deploy --push --update-aliases 1.9 dev
