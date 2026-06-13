@@ -1,0 +1,2755 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Core Library: Conceptual Guide - LangGraph4j</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#core-library-conceptual-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="LangGraph4j" class="md-header__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../../../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LangGraph4j
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Core Library: Conceptual Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../.." class="md-tabs__link">
+          
+  
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../core/core-library/" class="md-tabs__link">
+          
+  
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../features/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Features
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../how-tos/adaptiverag/" class="md-tabs__link">
+          
+  
+  
+  How to(s)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../references/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../apidocs/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  JavaDoc
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="LangGraph4j" class="md-nav__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../../../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    LangGraph4j
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integrations/spring-ai/spring-ai-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spring AI Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integrations/langchain4j/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain4j Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../studio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Studio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Builder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j/releases" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Latest Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/core-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel Branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/subgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/cancellation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cancellation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../core/checkpoint-postgres/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint (Postgres)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../apidocs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JavaDoc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="core-library-conceptual-guide">Core Library: Conceptual Guide</h1>
+<h2 id="graphs">Graphs</h2>
+<p>At its core, LangGraph4j models agent workflows as graphs. You define the behavior of your agents using three key components:</p>
+<ol>
+<li>
+<p><a href="#state">State</a>: A shared data structure that represents the current snapshot of your application. It is represented by an <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AgentState.html">AgentState</a> object.</p>
+</li>
+<li>
+<p><a href="#nodes">Nodes</a>: A <strong>Functional Interface</strong> (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html">AsyncNodeAction</a>)  that encode the logic of your agents. They receive the current <code>State</code> as input, perform some computation or side-effect, and return a request for  updated <code>State</code>.</p>
+</li>
+<li>
+<p><a href="#edges">Edges</a>: A <strong>Functional Interface</strong>  (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncCommandAction.html">AsyncCommandAction</a>) that determine which <code>Node</code> to execute next based on the current <code>State</code>. They can be conditional branches or fixed transitions.</p>
+<blockquote>
+<p>It also can equest for  updated <code>State</code> 👀.</p>
+</blockquote>
+</li>
+</ol>
+<p>By composing <code>Nodes</code> and <code>Edges</code>, you can create complex, looping workflows that evolve the <code>State</code> over time. The real power, though, comes from how LangGraph4j manages that <code>State</code>. 
+To emphasize: <code>Nodes</code> and <code>Edges</code> are like functions - they can contain an LLM or just Java code.</p>
+<p>In short: <em>nodes do the work. edges tell what to do next</em>.</p>
+<!-- 
+LangGraph4j's underlying graph algorithm uses [message passing](https://en.wikipedia.org/wiki/Message_passing) to define a general program. When a Node completes its operation, it sends messages along one or more edges to other node(s). These recipient nodes then execute their functions, pass the resulting messages to the next set of nodes, and the process continues. Inspired by Google's [Pregel](https://research.google/pubs/pregel-a-system-for-large-scale-graph-processing/) system, the program proceeds in discrete "super-steps." 
+-->
+<!-- 
+A super-step can be considered a single iteration over the graph nodes. Nodes that run in parallel are part of the same super-step, while nodes that run sequentially belong to separate super-steps. At the start of graph execution, all nodes begin in an `inactive` state. A node becomes `active` when it receives a new message (state) on any of its incoming edges (or "channels"). The active node then runs its function and responds with updates. At the end of each super-step, nodes with no incoming messages vote to `halt` by marking themselves as `inactive`. The graph execution terminates when all nodes are `inactive` and no messages are in transit.
+ -->
+
+<h3 id="stategraph">StateGraph</h3>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html">StateGraph</a> class is the main graph class to uses. This is parameterized by a user defined <code>State</code> object. </p>
+<!-- 
+### MessageGraph
+
+The `MessageGraph` class is a special type of graph. The `State` of a `MessageGraph` is ONLY an array of messages. This class is rarely used except for chatbots, as most applications require the `State` to be more complex than an array of messages.
+ -->
+<p><a id="compiling-your-graph"></a></p>
+<h3 id="compile-your-graph">Compile your graph</h3>
+<p>To build your graph, you first define the <a href="#state">state</a>, you then add <a href="#nodes">nodes</a> and <a href="#edges">edges</a>, and then you compile it. What exactly is compiling your graph and why is it needed?</p>
+<p>Compiling is a pretty simple step. It provides a few basic checks on the structure of your graph (no orphaned nodes, etc). It is also where you can specify runtime args like <a href="#checkpointer">checkpointers</a> and <a href="#breakpoints">breakpoints</a>. You compile your graph by just calling the <code>.compile</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CompileConfig</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">....</span>
+<span class="c1">// compile your graph</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graphBuilder</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="w"> </span><span class="n">CompileConfig</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>‼️ You <strong>MUST</strong> compile your graph before you can use it.</p>
+<h4 id="compileconfig">CompileConfig</h4>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompileConfig.html">CompileConfig</a> class allows you to pass configuration parameters that control runtime behaviors of your graph. You build a configuration using the builder pattern and pass it to the <code>.compile()</code> method.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="n">mySaver</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">recursionLimit</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">interruptBefore</span><span class="p">(</span><span class="s">&quot;nodeA&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;nodeB&quot;</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graphBuilder</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="n">compileConfig</span><span class="p">);</span>
+</code></pre></div>
+<h5 id="configuration-attributes">Configuration Attributes</h5>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>checkpointSaver</strong></td>
+<td><code>BaseCheckpointSaver</code></td>
+<td><code>null</code></td>
+<td>The checkpoint saver implementation for persisting graph state across executions. Required for stateful features like human-in-the-loop workflows and resuming interrupted graphs. See <a href="#checkpointer">Checkpointer</a> section for more details.</td>
+</tr>
+<tr>
+<td><strong>interruptBefore</strong></td>
+<td><code>Set&lt;String&gt;</code></td>
+<td>empty</td>
+<td>Node names where the graph should pause <strong>before</strong> executing the node. Useful for inspecting state before a node runs or for getting human approval before proceeding.</td>
+</tr>
+<tr>
+<td><strong>interruptsAfter</strong></td>
+<td><code>Set&lt;String&gt;</code></td>
+<td>empty</td>
+<td>Node names where the graph should pause <strong>after</strong> executing the node. Useful for inspecting results after a node completes or for user feedback.</td>
+</tr>
+<tr>
+<td><strong>interruptBeforeEdge</strong></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>If <code>true</code>, interruptions at a node occur <strong>after</strong> it executes but <strong>before</strong> any conditional edges are evaluated. This allows inspecting the state before the graph branches to the next node.</td>
+</tr>
+<tr>
+<td><strong>recursionLimit</strong></td>
+<td><code>int</code></td>
+<td><code>25</code></td>
+<td>Maximum recursion depth allowed during graph execution. Prevents infinite loops by raising an error if the graph exceeds this limit. Increase if your graph needs deep execution paths.</td>
+</tr>
+<tr>
+<td><strong>releaseThread</strong></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>If <code>true</code>, the checkpointer will release all data associated to the current thread acquired during graph execution.</td>
+</tr>
+<tr>
+<td><strong>graphId</strong></td>
+<td><code>String</code></td>
+<td><code>null</code></td>
+<td>Optional identifier for the graph. Useful for logging, monitoring, or distinguishing between multiple graph instances. It will available through <code>RunnableConfig.graphId()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="execute-your-graph">Execute your graph</h3>
+<p>Once you have compiled your graph, you can execute it in two different modes: <strong>synchronous</strong> and <strong>asynchronous</strong>.</p>
+<h4 id="synchronous-execution">Synchronous Execution</h4>
+<p>For synchronous execution, use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#execute(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">execute</a> method to run the graph and get the final result directly:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+</code></pre></div>
+<p>The <code>execute()</code> method blocks until the graph completes and returns the final state of the graph.</p>
+<h4 id="asynchronous-execution">Asynchronous Execution</h4>
+<p>For more detailed visibility into the execution flow, use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">stream</a> method which returns an [AsyncGenerator] that allows you to iterate over each step executed in the workflow:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">generator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">stepResult</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">generator</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Step executed: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">stepResult</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>stream()</code> method returns an <code>AsyncGenerator</code> that yields the state updates after each node execution. This is particularly useful for:</p>
+<ul>
+<li><strong>Streaming updates</strong>: Monitor intermediate states as the workflow progresses</li>
+<li><strong>Real-time feedback</strong>: Display each step to users as it executes</li>
+<li><strong>Debugging</strong>: Inspect how the state evolves throughout execution</li>
+<li><strong>Interruption handling</strong>: Access interruption metadata when breakpoints are triggered</li>
+</ul>
+<p>You can also retrieve the final result value from the generator, for details take a look to <a href="#graphresult">GraphResult</a> section:</p>
+<h4 id="runnableconfig">RunnableConfig</h4>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/RunnableConfig.html">RunnableConfig</a> class carries configuration parameters through graph execution, making runtime information available to both nodes (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html">AsyncNodeActionWithConfig</a>) and conditional edges (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncCommandAction.html">AsyncCommandAction</a>). This allows you to pass context-specific data and control execution behavior at runtime without modifying the graph structure.</p>
+<p>You provide a <code>RunnableConfig</code> when invoking the graph:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;user-123&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">streamMode</span><span class="p">(</span><span class="n">CompiledGraph</span><span class="p">.</span><span class="na">StreamMode</span><span class="p">.</span><span class="na">UPDATES</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;userId&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;user-123&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;model&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;gpt-4&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</code></pre></div>
+<h5 id="configuration-attributes_1">Configuration Attributes</h5>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>threadId</strong></td>
+<td><code>String</code></td>
+<td>A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history.</td>
+</tr>
+<tr>
+<td><strong>checkPointId</strong></td>
+<td><code>String</code></td>
+<td>Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning.</td>
+</tr>
+<tr>
+<td><strong>nextNode</strong></td>
+<td><code>String</code></td>
+<td>Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions.</td>
+</tr>
+<tr>
+<td><strong>streamMode</strong></td>
+<td><code>CompiledGraph.StreamMode</code></td>
+<td>Controls how results are streamed during execution. Options are <code>VALUES</code> (full state after each step) or <code>UPDATES</code> (only state changes). Defaults to <code>VALUES</code>.</td>
+</tr>
+<tr>
+<td><strong>metadata</strong></td>
+<td><code>Map&lt;String, Object&gt;</code></td>
+<td>Custom key-value pairs available throughout execution. Useful for passing runtime context like user IDs, API keys, feature flags, or model selection that nodes and edges need access to.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="reserved-attributes-metadata">Reserved attributes' metadata</h5>
+<p><code>RunnableConfig</code> provides several useful metadata that are reserved by the runtime and should not be overwritten:</p>
+<table>
+<thead>
+<tr>
+<th>Metadata Key</th>
+<th>Type</th>
+<th>Getter</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"LG4j_STUDIO_MDK"</code></td>
+<td><code>Boolean</code></td>
+<td><code>config.isRunningInStudio()</code></td>
+<td>Internal flag used by Studio integrations.</td>
+</tr>
+<tr>
+<td><code>"LG4j_NODE_ID"</code></td>
+<td><code>String</code></td>
+<td><code>config.nodeId()</code></td>
+<td>Current executing node id, injected by the runtime.</td>
+</tr>
+<tr>
+<td><code>"LG4j_GRAPH_PATH"</code></td>
+<td><code>GraphPath</code></td>
+<td><code>config.graphPath()</code></td>
+<td>graph/subgraph path used to track nested executions.</td>
+</tr>
+<tr>
+<td><code>"LG4j_GRAPH_ID"</code></td>
+<td><code>Optional&lt;String&gt;</code></td>
+<td><code>config.graphId()</code></td>
+<td>Effective graph id propagated at runtime (for tracing/logging).</td>
+</tr>
+<tr>
+<td><code>"LG4j_SUBGRAPH_UPDATE_DATA"</code></td>
+<td><code>Map&lt;String,Object&gt;</code></td>
+<td>Internal</td>
+<td>Reserved for subgraph resume/update handling. Do not use in application metadata.</td>
+</tr>
+</tbody>
+</table>
+<p>Additional internal keys can be generated at runtime (for example subgraph resume flags and per-parallel-node executor keys). Prefer <code>RunnableConfig</code> helper APIs such as <code>addParallelNodeExecutor(...)</code> instead of writing those keys manually.</p>
+<h5 id="accessing-runnableconfig-in-nodes-and-edges">Accessing RunnableConfig in Nodes and Edges</h5>
+<p>Since nodes and edges are functional interfaces, you can access the configuration through:</p>
+<p><strong>In AsyncNodeActionWithConfig:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">AsyncNodeActionWithConfig</span><span class="o">&lt;</span><span class="n">MyState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Access thread ID</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="n">threadId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">threadId</span><span class="p">().</span><span class="na">orElse</span><span class="p">(</span><span class="s">&quot;default&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Access metadata</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">userId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">metadata</span><span class="p">(</span><span class="s">&quot;userId&quot;</span><span class="p">).</span><span class="na">orElse</span><span class="p">(</span><span class="s">&quot;anonymous&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">metadata</span><span class="p">(</span><span class="s">&quot;model&quot;</span><span class="p">).</span><span class="na">orElse</span><span class="p">(</span><span class="s">&quot;gpt-3.5&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Access optional graph ID</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="n">graphId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">graphId</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Use configuration in your logic</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Executing for user: %s with model: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">userId</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;result&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;processed&quot;</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p><strong>In AsyncCommandAction (conditional edges):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">AsyncCommandAction</span><span class="o">&lt;</span><span class="n">MyState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">userId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">metadata</span><span class="p">(</span><span class="s">&quot;userId&quot;</span><span class="p">).</span><span class="na">orElse</span><span class="p">(</span><span class="s">&quot;anonymous&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Route based on runtime configuration</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;premium-user&quot;</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="n">userId</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;premium-path&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;standard-path&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<h5 id="common-use-cases">Common Use Cases</h5>
+<ul>
+<li><strong>User Context</strong>: Pass user ID, tenant ID, or organizational context through execution</li>
+<li><strong>Feature Flags</strong>: Enable/disable features at runtime via metadata</li>
+<li><strong>Model Selection</strong>: Choose different LLM models based on metadata</li>
+<li><strong>Logging &amp; Monitoring</strong>: Use <code>graphId()</code> and <code>threadId()</code> for tracing and debugging</li>
+<li><strong>Session Resumption</strong>: Use <code>threadId()</code> to fetch and resume previous execution state</li>
+<li><strong>Concurrent Control</strong>: Configure custom executors for parallel nodes via metadata</li>
+</ul>
+<h5 id="building-runnableconfig">Building RunnableConfig</h5>
+<div class="highlight"><pre><span></span><code><span class="c1">// Minimal configuration</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="c1">// Rich configuration with metadata</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;conversation-user-123&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">streamMode</span><span class="p">(</span><span class="n">CompiledGraph</span><span class="p">.</span><span class="na">StreamMode</span><span class="p">.</span><span class="na">UPDATES</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;userId&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;user-123&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;tenantId&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;org-456&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;llmModel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;gpt-4-turbo&quot;</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;isVip&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="c1">// Modify existing configuration</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">updatedConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">updateMetadata</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;llmModel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;gpt-4&quot;</span><span class="p">));</span>
+</code></pre></div>
+<h4 id="graphresult">GraphResult</h4>
+<p>The final result returned by <code>AsyncGenerator</code> from the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">stream</a> method is a generic <code>Object</code> that can contain different types of values depending on what was yielded during the graph execution. Rather than constantly checking the type with <code>instanceof</code>, LangGraph4j provides the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> utility class to safely identify and retrieve the correct result type.</p>
+<h5 id="result-types">Result Types</h5>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class can wrap the following result types:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>STATE_DATA</strong></td>
+<td>A <code>Map&lt;String, Object&gt;</code> representing the state snapshot after a node execution. This is the most common result during graph streaming.</td>
+</tr>
+<tr>
+<td><strong>NODE_OUTPUT</strong></td>
+<td>A <code>NodeOutput</code> object containing detailed information about a node's execution, including the node ID, the resulting state, and execution metadata.</td>
+</tr>
+<tr>
+<td><strong>INTERRUPTION_METADATA</strong></td>
+<td>An <code>InterruptionMetadata</code> object indicating that the graph execution was interrupted (e.g., at a breakpoint). This contains information about why the graph was interrupted and the state at the interruption point.</td>
+</tr>
+<tr>
+<td><strong>CHECKPOINT_SAVER_TAG</strong></td>
+<td>A <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.Tag.html">BaseCheckpointSaver.Tag</a> object representing a checkpoint identifier and metadata. Useful for tracking persisted states.</td>
+</tr>
+<tr>
+<td><strong>EMPTY</strong></td>
+<td>Indicates no result was produced (typically when the stream yields null).</td>
+</tr>
+</tbody>
+</table>
+<h5 id="using-graphresult">Using GraphResult</h5>
+<p>Instead of manually checking types, use <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> to safely extract the result:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Get the final result direct from the generator</span>
+<span class="n">GraphResult</span><span class="w"> </span><span class="n">finalResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GraphResult</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="n">generator</span><span class="p">);</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">isEmpty</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;result is empty&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isStateData</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asStateData</span><span class="p">();</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with state: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isNodeOutput</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">NodeOutput</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asNodeOutput</span><span class="p">();</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with node: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">output</span><span class="p">.</span><span class="na">nodeId</span><span class="p">());</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">InterruptionMetadata</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with interruption: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class provides type-safe methods to check (<code>isStateData()</code>, <code>isNodeOutput()</code>, etc.) and retrieve (<code>asStateData()</code>, <code>asNodeOutput()</code>, etc.) each result type, preventing casting errors and making your code more maintainable.</p>
+<h2 id="state">State</h2>
+<p>The first thing you do when you define a graph is define the <code>State</code> of the graph. The <code>State</code> consists of the <a href="#schema">schema of the graph</a> as well as <a href="#reducers">reducer</a> functions which specify how to apply updates to the state. The schema of the <code>State</code> will be the input schema to all <code>Nodes</code> and <code>Edges</code> in the graph, and should be defined using a map of  [<code>Channel</code>] object. All <code>Nodes</code> will emit updates to the <code>State</code> which are then applied using the specified <code>reducer</code> function.</p>
+<h3 id="schema">Schema</h3>
+<p>The way to specify the schema of a graph is by defining map of <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html">Channel</a> objects where each key is an item in the state.
+If no <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/Channel.html">Channel</a> is specified for an item then it is assumed that all updates to that item should override it.</p>
+<h3 id="reducers">Reducers</h3>
+<p><a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/Reducer.html">Reducers</a> are key to understanding how updates from nodes are applied to the <code>State</code>. Each key in the <code>State</code> has its own independent reducer function. If no reducer function is explicitly specified then it is assumed that all updates to that key should override it. Let's take a look at a few examples to understand them better.</p>
+<p><strong>Example A:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MessagesState</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">static</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Channel</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">SCHEMA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">            </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Channels</span><span class="p">.</span><span class="na">appender</span><span class="p">(</span><span class="n">ArrayList</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">graphBuilder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="w"> </span><span class="n">MessagesState</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">MessagesState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="appenderchannel">AppenderChannel</h3>
+<p>In the example above we specify for <code>messages</code> property a built-in channel <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AppenderChannel.html">AppenderChannel</a> which use a <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/Reducer.html">Reducer</a> implementation to accumulate values.</p>
+<p><a id="remove-messages"></a></p>
+<h4 id="remove-messages">Remove Messages</h4>
+<p><a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AppenderChannel.html">AppenderChannel</a> supports the message deletion throught its nested functional interface <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AppenderChannel.RemoveIdentifier.html">RemoveIdentifier</a>. Inheriting such interface you can create a particular value that when will be put inside a State's property, with <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AppenderChannel.html">AppenderChannel</a> schema, instrucs the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/Reducer.html">Reducer</a> to remove the  element that match the specified conditions in <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/AppenderChannel.RemoveIdentifier.html">RemoveIdentifier</a> throught <code>compareTo( element, index )</code> method. </p>
+<h5 id="removebyhash">RemoveByHash</h5>
+<p>Langgraph4j provides a Built in [AppederChannel.RemoveIdentifier] named <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/state/RemoveByHash.html">RemoveByHash</a> that allow to remove messages comparing their <code>hashCode</code>, below an example of its usage:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">workflow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">MessagesState</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">MessagesState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;message1&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;message2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;message2.1&quot;</span><span class="p">))))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span>
+<span class="w">            </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">RemoveByHash</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;message2.1&quot;</span><span class="p">))</span><span class="w"> </span><span class="c1">// this remove &quot;message2.1&quot; from messages values</span>
+<span class="w">        </span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_2&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_3&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_1&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">);</span>
+</code></pre></div>
+<h5 id="replaceallwith">ReplaceAllWith</h5>
+<p>Langgraph4j provides a built in [AppederChannel.ReplaceAllWith]  that allow to replace all elements with new ones, below an example of its usage:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">workflow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">MessagesState</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">MessagesState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;message1&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;message2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;message2.1&quot;</span><span class="p">))))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;agent_3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span>
+<span class="w">            </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ReplaceAllWith</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;a1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;a2&quot;</span><span class="p">)))</span><span class="w"> </span><span class="c1">// this replace current messages values with [&quot;a1&quot;, &quot;a2&quot;]</span>
+<span class="w">        </span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_2&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_3&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;agent_1&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;agent_3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="custom-reducer">Custom Reducer</h3>
+<p>You can also specify a custom reducer for a particular state property</p>
+<p><strong>Example B:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyState</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">static</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Channel</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">SCHEMA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">            </span><span class="s">&quot;property&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Channel</span><span class="p">.</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="n">of</span><span class="p">(</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">oldValue</span><span class="p">,</span><span class="w"> </span><span class="n">newValue</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">newValue</span><span class="p">.</span><span class="na">toUpperCase</span><span class="p">()</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">graphBuilder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="w"> </span><span class="n">MessagesState</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">MyState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="serializer">Serializer</h3>
+<p>During graph execution the state needs to be serialized (mostly for cloning purpose) also for providing ability to persist the state across different executions. To do this we have provided a new streighforward implementation based on <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/serializer/Serializer.html">Serializer</a> interface.</p>
+<h4 id="why-create-a-new-serialization-framework">Why create a new Serialization framework ?</h4>
+<ol>
+<li>Doesn't rely on unsafe standard serialization framework.</li>
+<li>Allow to implement serialization also to third-party (non serializable) classes</li>
+<li>Avoid as much as possible class loading problem</li>
+<li>Manage nullable value in serialization process</li>
+</ol>
+<h4 id="features">Features</h4>
+<ul>
+<li>[x] Allow to serialize using the java built-in standard binary serialization technique</li>
+<li>[x] Allow to plug also different serialization techniques</li>
+</ul>
+<p>Currently the main class for state's serialization using built-in java stream is <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/serializer/std/ObjectStreamStateSerializer.html">ObjectStreamStateSerializer</a>. It is also available an abstraction allowing to plug serialization techniques text based like <code>JSON</code> and/or <code>YAML</code> that is <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/serializer/plain_text/PlainTextStateSerializer.html">PlainTextStateSerializer</a>.</p>
+<p><a id="seriliazer-out-of-box"></a></p>
+<h4 id="out-of-the-box">Out of the Box</h4>
+<p>There are several provided Serializers out-of-the-box:</p>
+<table>
+<thead>
+<tr>
+<th>class</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ListSerializer</code></td>
+<td>built-in <code>List&lt;Object&gt;</code> serializer</td>
+</tr>
+<tr>
+<td><code>MapSerializer</code></td>
+<td>built-in <code>Map&lt;String,Object&gt;</code> serializer</td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td><code>AiMessageSerializer</code></td>
+<td>langchain4j <code>AiMessage</code> Serializer</td>
+</tr>
+<tr>
+<td><code>ChatMesssageSerializer</code></td>
+<td>langchain4j <code>ChatMesssage</code> Serializer</td>
+</tr>
+<tr>
+<td><code>SystemMessageSerializer</code></td>
+<td>langchain4j <code>SystemMessage</code> Serializer</td>
+</tr>
+<tr>
+<td><code>UserMessageSerializer</code></td>
+<td>langchain4j <code>UserMessage</code> Serializer</td>
+</tr>
+<tr>
+<td><code>ToolExecutionRequestSerializer</code></td>
+<td>langchain4j <code>ToolExecutionRequest</code> Serializer</td>
+</tr>
+<tr>
+<td><code>ToolExecutionResultMessageSerializer</code></td>
+<td>langchain4j <code>ToolExecutionResultMessage</code> Serializer</td>
+</tr>
+</tbody>
+</table>
+<h2 id="nodes">Nodes</h2>
+<!--
+In LangGraph4j, nodes are typically a **Functional Interface** ([AsyncNodeAction])  where the argument is the [state](#tate), and (optionally), the **second** positional argument is a "config", containing optional [configurable parameters](#configuration) (such as a `thread_id`).
+-->
+<p>In LangGraph4j, nodes are typically a <strong>Functional Interface</strong> (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html">AsyncNodeAction</a>)  where the argument is the <a href="#state">state</a>, you add these nodes to a graph using the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addNode(java.lang.String,org.bsc.langgraph4j.action.AsyncNodeAction)">addNode</a> method:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">State</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="nf">State</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">initData</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">(</span><span class="w"> </span><span class="n">initData</span><span class="w">  </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">input</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">(</span><span class="s">&quot;input&quot;</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w"> </span>
+<span class="w">  </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">results</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">(</span><span class="s">&quot;results&quot;</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w"> </span>
+
+<span class="p">}</span>
+
+<span class="n">AsyncNodeAction</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span><span class="w"> </span><span class="n">myNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;In myNode: &quot;</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="n">results</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Hello &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="na">input</span><span class="p">().</span><span class="na">orElse</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span><span class="w">  </span>
+<span class="p">});</span>
+
+<span class="n">AsyncNodeAction</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span><span class="w"> </span><span class="n">myOtherNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="p">(</span><span class="w"> </span><span class="n">State</span><span class="p">::</span><span class="k">new</span><span class="w"> </span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;myNode&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">myNode</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;myOtherNode&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">myOtherNode</span><span class="p">)</span>
+</code></pre></div>
+<p>Since <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html">AsyncNodeAction</a> is designed to work with <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a>, you can use <code>node_async</code> static method that adapt it to a simpler syncronous scenario. </p>
+<p><a id="start-node"></a></p>
+<h3 id="start-node"><code>START</code> Node</h3>
+<p>The <code>START</code> Node is a special node that represents the node sends user input to the graph. The main purpose for referencing this node is to determine which nodes should be called first.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.START</span><span class="p">;</span>
+
+<span class="n">graph</span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;nodeA&quot;</span><span class="p">);</span>
+</code></pre></div>
+<a id="end-node"></a></p>
+<h3 id="end-node"><code>END</code> Node</h3>
+<p>The <code>END</code> Node is a special node that represents a terminal node. This node is referenced when you want to denote which edges have no actions after they are done.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.END</span><span class="p">;</span>
+
+<span class="n">graph</span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;nodeA&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="edges">Edges</h2>
+<p>Edges define how the logic is routed and how the graph decides to stop. This is a big part of how your agents work and how different nodes communicate with each other. There are a few key types of edges:</p>
+<ul>
+<li><strong>Normal Edges</strong>: <blockquote>
+<p>Go directly from one node to the next.</p>
+</blockquote>
+</li>
+<li><strong>Conditional Edges</strong>: <blockquote>
+<p>Call a function to determine which node(s) to go to next.</p>
+</blockquote>
+</li>
+<li><strong>Entry Point</strong>: <blockquote>
+<p>Which node to call first when user input arrives.</p>
+</blockquote>
+</li>
+<li><strong>Conditional Entry Point</strong>: <blockquote>
+<p>Call a function to determine which node(s) to call first when user input arrives.</p>
+</blockquote>
+</li>
+</ul>
+<!-- 👉 PARALLEL
+ A node can have MULTIPLE outgoing edges. If a node has multiple out-going edges, **all** of those destination nodes will be executed in parallel as a part of the next superstep. -->
+
+<p><a id="normal-edges"></a></p>
+<h3 id="normal-edges">Normal Edges</h3>
+<p>If you <strong>always</strong> want to go from node A to node B, you can use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addEdge(java.lang.String,java.lang.String)">addEdge</a> method directly.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// add a normal edge</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;nodeA&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;nodeB&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p><a id="conditional-edges"></a></p>
+<h3 id="conditional-edges">Conditional Edges</h3>
+<p>If you want to <strong>optionally</strong> route to 1 or more edges (or optionally terminate), you can use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addConditionalEdges(java.lang.String,org.bsc.langgraph4j.action.AsyncCommandAction,java.util.Map)">addConditionalEdges</a> method. This method accepts the name of a node and a <strong>Functional Interface</strong> (<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncCommandAction.html">AsyncCommandAction</a>) that will be used as " routing function" to call after that node is executed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">graph</span><span class="p">.</span><span class="na">addConditionalEdges</span><span class="p">(</span><span class="s">&quot;nodeA&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">routingFunction</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="n">EdgeMapping</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">          </span><span class="p">.</span><span class="na">to</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;nodeB&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;first&quot;</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">to</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;nodeC&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;second&quot;</span><span class="w"> </span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">build</span><span class="p">());</span>
+</code></pre></div>
+<p>Similar to nodes, the <code>routingFunction</code> accept the current <code>state</code> of the graph and return a string value.</p>
+<!-- By default, the return value `routingFunction` is used as the name of the node (or an array of nodes) to send the state to next. All those nodes will be run in parallel as a part of the next superstep. -->
+
+<p>You must provide an object that maps the <code>routingFunction</code>'s output to the name of the next node.</p>
+<p><a id="entry-point"></a></p>
+<h3 id="entry-point">Entry Point</h3>
+<p>The entry point is the first node(s) that are run when the graph starts. You can use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addEdge(java.lang.String,java.lang.String)">addEdge</a> method from the virtual <code>START</code> node to the first node to execute to specify where to enter the graph.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.START</span><span class="p">;</span>
+
+<span class="n">graph</span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;nodeA&quot;</span><span class="p">);</span>
+</code></pre></div>
+<a id="conditional-entry-point"></a></p>
+<h3 id="conditional-entry-point">Conditional Entry Point</h3>
+<p>A conditional entry point lets you start at different nodes depending on custom logic. You can use <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addConditionalEdges(java.lang.String,org.bsc.langgraph4j.action.AsyncCommandAction,java.util.Map)">addConditionalEdges</a> from the virtual <code>START</code> node to accomplish this.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.START</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.utils.CollectionsUtils.mapOf</span><span class="p">;</span>
+
+<span class="n">graph</span><span class="p">.</span><span class="na">addConditionalEdges</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="n">routingFunction</span><span class="p">,</span><span class="w"> </span>
+<span class="w">      </span><span class="n">EdgeMapping</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">          </span><span class="p">.</span><span class="na">to</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;nodeB&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;first&quot;</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">to</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;nodeC&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;second&quot;</span><span class="w"> </span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">build</span><span class="p">());</span>
+</code></pre></div>
+<p>You must provide an object that maps the <code>routingFunction</code>'s output to the name of the next node.</p>
+<!-- 
+## `Send`
+
+By default, `Nodes` and `Edges` are defined ahead of time and operate on the same shared state. However, there can be cases where the exact edges are not known ahead of time and/or you may want different versions of `State` to exist at the same time. A common of example of this is with `map-reduce` design patterns. In this design pattern, a first node may generate an array of objects, and you may want to apply some other node to all those objects. The number of objects may be unknown ahead of time (meaning the number of edges may not be known) and the input `State` to the downstream `Node` should be different (one for each generated object).
+
+To support this design pattern, LangGraph4j supports returning [Send](/langgraphjs/reference/classes/langgraph.Send.html) objects from conditional edges. `Send` takes two arguments: first is the name of the node, and second is the state to pass to that node.
+
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">continueToJokes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">subjects</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">subjects</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">subject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Send</span><span class="p">(</span><span class="s2">&quot;generate_joke&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">subject</span><span class="w"> </span><span class="p">}));</span>
+<span class="p">}</span>
+
+<span class="nx">graph</span><span class="p">.</span><span class="nx">addConditionalEdges</span><span class="p">(</span><span class="s2">&quot;nodeA&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">continueToJokes</span><span class="p">);</span>
+</code></pre></div>
+-->
+
+<h2 id="checkpointer">Checkpointer</h2>
+<p>LangGraph4j has a built-in persistence layer, implemented through <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.html">Checkpointers</a>. When you use a checkpointer with a graph, you can interact with the state of that graph. When you use a checkpointer with a graph, you can interact with and manage the graph's state. The checkpointer saves a <em>checkpoint</em> of the graph state at every step, enabling several powerful capabilities:</p>
+<p>First, checkpointers facilitate <strong>human-in-the-loop workflows</strong><!--<a href="agentic_concepts.md#human-in-the-loop">human-in-the-loop workflows</a>--> workflows by allowing humans to inspect, interrupt, and approve steps. Checkpointers are needed for these workflows as the human has to be able to view the state of a graph at any point in time, and the graph has to be to resume execution after the human has made any updates to the state.</p>
+<p>Second, it allows for <a href="agentic_concepts.md#memory">"memory"</a> between interactions. You can use checkpointers to create threads and save the state of a thread after a graph executes. In the case of repeated human interactions (like conversations) any follow up messages can be sent to that checkpoint, which will retain its memory of previous ones.</p>
+<p>See <a href="../how-tos/persistence.ipynb">this guide</a> for how to add a checkpointer to your graph.</p>
+<h2 id="threads">Threads</h2>
+<p>Threads enable the checkpointing of multiple different runs, making them essential for multi-tenant chat applications and other scenarios where maintaining separate states is necessary. A thread is a unique ID assigned to a series of checkpoints saved by a checkpointer. When using a checkpointer, you must specify a <code>thread_id</code> when running the graph.</p>
+<p><code>thread_id</code> is simply the ID of a thread. This is always required</p>
+<p>You must pass these when invoking the graph as part of the configurable part of the config.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                                  </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">)</span>
+<span class="w">                                  </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</code></pre></div>
+<p>See <a href="../how-tos/persistence.ipynb">this guide</a> for how to use threads.</p>
+<p><a id="checkpointer-state"></a></p>
+<h2 id="checkpointer-state">Checkpointer state</h2>
+<p>When interacting with the checkpointer state, you must specify a <a href="#threads">thread identifier</a>. Each checkpoint saved by the checkpointer has two properties:</p>
+<ul>
+<li><strong>state</strong>: This is the value of the state at this point in time.</li>
+<li><strong>nextNodeId</strong>: This is the Idenfier of the node to execute next in the graph.</li>
+</ul>
+<p><a id="get-state"></a></p>
+<h3 id="get-state">Get state</h3>
+<p>You can get the state of a checkpointer by calling [graph.getState(config)]. The config should contain <code>thread_id</code>, and the state will be fetched for that thread.</p>
+<p><a id="get-state-history"></a></p>
+<h3 id="get-state-history">Get state history</h3>
+<p>You can also call <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getStateHistory(org.bsc.langgraph4j.RunnableConfig)">graph.getStateHistory(config)</a> to get a list of the history of the graph. The config should contain <code>thread_id</code>, and the state history will be fetched for that thread.</p>
+<p><a id="Update-state"></a></p>
+<h3 id="update-state">Update state</h3>
+<p>You can also interact with the state directly and update it using <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#updateState(org.bsc.langgraph4j.RunnableConfig,java.util.Map,java.lang.String)">graph.updateState(config,values,asNode)</a>.  This takes three different components:</p>
+<ul>
+<li><code>config</code></li>
+<li><code>values</code></li>
+<li><code>asNode</code></li>
+</ul>
+<p><strong><code>config</code></strong></p>
+<p>The config should contain <code>thread_id</code> specifying which thread to update.</p>
+<p><strong><code>values</code></strong></p>
+<p>These are the values that will be used to update the state. Note that this update is treated exactly as any update from a node is treated. This means that these values will be passed to the <a href="#reducers">reducer</a> functions that are part of the state. So this does NOT automatically overwrite the state. </p>
+<p><strong><code>asNode</code></strong></p>
+<p>The final thing you specify when calling <code>updateState</code> is <code>asNode</code>. This update will be applied as if it came from node <code>asNode</code>. If <code>asNode</code> is null, it will be set to the last node that updated the state.</p>
+<!-- 👉 AMBIGUITY  
+The final thing you specify when calling `updateState` is `asNode`. This update will be applied as if it came from node `asNode`. If `asNode` is null, it will be set to the last node that updated the state, if not ambiguous.
+
+The reason this matters is that the next steps in the graph to execute depend on the last node to have given an update, so this can be used to control which node executes next. -->
+
+<!-- 
+## Configuration
+
+When creating a graph, you can also mark that certain parts of the graph are configurable. This is commonly done to enable easily switching between models or system prompts. This allows you to create a single "cognitive architecture" (the graph) but have multiple different instance of it.
+
+You can then pass this configuration into the graph using the `configurable` config field.
+
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">configurable</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">llm</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;anthropic&quot;</span><span class="w"> </span><span class="p">}};</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nx">graph</span><span class="p">.</span><span class="nx">invoke</span><span class="p">(</span><span class="nx">inputs</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">);</span>
+</code></pre></div>
+
+You can then access and use this configuration inside a node:
+
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">nodeA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">llmType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">config</span><span class="o">?</span><span class="p">.</span><span class="nx">configurable</span><span class="o">?</span><span class="p">.</span><span class="nx">llm</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">llm</span><span class="o">:</span><span class="w"> </span><span class="kt">BaseChatModel</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">llmType</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">llm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getLlm</span><span class="p">(</span><span class="nx">llmType</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="p">...</span>
+<span class="p">};</span>
+</code></pre></div>
+
+See [this guide](/langgraph4j/how-tos/langgraph4j-howtos/configuration.html) for a full breakdown on configuration 
+-->
+
+<h2 id="breakpoints-aka-interruptions">Breakpoints (AKA interruptions )</h2>
+<p>In langgraph4j, a graph's execution can be paused at any node. This is particularly useful for implementing features like human-in-the-loop approvals, where the graph needs to
+wait for external input before proceeding.</p>
+<p>To set breakpoints before or after certain nodes execute. This can be used to wait for human approval before continuing. These can be set when you <a href="#compiling-your-graph">"compile" a graph</a>. </p>
+<h3 id="static-definition">Static definition</h3>
+<p>You can set breakpoints either <em>before</em> a node executes (using <code>interruptBefore</code>) or <em>after</em> a node executes (using <code>interruptAfter</code>) adding them on <code>CompileConfig</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="n">saver</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">interruptBefore</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;tools&quot;</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<h3 id="dynamic-definition">Dynamic definition</h3>
+<p>The <code>org.bsc.langgraph4j.action.InterruptableAction&lt;State&gt;</code> interface is the core component that enables this functionality. Any node action that implements this interface can conditionally interrupt the graph's execution.</p>
+<p>The heart of the interface is the interrupt method:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">InterruptableAction</span><span class="o">&lt;</span><span class="n">State</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="cm">/**</span>
+<span class="cm">    * Determines whether the graph execution should be interrupted at the current node.</span>
+<span class="cm">    *</span>
+<span class="cm">    * @param nodeId The identifier of the current node being processed.</span>
+<span class="cm">    * @param state  The current state of the agent.</span>
+<span class="cm">    * @return An {@link Optional} containing {@link InterruptionMetadata} if the execution</span>
+<span class="cm">    *         should be interrupted. Returns an empty {@link Optional} to continue execution.</span>
+<span class="cm">   */</span>
+<span class="w">   </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">InterruptionMetadata</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="nf">interrupt</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">nodeId</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Here’s how it works</strong>:</p>
+<ul>
+<li>When the graph is about to execute a node, it first checks if the node's action implements InterruptableAction.</li>
+<li>If it does, the interrupt(String nodeId, State state) method is called.</li>
+<li>If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the
+  interruption, which can be sent to an external system or user for review.</li>
+<li>If the method returns an empty Optional, the node executes normally, and the graph continues its execution without interruption.</li>
+</ul>
+<hr />
+<p>You <strong>MUST</strong> use a <a href="#checkpointer">checkpoiner</a> when using breakpoints. This is because your graph needs to be able to resume execution.</p>
+<p>In order to resume execution, you can just invoke your graph with <code>GraphInput.resume()</code> or <code>GraphInput.resume(Map)</code> as the input.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Initial run of graph</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+
+<span class="c1">// Let&#39;s assume it hit a breakpoint somewhere, you can then resume it no passing new state data</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+
+<span class="c1">// Let&#39;s assume it hit a breakpoint somewhere, you can then resume it passing new state data</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;key&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;value&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="achieve-interruptionmetadata-object-after-interruption">Achieve InterruptionMetadata object after interruption</h3>
+<p>It is most important understand that the <strong>nodes iterator holds the final result of graph execution</strong>. In the case of interruption the <code>InterruptionMetadata</code> instance will be set as iterator's result so you can achieve it using : <a href="#graphresult">GraphResult</a> as shown below</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">generator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">inputs</span><span class="w"> </span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">iterator</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="p">...</span>
+<span class="p">}</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">finalResult</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="n">GraphResult</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="n">generator</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="n">interruptionMetadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
+
+<span class="w">    </span><span class="p">....</span>
+<span class="p">}</span>
+</code></pre></div>
+<blockquote>
+<p><code>resultValue</code> is a generic <code>Object</code> that in case of interruptions is an instance of InterruptionMetadata</p>
+</blockquote>
+<p>See <a href="../how-tos/wait-user-input.ipynb">Wait for user Input (HITL)</a> for a full walkthrough of how to add breakpoints.</p>
+<h2 id="visualization">Visualization</h2>
+<p>It's often nice to be able to visualize graphs, especially as they get more complex. LangGraph4j comes with several built-in ways to visualize graphs using diagram-as-code tools such as [PlantUML] and <a href="https://mermaid.js.org">Mermaid</a> through the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph(org.bsc.langgraph4j.GraphRepresentation.Type(java.lang.String)">graph.getGraph</a> method. </p>
+<div class="highlight"><pre><span></span><code><span class="c1">// for PlantUML</span>
+<span class="n">GraphRepresentation</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="na">getGraph</span><span class="p">(</span><span class="n">GraphRepresentation</span><span class="p">.</span><span class="na">Type</span><span class="p">.</span><span class="na">PLANTUML</span><span class="p">);</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">getContent</span><span class="p">());</span>
+
+<span class="c1">// for Mermaid</span>
+<span class="n">GraphRepresentation</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="na">getGraph</span><span class="p">(</span><span class="n">GraphRepresentation</span><span class="p">.</span><span class="na">Type</span><span class="p">.</span><span class="na">MERMAID</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">getContent</span><span class="p">());</span>
+</code></pre></div>
+<!-- 
+There are several different streaming modes that LangGraph4j supports:
+
+- ["values"](/langgraph4j/how-tos/langgraph4j-howtos/stream-values.html): This streams the full value of the state after each step of the graph.
+- ["updates](/langgraph4j/how-tos/langgraph4j-howtos/stream-updates.html): This streams the updates to the state after each step of the graph. If multiple updates are made in the same step (e.g. multiple nodes are run) then those updates are streamed separately.
+
+In addition, you can use the [streamEvents](https://v02.api.js.langchain.com/classes/langchain_core_runnables.Runnable.html#streamEvents) method to stream back events that happen _inside_ nodes. This is useful for [streaming tokens of LLM calls](/langgraph4j/how-tos/langgraph4j-howtos/streaming-tokens-without-langchain.html). -->
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "toc.integrate", "toc.integrate.toc", "toc.integrate.toc.inline"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
