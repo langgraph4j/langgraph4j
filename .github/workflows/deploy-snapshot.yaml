@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feature/#386_ver_1.9
+      - develop
     paths:
       - '**/pom.xml'
 jobs:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/#386_ver_1.9
+          ref: develop
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -38,12 +38,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
         run: mvn -B clean source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml
-      - name: Upload all module artifacts 
-        if: always() 
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: all-targets 
-          path: '**/target/**'      
+      - name: Upload all module artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-targets
+          path: '**/target/**'
   deploy-javelit:
     runs-on: ubuntu-latest
     name: deploy javelit
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/#386_ver_1.9
+          ref: develop
       - name: Set up JDK 22
         uses: actions/setup-java@v4
         with:
