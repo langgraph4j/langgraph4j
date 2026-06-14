@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     name:  deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: main
       - name: GPG Setup
@@ -19,7 +19,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: ./gpg-setup.sh
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
           java-version: '17'
@@ -31,7 +31,7 @@ jobs:
         run: mvn -B -Prelease source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
       - name: Upload build outputs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-targets
           path: '**/target/**'
@@ -42,7 +42,7 @@ jobs:
     name: deploy javelit
     needs: deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: main
       - name: GPG Setup
@@ -51,7 +51,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: ./gpg-setup.sh
       - name: Set up JDK 22
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
           java-version: '22'
@@ -63,7 +63,7 @@ jobs:
         run: mvn -B -Prelease source:jar javadoc:jar install central-publishing:publish -pl javelit --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
       - name: Upload javelit build outputs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-javelit-targets
           path: '**/target/**'
