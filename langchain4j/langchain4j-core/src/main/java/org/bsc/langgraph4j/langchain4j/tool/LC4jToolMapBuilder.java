@@ -2,16 +2,16 @@ package org.bsc.langgraph4j.langchain4j.tool;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProviderRequest;
-import dev.langchain4j.skills.FileSystemSkillLoader;
 import dev.langchain4j.skills.Skill;
 import dev.langchain4j.skills.Skills;
 
 import java.lang.reflect.Method;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -110,17 +110,24 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
         return skills( Arrays.asList(requireNonNull(skills, "skills cannot be null")));
     }
 
-    public final T skills(Collection<? extends Skill> skills) {
+    public final T skills(Collection<? extends Skill> skillList) {
+        if( skills!=null ) {
+            throw new IllegalStateException("Skills have already been set. Skills can only be set once." );
+        }
+        skills = Skills.from( requireNonNull(skillList, "skills cannot be null"));
 
-        final var skillManager = Skills.from( requireNonNull(skills, "skills cannot be null"));
+        final var toolProvider = skills.toolProvider();
 
-        final var toolProvider = skillManager.toolProvider() ;
-
-        final var request = ToolProviderRequest.builder().build();
-
-        final var result = toolProvider.provideTools(request);
-
-        toolMap.putAll(result.tools());
+        if( toolProvider.isDynamic() ) {
+            throw new UnsupportedOperationException("Dynamic tool providers are not supported yet!");
+        }
+        final var result = toolProvider.provideTools(
+                ToolProviderRequest.builder()
+                        .invocationContext(InvocationContext.builder().build())
+                        .userMessage( UserMessage.from(""))
+                        .build() );
+        result.aiServiceTools()
+                .forEach( tool -> toolMap.put(tool.toolSpecification(), tool.toolExecutor()) );
 
         return result();
     }
