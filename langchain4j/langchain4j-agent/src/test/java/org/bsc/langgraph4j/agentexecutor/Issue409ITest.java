@@ -43,7 +43,7 @@ public class Issue409ITest {
         final var config = RunnableConfig.builder().threadId("T1").build();
 
         final var result = graph.stream(
-                        GraphInput.args( Map.of("messages", UserMessage.from("activate skill agent-commit")) ), config)
+                        GraphInput.args( Map.of("messages", UserMessage.from("list your available kills")) ), config)
                 .stream()
                 .reduce( (a,b) -> b);
 
