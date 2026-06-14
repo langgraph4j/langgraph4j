@@ -110,11 +110,13 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
         return skills( Arrays.asList(requireNonNull(skills, "skills cannot be null")));
     }
 
-    public final T skills(Collection<? extends Skill> skills) {
+    public final T skills(Collection<? extends Skill> skillList) {
+        if( skills!=null ) {
+            throw new IllegalStateException("Skills have already been set. Skills can only be set once." );
+        }
+        skills = Skills.from( requireNonNull(skillList, "skills cannot be null"));
 
-        final var skillManager = Skills.from( requireNonNull(skills, "skills cannot be null"));
-
-        final var toolProvider = skillManager.toolProvider();
+        final var toolProvider = skills.toolProvider();
 
         if( toolProvider.isDynamic() ) {
             throw new UnsupportedOperationException("Dynamic tool providers are not supported yet!");

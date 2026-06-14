@@ -40,9 +40,22 @@ public class CallModel<State extends MessagesState<ChatMessage>> implements Asyn
     public CallModel( AgentExecutorBuilder<State,?> builder ) {
         this.chatModel = builder.chatModel;
         this.streamingChatModel = builder.streamingChatModel;
-        this.systemMessage = ofNullable( builder.systemMessage ).orElseGet( () -> SystemMessage.from("You are a helpful assistant") );
         this.conversationContextPolicy = builder.conversationContextPolicy;
         this.emitStreamingOutputEnd = builder.emitStreamingOutputEnd;
+
+        final var candidateSystemMessage = ofNullable( builder.systemMessage )
+                .orElseGet( () -> SystemMessage.from("You are a helpful assistant") );
+
+        this.systemMessage = builder.skills().map( skills ->
+                SystemMessage.from("""
+                    %s
+                    You have access to the following skills:
+                    %s
+                    """.formatted(
+                        candidateSystemMessage.text(),
+                        skills.formatAvailableSkills()))
+        ).orElse( candidateSystemMessage );
+
 
         var parametersBuilder = ChatRequestParameters.builder()
                 .toolSpecifications( builder.toolMap().keySet().stream().toList() );
@@ -53,6 +66,7 @@ public class CallModel<State extends MessagesState<ChatMessage>> implements Asyn
 
         this.parameters =  parametersBuilder.build();
     }
+
 
     public boolean isStreaming() {
         return streamingChatModel != null;

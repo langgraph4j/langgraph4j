@@ -25,10 +25,6 @@ public class Issue409ITest {
                 Path.of("target", "Issue409"),
                 AgentExecutorEx.Serializers.JSON.object() );
 
-        final var compileConfig = CompileConfig.builder()
-                .checkpointSaver(saver)
-                .build();
-
         final var graph = AgentExecutor.builder()
                 .chatModel(model, true)
                 .systemMessage(SystemMessage.from("You are my developer assistant" ))
@@ -37,13 +33,12 @@ public class Issue409ITest {
                 .build()
                 .compile(CompileConfig.builder()
                         .checkpointSaver(saver)
-                        .releaseThread(true)
                         .build());
 
         final var config = RunnableConfig.builder().threadId("T1").build();
 
         final var result = graph.stream(
-                        GraphInput.args( Map.of("messages", UserMessage.from("activate skill agent-commit")) ), config)
+                        GraphInput.args( Map.of("messages", UserMessage.from("list your available kills")) ), config)
                 .stream()
                 .reduce( (a,b) -> b);
 
