@@ -2,6 +2,60 @@
 
 
 
+<!-- "name: v1.8.19" is a release tag -->
+
+## [v1.8.19](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.19) (2026-06-16)
+
+
+### Bug Fixes
+
+ -  **lancchain4j-agent**  enhance system message to include available skills ([af9dfc17f7060d7](https://github.com/bsorrentino/langgraph4j/commit/af9dfc17f7060d7bb27ee2b1e422a9d1069366a9))
+     > work on #409
+
+ -  save skills for agent usage ([4d6d808ac0862de](https://github.com/bsorrentino/langgraph4j/commit/4d6d808ac0862de7674e2161e7200fe13f3eed0e))
+     > work on #409
+
+ -  **LC4jToolMapBuilder**  adapt skill tool loading to ai service tools ([368b0d7d58874a8](https://github.com/bsorrentino/langgraph4j/commit/368b0d7d58874a8324b2b35525b765e9df556974))
+     > Reject dynamic skill tool providers until supported and build a ToolProviderRequest with invocation context and user message.
+     > work on 409
+
+
+
+### Test 
+
+ -  **lancchain4j-agent**  test the agent's skills availability ([66c30c7a123054c](https://github.com/bsorrentino/langgraph4j/commit/66c30c7a123054cc76f36addd965a9601205967c))
+    > work on #409
+
+ -  **langchain4j**  : add integration test for skill usage in agent executor ([70bbdeec11a1cdd](https://github.com/bsorrentino/langgraph4j/commit/70bbdeec11a1cdd2e668ced6a8ca87c04833a902))
+    > work on #409
+
+
+### Documentation
+
+ -  update changelog ([c4cd47cb7d0a3f3](https://github.com/bsorrentino/langgraph4j/commit/c4cd47cb7d0a3f3b286545d648079befbb505899))
+
+
+### ALM 
+
+ -  bump to next version 1.8.19 ([848f5666463ed9b](https://github.com/bsorrentino/langgraph4j/commit/848f5666463ed9bfb4893f4b647d76d7234ccf04))
+   
+ -  update spring-ai version to 2.0.0 ([0cd754b6b9174e5](https://github.com/bsorrentino/langgraph4j/commit/0cd754b6b9174e5a993fe391bcece8a427de1def))
+   
+ -  update langchain4j version to 1.16.2 ([8c3f43080495639](https://github.com/bsorrentino/langgraph4j/commit/8c3f43080495639e0736c7464446d52042990e36))
+   
+ -  update GitHub Actions to use latest versions of checkout, configure-pages, setup-java, upload-pages-artifact, and deploy-pages ([744cd0530e61c29](https://github.com/bsorrentino/langgraph4j/commit/744cd0530e61c29686c1eebf45f74b353df63e0d))
+   
+ -  update GitHub Actions to use latest versions of checkout, setup-java, and upload-artifact ([33630a1488f5952](https://github.com/bsorrentino/langgraph4j/commit/33630a1488f5952e4724b56d62d810a7de91751a))
+   
+ -  update GitHub Actions to use latest versions of checkout, setup-java, and upload-artifact ([9cd240b04a4fb16](https://github.com/bsorrentino/langgraph4j/commit/9cd240b04a4fb16ed033b8b84e630cdfd56d083b))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([79b9a572b84050a](https://github.com/bsorrentino/langgraph4j/commit/79b9a572b84050ac4296eceb73dbf96e257a5472))
+   
+
+
+
+
+
 <!-- "name: v1.8.18" is a release tag -->
 
 ## [v1.8.18](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.18) (2026-06-12)
