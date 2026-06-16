@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-parent</artifactId>
-    <version>1.8.18</version>
+    <version>1.8.19</version>
     <packaging>pom</packaging>
 
     <name>langgraph4j::parent</name>
@@ -44,9 +44,9 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <langchain4j.version>1.16.1</langchain4j.version>
-        <langchain4j.beta>1.16.1-beta26</langchain4j.beta>
-        <spring-ai.version>2.0.0-RC2</spring-ai.version>
+        <langchain4j.version>1.16.2</langchain4j.version>
+        <langchain4j.beta>1.16.2-beta26</langchain4j.beta>
+        <spring-ai.version>2.0.0</spring-ai.version>
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
 
