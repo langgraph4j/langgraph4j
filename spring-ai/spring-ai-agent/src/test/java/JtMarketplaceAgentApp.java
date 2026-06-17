@@ -169,14 +169,14 @@ public class JtMarketplaceAgentApp {
             final var subAgentMarketplace = SkilledReactSubAgent.builder()
                     .chatModel(chatModel)
                     .toolsFromObject(AgentMarketplace.tools())
-                    .build( compileConfig,
-                            SkillPath.of(Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-marketplace/")));
+                    .build( SkillPath.of(Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-marketplace/")),
+                            compileConfig);
 
             final var subAgentPayment = SkilledReactSubAgent.builder()
                     .chatModel(chatModel)
                     .toolsFromObject(AgentPayment.tools())
-                    .build( compileConfig,
-                            SkillPath.of(Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-payment/")));
+                    .build( SkillPath.of(Paths.get("spring-ai/spring-ai-agent/src/test/resources/skills/agent-payment/")),
+                            compileConfig );
 
             final var agent = AgentExecutorEx.builder()
                     .chatModel(chatModel)

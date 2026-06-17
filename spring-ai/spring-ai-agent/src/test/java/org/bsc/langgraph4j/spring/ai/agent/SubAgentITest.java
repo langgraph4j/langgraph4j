@@ -37,15 +37,15 @@ public class SubAgentITest {
                 .chatModel(chatModel)
                 .streaming(true)
                 .toolsFromObject( AgentMarketplace.tools() )
-                .build( compileConfig,
-                        SkillResource.of(resLoader.getResource("classpath:skills/agent-marketplace/" )));
+                .build( SkillResource.of(resLoader.getResource("classpath:skills/agent-marketplace/" )),
+                        compileConfig );
 
         final var subAgentPayment = SkilledReactSubAgent.builder()
                 .chatModel(chatModel)
                 .streaming(true)
                 .toolsFromObject( AgentPayment.tools() )
-                .build( compileConfig,
-                        SkillResource.of( resLoader.getResource("classpath:skills/agent-payment/") ));
+                .build( SkillResource.of( resLoader.getResource("classpath:skills/agent-payment/") ),
+                        compileConfig );
 
         final var purchaseAgent = AgentExecutorEx.builder()
                 .chatModel(chatModel)

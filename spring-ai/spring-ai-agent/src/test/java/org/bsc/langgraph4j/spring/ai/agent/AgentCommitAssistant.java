@@ -114,7 +114,7 @@ public interface AgentCommitAssistant {
         }
     }
 
-    static SkilledReactSubAgent subAgent(ChatModel chatModel,
+    static SubAgent subAgent(ChatModel chatModel,
                                          CompileConfig compileConfig,
                                          SkillSource skillSource,
                                          Consumer<String> logConsumer) throws Exception {
@@ -135,7 +135,7 @@ public interface AgentCommitAssistant {
                 })
                 .addNodeHook( logHook.asBeforeCall() )
                 .addNodeHook( logHook.asAfterCall() )
-                .build( compileConfig, skillSource );
+                .build( skillSource, compileConfig );
 
     }
 }
