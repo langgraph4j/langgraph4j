@@ -3,17 +3,16 @@
 #set( $symbol_escape = '\' )
 package ${package}.spring.ai.agentexecutor;
 
-import com.google.cloud.vertexai.Transport;
-import com.google.cloud.vertexai.VertexAI;
+import com.google.genai.Client;
+import com.openai.client.OpenAIClientImpl;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -24,10 +23,10 @@ public enum AiModel {
 
     OPENAI( (model, extra) ->
             OpenAiChatModel.builder()
-                    .openAiApi(OpenAiApi.builder()
+                    .openAiClient( new OpenAIClientImpl(com.openai.core.ClientOptions.builder()
                             .apiKey( extraAttribute( extra, "OPENAI_API_KEY" ) )
-                            .build())
-                    .defaultOptions(OpenAiChatOptions.builder()
+                            .build()))
+                    .options(OpenAiChatOptions.builder()
                             .model(model)
                             .logprobs(false)
                             //.temperature(0.0)
@@ -36,37 +35,37 @@ public enum AiModel {
     OLLAMA( (model,extra) ->
             OllamaChatModel.builder()
                     .ollamaApi(OllamaApi.builder()
-                        .baseUrl("http://localhost:11434")
-                        .build())
-                    .defaultOptions(OllamaChatOptions.builder()
+                            .baseUrl("http://localhost:11434")
+                            .build())
+                    .options(OllamaChatOptions.builder()
                             .model(model)
                             .temperature(0.0)
                             .build())
                     .build()),
     GITHUB_MODEL( (model, extra) ->
             OpenAiChatModel.builder()
-                .openAiApi(OpenAiApi.builder()
-                        .baseUrl("https://models.github.ai/inference")
-                        .apiKey( extraAttribute( extra,"GITHUB_MODELS_TOKEN") )
-                        .build())
-                .defaultOptions(OpenAiChatOptions.builder()
-                        .model(model)
-                        .logprobs(false)
-                        .temperature(0.1)
-                        .build())
-                .build()),
+                    .openAiClient( new OpenAIClientImpl(com.openai.core.ClientOptions.builder()
+                            .baseUrl("https://models.github.ai/inference")
+                            .apiKey( extraAttribute( extra,"GITHUB_MODELS_TOKEN") )
+                            .build()))
+                    .options(OpenAiChatOptions.builder()
+                            .model(model)
+                            .logprobs(false)
+                            .temperature(0.1)
+                            .build())
+                    .build()),
     GEMINI( (model,extra) ->
-            VertexAiGeminiChatModel.builder()
-                .vertexAI( new VertexAI.Builder()
-                    .setProjectId( extraAttribute(extra,"GOOGLE_CLOUD_PROJECT") )
-                    .setLocation( extraAttribute(extra,"GOOGLE_CLOUD_LOCATION") )
-                    .setTransport(Transport.REST)
+            GoogleGenAiChatModel.builder()
+                    .genAiClient( Client.builder()
+                            .vertexAI(true)
+                            .project( extraAttribute(extra,"GOOGLE_CLOUD_PROJECT") )
+                            .location( extraAttribute(extra,"GOOGLE_CLOUD_LOCATION") )
+                            .build())
+                    .options(GoogleGenAiChatOptions.builder()
+                            .model(model)
+                            .temperature(0.0)
+                            .build())
                     .build())
-            .defaultOptions(VertexAiGeminiChatOptions.builder()
-                    .model(model)
-                    .temperature(0.0)
-                    .build())
-            .build())
     ;
 
     private final BiFunction<String, Map<String,String>, ChatModel> model;

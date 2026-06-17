@@ -5,16 +5,16 @@ package ${package}.spring.ai.agentexecutor;
 
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
+import org.bsc.langgraph4j.agent.Agent;
+import org.bsc.langgraph4j.hook.EdgeHook;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.bsc.langgraph4j.spring.ai.agent.ReactAgent;
-import org.bsc.langgraph4j.spring.ai.agent.ReactAgentBuilder;
+import org.bsc.langgraph4j.spring.ai.agent.*;
 import org.bsc.langgraph4j.spring.ai.serializer.jackson.SpringAIJacksonStateSerializer;
-import org.bsc.langgraph4j.spring.ai.serializer.std.SpringAIStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.springframework.ai.chat.messages.Message;
 
 import java.util.Map;
-import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
 
@@ -30,14 +30,40 @@ public interface AgentExecutor {
     /**
      * Class responsible for building a state graph.
      */
-    class Builder extends ReactAgent.Builder<State> {
-        @Override
-        public StateGraph<State> build(Function<ReactAgentBuilder<?, ?>, ReactAgent.ChatService> chatServiceFactory) throws GraphStateException {
+    class Builder extends ReactAgentBuilder<Builder, State> {
 
-            stateSerializer = ofNullable(stateSerializer)
-                    .orElseGet( () -> new SpringAIJacksonStateSerializer<>(State::new) );
-            return super.build(chatServiceFactory);
+        public Builder() {
         }
+
+        public Builder(ReactAgentBuilder<?, State> builder) {
+            super(builder);
+        }
+
+        /**
+         * Builds and returns a StateGraph with the specified configuration.
+         * Initializes the stateSerializer if it's null. Then, constructs a new StateGraph object using the provided schema
+         * and serializer, adds an initial edge from the START node to "agent", and then proceeds to add nodes for "agent" and
+         * "action". It also sets up conditional edges from the "agent" node based on whether or not to continue.
+         *
+         * @return A configured StateGraph object.
+         * @throws GraphStateException If there is an issue with building the graph state.
+         */
+        public StateGraph<State> build( ) throws GraphStateException {
+
+            final var callModelAction = new CallModelAction<State>(this );
+
+            final var executeToolsAction = new ExecuteToolsAction<State>( tools() );
+
+            return agentBuilder
+                    .stateSerializer( ofNullable(stateSerializer)
+                            .orElseGet( () -> new SpringAIJacksonStateSerializer<>(State::new) ) )
+                    .schema( ofNullable(schema).orElse( MessagesState.SCHEMA) )
+                    .callModelAction( callModelAction )
+                    .executeToolsAction( executeToolsAction )
+                    .build();
+
+        }
+
     }
 
     /**

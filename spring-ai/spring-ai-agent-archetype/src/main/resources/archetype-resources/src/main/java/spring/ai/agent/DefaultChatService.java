@@ -3,36 +3,65 @@
 #set( $symbol_escape = '\' )
 package ${package}.spring.ai.agent;
 
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import reactor.core.publisher.Flux;
 
-import java.util.Objects;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
-class DefaultChatService implements ReactAgent.ChatService {
-    final ChatClient chatClient;
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 
-    public DefaultChatService(ReactAgentBuilder<?,?> builder ) {
-        Objects.requireNonNull(builder.chatModel,"chatModel cannot be null!");
-        var toolOptions = ToolCallingChatOptions.builder()
-                .internalToolExecutionEnabled(false) // MANDATORY: Disable automatic tool execution
-                .build();
+class DefaultChatService implements ChatService {
+    final ChatModel chatModel;
+    final ChatOptions chatOptions;
+    final SystemMessage defaultSystem;
 
-        var chatClientBuilder = ChatClient.builder(builder.chatModel)
-                .defaultOptions(toolOptions)
-                .defaultSystem( builder.systemMessage().orElse(
-                        "You are a helpful AI Assistant answering questions." ));
-                        
-        if (!builder.tools.isEmpty()) {
-            chatClientBuilder.defaultToolCallbacks(builder.tools());
+    public DefaultChatService(BaseReactAgentBuilder<?,?> builder ) {
+        this.chatModel = requireNonNull(builder.chatModel, "chatModel cannot be null!");
 
+        if (!builder.tools.isEmpty() && chatModel.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
+            chatOptions = toolCallingChatOptions.mutate().toolCallbacks(builder.tools()).build();
+        }
+        else {
+            chatOptions = null;
         }
 
-        this.chatClient = chatClientBuilder.build();
+        defaultSystem = SystemMessage.builder()
+                .text(builder.systemMessage().orElse(
+                        "You are a helpful AI Assistant answering questions." ))
+                .build() ;
     }
 
     @Override
-    public final ChatClient chatClient() {
-        return chatClient;
+    public ChatModel chatModel() {
+        return chatModel;
     }
 
+    @Override
+    public Optional<ChatOptions> chatOptions() {
+        return ofNullable(chatOptions);
+    }
+
+    @Override
+    public ChatResponse execute(List<Message> messages) {
+        final var newMessages = new LinkedList<Message>();
+        newMessages.add(defaultSystem);
+        newMessages.addAll(messages);
+        return ChatService.super.execute(newMessages);
+    }
+
+    @Override
+    public Flux<ChatResponse> streamingExecute(List<Message> messages) {
+        final var newMessages = new LinkedList<Message>();
+        newMessages.add(defaultSystem);
+        newMessages.addAll(messages);
+        return ChatService.super.streamingExecute(newMessages);
+    }
 }
