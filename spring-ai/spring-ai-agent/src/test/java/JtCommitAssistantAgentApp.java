@@ -23,6 +23,7 @@ import org.bsc.langgraph4j.spring.ai.agent.AgentCommitAssistant;
 import org.bsc.langgraph4j.spring.ai.agent.AiModel;
 import org.bsc.langgraph4j.spring.ai.agent.LogNodeHook;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
+import org.bsc.langgraph4j.spring.ai.serializer.jackson.SpringAIJacksonStateSerializer;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -170,15 +171,18 @@ public class JtCommitAssistantAgentApp {
         final var logHook = new LogNodeHook(logConsumer);
 
         try {
+            final var stateSerializer = new SpringAIJacksonStateSerializer<>(AgentExecutorEx.State::new);
+
             final var rootPath = Paths.get("target", "checkpoint");
 
-            final var saver = new FileSystemSaver(rootPath, AgentExecutorEx.State.defaultSerializer());
+            final var saver = new FileSystemSaver(rootPath, stateSerializer);
 
             var compileConfig = CompileConfig.builder()
                     .checkpointSaver(saver)
                     .build();
 
             return AgentExecutorEx.builder()
+                    .stateSerializer(stateSerializer)
                     .chatModel(chatModel)
                     .defaultSystem("""
                         You are a commit assistant.

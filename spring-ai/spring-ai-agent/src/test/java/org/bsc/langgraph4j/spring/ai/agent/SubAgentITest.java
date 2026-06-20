@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.agent.AgentEx;
 import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.spring.ai.agent.skill.SkillResource;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
+import org.bsc.langgraph4j.spring.ai.serializer.jackson.SpringAIJacksonStateSerializer;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -22,9 +23,11 @@ public class SubAgentITest {
 
     @Test
     public void testPurchaseAssistantAgent() throws Exception {
+
+        final var stateSerializer = new SpringAIJacksonStateSerializer<>(AgentExecutorEx.State::new);
         final var rootPath = Paths.get( "target", "checkpoint" );
 
-        final var saver = new FileSystemSaver( rootPath, AgentExecutorEx.State.defaultSerializer());
+        final var saver = new FileSystemSaver( rootPath, stateSerializer);
 
         //final var chatModel = AiModel.OPENAI.chatModel("gpt-5-mini");
         final var chatModel = AiModel.OLLAMA.chatModel("qwen3.5");
@@ -77,12 +80,13 @@ public class SubAgentITest {
     @Test
     public void testCommitAssistantAgent() throws Exception {
 
-        final var logHook = new LogNodeHook(System.out::println);
+        final var stateSerializer = new SpringAIJacksonStateSerializer<>(AgentExecutorEx.State::new);
 
+        final var logHook = new LogNodeHook(System.out::println);
 
         final var rootPath = Paths.get( "target", "testCommitSubAgent" );
 
-        final var saver = new FileSystemSaver( rootPath, AgentExecutorEx.State.defaultSerializer());
+        final var saver = new FileSystemSaver( rootPath, stateSerializer);
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver( saver )
@@ -92,6 +96,7 @@ public class SubAgentITest {
         final var chatModel = AiModel.OLLAMA.chatModel("qwen3.5");
 
         final var agentCommit = AgentExecutorEx.builder()
+                .stateSerializer(stateSerializer)
                 .chatModel(chatModel)
                 .streaming(true)
                 .defaultSystem("""

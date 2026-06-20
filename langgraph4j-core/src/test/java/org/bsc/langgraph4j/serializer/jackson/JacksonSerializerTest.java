@@ -48,6 +48,17 @@ public class JacksonSerializerTest {
         }
 
     }
+
+    static class MyJacksonStateSerializer extends JacksonStateSerializer<State> {
+
+        public MyJacksonStateSerializer() {
+            super(State::new, JsonMapper.builder()
+                    .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                    .build());
+        }
+    }
+
+
     @Test
     public void serializeWithTypeInferenceTest() throws IOException, ClassNotFoundException {
 
@@ -72,19 +83,10 @@ public class JacksonSerializerTest {
         assertEquals( "value1", deserializedState.data().get("prop1") );
     }
 
-    static class MyJacksonStateSerializer extends JacksonStateSerializer<AgentState> {
-
-        public MyJacksonStateSerializer() {
-            super(AgentState::new, JsonMapper.builder()
-                    .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-                    .build());
-        }
-    }
-
     @Test
     public void NodOutputJacksonSerializationTest() throws Exception {
 
-        var serializer = new MyJacksonStateSerializer();
+        final var serializer = new MyJacksonStateSerializer();
 
         NodeOutput<AgentState> output = new NodeOutput<>("node", null);
         var mapper = serializer.objectMapper();
@@ -121,7 +123,7 @@ public class JacksonSerializerTest {
     @Test
     public void valueFromNodeTest() throws Exception {
 
-        var serializer = new MyJacksonStateSerializer();
+        final var serializer = new MyJacksonStateSerializer();
 
         var data = Map.of(
                 "integer", 10,
@@ -162,7 +164,7 @@ public class JacksonSerializerTest {
     @Test
     void checkPointSerializeTest() throws Exception {
 
-        var serializer = new MyJacksonStateSerializer();
+        final var serializer = new MyJacksonStateSerializer();
 
         var checkpoints = new LinkedList<Checkpoint>();
         var stateData = new HashMap<String,Object>();
@@ -209,7 +211,42 @@ public class JacksonSerializerTest {
             assertEquals( checkpoints.get(i).getState(), newCheckpoints.get(i).getState() );
         }
 
-
-
     }
+
+    private record NonSerializableElement(  String value )  {
+        public static NonSerializableElement of(String value) {
+            return new NonSerializableElement(value);
+        }
+    }
+
+    @Test
+    public void transientAttributesAreKeptInMemory() throws Exception {
+
+        final var stateSerializer = new MyJacksonStateSerializer();
+        stateSerializer.declareTransientAttributes("transient");
+
+
+        final var state = stateSerializer.stateOf(Map.of(
+                "a", "b",
+                "transient", NonSerializableElement.of("I'M NOT SERIALIZABLE")
+        ));
+
+        final var jsonString = stateSerializer.writeDataAsString( state.data() );
+
+        assertNotNull(jsonString);
+
+        final var jsonDeserializedData = stateSerializer.objectMapper().readValue( jsonString, new TypeReference<Map<String,Object>>(){});
+
+        assertFalse( jsonDeserializedData.containsKey("transient") );
+        assertTrue( jsonDeserializedData.containsKey("a") );
+        assertEquals("b", jsonDeserializedData.get("a"));
+
+        final var stateDeserializedData = stateSerializer.readDataFromString( jsonString );
+
+        assertTrue( stateDeserializedData.containsKey("transient") );
+        assertEquals(NonSerializableElement.of("I'M NOT SERIALIZABLE"), stateDeserializedData.get("transient"));
+        assertTrue( stateDeserializedData.containsKey("a") );
+        assertEquals("b", stateDeserializedData.get("a"));
+    }
+
 }

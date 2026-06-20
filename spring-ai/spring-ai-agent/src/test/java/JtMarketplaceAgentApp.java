@@ -26,6 +26,7 @@ import org.bsc.langgraph4j.spring.ai.agent.AgentPayment;
 import org.bsc.langgraph4j.spring.ai.agent.AiModel;
 import org.bsc.langgraph4j.spring.ai.agent.SkilledReactSubAgent;
 import org.bsc.langgraph4j.spring.ai.agentexecutor.AgentExecutorEx;
+import org.bsc.langgraph4j.spring.ai.serializer.jackson.SpringAIJacksonStateSerializer;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.content.Content;
@@ -158,9 +159,11 @@ public class JtMarketplaceAgentApp {
     public CompiledGraph<AgentExecutorEx.State> buildAgent(ChatModel chatModel, boolean streaming)  {
 
         try {
+            final var stateSerializer = new SpringAIJacksonStateSerializer<>(AgentExecutorEx.State::new);
+
             final var rootPath = Paths.get("target", "checkpoint");
 
-            final var saver = new FileSystemSaver(rootPath, AgentExecutorEx.State.defaultSerializer());
+            final var saver = new FileSystemSaver(rootPath, stateSerializer);
 
             var compileConfig = CompileConfig.builder()
                     .checkpointSaver(saver)
