@@ -62,13 +62,6 @@ public interface AgentExecutorEx extends LG4JLoggable {
         public static final String TOOL_EXECUTION_REQUESTS = "tool_execution_requests";
         public static final String TOOL_EXECUTION_RESPONSES = "tool_execution_responses";
         public static final String NEXT_ACTION = "next_action";
-        private static final class StateSerializerHolder {
-            private static final StateSerializer<State> INSTANCE = new SpringAIJacksonStateSerializer<>(State::new);
-        }
-
-        public static StateSerializer<State> defaultSerializer() {
-            return StateSerializerHolder.INSTANCE;
-        }
 
         static final Map<String, Channel<?>> SCHEMA = mergeMap(
                 MessagesState.SCHEMA,
@@ -171,9 +164,11 @@ public interface AgentExecutorEx extends LG4JLoggable {
                 return new FunctionToolBehaviour( toolService, tool );
             }).toList();
 
+            final var stateSerializer$ = ofNullable(stateSerializer)
+                    .orElseGet( () -> new SpringAIJacksonStateSerializer<>(AgentExecutorEx.State::new) );
+
             return agentBuilder
-                    .stateSerializer( ofNullable(stateSerializer)
-                            .orElseGet(State::defaultSerializer) )
+                    .stateSerializer( stateSerializer$ )
                     .schema( State.SCHEMA )
                     .callModelAction( callModelAction )
                     .dispatchToolsAction( dispatchTools( approvals.keySet() ) )
