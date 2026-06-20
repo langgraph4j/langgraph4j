@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,10 +16,11 @@ import java.util.Map;
  * . Need to be extended from specific state implementation
  * @param <State> The type of the agent state to be serialized/deserialized.
  */
-@Deprecated(forRemoval = true)
+@Deprecated(forRemoval = true, since = "1.9")
 public abstract class GsonStateSerializer<State extends AgentState> extends PlainTextStateSerializer<State> {
 
     protected final Gson gson;
+    private final Map<String, Object> transientData = new HashMap<>(8);
 
     protected GsonStateSerializer(AgentStateFactory<State> stateFactory, Gson gson) {
         super(stateFactory);
@@ -38,12 +40,36 @@ public abstract class GsonStateSerializer<State extends AgentState> extends Plai
 
     @Override
     public final String writeDataAsString(Map<String, Object> data) throws IOException {
+        final Map<String,Object> serializedData;
+
+        if( transientAttributeSet.isEmpty() ) {
+            serializedData = data;
+        } else {
+            serializedData = new HashMap<>(data);
+
+            transientData.clear();
+
+            for( String key : transientAttributeSet ) {
+                if( serializedData.containsKey(key) ) {
+                    transientData.put(key, serializedData.remove(key));
+                }
+            }
+        }
+
         return gson.toJson(data);
     }
 
     @Override
     public final Map<String, Object> readDataFromString(String string) throws IOException {
-        return gson.fromJson(string, new TypeToken<>() {});
+        final var data =  gson.fromJson(string, new TypeToken<Map<String, Object>>() {});
+
+        for( String key : transientAttributeSet ) {
+            if( transientData.containsKey(key) ) {
+                data.put(key, transientData.get(key));
+            }
+        }
+        return data;
+
     }
 
 }
