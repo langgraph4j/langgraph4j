@@ -4,15 +4,19 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.io.*;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class StateSerializer<State extends AgentState> implements Serializer<State> {
 
     private final AgentStateFactory<State> stateFactory;
+    protected Set<String> transientAttributeSet = new HashSet<>(8);
 
-    protected StateSerializer( AgentStateFactory<State> stateFactory) {
+    protected StateSerializer( AgentStateFactory<State> stateFactory ) {
         this.stateFactory = Objects.requireNonNull(stateFactory, "stateFactory cannot be null");
+    }
+
+    public void declareTransientAttributes( String... attributes) {
+        transientAttributeSet.addAll(Arrays.asList(attributes));
     }
 
     public final AgentStateFactory<State> stateFactory() {
