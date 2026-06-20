@@ -97,7 +97,7 @@ public class LG4JMemorySaverTest
 
         Map<String, Object> inputs = Map.of( "input", "test1");
 
-        var initState = app.cloneState( app.initialState( inputs, runnableConfig ) );
+        var initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
 
         assertEquals( 1, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );
@@ -115,7 +115,7 @@ public class LG4JMemorySaverTest
                 .build() ) ;
 
         app = workflow.compile( compileConfig );
-        initState = app.cloneState( app.initialState( inputs, runnableConfig ) );
+        initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
 
         assertEquals( 1, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );
@@ -129,7 +129,7 @@ public class LG4JMemorySaverTest
                 .nextNodeId(END)
                 .build() ) ;
         app = workflow.compile( compileConfig );
-        initState = app.cloneState( app.initialState( inputs, runnableConfig ) );
+        initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
 
         assertEquals( 2, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );
