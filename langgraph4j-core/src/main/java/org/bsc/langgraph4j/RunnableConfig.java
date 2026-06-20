@@ -115,6 +115,19 @@ public final class RunnableConfig implements HasMetadata {
         }
 
         /**
+         * Disables state cloning during graph execution.
+         * <p>
+         * When state cloning is disabled, state exposed outside the graph boundary is not
+         * guaranteed to be immutable and may reflect subsequent mutations.
+         *
+         * @return this {@code Builder} instance for method chaining
+         * @since 1.9
+         */
+        public Builder disableCloneState() {
+            return putMetadata(DISABLE_CLONE_STATE, true);
+        }
+
+        /**
          * Constructs and returns the configured {@code RunnableConfig} object.
          *
          * @return the configured {@code RunnableConfig} object
@@ -155,6 +168,13 @@ public final class RunnableConfig implements HasMetadata {
     public static final String GRAPH_NODE_PATH = "LG4j_GRAPH_NODE_PATH";
     public static final String GRAPH_ID = "LG4j_GRAPH_ID";
     public static final String SUBGRAPH_RESUME_UPDATE_DATA = "LG4j_SUBGRAPH_UPDATE_DATA";
+
+    /**
+     * Metadata key used to disable state cloning during graph execution.
+     *
+     * @since 1.9
+     */
+    public static final String DISABLE_CLONE_STATE = "LG4j_DISABLE_CLONE_STATE";
 
     private final String threadId;
     private final String checkPointId;
@@ -316,9 +336,26 @@ public final class RunnableConfig implements HasMetadata {
         return metadata(GRAPH_PATH, new TypeRef<GraphPath>() {})
                 .orElseGet(GraphPath::empty);
     }
+
+    /**
+     * Returns the path of the currently executing node within the graph hierarchy.
+     *
+     * @return the current node path, or an empty {@link GraphPath} when no node path is set
+     * @since 1.9
+     */
     public GraphPath nodePath() {
         return metadata(GRAPH_NODE_PATH, new TypeRef<GraphPath>() {})
                 .orElseGet(GraphPath::empty);
+    }
+
+    /**
+     * Returns whether state cloning is disabled for this runnable configuration.
+     *
+     * @return {@code true} if state cloning is disabled, {@code false} otherwise
+     * @since 1.9
+     */
+    public boolean isCloneStateDisabled() {
+        return  (Boolean)metadata(DISABLE_CLONE_STATE).orElse(false);
     }
 
     public boolean isResumeSubgraph() {
