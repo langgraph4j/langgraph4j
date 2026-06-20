@@ -93,6 +93,7 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
 
     private final SerializerMapper mapper = new SerializerMapper();
     private final MapSerializer mapSerializer = new MapSerializer();
+    private final Map<String, Object> transientData = new HashMap<>(8);
 
     public ObjectStreamStateSerializer( AgentStateFactory<State> stateFactory ) {
         super(stateFactory);
@@ -107,12 +108,35 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
 
     @Override
     public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
-        mapSerializer.write(data, mapper.objectOutputWithMapper(out));
+        final Map<String,Object> serializedData;
+
+        if( transientAttributeSet.isEmpty() ) {
+            serializedData = data;
+        } else {
+            serializedData = new HashMap<>(data);
+
+            transientData.clear();
+
+            for( String key : transientAttributeSet ) {
+                if( serializedData.containsKey(key) ) {
+                    transientData.put(key, serializedData.remove(key));
+                }
+            }
+        }
+
+        mapSerializer.write(serializedData, mapper.objectOutputWithMapper(out));
     }
 
     @Override
     public final Map<String, Object> readData(ObjectInput in) throws IOException, ClassNotFoundException {
-        return mapSerializer.read( mapper.objectInputWithMapper(in) );
+        final var data = mapSerializer.read( mapper.objectInputWithMapper(in) );
+        for( String key : transientAttributeSet ) {
+            if( transientData.containsKey(key) ) {
+                data.put(key, transientData.get(key));
+            }
+        }
+        return data;
     }
+
 
 }
