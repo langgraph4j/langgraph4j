@@ -379,7 +379,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         if( compileConfig.checkpointSaver().isPresent() ) {
             var cp =  Checkpoint.builder()
                                 .nodeId( nodeId )
-                                .state( cloneState(state) )
+                                .state( cloneState(state, config) )
                                 .nextNodeId( nextNodeId )
                                 .build();
             compileConfig.checkpointSaver().get().put( config, cp );
@@ -401,7 +401,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.getChannels() ));
     }
 
-    State cloneState( Map<String,Object> data ) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    State cloneState( Map<String,Object> data, RunnableConfig runnableConfig ) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        if(runnableConfig.isCloneStateDisabled()) {
+            return stateGraph.getStateFactory().apply(data);
+        }
         return stateGraph.getStateSerializer().cloneObject(data);
     }
 
@@ -706,8 +709,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
 
         @SuppressWarnings("unchecked")
-        protected Output buildNodeOutput(String nodeId ) throws Exception {
-            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState()) );
+        protected Output buildNodeOutput( String nodeId, RunnableConfig config ) throws Exception {
+            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState(), config) );
         }
 
         @SuppressWarnings("unchecked")
@@ -843,7 +846,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             Optional<Checkpoint>  cp = addCheckpoint(config, context.currentNodeId(), context.currentState(), context.nextNodeId());
             return completedFuture(( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
                     buildStateSnapshot(cp.get()) :
-                    buildNodeOutput( context.currentNodeId() ))
+                    buildNodeOutput( context.currentNodeId(), config ))
                     ;
         }
 
@@ -887,7 +890,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                         var output =  ( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
                                 buildStateSnapshot(cp.get()) :
-                                buildNodeOutput( context.currentNodeId() );
+                                buildNodeOutput( context.currentNodeId(), config );
 
                         context.setCurrentNodeId(context.nextNodeId());
 
@@ -899,7 +902,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     if( END.equals(context.nextNodeId()) ) {
                         context.reset();
                         $1.dispatchAsync(
-                                AsyncGenerator.Data.of( buildNodeOutput( END ) ));
+                                AsyncGenerator.Data.of( buildNodeOutput( END, config ) ));
                         continue;
                     }
 
@@ -916,14 +919,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // CHECK ON PREVIOUS NODE
                     if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done( interruptionMetadata ));
                         break;
                     }
 
                     if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done(interruptionMetadata ));
                         break;
@@ -939,7 +942,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     final var action = ofNullable(nodes.get( context.currentNodeId() ))
                             .orElseThrow( () -> RunErrors.missingNode.exception( config, context.currentNodeId()));
 
-                    final var clonedState = cloneState(context.currentState());
+                    final var clonedState = cloneState(context.currentState(), config);
 
                     try {
 
@@ -1121,8 +1124,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
 
         @SuppressWarnings("unchecked")
-        protected Output buildNodeOutput(String nodeId ) throws Exception {
-            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState()) );
+        protected Output buildNodeOutput( String nodeId, RunnableConfig config ) throws Exception {
+            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState(), config) );
         }
 
         @SuppressWarnings("unchecked")
@@ -1226,7 +1229,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             Optional<Checkpoint>  cp = addCheckpoint(config, context.currentNodeId(), context.currentState(), context.nextNodeId());
             return completedFuture(( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
                     buildStateSnapshot(cp.get()) :
-                    buildNodeOutput( context.currentNodeId() ))
+                    buildNodeOutput( context.currentNodeId(), config ))
                     ;
         }
 
@@ -1304,7 +1307,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     var output =  ( cp.isPresent() && config.streamMode() == StreamMode.SNAPSHOTS) ?
                             buildStateSnapshot(cp.get()) :
-                            buildNodeOutput( context.currentNodeId() );
+                            buildNodeOutput( context.currentNodeId(), config );
 
                     context.setCurrentNodeId(context.nextNodeId());
 
@@ -1313,7 +1316,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 if( END.equals(context.nextNodeId()) ) {
                     context.reset();
-                    return Data.of( buildNodeOutput( END ) );
+                    return Data.of( buildNodeOutput( END, config ) );
                 }
 
                 final var resumeFrom = context.getResumeFromAndReset();
@@ -1329,11 +1332,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 // check on previous node
                 if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
-                    return Data.done( InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build() );
+                    return Data.done( InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build() );
                 }
 
                 if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
-                    return Data.done(InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build() );
+                    return Data.done(InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build() );
                 }
 
                 context.setCurrentNodeId( context.nextNodeId() );
@@ -1349,7 +1352,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 if (action == null)
                     throw RunErrors.missingNode.exception( config, context.currentNodeId());
 
-                final var clonedState = cloneState(context.currentState());
+                final var clonedState = cloneState(context.currentState(), config);
 
                 try {
                     return applyAction(action, context.currentNodeId(), clonedState, config);
