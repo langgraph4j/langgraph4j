@@ -10,6 +10,7 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
     protected final ObjectMapper objectMapper;
 
     protected TypeMapper typeMapper = new TypeMapper();
+    private final Map<String, Object> transientData = new HashMap<>(8);
 
     protected JacksonStateSerializer( AgentStateFactory<State> stateFactory ) {
         this( stateFactory, new ObjectMapper() );
@@ -55,14 +57,36 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
         return "application/json";
     }
 
-    @Override
     public final String writeDataAsString(Map<String, Object> data) throws IOException {
-        return objectMapper.writeValueAsString(data);
+
+        final Map<String,Object> serializedData;
+
+        if( transientAttributeSet.isEmpty() ) {
+            serializedData = data;
+        } else {
+            serializedData = new HashMap<>(data);
+
+            transientData.clear();
+
+            for( String key : transientAttributeSet ) {
+                if( serializedData.containsKey(key) ) {
+                    transientData.put(key, serializedData.remove(key));
+                }
+            }
+        }
+
+        return objectMapper.writeValueAsString(serializedData);
     }
 
     @Override
     public final Map<String, Object> readDataFromString(String string) throws IOException {
-        return objectMapper.readValue(string, new TypeReference<>() {});
+        final var data =  objectMapper.readValue(string, new TypeReference<Map<String, Object>>() {});
+        for( String key : transientAttributeSet ) {
+            if( transientData.containsKey(key) ) {
+                data.put(key, transientData.get(key));
+            }
+        }
+        return data;
     }
 
 }
