@@ -403,7 +403,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
     State cloneState( Map<String,Object> data, RunnableConfig runnableConfig ) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         if(runnableConfig.isCloneStateDisabled()) {
-            return stateGraph.getStateFactory().apply(data);
+            return stateGraph.getStateSerializer().stateOf(data);
         }
         return stateGraph.getStateSerializer().cloneObject(data);
     }
