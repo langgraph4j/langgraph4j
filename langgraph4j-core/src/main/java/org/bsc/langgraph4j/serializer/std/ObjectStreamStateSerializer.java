@@ -115,8 +115,6 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
         } else {
             serializedData = new HashMap<>(data);
 
-            transientData.clear();
-
             for( String key : transientAttributeSet ) {
                 if( serializedData.containsKey(key) ) {
                     transientData.put(key, serializedData.remove(key));
