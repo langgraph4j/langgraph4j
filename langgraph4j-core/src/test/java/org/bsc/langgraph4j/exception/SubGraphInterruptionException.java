@@ -1,6 +1,6 @@
 package org.bsc.langgraph4j.exception;
 
-import org.bsc.langgraph4j.GraphRunException;
+import org.bsc.langgraph4j.GraphRunnerException;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.state.AgentState;
@@ -9,7 +9,7 @@ import org.bsc.langgraph4j.utils.ExceptionUtils;
 import java.util.Map;
 import java.util.Optional;
 
-public class SubGraphInterruptionException extends GraphRunException {
+public class SubGraphInterruptionException extends GraphRunnerException {
 
     public static Optional<SubGraphInterruptionException> of(Throwable throwable) {
         return ExceptionUtils.findCauseByType( throwable, SubGraphInterruptionException.class );

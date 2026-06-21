@@ -708,7 +708,7 @@ public class LG4JTest implements LG4JLoggable {
         }
         catch( Exception ex ) {
 
-            final var runException = ExceptionUtils.findCauseByType(ex, GraphRunException.class);
+            final var runException = ExceptionUtils.findCauseByType(ex, GraphRunnerException.class);
             assertTrue( runException.isPresent() );
             final var config = runException.get().config();
             assertEquals("node_with_exception", config.nodeId() );
@@ -726,7 +726,7 @@ public class LG4JTest implements LG4JLoggable {
     void testHandleGraphRunException() throws GraphStateException {
         final var workflow = new StateGraph<>(MessagesState.SCHEMA, State::new)
                 .addNode( "node_with_exception", ( state, config ) ->
-                        failedFuture(new GraphRunException( config, "test exception"))
+                        failedFuture(new GraphRunnerException( config, "test exception"))
                 )
                 .addEdge(START, "node_with_exception")
                 .addEdge("node_with_exception", END)
@@ -741,8 +741,8 @@ public class LG4JTest implements LG4JLoggable {
         catch( Exception ex ) {
 
             final var rootException = ExceptionUtils.getRootCause(ex);
-            assertInstanceOf( GraphRunException.class, rootException);
-            final var runException = (GraphRunException)rootException;
+            assertInstanceOf( GraphRunnerException.class, rootException);
+            final var runException = (GraphRunnerException)rootException;
             final var config = runException.config();
             assertEquals("node_with_exception", config.nodeId() );
             assertTrue( config.graphId().isPresent() );

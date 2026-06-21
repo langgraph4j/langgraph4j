@@ -259,7 +259,7 @@ public class LG4JCancellationTest {
                 log.info("iteration is on: {}", output);
             }).exceptionally(ex -> {
                 assertTrue(generator.isCancelled());
-                assertInstanceOf(GraphRunException.class, ex.getCause());
+                assertInstanceOf(GraphRunnerException.class, ex.getCause());
                 assertInstanceOf(InterruptedException.class, ExceptionUtils.getRootCause(ex));
                 assertEquals( 2, taskExecuted.get() );
                 return AsyncGenerator.IsCancellable.CANCELLED;

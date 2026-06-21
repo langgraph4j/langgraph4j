@@ -65,8 +65,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
          * @param args the arguments to format the error message
          * @return a new GraphRunnerException
          */
-        GraphRunException exception(RunnableConfig config, String... args) {
-            return new GraphRunException( config, errorMessage.formatted( (Object[]) args));
+        GraphRunnerException exception(RunnableConfig config, String... args) {
+            return new GraphRunnerException( config, errorMessage.formatted( (Object[]) args));
         }
     }
 
@@ -964,13 +964,13 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 }
             }
-            catch( GraphRunException e ) {
+            catch( GraphRunnerException e ) {
                 log.error( e.getMessage(), e );
                 $1.dispatchAsync( AsyncGenerator.Data.error( e ) );
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
-                $1.dispatchAsync( AsyncGenerator.Data.error( new GraphRunException( config, e) ));
+                $1.dispatchAsync( AsyncGenerator.Data.error( new GraphRunnerException( config, e) ));
             }
 
         }
@@ -1365,13 +1365,13 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 }
 
             }
-            catch( GraphRunException e ) {
+            catch( GraphRunnerException e ) {
                 log.error( e.getMessage(), e );
                 return Data.error( e );
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
-                return Data.error( new GraphRunException( config, e) );
+                return Data.error( new GraphRunnerException( config, e) );
             }
 
         }
