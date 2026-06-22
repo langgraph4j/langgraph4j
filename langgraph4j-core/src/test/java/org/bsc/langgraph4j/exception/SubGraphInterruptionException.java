@@ -9,6 +9,7 @@ import org.bsc.langgraph4j.utils.ExceptionUtils;
 import java.util.Map;
 import java.util.Optional;
 
+
 public class SubGraphInterruptionException extends GraphRunnerException {
 
     public static Optional<SubGraphInterruptionException> of(Throwable throwable) {
@@ -20,8 +21,8 @@ public class SubGraphInterruptionException extends GraphRunnerException {
     final Map<String, Object> state;
     final InterruptionMetadata<? extends AgentState> interruptionMetadata;
 
-    public SubGraphInterruptionException(RunnableConfig config, String parentNodeId, String nodeId, Map<String, Object> state) {
-        super( config, "interruption in subgraph: %s on node: %s".formatted( parentNodeId, nodeId)  );
+    public SubGraphInterruptionException(RunnableConfig config,String parentNodeId, String nodeId, Map<String, Object> state) {
+        super(config, "interruption in subgraph: %s on node: %s".formatted( parentNodeId, nodeId));
         this.parentNodeId = parentNodeId;
         this.nodeId = nodeId;
         this.state = state;
@@ -29,7 +30,7 @@ public class SubGraphInterruptionException extends GraphRunnerException {
     }
 
     public SubGraphInterruptionException(RunnableConfig config, InterruptionMetadata<? extends AgentState> interruptionMetadata) {
-        super(config, "interruption in subgraph: %s on node: %s".formatted( "NONE", interruptionMetadata.nodeId()));
+        super(config, "interruption in subgraph: %s on node: %s".formatted("NONE", interruptionMetadata.nodeId()));
         this.parentNodeId = "NONE";
         this.nodeId = interruptionMetadata.nodeId();
         this.state = interruptionMetadata.state().data();
@@ -44,8 +45,9 @@ public class SubGraphInterruptionException extends GraphRunnerException {
         return parentNodeId;
     }
 
-    public String nodeId() {
-        return nodeId;
+    @Override
+    public Optional<String> nodeId() {
+        return Optional.ofNullable(nodeId);
     }
 
     public Map<String, Object> state() {

@@ -405,7 +405,7 @@ public class CompiledSubGraphTest implements LG4JLoggable {
                 break;
             }
             catch( Exception ex ) {
-                var interruptException = SubGraphInterruptionException.of(ex);
+                Optional<SubGraphInterruptionException> interruptException = SubGraphInterruptionException.of(ex);
                 if( interruptException.isPresent() ) {
 
                     log.info("SubGraphInterruptionException: {}", interruptException.get().getMessage());
