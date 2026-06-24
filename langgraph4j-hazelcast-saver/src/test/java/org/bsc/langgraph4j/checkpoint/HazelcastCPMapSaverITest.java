@@ -9,6 +9,7 @@ import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
+import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -102,6 +103,7 @@ public class HazelcastCPMapSaverITest {
                 .hazelcastInstance(member)
                 .mapType(HazelcastSaver.MapType.CP_MAP)
                 .mapName(mapName)
+                .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
                 .build();
 
         NodeAction<AgentState> agent_1 = state -> Map.of("agent_1:prop1", "agent_1:test");
@@ -129,6 +131,7 @@ public class HazelcastCPMapSaverITest {
                 .hazelcastInstance(member)
                 .mapType(HazelcastSaver.MapType.CP_MAP)
                 .mapName(mapName)
+                .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
                 .build();
 
         var workflow2 = graph.compile(CompileConfig.builder()

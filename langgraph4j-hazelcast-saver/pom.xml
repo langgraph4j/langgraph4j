@@ -33,24 +33,16 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <!-- Used to encode the checkpoint list as JSON; core declares Jackson as "provided" -->
+        <!-- Needed at runtime only for the JSON path (JacksonCheckpointListSerializer). Declared
+             "provided" like langgraph4j-core so binary-only consumers don't pull Jackson transitively;
+             supply Jackson yourself when using a JacksonStateSerializer. -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+            <scope>provided</scope>
         </dependency>
 
-        <!--
-            Hazelcast is "provided": the consumer supplies the jar, so the same saver works on either
-            the open-source Community Edition (com.hazelcast:hazelcast) or the commercial Enterprise
-            Edition (com.hazelcast:hazelcast-enterprise) without a clashing duplicate on the classpath.
-            The CPMap backing (mapType(MapType.CP_MAP)) is gated by the Enterprise license at runtime only; its
-            API ships in the CE jar, so this whole module compiles against CE. The bundled Java client
-            (HazelcastClient) is part of this same jar.
-
-            The actual Hazelcast dependency is declared in the "community" profile (active by default,
-            CE jar) and swapped for the Enterprise jar by the "enterprise-it" profile below.
-        -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

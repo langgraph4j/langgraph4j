@@ -7,9 +7,15 @@ workflow state survives process restarts and can be shared across the members of
 ## Storage model
 
 All checkpoints of a single thread are stored as **one map entry**: the key is the `threadId` and
-the value is the JSON-encoded, time-ordered list of that thread's checkpoints (most recent first).
-The per-checkpoint `state` is encoded with the configured `StateSerializer`, or plain Jackson JSON
-when none is set.
+the value is the serialized, time-ordered list of that thread's checkpoints (most recent first).
+This is the same whole-list-per-key model that the core `FileSystemSaver` uses (one file per
+thread); here a map entry takes the place of the file.
+
+Serialization reuses the framework's checkpoint-list serializers, chosen from the required
+`StateSerializer`: a `JacksonStateSerializer` selects `JacksonCheckpointListSerializer` (JSON,
+stored as the map value directly), and any other `StateSerializer` selects `CheckpointListSerializer`
+(binary, stored Base64-encoded). Read the list back with a saver configured the same way it was
+written.
 
 This single-value-per-thread layout keeps reads and writes atomic per thread and is the natural fit
 for a `CPMap`, which exposes only get-by-key with no key enumeration. It is chosen for simplicity and
@@ -67,6 +73,7 @@ HazelcastInstance hz = Hazelcast.newHazelcastInstance(new Config());
 
 var saver = HazelcastSaver.builder()
         .hazelcastInstance(hz)
+        .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
         .build();
 ```
 
@@ -79,18 +86,24 @@ HazelcastInstance hz = HazelcastClient.newHazelcastClient(cfg);
 
 var saver = HazelcastSaver.builder()
         .hazelcastInstance(hz)
+        .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
         .mapType(HazelcastSaver.MapType.CP_MAP)   // linearizable CP map (Enterprise)
         .mapName("agentCheckpoints")
         .build();
 ```
 
-### Custom state serializer
+### State serialization (JSON vs. binary)
+
+A `StateSerializer` is **required**. A `JacksonStateSerializer` stores checkpoints as JSON; any other
+`StateSerializer` (e.g. `ObjectStreamStateSerializer`) stores them as Base64-encoded binary. Reload
+checkpoints with a saver configured the same way they were written.
 
 ```java
-var saver = HazelcastSaver.builder()
-        .hazelcastInstance(hz)
-        .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
-        .build();
+// Binary (Java serialization)
+.stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
+
+// JSON (subclass JacksonStateSerializer for your state type)
+.stateSerializer(myJacksonStateSerializer)
 ```
 
 ## Builder options
@@ -100,7 +113,7 @@ var saver = HazelcastSaver.builder()
 | `hazelcastInstance(HazelcastInstance)` | — (required) | Embedded member or client instance |
 | `mapName(String)` | `langgraph4j-checkpoints` | Name of the backing Hazelcast map |
 | `mapType(MapType)` | `MapType.I_MAP` | `MapType.CP_MAP` selects the Enterprise CPMap backing |
-| `stateSerializer(StateSerializer)` | none (Jackson JSON) | Encoder for each checkpoint's state |
+| `stateSerializer(StateSerializer)` | — (required) | JSON if a `JacksonStateSerializer`, otherwise Base64 binary |
 
 ## Tests
 

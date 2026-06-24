@@ -1,17 +1,20 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.CPMap;
 import com.hazelcast.map.IMap;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
+import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Base64;
+import java.util.LinkedList;
+import java.util.Objects;
 
 /**
  * <p>{@code HazelcastSaver} persists LangGraph4j workflow checkpoints in a Hazelcast
@@ -19,9 +22,13 @@ import java.util.*;
  * across the members of a Hazelcast cluster.</p>
  *
  * <p><b>Storage model.</b> All checkpoints of a single thread are stored as one map entry:
- * the key is the {@code threadId} and the value is the JSON-encoded, time-ordered list of
- * that thread's checkpoints (most recent first). This mirrors the in-memory model used by
- * {@link AbstractCheckpointSaver}, which hands this saver the full checkpoint list to persist.</p>
+ * the key is the {@code threadId} and the value is the serialized, time-ordered list of that
+ * thread's checkpoints (most recent first). This is the same whole-list-per-key model used by
+ * {@link FileSystemSaver} (one file per thread); here a Hazelcast map entry takes the place of the
+ * file. Serialization reuses the framework's checkpoint-list serializers: a
+ * {@link JacksonCheckpointListSerializer} (JSON, stored as the map value directly) when a
+ * {@link JacksonStateSerializer} is configured, otherwise a {@link CheckpointListSerializer}
+ * (binary, stored Base64-encoded).</p>
  *
  * <p><b>Write amplification.</b> Because a thread's checkpoints live in a single value, each
  * appended checkpoint re-serializes and rewrites the entire list for that thread (an {@code O(n)}
@@ -52,6 +59,7 @@ import java.util.*;
  *
  * var saver = HazelcastSaver.builder()
  *         .hazelcastInstance(hz)
+ *         .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
  *         .build();
  * }</pre>
  *
@@ -63,6 +71,7 @@ import java.util.*;
  *
  * var saver = HazelcastSaver.builder()
  *         .hazelcastInstance(hz)
+ *         .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
  *         .mapType(HazelcastSaver.MapType.CP_MAP)   // linearizable CP map (Enterprise)
  *         .mapName("agentCheckpoints")
  *         .build();
@@ -90,16 +99,20 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
         CP_MAP
     }
 
-    private static final String SCHEMA_VERSION = "1";
-
     private final CheckpointStore store;
-    private final ObjectMapper objectMapper;
-    private final StateSerializer<? extends AgentState> stateSerializer;
+    private final Serializer<LinkedList<Checkpoint>> checkpointsSerializer;
 
     private HazelcastSaver(Builder builder) {
         Objects.requireNonNull(builder.hazelcastInstance, "hazelcastInstance cannot be null");
+        final var stateSerializer = Objects.requireNonNull(builder.stateSerializer, "stateSerializer cannot be null");
         final String mapName = (builder.mapName == null || builder.mapName.isBlank())
                 ? DEFAULT_MAP_NAME : builder.mapName;
+
+        // Reuse the framework's checkpoint-list serializers (same choice as FileSystemSaver):
+        // JSON when the state serializer is Jackson-based, binary otherwise.
+        this.checkpointsSerializer = (stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer)
+                ? new JacksonCheckpointListSerializer(jsonStateSerializer)
+                : new CheckpointListSerializer(stateSerializer);
 
         // CPMap is an Enterprise feature: its API is in the CE jar but it throws at runtime
         // unless a Hazelcast Enterprise license is present and the CP Subsystem is enabled.
@@ -107,9 +120,6 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
             case CP_MAP -> new CPMapStore(builder.hazelcastInstance.getCPSubsystem().getMap(mapName));
             case I_MAP -> new IMapStore(builder.hazelcastInstance.getMap(mapName));
         };
-
-        this.objectMapper = new ObjectMapper();
-        this.stateSerializer = builder.stateSerializer;
     }
 
     public static Builder builder() {
@@ -143,150 +153,33 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
     }
 
     // -------------------------------------------------------------------------
-    // Encoding / decoding
+    // Encoding / decoding (whole checkpoint list <-> String map value)
     // -------------------------------------------------------------------------
 
-    private enum StateEncoding {
-        SERIALIZER_BYTES("serializer-bytes"),
-        PLAIN_TEXT_UTF8("plain-text-utf8");
-
-        private final String value;
-
-        StateEncoding(String value) {
-            this.value = value;
-        }
-
-        static Optional<StateEncoding> fromValue(String value) {
-            if (value == null || value.isBlank()) {
-                return Optional.empty();
-            }
-            for (StateEncoding encoding : values()) {
-                if (encoding.value.equals(value)) {
-                    return Optional.of(encoding);
-                }
-            }
-            return Optional.empty();
-        }
-    }
-
-    private record EncodedState(String payload, String contentType, String encoding) {}
-
     private String encode(LinkedList<Checkpoint> checkpoints) throws IOException {
-        final List<Map<String, Object>> encoded = new ArrayList<>(checkpoints.size());
-        for (Checkpoint checkpoint : checkpoints) {
-            final EncodedState state = encodeState(checkpoint.getState());
-            final Map<String, Object> entry = getObjectMap(checkpoint, state);
-            encoded.add(entry);
+        if (checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer) {
+            return jsonSerializer.writeDataAsString(checkpoints);
+        } else {
+            return Base64.getEncoder().encodeToString(checkpointsSerializer.objectToBytes(checkpoints));
         }
-
-        final Map<String, Object> root = new LinkedHashMap<>();
-        root.put("schemaVersion", SCHEMA_VERSION);
-        root.put("checkpoints", encoded);
-        return objectMapper.writeValueAsString(root);
     }
 
-    private static Map<String, Object> getObjectMap(Checkpoint checkpoint, EncodedState state) {
-        final Map<String, Object> entry = new LinkedHashMap<>();
-        entry.put("id", checkpoint.getId());
-        entry.put("nodeId", checkpoint.getNodeId());
-        entry.put("nextNodeId", checkpoint.getNextNodeId());
-        entry.put("state", state.payload());
-        if (state.contentType() != null) {
-            entry.put("contentType", state.contentType());
-        }
-        if (state.encoding() != null) {
-            entry.put("encoding", state.encoding());
-        }
-        return entry;
-    }
-
-    @SuppressWarnings("unchecked")
     private LinkedList<Checkpoint> decode(String value) throws IOException, ClassNotFoundException {
-        final LinkedList<Checkpoint> checkpoints = new LinkedList<>();
         if (value == null || value.isBlank()) {
-            return checkpoints;
+            return new LinkedList<>();
         }
-
-        final Map<String, Object> root = objectMapper.readValue(value, Map.class);
-        final List<Map<String, Object>> entries = (List<Map<String, Object>>) root.get("checkpoints");
-        if (entries == null) {
-            return checkpoints;
-        }
-
-        for (Map<String, Object> entry : entries) {
-            final String payload = (String) entry.get("state");
-            final String contentType = (String) entry.get("contentType");
-            final String encoding = (String) entry.get("encoding");
-            final Map<String, Object> state = decodeState(payload, contentType, encoding);
-
-            checkpoints.add(Checkpoint.builder()
-                    .id((String) entry.get("id"))
-                    .nodeId((String) entry.get("nodeId"))
-                    .nextNodeId((String) entry.get("nextNodeId"))
-                    .state(state)
-                    .build());
-        }
-        return checkpoints;
-    }
-
-    private EncodedState encodeState(Map<String, Object> data) throws IOException {
-        Objects.requireNonNull(data, "data cannot be null");
-
-        if (stateSerializer == null) {
-            return new EncodedState(objectMapper.writeValueAsString(data), null, null);
-        }
-
-        if (stateSerializer instanceof PlainTextStateSerializer<?> serializer) {
-            final var bytes = serializer.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-            return new EncodedState(Base64.getEncoder().encodeToString(bytes),
-                    stateSerializer.contentType(), StateEncoding.PLAIN_TEXT_UTF8.value);
-        }
-
-        final var bytes = stateSerializer.dataToBytes(data);
-        return new EncodedState(Base64.getEncoder().encodeToString(bytes),
-                stateSerializer.contentType(), StateEncoding.SERIALIZER_BYTES.value);
-    }
-
-    private Map<String, Object> decodeState(String payload, String contentType, String encodingValue)
-            throws IOException, ClassNotFoundException {
-
-        if (stateSerializer == null) {
-            return decodeJsonState(payload);
-        }
-
-        if (contentType != null && !Objects.equals(contentType, stateSerializer.contentType())) {
-            throw new IllegalStateException(String.format(
-                    "Content Type used for stored state '%s' is different from one '%s' used to deserialize it",
-                    contentType, stateSerializer.contentType()));
-        }
-
-        final var bytes = Base64.getDecoder().decode(payload);
-        final var encoding = StateEncoding.fromValue(encodingValue);
-
-        if (encoding.isPresent()) {
-            return switch (encoding.get()) {
-                case SERIALIZER_BYTES -> stateSerializer.dataFromBytes(bytes);
-                case PLAIN_TEXT_UTF8 -> decodePlainTextBytes(bytes);
-            };
-        }
-
-        if (stateSerializer instanceof PlainTextStateSerializer<?>) {
-            return decodePlainTextBytes(bytes);
-        }
-        return stateSerializer.dataFromBytes(bytes);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> decodeJsonState(String payload) throws IOException {
-        return objectMapper.readValue(payload, Map.class);
-    }
-
-    private Map<String, Object> decodePlainTextBytes(byte[] bytes) throws IOException {
-        if (!(stateSerializer instanceof PlainTextStateSerializer<?> serializer)) {
+        try {
+            if (checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer) {
+                return jsonSerializer.readDataFromString(value);
+            } else {
+                return checkpointsSerializer.bytesToObject(Base64.getDecoder().decode(value));
+            }
+        } catch (IOException | ClassNotFoundException | IllegalArgumentException e) {
             throw new IllegalStateException(
-                    "Stored state was encoded as plain text, but configured stateSerializer is not a PlainTextStateSerializer");
+                    "Failed to decode stored checkpoints. A Hazelcast map entry must be read with the same "
+                            + "StateSerializer kind it was written with (JSON vs. binary); verify the saver "
+                            + "uses a matching serializer.", e);
         }
-        return serializer.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
     }
 
     // -------------------------------------------------------------------------
@@ -342,7 +235,8 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
     /**
      * Builder for {@link HazelcastSaver}.
      * <p>
-     * A {@link HazelcastInstance} is required; it may represent an embedded member or a client.
+     * A {@link HazelcastInstance} and a {@link StateSerializer} are required; the instance may
+     * represent an embedded member or a client.
      */
     public static class Builder {
         private HazelcastInstance hazelcastInstance;
@@ -391,11 +285,12 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
         }
 
         /**
-         * Sets the state serializer used to encode/decode the {@code state} of each checkpoint.
+         * Sets the state serializer used to encode/decode the checkpoints. Required.
          * <p>
-         * When unset, the state map is stored as plain JSON via Jackson.
+         * A {@link JacksonStateSerializer} stores checkpoints as JSON; any other
+         * {@link StateSerializer} stores them as Base64-encoded binary.
          *
-         * @param stateSerializer the state serializer (optional)
+         * @param stateSerializer the state serializer; must not be {@code null}
          * @return this builder
          */
         public <State extends AgentState> Builder stateSerializer(StateSerializer<State> stateSerializer) {
@@ -407,7 +302,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
          * Builds the {@link HazelcastSaver}.
          *
          * @return a new {@link HazelcastSaver}
-         * @throws NullPointerException if {@code hazelcastInstance} was not set
+         * @throws NullPointerException if {@code hazelcastInstance} or {@code stateSerializer} was not set
          */
         public HazelcastSaver build() {
             return new HazelcastSaver(this);

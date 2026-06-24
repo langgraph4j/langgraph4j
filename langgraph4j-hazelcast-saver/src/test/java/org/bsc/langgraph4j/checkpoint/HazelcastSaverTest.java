@@ -77,20 +77,15 @@ public class HazelcastSaverTest {
 
     /** Each saver gets its own map so tests are isolated from one another. */
     protected HazelcastSaver createSaver() {
-        return HazelcastSaver.builder()
-                .hazelcastInstance(hazelcastInstance)
-                .mapName("checkpoints-" + UUID.randomUUID())
-                .build();
+        return createSaver("checkpoints-" + UUID.randomUUID(), StateSerializerEnum.BINARY);
     }
 
     protected HazelcastSaver createSaver(String mapName, StateSerializerEnum param) {
-        var builder = HazelcastSaver.builder()
+        return HazelcastSaver.builder()
                 .hazelcastInstance(hazelcastInstance)
-                .mapName(mapName);
-        if (param != null) {
-            builder.stateSerializer(param.stateSerializer);
-        }
-        return builder.build();
+                .mapName(mapName)
+                .stateSerializer(param.stateSerializer)
+                .build();
     }
 
     @Test
@@ -122,7 +117,7 @@ public class HazelcastSaverTest {
     @Test
     public void testCheckpointWithNotReleasedThread() throws Exception {
         var mapName = "checkpoints-" + UUID.randomUUID();
-        var saver = createSaver(mapName, null);
+        var saver = createSaver(mapName, StateSerializerEnum.BINARY);
 
         NodeAction<AgentState> agent_1 = state -> Map.of("agent_1:prop1", "agent_1:test");
 
@@ -163,7 +158,7 @@ public class HazelcastSaverTest {
         assertEquals("update test", updatedSnapshot.get().state().value("update").get());
 
         // Reload checkpoints from Hazelcast with a fresh saver over the same map
-        var saver2 = createSaver(mapName, null);
+        var saver2 = createSaver(mapName, StateSerializerEnum.BINARY);
         workflow = graph.compile(CompileConfig.builder()
                 .checkpointSaver(saver2)
                 .releaseThread(false)
@@ -217,6 +212,11 @@ public class HazelcastSaverTest {
         var history2 = workflow2.getStateHistory(runnableConfig);
         assertFalse(history2.isEmpty());
         assertEquals(history.size(), history2.size());
+
+        // Assert the state VALUE survived the serialize -> Hazelcast -> deserialize round-trip
+        var reloaded = workflow2.lastStateOf(runnableConfig);
+        assertTrue(reloaded.isPresent());
+        assertEquals("agent_1:test", reloaded.get().state().value("agent_1:prop1").orElse(null));
 
         saver2.release(runnableConfig);
     }
