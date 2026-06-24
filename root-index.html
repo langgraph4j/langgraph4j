@@ -359,6 +359,14 @@
             showError("No documentation versions are currently deployed.");
             return;
           }
+
+          const mainVersion = versions.find(v =>
+            v.version === "main" || (v.aliases && v.aliases.includes("main"))
+          );
+          if (mainVersion) {
+            window.location.replace(`./${mainVersion.version}/`);
+            return;
+          }
           
           // Sort versions: 'latest' alias or release versions first, dev last
           versions.sort((a, b) => {
