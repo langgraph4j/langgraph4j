@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Documentation Portal - Browse through various versions of our documentation including latest releases and active development builds.">
+  <title>Documentation Portal</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.6);
+      --card-hover-bg: rgba(31, 41, 55, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(99, 102, 241, 0.4);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      --gradient-latest: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --gradient-dev: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --gradient-release: linear-gradient(135deg, #06b6d4 0%, #0d9488 100%);
+      --glow-color: rgba(99, 102, 241, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: "";
+      position: absolute;
+      width: 1000px;
+      height: 1000px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.04) 50%, rgba(11, 15, 25, 0) 100%);
+      top: -300px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    main {
+      width: 100%;
+      max-width: 680px;
+      padding: 60px 24px;
+      z-index: 1;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+      animation: pulse 4s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2); }
+      100% { transform: scale(1.05); box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3); }
+    }
+
+    .logo-svg {
+      color: #a855f7;
+      width: 32px;
+      height: 32px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 12px;
+      background: linear-gradient(to right, #ffffff, #d1d5db);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .portal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .versions-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Version Card styling */
+    .version-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .version-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--glow-color) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 0;
+    }
+
+    .version-card:hover {
+      transform: translateY(-2px);
+      background: var(--card-hover-bg);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 20px var(--glow-color);
+    }
+
+    .version-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 1;
+      flex-grow: 1;
+      padding-right: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .version-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge-latest {
+      background: var(--gradient-latest);
+    }
+
+    .badge-dev {
+      background: var(--gradient-dev);
+    }
+
+    .badge-release {
+      background: var(--gradient-release);
+    }
+
+    .version-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .card-arrow {
+      position: relative;
+      z-index: 1;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .version-card:hover .card-arrow {
+      color: #ffffff;
+      transform: translateX(4px);
+    }
+
+    /* States */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(99, 102, 241, 0.1);
+      border-radius: 50%;
+      border-top-color: #6366f1;
+      margin: 0 auto 16px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-state {
+      display: none;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 24px;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    footer a {
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    footer a:hover {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  
+  <main>
+    <header>
+      <div class="logo-container">
+        <!-- Documentation Icon -->
+        <svg class="logo-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+      </div>
+      <h1 id="portal-title">Documentation Portal</h1>
+      <p class="subtitle">Select a version below to explore the project documentation, APIs, and release guides.</p>
+    </header>
+
+    <section class="portal-card" aria-labelledby="portal-title">
+      <h2 class="section-title">Available Versions</h2>
+      
+      <div id="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Fetching active deployments...</p>
+      </div>
+
+      <div id="error" class="error-state">
+        Unable to load the version list.
+      </div>
+
+      <div id="versions-list" class="versions-grid">
+        <!-- Rendered Dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Powered by <a href="https://www.mkdocs.org/" target="_blank" rel="noopener">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">Material</a> & <a href="https://github.com/jimporter/mike" target="_blank" rel="noopener">Mike</a></p>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const versionsList = document.getElementById("versions-list");
+      const loadingElement = document.getElementById("loading");
+      const errorElement = document.getElementById("error");
+
+      fetch("./versions.json")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Could not fetch versions.json");
+          }
+          return response.json();
+        })
+        .then(versions => {
+          loadingElement.style.display = "none";
+          if (!versions || versions.length === 0) {
+            showError("No documentation versions are currently deployed.");
+            return;
+          }
+          
+          // Sort versions: 'latest' alias or release versions first, dev last
+          versions.sort((a, b) => {
+            if (a.version === "dev") return 1;
+            if (b.version === "dev") return -1;
+            return b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' });
+          });
+
+          versions.forEach(v => {
+            const card = document.createElement("a");
+            card.className = "version-card";
+            card.href = `./${v.version}/`;
+            card.id = `version-link-${v.version.replace(/[^a-zA-Z0-9]/g, '-')}`;
+
+            const isDev = v.version === "dev";
+            const isLatest = v.aliases && v.aliases.includes("latest");
+            
+            let badgeHtml = "";
+            if (isLatest) {
+              badgeHtml = `<span class="badge badge-latest">Latest</span>`;
+            } else if (isDev) {
+              badgeHtml = `<span class="badge badge-dev">Dev</span>`;
+            } else {
+              badgeHtml = `<span class="badge badge-release">Release</span>`;
+            }
+
+            const desc = isDev 
+              ? "Development build containing the newest updates from the develop branch." 
+              : `Stable release version ${v.version}.`;
+
+            card.innerHTML = `
+              <div class="card-content">
+                <div class="card-header">
+                  <span class="version-title">${v.title || v.version}</span>
+                  ${badgeHtml}
+                </div>
+                <p class="version-desc">${desc}</p>
+              </div>
+              <div class="card-arrow" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
+              </div>
+            `;
+            versionsList.appendChild(card);
+          });
+        })
+        .catch(err => {
+          loadingElement.style.display = "none";
+          showError("Unable to fetch documentation versions. If this is a new deployment, please wait a few moments for the build to finish.");
+        });
+
+      function showError(message) {
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
