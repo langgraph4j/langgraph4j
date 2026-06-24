@@ -22,6 +22,25 @@ jobs:
         with:
           fetch-depth: 0 # Required by mike to access the gh-pages history
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build Maven Site
+        run: |
+          mvn site:site site:stage -T1
+
+      - name: Prepare MkDocs content
+        run: |
+          cp -r src/site/mkdocs target/mkdocs
+          cp how-tos/*.ipynb target/mkdocs/how-tos
+          cp -r target/staging/apidocs target/mkdocs/apidocs
+
+          # Copy Spring AI docs
+          rsync -avm --include='*/' --include='README.md' --exclude='*' spring-ai/ target/mkdocs/integrations/spring-ai/
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -34,7 +53,7 @@ jobs:
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
-            pip install mkdocs-material mike
+            pip install mkdocs-material mkdocs-jupyter mike
           fi
 
       - name: Configure Git Credentials
