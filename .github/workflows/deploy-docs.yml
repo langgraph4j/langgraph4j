@@ -1,7 +1,7 @@
 name: Deploy Documentation
 
 on:
-  push:
+#  push:
 #     branches:
 #       - develop
 #     tags:
