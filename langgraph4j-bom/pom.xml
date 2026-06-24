@@ -117,6 +117,11 @@
                 <artifactId>langgraph4j-cockroachdb-saver</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-hazelcast-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- studio -->
             <dependency>

@@ -1,0 +1,152 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.bsc.langgraph4j</groupId>
+        <artifactId>langgraph4j-parent</artifactId>
+        <version>1.8.19</version>
+    </parent>
+
+    <artifactId>langgraph4j-hazelcast-saver</artifactId>
+    <packaging>jar</packaging>
+
+    <description>Hazelcast Saver for LangGraph4j</description>
+    <name>langgraph4j::hazelcast-saver</name>
+    <url>https://github.com/langgraph4j/langgraph4j</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/langgraph4j/langgraph4j.git</connection>
+        <developerConnection>scm:git:https://github.com/langgraph4j/langgraph4j.git</developerConnection>
+        <url>https://github.com/langgraph4j/langgraph4j</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <hazelcast.version>5.7.0</hazelcast.version>
+        <jackson.version>2.21.1</jackson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>langgraph4j-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- Used to encode the checkpoint list as JSON; core declares Jackson as "provided" -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!--
+            Hazelcast is "provided": the consumer supplies the jar, so the same saver works on either
+            the open-source Community Edition (com.hazelcast:hazelcast) or the commercial Enterprise
+            Edition (com.hazelcast:hazelcast-enterprise) without a clashing duplicate on the classpath.
+            The CPMap backing (mapType(MapType.CP_MAP)) is gated by the Enterprise license at runtime only; its
+            API ships in the CE jar, so this whole module compiles against CE. The bundled Java client
+            (HazelcastClient) is part of this same jar.
+
+            The actual Hazelcast dependency is declared in the "community" profile (active by default,
+            CE jar) and swapped for the Enterprise jar by the "enterprise-it" profile below.
+        -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Keep Hazelcast cluster discovery on the loopback interface during tests -->
+                    <systemPropertyVariables>
+                        <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                    </systemPropertyVariables>
+                    <!-- *ITest.java are Enterprise-license-gated integration tests; excluded from CI -->
+                    <excludes>
+                        <exclude>**/*ITest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+            Default profile: open-source Community Edition jar. Active for every normal build
+            (including release), so the module always compiles and the IMap tests run on CE.
+            Deactivated automatically only when another profile of THIS pom (enterprise-it) is
+            activated, which is what lets the Enterprise jar take its place without a clash.
+        -->
+        <profile>
+            <id>community</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.hazelcast</groupId>
+                    <artifactId>hazelcast</artifactId>
+                    <version>${hazelcast.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!--
+            Enterprise integration-test profile (opt-in: -Penterprise-it). Replaces the CE jar with
+            the Enterprise jar (a drop-in superset, so the two must never coexist on the classpath),
+            adds the Hazelcast Enterprise Maven repository, and runs the otherwise-excluded *ITest.
+            The CPMap integration test still needs a license via HZ_LICENSEKEY (or the
+            hazelcast.enterprise.license.key system property) and skips when none is present.
+
+            Example:
+              HZ_LICENSEKEY=... ./mvnw -pl langgraph4j-hazelcast-saver -Penterprise-it test
+        -->
+        <profile>
+            <id>enterprise-it</id>
+            <repositories>
+                <repository>
+                    <id>hazelcast-release</id>
+                    <url>https://repository.hazelcast.com/release/</url>
+                </repository>
+            </repositories>
+            <dependencies>
+                <dependency>
+                    <groupId>com.hazelcast</groupId>
+                    <artifactId>hazelcast-enterprise</artifactId>
+                    <version>${hazelcast.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <!-- Override the default exclude so the *ITest run under this profile -->
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*ITest.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
