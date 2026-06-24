@@ -4,12 +4,36 @@ site_dir: target/sitedocs
 repo_url: https://github.com/bsorrentino/langgraph4j
 theme:
   name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   logo: images/langgraph4j-icon.png
   features:
     - navigation.tabs
+    - navigation.sections
+    - navigation.top
     - toc.integrate
     - toc.integrate.toc
     - toc.integrate.toc.inline
+    - search.suggest
+    - search.highlight
+extra:
+  version:
+    provider: mike
 plugins:
   - mkdocs-jupyter
   - search
