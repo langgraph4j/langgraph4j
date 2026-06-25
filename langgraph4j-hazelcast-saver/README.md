@@ -90,6 +90,9 @@ var saver = HazelcastSaver.builder()
         .build();
 ```
 
+> The `CPMap` path requires the Hazelcast **Enterprise** jar and an Enterprise cluster/client; the
+> Community Edition `com.hazelcast:hazelcast` dependency shown above covers only the `IMap` path.
+
 ### State serialization (JSON vs. binary)
 
 A `StateSerializer` is **required**. A `JacksonStateSerializer` stores checkpoints as JSON; any other
@@ -107,10 +110,10 @@ shipped by the integration modules, or subclass it yourself:
 
 ```java
 // JSON — langchain4j stack: pre-registers ChatMessage / ToolExecutionRequest / Content handlers
-// (from langgraph4j-langchain4j-core)
+// (from langgraph4j-langchain4j)
 .stateSerializer(new LC4jJacksonStateSerializer<>(AgentState::new))
 
-// JSON — spring-ai stack (from langgraph4j-spring-ai-core)
+// JSON — spring-ai stack (from langgraph4j-spring-ai)
 .stateSerializer(new SpringAIJacksonStateSerializer<>(AgentState::new))
 
 // JSON — custom: subclass JacksonStateSerializer for your state type and register any custom
