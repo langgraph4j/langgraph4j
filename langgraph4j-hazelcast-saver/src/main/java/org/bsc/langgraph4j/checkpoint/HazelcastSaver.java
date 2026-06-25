@@ -23,11 +23,9 @@ import java.util.Objects;
  *
  * <p><b>Storage model.</b> All checkpoints of a single thread are stored as one map entry:
  * the key is the {@code threadId} and the value is the serialized, time-ordered list of that
- * thread's checkpoints (most recent first). This is the same whole-list-per-key model used by
- * {@link FileSystemSaver} (one file per thread); here a Hazelcast map entry takes the place of the
- * file. Serialization reuses the framework's checkpoint-list serializers: a
- * {@link JacksonCheckpointListSerializer} (JSON, stored as the map value directly) when a
- * {@link JacksonStateSerializer} is configured, otherwise a {@link CheckpointListSerializer}
+ * thread's checkpoints (most recent first). Serialization reuses the framework's checkpoint-list
+ * serializers: a {@link JacksonCheckpointListSerializer} (JSON, stored as the map value directly)
+ * when a {@link JacksonStateSerializer} is configured, otherwise a {@link CheckpointListSerializer}
  * (binary, stored Base64-encoded).</p>
  *
  * <p><b>Write amplification.</b> Because a thread's checkpoints live in a single value, each
@@ -108,7 +106,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
         final String mapName = (builder.mapName == null || builder.mapName.isBlank())
                 ? DEFAULT_MAP_NAME : builder.mapName;
 
-        // Reuse the framework's checkpoint-list serializers (same choice as FileSystemSaver):
+        // Reuse the framework's checkpoint-list serializers:
         // JSON when the state serializer is Jackson-based, binary otherwise.
         this.checkpointsSerializer = (stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer)
                 ? new JacksonCheckpointListSerializer(jsonStateSerializer)
@@ -164,7 +162,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
         }
     }
 
-    private LinkedList<Checkpoint> decode(String value) throws IOException, ClassNotFoundException {
+    private LinkedList<Checkpoint> decode(String value) {
         if (value == null || value.isBlank()) {
             return new LinkedList<>();
         }

@@ -8,8 +8,6 @@ workflow state survives process restarts and can be shared across the members of
 
 All checkpoints of a single thread are stored as **one map entry**: the key is the `threadId` and
 the value is the serialized, time-ordered list of that thread's checkpoints (most recent first).
-This is the same whole-list-per-key model that the core `FileSystemSaver` uses (one file per
-thread); here a map entry takes the place of the file.
 
 Serialization reuses the framework's checkpoint-list serializers, chosen from the required
 `StateSerializer`: a `JacksonStateSerializer` selects `JacksonCheckpointListSerializer` (JSON,
@@ -33,7 +31,7 @@ The map type is selected with `mapType(MapType)`:
 
 | Map type | value | Consistency | Edition | Jar |
 | --- | --- | --- | --- | --- |
-| `IMap` (default) | `MapType.I_MAP` | AP, backup-replicated; survives one member loss, not linearizable | Community | `com.hazelcast:hazelcast` |
+| `IMap` (default) | `MapType.I_MAP` | AP, partitioned with synchronous backups; tolerates up to `backup-count` simultaneous member losses (default 1), not linearizable | Community | `com.hazelcast:hazelcast` |
 | `CPMap` | `MapType.CP_MAP` | Linearizable, Raft-backed (CP Subsystem); an acknowledged checkpoint is never lost while a CP majority is available | Enterprise | `com.hazelcast:hazelcast-enterprise` |
 
 For checkpointing you usually want the stronger `CPMap` guarantee, but it requires Hazelcast
@@ -101,9 +99,27 @@ checkpoints with a saver configured the same way they were written.
 ```java
 // Binary (Java serialization)
 .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
+```
 
-// JSON (subclass JacksonStateSerializer for your state type)
-.stateSerializer(myJacksonStateSerializer)
+`JacksonStateSerializer` is `abstract` (it recovers the concrete state type from its generic
+binding), so it can't be instantiated directly — either use one of the ready-made concrete subclasses
+shipped by the integration modules, or subclass it yourself:
+
+```java
+// JSON — langchain4j stack: pre-registers ChatMessage / ToolExecutionRequest / Content handlers
+// (from langgraph4j-langchain4j-core)
+.stateSerializer(new LC4jJacksonStateSerializer<>(AgentState::new))
+
+// JSON — spring-ai stack (from langgraph4j-spring-ai-core)
+.stateSerializer(new SpringAIJacksonStateSerializer<>(AgentState::new))
+
+// JSON — custom: subclass JacksonStateSerializer for your state type and register any custom
+// (de)serializers on objectMapper()/typeMapper() in the constructor
+class MyStateSerializer extends JacksonStateSerializer<AgentState> {
+    MyStateSerializer() { super(AgentState::new); }
+}
+...
+.stateSerializer(new MyStateSerializer())
 ```
 
 ## Builder options
