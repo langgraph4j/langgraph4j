@@ -1,0 +1,95 @@
+name: Deploy Documentation
+
+on:
+#  push:
+#     branches:
+#       - develop
+#     tags:
+#       - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy Multi-Version Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Required by mike to access the gh-pages history
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build Maven Site
+        run: |
+          mvn site:site site:stage -T1
+
+      - name: Prepare MkDocs content
+        run: |
+          cp -r src/site/mkdocs target/mkdocs
+          cp how-tos/*.ipynb target/mkdocs/how-tos
+          cp -r target/staging/apidocs target/mkdocs/apidocs
+
+          # Copy Spring AI docs
+          rsync -avm --include='*/' --include='README.md' --exclude='*' spring-ai/ target/mkdocs/integrations/spring-ai/
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+# FIX: No file in ... matched to [**/requirements.txt or **/pyproject.toml], make sure you have checked out the target repository
+#          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material mkdocs-jupyter mike
+
+      - name: Configure Git Credentials
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch gh-pages branch
+        run: |
+          git fetch origin gh-pages --depth=1 || true
+
+      - name: Deploy version with Mike
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # Extract version from tag and keep only major.minor (e.g., v1.0.5 -> 1.0)
+            TAG_NAME="${{ github.ref_name }}"
+            VERSION_FULL="${TAG_NAME#v}"
+            VERSION_NAME=$(echo "$VERSION_FULL" | cut -d. -f1,2)
+            echo "Deploying release version: $VERSION_NAME (from $TAG_NAME)"
+            mike deploy --push --update-aliases "$VERSION_NAME" latest
+            # Set this new version as the default alias target
+            mike set-default --push latest
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            echo "Deploying development version: dev"
+            mike deploy --push dev
+          else
+            # For manual workflow dispatch or other branches
+            echo "Deploying branch version: ${{ github.ref_name }}"
+            mike deploy --push "${{ github.ref_name }}"
+          fi
+
+      - name: Deploy Custom Root Index Page
+        run: |
+          # Clone the gh-pages branch to update root index.html with the custom version selector
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-dir
+          cp root-index.html gh-pages-dir/index.html
+          cd gh-pages-dir
+          git add index.html
+          git commit -m "Deploy custom root version selector landing page [skip ci]" || true
+          git push origin gh-pages
+          cd ..
+          rm -rf gh-pages-dir

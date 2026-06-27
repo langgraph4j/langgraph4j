@@ -4,12 +4,33 @@ site_dir: target/sitedocs
 repo_url: https://github.com/bsorrentino/langgraph4j
 theme:
   name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   logo: images/langgraph4j-icon.png
   features:
     - navigation.tabs
+    - navigation.sections
+    - navigation.top
     - toc.integrate
     - toc.integrate.toc
     - toc.integrate.toc.inline
+    - search.suggest
+    - search.highlight
 extra:
   version:
     provider: mike
@@ -24,7 +45,6 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - Home: 
     - Overview: index.md    
@@ -48,7 +68,7 @@ nav:
       - PlantUML: how-tos/plantuml.ipynb
       - Hooks: how-tos/hooks.ipynb
     - Integrations: 
-      - integrations/spring-ai/spring-ai-agent/README.md
+      - integrations/spring-ai.md
       - integrations/langchain4j.md      
     - Studio: studio/index.md
     - Builder: builder/index.md
