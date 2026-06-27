@@ -1,8 +1,8 @@
 name: Deploy Site to GitHub Pages
 
 on:
-  push:
-    branches: [ main ]  # or your default branch
+#  push:
+#    branches: [ main ]  # or your default branch
   workflow_dispatch:    # allows manual trigger
 
 permissions:

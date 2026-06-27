@@ -1,11 +1,11 @@
 name: Deploy Documentation
 
 on:
-  #  push:
-  #     branches:
-  #       - develop
-  #     tags:
-  #       - 'v*'
+#  push:
+#     branches:
+#       - develop
+#     tags:
+#       - 'v*'
   workflow_dispatch:
 
 permissions:

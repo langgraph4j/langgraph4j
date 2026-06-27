@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-parent</artifactId>
-    <version>1.8.19</version>
+    <version>1.8.20</version>
     <packaging>pom</packaging>
 
     <name>langgraph4j::parent</name>
@@ -243,6 +243,7 @@
         <module>langgraph4j-redis-saver</module>
         <module>langgraph4j-dynamodb-saver</module>
         <module>langgraph4j-cockroachdb-saver</module>
+        <module>langgraph4j-hazelcast-saver</module>
 
         <module>langgraph4j-opentelemetry</module>
 

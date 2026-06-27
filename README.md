@@ -10,7 +10,7 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Jun 16, 2026 | `1.8.19` | last release
+| Jun 27, 2026 | `1.8.20` | last release
 
 
 | Release line | Java baseline | Notes |
@@ -124,6 +124,8 @@ langgraph4j/
 ├── langgraph4j-postgres-saver           # LangGraph4j persistent checkpoint saver based on PostgresSQL
 ├── langgraph4j-dynamodb-saver           # LangGraph4j persistent checkpoint saver based on Amazon DynamoDB
 ├── langgraph4j-cockroachdb-saver        # LangGraph4j persistent checkpoint saver based on CockroachDB
+├── langgraph4j-redis-saver              # LangGraph4j persistent checkpoint saver based on Redis
+├── langgraph4j-hazelcast-saver          # LangGraph4j persistent checkpoint saver based on Hazelcast
 ├── langchain4j/                         # LangChain4j integration
 │   ├── langchain4j-core/                # LangChain4j core components (integration required)
 │   └── langchain4j-agent/               # LangChain4j agent executor
@@ -150,7 +152,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.8.19</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.8.20</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -182,7 +184,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.8.19</version> <!-- Or the current snapshot version -->
+    <version>1.8.20</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
