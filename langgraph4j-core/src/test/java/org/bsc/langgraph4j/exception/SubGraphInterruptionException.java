@@ -40,8 +40,9 @@ public class SubGraphInterruptionException extends GraphRunnerException {
         return parentNodeId;
     }
 
-    public String nodeId() {
-        return nodeId;
+    @Override
+    public Optional<String> nodeId() {
+        return Optional.ofNullable(nodeId);
     }
 
     public Map<String, Object> state() {

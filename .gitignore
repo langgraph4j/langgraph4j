@@ -43,7 +43,7 @@ build/
 ### Jupyter
 .venv/
 how-tos/log.*
-
+.cache/
 
 ### Postegres VSCode plugin
 *.session.sql
