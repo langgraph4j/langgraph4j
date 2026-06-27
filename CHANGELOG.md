@@ -2,6 +2,129 @@
 
 
 
+<!-- "name: v1.8.20" is a release tag -->
+
+## [v1.8.20](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.20) (2026-06-27)
+
+### Features
+
+ *  add Hazelcast checkpoint saver ([5be51b69e3c448c](https://github.com/bsorrentino/langgraph4j/commit/5be51b69e3c448cd5743abd7837a2c77458258e1))
+     > Add langgraph4j-hazelcast-saver, a BaseCheckpointSaver that persists
+     > workflow checkpoints in a Hazelcast distributed map so state survives
+     > restarts and can be shared across a cluster.
+     > - HazelcastSaver: single-value-per-thread storage; map type selectable
+     > via mapType(MapType.I_MAP | MapType.CP_MAP), default IMap (Community
+     > Edition), CP_MAP uses the linearizable CPMap (Enterprise). Accepts any
+     > HazelcastInstance (embedded member or client). Optional StateSerializer
+     > (plain JSON by default).
+     > - Hazelcast declared as a &quot;provided&quot; dependency so the same module works
+     > on either edition; the CPMap API compiles against the CE jar.
+     > - Tests: HazelcastSaverTest runs against an embedded CE member in CI;
+     > HazelcastCPMapSaverITest exercises the CPMap path under the opt-in
+     > enterprise-it profile (license-gated, excluded from CI).
+     > - Register the module in the root pom and the BOM.
+     > - Document usage in the module README and a new how-tos/persistence.ipynb
+     > section.
+   
+ *  **core**  expose null-safe nodeId() on GraphRunnerException ([30d03b05b6d72ce](https://github.com/bsorrentino/langgraph4j/commit/30d03b05b6d72ce642ce5622834eda67e9dba4b2))
+     > When a node fails during graph execution the error is wrapped in a
+     > GraphRunnerException. The failing node is reachable via the carried
+     > RunnableConfig, but RunnableConfig.nodeId() calls orElseThrow(), so
+     > config().nodeId() throws when the exception is raised outside a node
+     > context (e.g. entry-point resolution).
+     > Add GraphRunnerException.nodeId() returning Optional&lt;String&gt;, resolved
+     > from the carried config and safe to call while handling a failure.
+     > checkPointId is intentionally omitted, since config().checkPointId()
+     > already returns an Optional&lt;String&gt;.
+     > Closes #90
+   
+
+
+### Refactor
+
+ -  align Hazelcast saver serialization with FileSystemSaver + review fixes ([6fbb677863861a3](https://github.com/bsorrentino/langgraph4j/commit/6fbb677863861a3d48e0812f4eb2d1f38fb0e4d7))
+    > Rework HazelcastSaver to serialize the whole checkpoint list through the
+ > framework&#x27;s checkpoint-list serializers (JacksonCheckpointListSerializer for
+ > JSON, CheckpointListSerializer for binary), mirroring FileSystemSaver, instead
+ > of a hand-rolled per-checkpoint JSON envelope. The state serializer is now
+ > required (matching FileSystemSaver and the SQL savers).
+ > Review-driven fixes:
+ > - decode() now throws a clear IllegalStateException when a stored value is read
+ > with a different StateSerializer kind (JSON vs. binary) than it was written.
+ > - Reuse Serializer.objectToBytes/bytesToObject for the binary path instead of
+ > hand-rolled ObjectOutputStream/ObjectInputStream plumbing.
+ > - jackson-databind is now &quot;provided&quot; (only needed at runtime for the JSON path),
+ > matching langgraph4j-core and avoiding transitive bloat for binary-only users.
+ > - HazelcastSaverTest asserts reloaded state content for both JSON and binary
+ > serializers (not just history size).
+ > - Remove an orphaned pom comment left above the junit dependency.
+ > Docs (README, how-tos/persistence.ipynb) updated for the required serializer.
+
+
+
+### Documentation
+
+ -  update root-index.html for LangGraph4j documentation portal ([087bce076ca58e3](https://github.com/bsorrentino/langgraph4j/commit/087bce076ca58e3808c23d36bd46d4219afabe22))
+
+ -  list hazelcast saver in root README ([eb32672ab0fcea7](https://github.com/bsorrentino/langgraph4j/commit/eb32672ab0fcea788a00688b3e107c42baf9f97f))
+     > Add langgraph4j-hazelcast-saver to the project-structure module tree, and
+     > restore the missing langgraph4j-redis-saver line while there.
+
+ -  fix Hazelcast saver README review findings ([f83e7f68cb8c875](https://github.com/bsorrentino/langgraph4j/commit/f83e7f68cb8c87593ee3bf84d248e8874491cd3d))
+     > - Correct the integration-module artifact names (langgraph4j-langchain4j and
+     > langgraph4j-spring-ai, not the *-core variants) for the JSON serializer examples.
+     > - Note that the CPMap usage example needs the Hazelcast Enterprise jar/cluster;
+     > the Community Edition dependency shown covers only the IMap path.
+
+ -  refine Hazelcast saver docs ([903ecd35ddb1924](https://github.com/bsorrentino/langgraph4j/commit/903ecd35ddb19248c1068f87639703b6cae37f35))
+     > - Remove FileSystemSaver references from the README and class Javadoc/comment.
+     > - Correct the IMap durability note: tolerates up to &#x60;backup-count&#x60; simultaneous
+     > member losses (default 1), instead of &quot;survives one member loss&quot;.
+     > - Expand the README state-serialization section: explain why JacksonStateSerializer
+     > must be subclassed and point to the ready-made LC4jJacksonStateSerializer /
+     > SpringAIJacksonStateSerializer.
+     > - Drop the now-unnecessary checked-exception declaration on decode().
+
+ -  redirect to main version of documentation if available ([8657ae207ce5e99](https://github.com/bsorrentino/langgraph4j/commit/8657ae207ce5e9924f141cb2b8abaa68a2d8313f))
+
+ -  add initial documentation portal with version selection and dynamic content loading ([4e0ae171f6e1e87](https://github.com/bsorrentino/langgraph4j/commit/4e0ae171f6e1e87218f68a14e12898ad7f9486a2))
+
+ -  enhance mkdocs configuration with theme palette toggles and additional features ([6675ec24c25e5aa](https://github.com/bsorrentino/langgraph4j/commit/6675ec24c25e5aabe8f9957d644b912b4afe44ce))
+
+ -  update changelog ([b7419ec051a3fac](https://github.com/bsorrentino/langgraph4j/commit/b7419ec051a3fac12753f504816a0a83a48fea40))
+
+
+### ALM 
+
+ -  bump to next version 1.8.20 ([8bc083595a7062e](https://github.com/bsorrentino/langgraph4j/commit/8bc083595a7062e6ea26b9be43c815682d30535a))
+   
+
+### Continuous Integration
+
+ -  comment out push trigger for main branch in deploy-site.yml ([87c5d770c42271c](https://github.com/bsorrentino/langgraph4j/commit/87c5d770c42271cf9bd77cfe40cd4b56996618ed))
+   
+ -  fix cache configuration for Python dependencies in deploy workflow ([c832830faac7d0f](https://github.com/bsorrentino/langgraph4j/commit/c832830faac7d0f5f5968de10f942b4a4d606d8b))
+   
+ -  disable automatic deployment on push for versioned documentation ([09a8cc4fb861d14](https://github.com/bsorrentino/langgraph4j/commit/09a8cc4fb861d141fd9e4e5d8849961ad269bb80))
+   
+ -  disable automatic deployment on push for versioned documentation ([01c16a4f3c97256](https://github.com/bsorrentino/langgraph4j/commit/01c16a4f3c972567948bcdfdfe50f2813f4feed5))
+   
+ -  update Java setup action to v5 and simplify dependency installation ([95ad926f1402d6e](https://github.com/bsorrentino/langgraph4j/commit/95ad926f1402d6effe1c1f471a778dc5e85d84a4))
+   
+ -  disable start on push in deploy documentation workflow ([663fe93c299379b](https://github.com/bsorrentino/langgraph4j/commit/663fe93c299379bba6835b7bddd8bba1c02f5e7e))
+   
+ -  restore original deploy site github action as fallback startegy ([12472e5ba014180](https://github.com/bsorrentino/langgraph4j/commit/12472e5ba014180a296b67696812ece809b717a7))
+   
+ -  update deployment workflow to include Java setup and MkDocs content preparation ([f4253665d636ba6](https://github.com/bsorrentino/langgraph4j/commit/f4253665d636ba6c3969089b2112def789f290a3))
+   
+ -  remove old deploy docs actions ([574f94066088347](https://github.com/bsorrentino/langgraph4j/commit/574f940660883473fbe18f7daa8ec90b5d4d6306))
+   
+ -  add GitHub Actions workflow for multi-version documentation deployment ([8d6a7b8d213d2cb](https://github.com/bsorrentino/langgraph4j/commit/8d6a7b8d213d2cb24c3b9c62451d87cec161db6f))
+   
+
+
+
+
 <!-- "name: v1.8.19" is a release tag -->
 
 ## [v1.8.19](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.19) (2026-06-16)
