@@ -828,6 +828,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#add-persistent-memory-with-hazelcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add Persistent Memory with Hazelcast
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1936,6 +1947,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#add-persistent-memory-with-hazelcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add Persistent Memory with Hazelcast
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3037,13 +3059,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="kd">var</span><span class="w"> </span><span class="n">localRespoUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"file://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/.m2/repository/"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.1"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jbeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.1-beta17"</span><span class="p">;</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.8.19"</span><span class="p">;</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.8.20"</span><span class="p">;</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">var userHomeDir = System.getProperty("user.home");
 var localRespoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.9.1";
 var langchain4jbeta = "1.9.1-beta17";
-var langgraph4jVersion = "1.8.19";</div>
+var langgraph4jVersion = "1.8.20";</div>
 </div>
 </div>
 </div>
@@ -4154,6 +4176,265 @@ agent
 AiMessage { text = "No, I don't know your name. I don't have access to personal data about users unless it has been shared with me in the course of our conversation. If you have any questions or need assistance, feel free to ask!", thinking = null, toolExecutionRequests = [], attributes = {} }
 __END__
 </pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="add-persistent-memory-with-hazelcast">Add Persistent Memory with Hazelcast<a class="anchor-link" href="#add-persistent-memory-with-hazelcast">¶</a></h2><p>The in-memory <a href="https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/MemorySaver.html"><code>MemorySaver</code></a> above keeps checkpoints only while this JVM is alive. To make the
+conversation <strong>survive restarts</strong> — and to share it across the members of a cluster — swap in the
+<a href="https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/HazelcastSaver.html"><code>HazelcastSaver</code></a>, which stores checkpoints in a Hazelcast distributed map.</p>
+<p>The saver accepts any <code>HazelcastInstance</code>, so the same code works whether Hazelcast runs <strong>embedded</strong>
+(in-process, as below) or as a separate cluster reached through a <strong>client</strong>
+(<code>HazelcastClient.newHazelcastClient(...)</code>). By default it stores checkpoints in an <code>IMap</code> (works on
+the open-source Community Edition); <code>mapType(HazelcastSaver.MapType.CP_MAP)</code> selects the
+linearizable, Raft-backed CP map (Hazelcast Enterprise).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="c1">// HazelcastSaver declares the Hazelcast jar as "provided", so add it explicitly here.</span>
+<span class="o">%</span><span class="n">dependency</span><span class="w"> </span><span class="o">/</span><span class="n">add</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">bsc</span><span class="p">.</span><span class="na">langgraph4j</span><span class="p">:</span><span class="n">langgraph4j</span><span class="o">-</span><span class="n">hazelcast</span><span class="o">-</span><span class="n">saver</span><span class="p">:</span><span class="err">\</span><span class="p">{</span><span class="n">langgraph4jVersion</span><span class="p">}</span>
+<span class="o">%</span><span class="n">dependency</span><span class="w"> </span><span class="o">/</span><span class="n">add</span><span class="w"> </span><span class="n">com</span><span class="p">.</span><span class="na">hazelcast</span><span class="p">:</span><span class="n">hazelcast</span><span class="p">:</span><span class="mf">5.7.0</span>
+
+<span class="o">%</span><span class="n">dependency</span><span class="w"> </span><span class="o">/</span><span class="n">resolve</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-17">// HazelcastSaver declares the Hazelcast jar as "provided", so add it explicitly here.
+%dependency /add org.bsc.langgraph4j:langgraph4j-hazelcast-saver:\{langgraph4jVersion}
+%dependency /add com.hazelcast:hazelcast:5.7.0
+
+%dependency /resolve</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">com.hazelcast.config.Config</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.hazelcast.core.Hazelcast</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.hazelcast.core.HazelcastInstance</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.checkpoint.HazelcastSaver</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.CompileConfig</span><span class="p">;</span>
+
+<span class="c1">// Start a single embedded Hazelcast member with cluster join disabled (no network needed).</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">hzConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Config</span><span class="p">();</span>
+<span class="n">hzConfig</span><span class="p">.</span><span class="na">getNetworkConfig</span><span class="p">().</span><span class="na">getJoin</span><span class="p">().</span><span class="na">getMulticastConfig</span><span class="p">().</span><span class="na">setEnabled</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="n">hzConfig</span><span class="p">.</span><span class="na">getNetworkConfig</span><span class="p">().</span><span class="na">getJoin</span><span class="p">().</span><span class="na">getTcpIpConfig</span><span class="p">().</span><span class="na">setEnabled</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="n">HazelcastInstance</span><span class="w"> </span><span class="n">hz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Hazelcast</span><span class="p">.</span><span class="na">newHazelcastInstance</span><span class="p">(</span><span class="n">hzConfig</span><span class="p">);</span>
+
+<span class="c1">// Default map type is IMap (Community Edition); use .mapType(HazelcastSaver.MapType.CP_MAP) for Enterprise.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">hazelcastSaver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HazelcastSaver</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">hazelcastInstance</span><span class="p">(</span><span class="n">hz</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">stateSerializer</span><span class="p">(</span><span class="n">stateSerializer</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="n">hazelcastSaver</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">persistentGraph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">workflow</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-18">import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import org.bsc.langgraph4j.checkpoint.HazelcastSaver;
+import org.bsc.langgraph4j.CompileConfig;
+
+// Start a single embedded Hazelcast member with cluster join disabled (no network needed).
+var hzConfig = new Config();
+hzConfig.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+hzConfig.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(hzConfig);
+
+// Default map type is IMap (Community Edition); use .mapType(HazelcastSaver.MapType.CP_MAP) for Enterprise.
+var hazelcastSaver = HazelcastSaver.builder()
+                        .hazelcastInstance(hz)
+                        .stateSerializer(stateSerializer)
+                        .build();
+
+var compileConfig = CompileConfig.builder()
+                    .checkpointSaver(hazelcastSaver)
+                    .build();
+
+var persistentGraph = workflow.compile( compileConfig );</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.RunnableConfig</span><span class="p">;</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">"hazelcast-conversation-1"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inputs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">"messages"</span><span class="p">,</span><span class="w"> </span><span class="n">AiMessage</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="s">"Hi I'm Bartolo, niced to meet you."</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">persistentGraph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">);</span>
+
+<span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">node</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">node</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="s">"agent"</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">state</span><span class="p">().</span><span class="na">lastMessage</span><span class="p">().</span><span class="na">orElse</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-19">import org.bsc.langgraph4j.RunnableConfig;
+
+var runnableConfig = RunnableConfig.builder()
+                .threadId("hazelcast-conversation-1")
+                .build();
+
+Map&lt;String,Object&gt; inputs = Map.of( "messages", AiMessage.from("Hi I'm Bartolo, niced to meet you.") );
+
+var result = persistentGraph.stream( inputs, runnableConfig );
+
+for( var r : result ) {
+  System.out.println( r.node() );
+  if( r.node().equals("agent")) {
+    System.out.println( r.state().lastMessage().orElse(null) );
+  }
+}</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="c1">// The state of thread "hazelcast-conversation-1" is now in the Hazelcast map,</span>
+<span class="c1">// so the agent recalls the earlier message.</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inputs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">"messages"</span><span class="p">,</span><span class="w"> </span><span class="n">AiMessage</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="s">"Remember my name?"</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">persistentGraph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">);</span>
+
+<span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">node</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">node</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="s">"agent"</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="na">state</span><span class="p">().</span><span class="na">lastMessage</span><span class="p">().</span><span class="na">orElse</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-20">// The state of thread "hazelcast-conversation-1" is now in the Hazelcast map,
+// so the agent recalls the earlier message.
+Map&lt;String,Object&gt; inputs = Map.of( "messages", AiMessage.from("Remember my name?") );
+
+var result = persistentGraph.stream( inputs, runnableConfig );
+
+for( var r : result ) {
+  System.out.println( r.node() );
+  if( r.node().equals("agent")) {
+    System.out.println( r.state().lastMessage().orElse(null) );
+  }
+}</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-21">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="c1">// Shut down the embedded member when done (the caller owns the HazelcastInstance lifecycle).</span>
+<span class="n">hz</span><span class="p">.</span><span class="na">shutdown</span><span class="p">();</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-21">// Shut down the embedded member when done (the caller owns the HazelcastInstance lifecycle).
+hz.shutdown();</div>
 </div>
 </div>
 </div>

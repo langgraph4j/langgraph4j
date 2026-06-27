@@ -2120,7 +2120,7 @@
 </code></pre></div>
 <h3 id="setup-with-docker">Setup (with Docker)</h3>
 <p><strong>Pull image</strong></p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>bsorrentino/langgraph4j-builder:1.8.19
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>bsorrentino/langgraph4j-builder:1.8.20
 </code></pre></div>
 <p><strong>Run container</strong></p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
@@ -2128,9 +2128,9 @@
 <span class="w">  </span>-p<span class="w"> </span><span class="m">3000</span>:3000<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span>.:/app/workspace<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">NODE_ENV</span><span class="o">=</span>production<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="nv">LANGRAPH4J_GEN</span><span class="o">=</span>generator-1.8.19-jar-with-dependencies.jar<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">LANGRAPH4J_GEN</span><span class="o">=</span>generator-1.8.20-jar-with-dependencies.jar<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">RUNNING_IN_DOCKER</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>bsorrentino/langgraph4j-builder:1.8.19
+<span class="w">  </span>bsorrentino/langgraph4j-builder:1.8.20
 </code></pre></div>
 <p>open browser on address <a href="http://localhost:3000">http://localhost:3000</a></p>
 <hr />
