@@ -233,6 +233,7 @@
         <module>langgraph4j-redis-saver</module>
         <module>langgraph4j-dynamodb-saver</module>
         <module>langgraph4j-cockroachdb-saver</module>
+        <module>langgraph4j-hazelcast-saver</module>
 
         <module>langgraph4j-opentelemetry</module>
 
