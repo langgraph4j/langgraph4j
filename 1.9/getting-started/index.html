@@ -1,0 +1,2751 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../how-tos/adaptiverag/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Getting Started - LangGraph4j</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#getting-started-with-langgraph4j" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LangGraph4j" class="md-header__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LangGraph4j
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Getting Started
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../whats-new-v1.9/" class="md-tabs__link">
+          
+  
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../core/core-library/" class="md-tabs__link">
+          
+  
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../features/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Features
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../how-tos/adaptiverag/" class="md-tabs__link">
+          
+  
+  
+  How to(s)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../references/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../apidocs/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  JavaDoc
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LangGraph4j" class="md-nav__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    LangGraph4j
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../whats-new-v1.9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new in 1.9
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-features-benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Features &amp; Benefits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts-explained" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts Explained
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Concepts Explained">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stategraphs-extends-agentstate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateGraph&lt;S extends AgentState&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentstate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AgentState
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compilation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoints-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoints (Persistence)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-first-graph-a-simple-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your First Graph - A Simple Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-your-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Your Graph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#studio-running-your-graph-visually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Studio 🤩 - Running Your Graph visually
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bonus-built-in-integrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BONUS: built-in integrations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BONUS: built-in integrations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#langchain4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LangChain4j
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LangChain4j">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Define Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spring-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spring AI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spring AI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-tools_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Define Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-agent_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-capabilities-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Capabilities Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/spring-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spring AI Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/langchain4j/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain4j Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../studio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Studio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Builder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j/releases" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Latest Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/core-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel Branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/subgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/cancellation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cancellation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/checkpoint-postgres/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint (Postgres)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apidocs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JavaDoc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="getting-started-with-langgraph4j">🦜🕸️ Getting Started with LangGraph4j</h1>
+<p>Welcome to LangGraph4j! This guide will help you understand the core concepts of LangGraph4j, install it, and build your first application.</p>
+<h2 id="introduction">Introduction</h2>
+<p>LangGraph4j is a Java library for building stateful, multi-agent applications with Large Language Models (LLMs). It is inspired by the Python library <a href="https://github.com/langchain-ai/langgraph">LangGraph</a> and is designed to work seamlessly with popular Java LLM frameworks like <a href="https://github.com/langchain4j/langchain4j">Langchain4j</a> and <a href="https://spring.io/projects/spring-ai.">Spring AI</a>.</p>
+<p>At its core, LangGraph4j allows you to define cyclical graphs where different components (agents, tools, or custom logic) can interact in a stateful manner. This is crucial for building complex applications that require memory, context, and the ability for different "agents" to collaborate or hand off tasks.</p>
+<h2 id="core-features-benefits">Core Features &amp; Benefits</h2>
+<p>LangGraph4j offers several features and benefits:</p>
+<ul>
+<li><strong>Stateful Execution:</strong> Manage and update a shared state across graph nodes, enabling memory and context awareness.</li>
+<li><strong>Cyclical Graphs:</strong> Unlike traditional DAGs, LangGraph4j supports cycles, essential for agent-based architectures where control flow can loop back (e.g., an agent retrying a task or asking for clarification).</li>
+<li><strong>Explicit Control Flow:</strong> Clearly define the paths and conditions for transitions between nodes in your graph.</li>
+<li><strong>Modularity:</strong> Build complex systems from smaller, reusable components (nodes).</li>
+<li><strong>Flexibility:</strong> Integrate with various LLM providers and custom Java logic.</li>
+<li><strong>Observability &amp; Debugging:</strong><ul>
+<li><strong>Checkpoints:</strong> Save the state of your graph at any point and replay or inspect it later. This is invaluable for debugging and understanding complex interactions.</li>
+<li><strong>Graph Visualization:</strong> Generate visual representations of your graph using PlantUML or Mermaid to understand its structure.</li>
+</ul>
+</li>
+<li><strong>Asynchronous &amp; Streaming Support:</strong> Build responsive applications with non-blocking operations and stream results from LLMs.</li>
+<li><strong>Playground &amp; Studio:</strong> A web UI to visually inspect, run, and debug your graphs.</li>
+</ul>
+<h2 id="core-concepts-explained">Core Concepts Explained</h2>
+<p>Understanding these concepts is key to using LangGraph4j effectively:</p>
+<h3 id="stategraphs-extends-agentstate"><code>StateGraph&lt;S extends AgentState&gt;</code></h3>
+<p>The <code>StateGraph</code> is the primary class you'll use to define the structure of your application. It's where you add nodes and edges to create your graph. It is parameterized by an <code>AgentState</code>.</p>
+<h3 id="agentstate"><code>AgentState</code></h3>
+<p>The <code>AgentState</code> (or a class extending it) represents the shared state of your graph. It's essentially a map (<code>Map&lt;String, Object&gt;</code>) that gets passed from node to node. Each node can read from this state and return updates to it.</p>
+<ul>
+<li><strong>Schema:</strong> The structure of the state is defined by a "schema," which is a <code>Map&lt;String, Channel.Reducer&gt;</code>. Each key in the map corresponds to an attribute in the state.</li>
+<li><strong><code>Channel.Reducer</code>:</strong> A reducer defines how updates to a state attribute are handled. For example, a new value might overwrite the old one, or it might be added to a list of existing values.</li>
+<li><strong><code>Channel.Default&lt;T&gt;</code>:</strong> Provides a default value for a state attribute if it's not already set.</li>
+<li><strong><code>Channel.Appender&lt;T&gt;</code> / <code>MessageChannel.Appender&lt;M&gt;</code>:</strong> A common type of reducer that appends the new value to a list associated with the state attribute. This is useful for accumulating messages, tool calls, or other sequences of data. <code>MessageChannel.Appender</code> is specifically designed for chat messages and can also handle message deletion by ID.</li>
+</ul>
+<h3 id="nodes"><code>Nodes</code></h3>
+<p>Nodes are the building blocks of your graph that perform actions. A node is typically a function (or a class implementing <code>NodeAction&lt;S&gt;</code> or <code>AsyncNodeAction&lt;S&gt;</code>) that:
+1.  Receives the current <code>AgentState</code> as input.
+2.  Performs some computation (e.g., calls an LLM, executes a tool, runs custom business logic).
+3.  Returns a <code>Map&lt;String, Object&gt;</code> representing updates to the state. These updates are then applied to the <code>AgentState</code> according to the schema's reducers.</p>
+<p>Nodes can be synchronous or asynchronous (<code>CompletableFuture</code>).</p>
+<h3 id="edges"><code>Edges</code></h3>
+<p>Edges define the flow of control between nodes.</p>
+<ul>
+<li><strong>Normal Edges:</strong> An unconditional transition from one node to another. After node A completes, control always passes to node B. You define these with <code>addEdge(sourceNodeName, destinationNodeName)</code>.</li>
+<li><strong>Conditional Edges:</strong> The next node is determined dynamically based on the current <code>AgentState</code>. After a source node completes, an <code>EdgeAction&lt;S&gt;</code> (or <code>AsyncEdgeAction&lt;S&gt;</code>) function is executed. This function receives the current state and returns the name of the next node to execute. This allows for branching logic (e.g., if an agent decided to use a tool, go to the "execute_tool" node; otherwise, go to the "respond_to_user" node). Conditional edges are defined with <code>addConditionalEdges(...)</code>.</li>
+<li><strong>Entry Points:</strong> You can also define conditional entry points to your graph using <code>addConditionalEntryPoint(...)</code>.</li>
+</ul>
+<h3 id="compilation"><code>Compilation</code></h3>
+<p>Once you've defined all your nodes and edges in a <code>StateGraph</code>, you <code>compile()</code> it into a <code>CompiledGraph&lt;S extends AgentState&gt;</code>. This compiled graph is an immutable, runnable representation of your logic. Compilation validates the graph structure (e.g., checks for orphaned nodes).</p>
+<h3 id="checkpoints-persistence"><code>Checkpoints (Persistence)</code></h3>
+<p>LangGraph4j allows you to save (<code>Checkpoint</code>) the state of your graph at any step. This is extremely useful for:</p>
+<ul>
+<li><strong>Debugging:</strong> Inspect the state at various points to understand what happened.</li>
+<li><strong>Resuming:</strong> Restore a graph to a previous state and continue execution.</li>
+<li><strong>Long-running processes:</strong> Persist the state of long-running agent interactions.</li>
+</ul>
+<p>You'll typically use a <code>CheckpointSaver</code> implementation (e.g., <code>MemorySaver</code> for in-memory storage, or you can implement your own for persistent storage).</p>
+<h2 id="installation">Installation</h2>
+<p>To use LangGraph4j in your project, you need to add it as a dependency.</p>
+<p><strong>Maven:</strong></p>
+<p>Make sure you are using Java 17 or later.</p>
+<p><strong>Latest Stable Version (Recommended):</strong>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;properties&gt;</span>
+<span class="w">    </span><span class="nt">&lt;langgraph4j.version&gt;</span>1.9-SNAPSHOT<span class="nt">&lt;/langgraph4j.version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Check for the actual latest version --&gt;</span>
+<span class="nt">&lt;/properties&gt;</span>
+
+<span class="cm">&lt;!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions --&gt;</span>
+<span class="nt">&lt;dependencyManagement&gt;</span>
+<span class="w">  </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-bom<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>${langgraph4j.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">      </span><span class="nt">&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;</span>
+<span class="w">      </span><span class="nt">&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/dependencyManagement&gt;</span>
+
+<span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- Add other langgraph4j modules if needed, e.g., langgraph4j-langchain4j --&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre></div>
+<em>(Note: Always check the <a href="https://central.sonatype.com/search?q=g%3Aorg.bsc.langgraph4j">Maven Central Repository</a> for the latest version number.)</em></p>
+<p><strong>Development Snapshot Version:</strong>
+If you want to use the latest unreleased features, you can use a snapshot version.
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9-SNAPSHOT<span class="nt">&lt;/version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Or the current snapshot version --&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+You might need to configure your <code>settings.xml</code> or <code>pom.xml</code> to include the Sonatype OSS snapshots repository:
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;repositories&gt;</span>
+<span class="w">    </span><span class="nt">&lt;repository&gt;</span>
+<span class="w">        </span><span class="nt">&lt;id&gt;</span>sonatype-oss-snapshots<span class="nt">&lt;/id&gt;</span>
+<span class="w">        </span><span class="nt">&lt;url&gt;</span>https://central.sonatype.com/repository/maven-snapshots<span class="nt">&lt;/url&gt;</span>
+<span class="w">        </span><span class="nt">&lt;snapshots&gt;</span>
+<span class="w">            </span><span class="nt">&lt;enabled&gt;</span>true<span class="nt">&lt;/enabled&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/snapshots&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/repository&gt;</span>
+<span class="nt">&lt;/repositories&gt;</span>
+</code></pre></div></p>
+<h2 id="your-first-graph-a-simple-example">Your First Graph - A Simple Example</h2>
+<p>Let's create a very simple graph that has two nodes: <code>greeter</code> and <code>responder</code>.
+The <code>greeter</code> node will add a greeting message to the state.
+The <code>responder</code> node will add a response message based on the greeting.</p>
+<p><strong>1. Define the State:</strong>
+Our state will hold a list of messages.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.state.AgentState</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.state.Channels</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.state.Channel</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Collections</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Map</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Optional</span><span class="p">;</span>
+
+<span class="c1">// Define the state for our graph</span>
+<span class="kd">class</span> <span class="nc">SimpleState</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">MESSAGES_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;messages&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Define the schema for the state.</span>
+<span class="w">    </span><span class="c1">// MESSAGES_KEY will hold a list of strings, and new messages will be appended.</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Channel</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">SCHEMA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">            </span><span class="n">MESSAGES_KEY</span><span class="p">,</span><span class="w"> </span><span class="n">Channels</span><span class="p">.</span><span class="na">appender</span><span class="p">(</span><span class="n">ArrayList</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">SimpleState</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">initData</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">(</span><span class="n">initData</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">messages</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;&gt;</span><span class="n">value</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">orElse</span><span class="p">(</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>2. Define the Nodes:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.action.NodeAction</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Collections</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Map</span><span class="p">;</span>
+
+<span class="c1">// Node that adds a greeting</span>
+<span class="kd">class</span> <span class="nc">GreeterNode</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">NodeAction</span><span class="o">&lt;</span><span class="n">SimpleState</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">SimpleState</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;GreeterNode executing. Current messages: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="na">messages</span><span class="p">());</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">SimpleState</span><span class="p">.</span><span class="na">MESSAGES_KEY</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello from GreeterNode!&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Node that adds a response</span>
+<span class="kd">class</span> <span class="nc">ResponderNode</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">NodeAction</span><span class="o">&lt;</span><span class="n">SimpleState</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">SimpleState</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;ResponderNode executing. Current messages: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="na">messages</span><span class="p">());</span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">currentMessages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="na">messages</span><span class="p">();</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">currentMessages</span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="s">&quot;Hello from GreeterNode!&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">SimpleState</span><span class="p">.</span><span class="na">MESSAGES_KEY</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Acknowledged greeting!&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">SimpleState</span><span class="p">.</span><span class="na">MESSAGES_KEY</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;No greeting found.&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>3. Define and Compile the Graph:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.GraphStateException</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.action.AsyncNodeAction.node_async</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.START</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.StateGraph.END</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Map</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SimpleGraphApp</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">GraphStateException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Initialize nodes</span>
+<span class="w">        </span><span class="n">GreeterNode</span><span class="w"> </span><span class="n">greeterNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">GreeterNode</span><span class="p">();</span>
+<span class="w">        </span><span class="n">ResponderNode</span><span class="w"> </span><span class="n">responderNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ResponderNode</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// Define the graph structure</span>
+<span class="w">       </span><span class="kd">var</span><span class="w"> </span><span class="n">stateGraph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">SimpleState</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">initData</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">SimpleState</span><span class="p">(</span><span class="n">initData</span><span class="p">))</span>
+<span class="w">            </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;greeter&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">greeterNode</span><span class="p">))</span>
+<span class="w">            </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;responder&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">responderNode</span><span class="p">))</span>
+<span class="w">            </span><span class="c1">// Define edges</span>
+<span class="w">            </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;greeter&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// Start with the greeter node</span>
+<span class="w">            </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;greeter&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;responder&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;responder&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span><span class="w">   </span><span class="c1">// End after the responder node</span>
+<span class="w">             </span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// Compile the graph</span>
+<span class="w">        </span><span class="kd">var</span><span class="w"> </span><span class="n">compiledGraph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stateGraph</span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// Run the graph</span>
+<span class="w">        </span><span class="c1">// The `stream` method returns an AsyncGenerator.</span>
+<span class="w">        </span><span class="c1">// For simplicity, we&#39;ll collect results. In a real app, you might process them as they arrive.</span>
+<span class="w">        </span><span class="c1">// Here, the final state after execution is the item of interest.</span>
+
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">compiledGraph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="n">SimpleState</span><span class="p">.</span><span class="na">MESSAGES_KEY</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Let&#39;s, begin!&quot;</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>We defined <code>SimpleState</code> with a <code>MESSAGES_KEY</code> that uses <code>AppenderChannel</code> to accumulate strings.</li>
+<li><code>GreeterNode</code> adds a "Hello" message.</li>
+<li><code>ResponderNode</code> checks for the greeting and adds an acknowledgment.</li>
+<li>The <code>StateGraph</code> is defined, nodes are added, and edges specify the flow: <code>START</code> -&gt; <code>greeter</code> -&gt; <code>responder</code> -&gt; <code>END</code>.</li>
+<li><code>stateGraph.compile()</code> creates the runnable <code>CompiledGraph</code>.</li>
+<li><code>compiledGraph.stream(initialState)</code> executes the graph. We iterate through the stream to get the final state. Each item in the stream represents the state after a node has executed.</li>
+</ul>
+<p>This example demonstrates the basic workflow: define state, define nodes, wire them with edges, compile, and run.</p>
+<h2 id="running-your-graph">Running Your Graph</h2>
+<p>As shown in the example, you typically run a compiled graph using one of its execution methods:</p>
+<ul>
+<li><code>stream(S initialState, RunnableConfig config)</code>: Executes the graph and returns an <code>AsyncGenerator&lt;S&gt;</code>. Each yielded item is the state <code>S</code> after a node has completed. This is useful for observing the state at each step or for streaming partial results.</li>
+<li><code>invoke(S initialState, RunnableConfig config)</code>: Executes the graph and returns a <code>CompletableFuture&lt;S&gt;</code> that completes with the final state of the graph after it reaches an <code>END</code> node.</li>
+</ul>
+<p>The <code>RunnableConfig</code> can be used to pass in runtime configuration.</p>
+<h2 id="studio-running-your-graph-visually">Studio 🤩 - Running Your Graph visually</h2>
+<p><strong>Langgraph4j Studio</strong> is an embeddable web application for visualizing and experimenting with graphs:</p>
+<p>To explore the <strong>Langgraph4j Studio</strong> go to <a href="/studio">Studio</a></p>
+<h2 id="bonus-built-in-integrations">BONUS: built-in integrations</h2>
+<h3 id="langchain4j">LangChain4j</h3>
+<p>As default use case to proof <a href="https://github.com/langchain4j/langchain4j">LangChain4j</a> integration, We have implemented <strong>AgentExecutor (aka ReACT Agent)</strong> using LangGraph4j. In the <a href="https://github.com/langgraph4j/langgraph4j/tree/main/langchain4j/langchain4j-agent">project's module</a>, you can the complete working code with tests. Feel free to checkout and use it as a reference.
+Below usage example of the <code>AgentExecutor</code>.</p>
+<h4 id="define-tools">Define Tools</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TestTool</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Tool</span><span class="p">(</span><span class="s">&quot;tool for test AI agent executor&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="nf">execTest</span><span class="p">(</span><span class="nd">@P</span><span class="p">(</span><span class="s">&quot;test message&quot;</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;test tool (&#39;%s&#39;) executed with result &#39;OK&#39;&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Tool</span><span class="p">(</span><span class="s">&quot;return current number of system thread allocated by application&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">threadCount</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">getAllStackTraces</span><span class="p">().</span><span class="na">size</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="run-agent">Run Agent</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OllamaChatModel</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">modelName</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;qwen2.5:7b&quot;</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">baseUrl</span><span class="p">(</span><span class="s">&quot;http://localhost:11434&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">supportedCapabilities</span><span class="p">(</span><span class="n">Capability</span><span class="p">.</span><span class="na">RESPONSE_FORMAT_JSON_SCHEMA</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">logRequests</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">logResponses</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">maxRetries</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">temperature</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentExecutor</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">chatModel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">toolsFromObject</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">TestTool</span><span class="p">())</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;perform test twice and return number of current active threads&quot;</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="spring-ai">Spring AI</h3>
+<p>As default use case to proof <a href="https://spring.io/projects/spring-ai.">Spring AI</a> integration, We have implemented <strong>AgentExecutor (aka ReACT Agent)</strong> using LangGraph4j. In the <a href="https://github.com/langgraph4j/langgraph4j/tree/main/spring-ai/spring-ai-agent">project's module</a>, you can the complete working code with tests. Feel free to checkout and use it as a reference.
+Below usage example of the <code>AgentExecutor</code>.</p>
+<h4 id="define-tools_1">Define Tools</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TestTool</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Tool</span><span class="p">(</span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tool for test AI agent executor&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="nf">execTest</span><span class="p">(</span><span class="w"> </span><span class="nd">@ToolParam</span><span class="p">(</span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="s">&quot;test message&quot;</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">format</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;test tool (&#39;%s&#39;) executed with result &#39;OK&#39;&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Tool</span><span class="p">(</span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;return current number of system thread allocated by application&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">threadCount</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">getAllStackTraces</span><span class="p">().</span><span class="na">size</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="run-agent_1">Run Agent</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OllamaChatModel</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">ollamaApi</span><span class="p">(</span><span class="n">OllamaApi</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">baseUrl</span><span class="p">(</span><span class="s">&quot;http://localhost:11434&quot;</span><span class="p">).</span><span class="na">build</span><span class="p">())</span>
+<span class="w">            </span><span class="p">.</span><span class="na">defaultOptions</span><span class="p">(</span><span class="n">OllamaOptions</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">model</span><span class="p">(</span><span class="s">&quot;qwen2.5:7b&quot;</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">temperature</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">build</span><span class="p">())</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentExecutor</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">chatModel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">toolsFromObject</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">TestTool</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">()</span>
+<span class="w">        </span><span class="p">;</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;perform test twice and return number of current active threads&quot;</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="key-capabilities-overview">Key Capabilities Overview</h2>
+<p>LangGraph4j is packed with features to build sophisticated agentic applications:</p>
+<ul>
+<li><strong>Asynchronous Operations:</strong> Nodes and edges can be asynchronous (returning <code>CompletableFuture</code>), allowing for non-blocking I/O operations, especially when dealing with LLM calls.</li>
+<li><strong>Streaming:</strong> Natively supports streaming responses from LLMs through nodes, enabling real-time output. See <a href="../how-tos/llm-streaming/">how-tos/llm-streaming.ipynb</a>.</li>
+<li><strong>Checkpoints (Persistence &amp; Time Travel):</strong> Save and load the state of your graph. This allows you to resume long-running tasks, debug by inspecting intermediate states, and even "time travel" to previous states. See <a href="../how-tos/persistence/">how-tos/persistence.ipynb</a> and <a href="../how-tos/time-travel/">how-tos/time-travel.ipynb</a>.</li>
+<li><strong>Graph Visualization:</strong> Generate <a href="https://plantuml.com/">PlantUML</a> or <a href="https://mermaid.js.org/">Mermaid</a> diagrams of your graph to visualize its structure, which aids in understanding and debugging. See <a href="../how-tos/plantuml/">how-tos/plantuml.ipynb</a>.</li>
+<li><strong>Playground &amp; Studio:</strong> LangGraph4j comes with an embeddable web UI (Studio) that allows you to visualize, run, and interact with your graphs in real-time. This is excellent for development and debugging.</li>
+<li><strong>Child Graphs (Subgraphs):</strong> Compose complex graphs by nesting smaller, reusable graphs within nodes of a parent graph. This promotes modularity and reusability. See <a href="../how-tos/subgraph-as-nodeaction/">how-tos/subgraph-as-nodeaction.ipynb</a>, <a href="../how-tos/subgraph-as-compiledgraph/">how-tos/subgraph-as-compiledgraph.ipynb</a>, and <a href="../how-tos/subgraph-as-stategraph/">how-tos/subgraph-as-stategraph.ipynb</a> samples.</li>
+<li><strong>Parallel Execution:</strong> Configure parts of your graph to execute multiple nodes in parallel, improving performance for tasks that can be run concurrently. See <a href="../how-tos/parallel-branch/">how-tos/parallel-branch.ipynb</a>.</li>
+<li><strong>Threads (Multi-turn Conversations):</strong> Manage distinct, parallel execution threads within a single graph instance, each with its own checkpoint history. This is vital for handling multiple user sessions or conversations simultaneously.</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<p>Now that you have a basic understanding of LangGraph4j, here's how you can continue your journey:</p>
+<ul>
+<li><strong>Explore the <code>how-tos</code>:</strong> The <a href="how-tos/">how-tos/</a> directory in the repository contains Jupyter notebooks (runnable with Java kernels like <a href="https://github.com/SpencerPark/IJava">IJava</a>) that demonstrate various features with code examples.</li>
+<li><strong>Study the Samples:</strong> Check out the <a href="https://github.com/langgraph4j/langgraph4j-examples">samples/</a> directory for more complete application examples, including integrations with Langchain4j and Spring AI.</li>
+<li><strong>Consult the Javadocs:</strong> For detailed information on classes and methods, refer to the <a href="/langgraph4j/apidocs/index.html">API documentation (Javadocs)</a>. <em>(Link might need updating if official project documentation site changes)</em></li>
+<li><strong>Experiment!</strong> The best way to learn is by doing. Try modifying the examples or building your own simple graphs.</li>
+</ul>
+<p>We hope this guide helps you get started with LangGraph4j. Happy building!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.integrate", "toc.integrate.toc", "toc.integrate.toc.inline", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

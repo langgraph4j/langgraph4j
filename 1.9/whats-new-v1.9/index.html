@@ -1,0 +1,2896 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="..">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>What's new in 1.9 - LangGraph4j</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#migrating-from-langgraph4j-18x-to-19" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LangGraph4j" class="md-header__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LangGraph4j
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              What's new in 1.9
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../core/core-library/" class="md-tabs__link">
+          
+  
+  
+  Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../features/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Features
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../how-tos/adaptiverag/" class="md-tabs__link">
+          
+  
+  
+  How to(s)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../references/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../apidocs/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  JavaDoc
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LangGraph4j" class="md-nav__button md-logo" aria-label="LangGraph4j" data-md-component="logo">
+      
+  <img src="../images/langgraph4j-icon.png" alt="logo">
+
+    </a>
+    LangGraph4j
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bsorrentino/langgraph4j" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new in 1.9
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new in 1.9
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#migration-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-dependencies-and-coordinates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Dependencies and coordinates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-starting-resuming-and-invoking-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Starting, resuming, and invoking graphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-checkpoint-lifecycle-now-releases-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Checkpoint lifecycle now releases by default
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-saver-versioning-and-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Saver versioning and tags
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Saver versioning and tags">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unified-tag-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified tag API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed-versioning-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed versioning types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesystemsaver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FileSystemSaver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-checkpoint-savers-and-subgraphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom checkpoint savers and subgraphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-state-cloning-and-transient-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. State cloning and transient attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. State cloning and transient attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional-state-clone-bypass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional state-clone bypass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transient-state-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transient state attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-runtime-configuration-and-graph-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Runtime configuration and graph metadata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-core-api-removals-renames-and-behavior-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Core API removals, renames, and behavior changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Core API removals, renames, and behavior changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recursion-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recursion limit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-enum-and-execution-exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error enum and execution exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-end-marker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming end marker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hook-and-exception-utility-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hook and exception utility extensions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-streaming-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal streaming engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-agent-framework-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Agent framework changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Agent framework changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-agentex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core AgentEx
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skills-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-spring-ai-agent-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Spring AI agent migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-new-json-graph-dsl-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. New JSON graph DSL module
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-persistence-integrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Persistence integrations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-removed-javelit-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Removed Javelit component
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-fixes-included-in-the-19-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Fixes included in the 1.9 branch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-repository-and-documentation-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Repository and documentation changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/spring-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spring AI Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/langchain4j/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain4j Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../studio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Studio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Builder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j/releases" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Latest Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/core-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel Branch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/subgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/cancellation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cancellation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/checkpoint-postgres/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint (Postgres)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/langgraph4j/langgraph4j-examples" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to(s)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How to(s)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/adaptiverag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/agentexecutor-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Executor + MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/multi-agent-supervisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent supervisor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to add persistence ("memory") to your graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/time-travel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to view and update past graph state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/wait-user-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wait for User Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-stategraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as state graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-compiledgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as compiled graph sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/subgraph-as-nodeaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subgraph as node action sample
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/llm-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate Langchain4j LLM streaming in Langgraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/parallel-branch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to create branches for parallel node execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/plantuml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Langgraph4j to PlantUML diagram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks Samples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apidocs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JavaDoc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="migrating-from-langgraph4j-18x-to-19">Migrating from LangGraph4j 1.8.x to 1.9</h1>
+<p>This guide describes the user-visible differences between <code>develop</code> at
+<code>eba30913aa58</code> (1.8.19) and <code>feature/#386_ver_1.9</code> at <code>694def9e06ee</code>.
+Repository-only changes such as tests, CI workflows, generated site files, and
+formatting are summarized separately at the end.</p>
+<h2 id="migration-checklist">Migration checklist</h2>
+<p>Before upgrading, check the following items:</p>
+<ol>
+<li>Replace calls to <code>CompiledGraph.stream(Map, ...)</code>,
+   <code>streamSnapshots(Map, ...)</code>, and <code>invoke(Map, ...)</code> with their <code>GraphInput</code>
+   equivalents. The map overloads are deprecated for removal.</li>
+<li>If a checkpoint must remain active after a run, explicitly configure
+   <code>CompileConfig.builder().releaseThread(false)</code>. The default is now <code>true</code>.</li>
+<li>Replace <code>CompiledGraph.setMaxIterations(...)</code> with
+   <code>CompileConfig.builder().recursionLimit(...)</code>.</li>
+<li>Replace <code>CompiledGraph.RunnableErrors</code> with <code>CompiledGraph.RunErrors</code> if the
+   enum was referenced directly.</li>
+<li>Replace <code>VersionedMemorySaver</code> and <code>HasVersions</code>; versioned released runs are
+   now accessed through <code>BaseCheckpointSaver.Tag</code>, <code>tag(...)</code>, and <code>lastTag(...)</code>.</li>
+<li>Update custom <code>BaseCheckpointSaver</code> implementations for the expanded saver
+   contract, preferably by extending <code>AbstractCheckpointSaver</code>.</li>
+<li>Replace <code>RunnableConfig.graphPath()</code> with <code>nodePath()</code> where the code needs
+   the current node path.</li>
+<li>Replace <code>GsonStateSerializer</code>; it is deprecated for removal. Prefer a
+   Jackson-based serializer.</li>
+<li>If using LangChain4j or Spring AI streaming classes directly, migrate from
+   the async-generator 4.x queue API to async-generator 5.x flow semantics.</li>
+<li>If using the Spring AI agent builders, migrate away from the removed
+    <code>ReactAgent</code> type and custom build-time chat-service factory.</li>
+<li>If using <code>javelit</code>, replace the removed <code>SpinnerComponent</code>.</li>
+</ol>
+<h2 id="1-dependencies-and-coordinates">1. Dependencies and coordinates</h2>
+<p>Change the LangGraph4j version in your BOM or individual dependencies:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependencyManagement&gt;</span>
+<span class="w">  </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-bom<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>${langgraph4j.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">      </span><span class="nt">&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;</span>
+<span class="w">      </span><span class="nt">&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/dependencyManagement&gt;</span>
+</code></pre></div>
+<p>Set <code>langgraph4j.version</code> to the published 1.9 release. The branch currently
+uses <code>1.9-SNAPSHOT</code>.</p>
+<p>The relevant dependency baseline is:</p>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>1.8.19</th>
+<th>1.9</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java</td>
+<td>17+</td>
+<td>17+</td>
+</tr>
+<tr>
+<td>async-generator</td>
+<td>4.3.1</td>
+<td>5.0.0</td>
+</tr>
+<tr>
+<td>LangChain4j</td>
+<td>1.16.2 / beta26</td>
+<td>unchanged</td>
+</tr>
+<tr>
+<td>Spring AI</td>
+<td>2.0.0</td>
+<td>unchanged</td>
+</tr>
+<tr>
+<td>Jackson Databind used by core</td>
+<td>2.21.1</td>
+<td>unchanged</td>
+</tr>
+</tbody>
+</table>
+<p><code>langchain4j-skills</code> now uses the common <code>${langchain4j.beta}</code> version instead
+of the previously hard-coded <code>1.12.1-beta21</code>. Applications that override
+LangChain4j dependencies should keep all LangChain4j beta artifacts aligned.</p>
+<p>The <code>spring-ai-agent-utils</code> dependency in the Spring AI agent module is now
+test-scoped. Applications that used it transitively must declare it directly.</p>
+<h2 id="2-starting-resuming-and-invoking-graphs">2. Starting, resuming, and invoking graphs</h2>
+<p><code>GraphInput</code> is now the preferred and explicit execution API.</p>
+<p>Before:</p>
+<div class="highlight"><pre><span></span><code><span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span><span class="w"> </span><span class="c1">// resume</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</code></pre></div>
+<p>After:</p>
+<div class="highlight"><pre><span></span><code><span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">)),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;approval&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;APPROVED&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">)),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+</code></pre></div>
+<p>Use <code>GraphInput.noArgs()</code> to start a graph with no arguments. Do not use a null
+map to communicate whether a run is new or resumed.</p>
+<p>The following overloads remain available in 1.9 but are deprecated for
+removal:</p>
+<ul>
+<li><code>stream(Map&lt;String,Object&gt;, RunnableConfig)</code></li>
+<li><code>stream(Map&lt;String,Object&gt;)</code></li>
+<li><code>streamSnapshots(Map&lt;String,Object&gt;, RunnableConfig)</code></li>
+<li><code>invoke(Map&lt;String,Object&gt;, RunnableConfig)</code></li>
+<li><code>invoke(Map&lt;String,Object&gt;)</code></li>
+</ul>
+<p><code>RunnableConfig.empty()</code> is a reusable empty configuration for executions that
+do not need a thread ID, checkpoint ID, metadata, or custom stream mode.</p>
+<h2 id="3-checkpoint-lifecycle-now-releases-by-default">3. Checkpoint lifecycle now releases by default</h2>
+<p><code>CompileConfig.releaseThread</code> changed from <code>false</code> to <code>true</code>.</p>
+<p>With a checkpoint saver configured, a completed run now releases its active
+thread automatically. Releasing archives/tags the checkpoints according to the
+saver implementation and removes the active checkpoint set. This affects code
+that expects to inspect, resume, replay, or manually release the same active
+thread after completion.</p>
+<p>Preserve the 1.8 behavior explicitly when needed:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="n">saver</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">releaseThread</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>Use <code>releaseThread(false)</code> for long-lived conversations, time travel, manual
+checkpoint lifecycle management, or any flow that resumes after a normally
+completed invocation. Interrupted runs remain resumable because execution has
+not reached normal completion.</p>
+<p>An initial non-resume invocation now consults the saver for existing thread
+state regardless of <code>releaseThread</code>. Use a new thread ID when a genuinely fresh
+run is required, or release/delete the prior active state first.</p>
+<h2 id="4-saver-versioning-and-tags">4. Saver versioning and tags</h2>
+<h3 id="unified-tag-api">Unified tag API</h3>
+<p><code>BaseCheckpointSaver.Tag</code> changed from a two-field record into an immutable
+class with:</p>
+<ul>
+<li><code>threadId()</code></li>
+<li><code>version()</code>, returning <code>Optional&lt;Integer&gt;</code></li>
+<li><code>checkpoints()</code></li>
+<li><code>lastCheckpoint()</code></li>
+</ul>
+<p>The old two-argument constructor remains available, but record-specific
+behavior such as record pattern matching or assumptions about generated
+<code>equals</code>, <code>hashCode</code>, and <code>toString</code> no longer applies.</p>
+<p><code>BaseCheckpointSaver</code> adds:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Tag</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">tag</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">version</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">Tag</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">lastTag</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+</code></pre></div>
+<p><code>MemorySaver</code> and <code>FileSystemSaver</code> now retain released runs as numbered tags.
+<code>release(...)</code> returns the created version, and <code>lastTag(...)</code> retrieves the
+most recent released run.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">released</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">saver</span><span class="p">.</span><span class="na">release</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">released</span><span class="p">.</span><span class="na">version</span><span class="p">().</span><span class="na">orElseThrow</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">lastRun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">saver</span><span class="p">.</span><span class="na">lastTag</span><span class="p">(</span><span class="n">config</span><span class="p">).</span><span class="na">orElseThrow</span><span class="p">();</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">finalCheckpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lastRun</span><span class="p">.</span><span class="na">lastCheckpoint</span><span class="p">().</span><span class="na">orElseThrow</span><span class="p">();</span>
+</code></pre></div>
+<p><code>GraphResult.asLastCheckpointStateData()</code> now uses <code>Tag.lastCheckpoint()</code>; its
+observable result is unchanged.</p>
+<h3 id="removed-versioning-types">Removed versioning types</h3>
+<p><code>VersionedMemorySaver</code> and <code>HasVersions</code> were removed. Replace
+<code>versionsByThreadId(...)</code> and <code>lastVersionByThreadId(...)</code> usage with retained
+<code>Tag</code> objects and the unified <code>tag(...)</code>/<code>lastTag(...)</code> API on <code>MemorySaver</code>.</p>
+<h3 id="filesystemsaver">FileSystemSaver</h3>
+<p>Released files continue to use versioned names such as
+<code>thread-&lt;threadId&gt;-v&lt;version&gt;-saver.json</code> or <code>.bin</code>.</p>
+<p>The new helper below lists versioned saver files and returns an empty stream if
+the directory does not exist or is not a directory:</p>
+<div class="highlight"><pre><span></span><code><span class="n">FileSystemSaver</span><span class="p">.</span><span class="na">list</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">threadId</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+</code></pre></div>
+<p><code>deleteFile(...)</code> still exists, but <code>release(...)</code> is the normal lifecycle API
+when the run should be retained as a version.</p>
+<h3 id="custom-checkpoint-savers-and-subgraphs">Custom checkpoint savers and subgraphs</h3>
+<p><code>BaseCheckpointSaver</code> also adds subgraph-saver registration:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">putSubGraphSaver</span><span class="p">(</span>
+<span class="w">    </span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">parentConfig</span><span class="p">,</span>
+<span class="w">    </span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">subGraphConfig</span><span class="p">,</span>
+<span class="w">    </span><span class="n">BaseCheckpointSaver</span><span class="w"> </span><span class="n">subGraphSaver</span><span class="p">);</span>
+
+<span class="n">Collection</span><span class="o">&lt;</span><span class="n">SubGraphSaver</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">listSubGraphSaver</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">parentConfig</span><span class="p">);</span>
+</code></pre></div>
+<p>This allows a parent saver to release checkpoint savers created by compiled
+subgraphs. <code>SubCompiledGraphNodeAction</code> registers the subgraph saver with the
+parent saver, and <code>AbstractCheckpointSaver.release(...)</code> cascades release to
+those subgraph threads.</p>
+<p>Custom implementations that directly implement <code>BaseCheckpointSaver</code> must
+implement the new methods. Extending <code>AbstractCheckpointSaver</code> supplies the
+default tag behavior and subgraph bookkeeping.</p>
+<h2 id="5-state-cloning-and-transient-attributes">5. State cloning and transient attributes</h2>
+<h3 id="optional-state-clone-bypass">Optional state-clone bypass</h3>
+<p>Graph outputs and checkpoint snapshots are cloned by default, as in 1.8. For a
+performance-sensitive run, cloning can now be disabled:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">disableCloneState</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>When disabled, state objects exposed outside the graph are not guaranteed to
+be immutable and can reflect later mutations. Only enable this after confirming
+that callers do not retain or mutate emitted state.</p>
+<p><code>RunnableConfig.isCloneStateDisabled()</code> reports the effective option.</p>
+<h3 id="transient-state-attributes">Transient state attributes</h3>
+<p><code>StateSerializer</code> adds:</p>
+<div class="highlight"><pre><span></span><code><span class="n">serializer</span><span class="p">.</span><span class="na">declareTransientAttributes</span><span class="p">(</span><span class="s">&quot;runtimeClient&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;openStream&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Declared attributes are omitted from serialized bytes/text and restored from
+the serializer's in-memory transient data when deserializing in the same
+process. Support is implemented by <code>ObjectStreamStateSerializer</code>,
+<code>JacksonStateSerializer</code>, and <code>GsonStateSerializer</code>.</p>
+<p>Transient values are process-local. They are not available after restart, on a
+different node, or from a newly created serializer instance. Do not use them
+for data required to resume a persisted graph.</p>
+<p><code>GsonStateSerializer</code> is deprecated for removal since 1.9; migrate to
+<code>JacksonStateSerializer</code> or an integration-specific Jackson serializer.</p>
+<p><code>TypeMapper.Reference</code> now accepts a <code>Class&lt;T&gt;</code> and uses its fully qualified
+class name:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TypeMapper</span><span class="p">.</span><span class="na">Reference</span><span class="o">&lt;</span><span class="n">MyType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MyType</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w"> </span><span class="p">{};</span>
+</code></pre></div>
+<h2 id="6-runtime-configuration-and-graph-metadata">6. Runtime configuration and graph metadata</h2>
+<p><code>RunnableConfig</code> remains immutable from the user's perspective. Methods such
+as <code>updateMetadata(...)</code>, <code>removeMetadata(...)</code>, <code>withCheckPointId(...)</code>, and
+<code>withStreamMode(...)</code> return a new configuration. Metadata builders reject null
+values.</p>
+<p>The graph now records a node hierarchy separately from the graph hierarchy:</p>
+<ul>
+<li><code>RunnableConfig.nodePath()</code> and <code>GRAPH_NODE_PATH</code> are new.</li>
+<li><code>RunnableConfig.graphPath()</code> is deprecated since 1.9.</li>
+<li><code>GraphPath.replaceLast(...)</code> creates a path with its final element replaced.</li>
+<li><code>GraphDefinition.Nodes.isSubgraphNode(...)</code> and <code>hasSubGraphs()</code> expose
+  subgraph checks.</li>
+</ul>
+<p>Code in hooks or custom subgraph integrations should use <code>nodePath()</code> to locate
+the active node. Resume metadata for a subgraph is automatically removed after
+the resumed embedded generator completes, preventing stale resume data from
+leaking into later nodes.</p>
+<h2 id="7-core-api-removals-renames-and-behavior-changes">7. Core API removals, renames, and behavior changes</h2>
+<h3 id="recursion-limit">Recursion limit</h3>
+<p><code>CompiledGraph.setMaxIterations(int)</code> was removed. Configure the limit before
+compilation:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">workflow</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">recursionLimit</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">());</span>
+</code></pre></div>
+<h3 id="error-enum-and-execution-exceptions">Error enum and execution exceptions</h3>
+<p><code>CompiledGraph.RunnableErrors</code> was renamed to <code>CompiledGraph.RunErrors</code>.</p>
+<p>Graph execution failures continue to use <code>GraphRunnerException</code> and retain the
+associated <code>RunnableConfig</code>. <code>GraphRunnerException.of(Throwable)</code> is a new
+helper for locating a graph runner exception in a cause chain.</p>
+<h3 id="streaming-end-marker">Streaming end marker</h3>
+<p><code>StreamingOutputEnd.isEnd()</code> is no longer overridden. Use
+<code>isStreamingEnd()</code> to detect the end-of-stream marker. <code>isEnd()</code> retains the
+base <code>NodeOutput</code> meaning and must not be used as a streaming-end test.</p>
+<h3 id="hook-and-exception-utility-extensions">Hook and exception utility extensions</h3>
+<p>Applications that subclass <code>WrapCallHookSubgraphAware</code> must update overrides of
+<code>isSubgraphRequested(...)</code> and <code>isSubgraphEnded(...)</code>: both now return
+<code>Optional&lt;String&gt;</code> containing a node ID instead of <code>Optional&lt;Step&gt;</code>. The helper
+tracks nested subgraphs by node ID rather than by the deprecated graph path.</p>
+<p><code>HookCalls.callListAsStream()</code> and <code>callMapAsStream(String)</code> are now public, and
+the new no-argument <code>callMapAsStream()</code> exposes the keyed hook entries. Although
+<code>HookCalls</code> is in an internal package, this affects extensions that used it.</p>
+<p><code>ExceptionUtils.findCauseByType(...)</code> now preserves the requested exception
+type in its return value (<code>Optional&lt;Ex&gt;</code> instead of <code>Optional&lt;Throwable&gt;</code>), so
+most callers can remove an explicit cast.</p>
+<h3 id="internal-streaming-engine">Internal streaming engine</h3>
+<p>Core graph execution and the Spring AI/LangChain4j streaming generators now use
+<code>AsyncGeneratorFlow</code> from async-generator 5.0. Normal iteration through
+<code>stream()</code> remains source-compatible, but code that subclasses streaming
+generators, supplies a <code>BlockingQueue</code>, or depends on
+<code>AsyncGenerator.WithResult</code> must migrate.</p>
+<p><code>StreamingChatGenerator</code> now implements <code>AsyncGenerator</code>,
+<code>AsyncGenerator.HasResultValue</code>, and <code>LG4JLoggable</code> directly. Its builder no
+longer accepts <code>queue(...)</code>.</p>
+<p>The deprecated LangChain4j <code>LLMStreamingGenerator</code> class was removed. Use
+<code>org.bsc.langgraph4j.langchain4j.generators.StreamingChatGenerator</code>.</p>
+<h2 id="8-agent-framework-changes">8. Agent framework changes</h2>
+<h3 id="core-agentex">Core <code>AgentEx</code></h3>
+<p><code>AgentEx</code> introduces <code>ToolBehaviour&lt;M, State&gt;</code>. A tool behavior supplies its
+name and can add its execution node to the state graph. Consequently, the
+low-level <code>AgentEx.Builder.build(...)</code> method now accepts tool behaviors rather
+than raw tool objects plus a separate <code>toolName</code>/<code>executeToolFactory</code> mapping.</p>
+<p>Hook registration is consolidated:</p>
+<ul>
+<li>Use <code>addNodeHook(...)</code>, optionally with a node ID, for before/wrap/after node
+  hooks.</li>
+<li>Use <code>addEdgeHook(...)</code>, optionally with a node ID, for before/wrap/after edge
+  hooks.</li>
+<li>The specialized low-level methods such as <code>addCallModelHook</code>,
+  <code>addDispatchToolsHook</code>, <code>addShouldContinueHook</code>, <code>addDispatchActionHook</code>, and
+  <code>addApprovalActionHook</code> were removed from <code>AgentEx.Builder</code>.</li>
+</ul>
+<p>The higher-level Spring AI builders retain compatibility convenience methods
+with those specialized names.</p>
+<h3 id="skills-api">Skills API</h3>
+<p>Core adds a small provider-neutral skills API:</p>
+<ul>
+<li><code>SkillSource</code> supplies skill Markdown.</li>
+<li><code>SkillPath</code> reads a file-backed skill directory.</li>
+<li><code>SkillParser</code> parses YAML-like front matter and content.</li>
+<li><code>SkillParser.FrontMatter</code> exposes string and string-list values.</li>
+</ul>
+<p>These APIs are also used by the new Spring AI skilled sub-agent support.</p>
+<h2 id="9-spring-ai-agent-migration">9. Spring AI agent migration</h2>
+<p>The former <code>org.bsc.langgraph4j.spring.ai.agent.ReactAgent</code> interface was
+removed. Its responsibilities are split into:</p>
+<ul>
+<li><code>BaseReactAgentBuilder</code> for model, serializer, tools, schema, streaming, and
+  conversation-context configuration.</li>
+<li><code>ReactAgentBuilder</code> for the compact <code>AgentExecutor</code> graph.</li>
+<li><code>ReactAgentBuilderEx</code> for <code>AgentExecutorEx</code>, approvals, node/edge hooks, and
+  sub-agents.</li>
+<li>top-level <code>ChatService</code> and the default implementation.</li>
+</ul>
+<p>Most applications that only call <code>AgentExecutor.builder()</code> or
+<code>AgentExecutorEx.builder()</code> can keep their fluent configuration. The important
+change affects custom chat services.</p>
+<p>Before:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentExecutor</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">chatModel</span><span class="p">(</span><span class="n">chatModel</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">(</span><span class="n">builder</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MyChatService</span><span class="p">(</span><span class="n">builder</span><span class="p">));</span>
+</code></pre></div>
+<p>After:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentExecutor</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">chatModel</span><span class="p">(</span><span class="n">chatModel</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">chatService</span><span class="p">(</span><span class="n">myChatService</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>Implement the new top-level
+<code>org.bsc.langgraph4j.spring.ai.agent.ChatService</code>, not
+<code>ReactAgent.ChatService</code>.</p>
+<p><code>AgentExecutorEx.Builder</code> also adds a direct compile overload:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CompiledGraph</span><span class="o">&lt;</span><span class="n">AgentExecutorEx</span><span class="p">.</span><span class="na">State</span><span class="o">&gt;</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentExecutorEx</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">chatModel</span><span class="p">(</span><span class="n">chatModel</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">tools</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">(</span><span class="n">compileConfig</span><span class="p">);</span>
+</code></pre></div>
+<p>The default serializer for the LangChain4j <code>AgentExecutorEx</code> changes from the
+standard Java object serializer to its JSON serializer. Persisted checkpoints
+must be read with a serializer compatible with the format that created them;
+do not mix old binary checkpoint files with the new default.</p>
+<p>Spring AI adds reusable sub-agent types:</p>
+<ul>
+<li><code>SubAgent</code> exposes a compiled agent as both a <code>ToolCallback</code> and an
+  <code>AgentEx.ToolBehaviour</code>.</li>
+<li><code>CustomSubAgent</code> wraps an explicitly supplied compiled graph.</li>
+<li><code>SkilledReactSubAgent</code> builds a sub-agent from a <code>SkillSource</code>.</li>
+<li><code>SkillResource</code> adapts a Spring <code>Resource</code> to <code>SkillSource</code>.</li>
+</ul>
+<p><code>AgentExecutorEx.State.toolExecutionRequests$removeFirst()</code> is now public, and
+<code>getToolCallByNameFromLastMessage(...)</code> is available for custom orchestration.
+Parallel tool responses are explicitly retained in agent state, and denied
+approval responses are routed back through the dispatcher.</p>
+<p>The Maven archetype has been updated to the same builder layout and APIs.</p>
+<h2 id="10-new-json-graph-dsl-module">10. New JSON graph DSL module</h2>
+<p>The new <code>langgraph4j-dsl</code> artifact is included in the BOM:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-dsl<span class="nt">&lt;/artifactId&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p><code>JsonDslGenerator</code> is a <code>GraphDefinition.Reducer</code> that exports a graph,
+including parallel nodes and nested subgraphs, to a JSON representation:</p>
+<div class="highlight"><pre><span></span><code><span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compiledGraph</span><span class="p">.</span><span class="na">reduce</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">JsonDslGenerator</span><span class="o">&lt;&gt;</span><span class="p">());</span>
+</code></pre></div>
+<p>The module packages <code>/langgraph4j-dsl.schema.json</code> for validation. The Studio
+web UI consumes the same graph/result model and was updated to React 19 and an
+event-driven web-component implementation. These Studio changes do not require
+Java application changes unless an application embeds or customizes the web UI.</p>
+<h2 id="11-persistence-integrations">11. Persistence integrations</h2>
+<p>CockroachDB and DynamoDB savers already exist on the 1.8.19 <code>develop</code> baseline,
+so they are not new migration requirements for 1.9. Their module versions move
+with the rest of the project.</p>
+<p>Subgraph release cascading described above applies to savers derived from
+<code>AbstractCheckpointSaver</code>, including the database-backed implementations.</p>
+<h2 id="12-removed-javelit-component">12. Removed Javelit component</h2>
+<p><code>org.bsc.javelit.SpinnerComponent</code> and its internal spinner implementation were
+removed. There is no direct replacement in this branch. Applications using
+this optional Java 21 module must replace it with their own progress component
+or another Javelit component before upgrading.</p>
+<h2 id="13-fixes-included-in-the-19-branch">13. Fixes included in the 1.9 branch</h2>
+<p>The comparison also contains these behavior fixes:</p>
+<ul>
+<li>State emitted by embedded generators is merged consistently before after-node
+  hooks run.</li>
+<li>Subgraph interruption/resume tracks node paths and checkpoint savers more
+  reliably, including nested subgraphs.</li>
+<li><code>CheckpointSerializer</code> reads <code>nodeId</code> and <code>nextNodeId</code> in the correct order.</li>
+<li>Spring AI tool-response messages are serialized and retained in state.</li>
+<li>Spring AI model calls fail clearly when no output is returned.</li>
+<li>LangChain4j and Spring AI streaming correctly handle responses composed only
+  of tool-call chunks.</li>
+<li>Collection string formatting tolerates null maps.</li>
+<li>Metadata builders reject null values.</li>
+<li><code>FileSystemSaver.list(...)</code> safely handles a missing target directory.</li>
+</ul>
+<h2 id="14-repository-and-documentation-changes">14. Repository and documentation changes</h2>
+<p>These changes affect project contributors or documentation deployment rather
+than library migration:</p>
+<ul>
+<li>Maven/site documentation was reorganized and old generated Spring AI pages
+  were removed in favor of maintained module READMEs.</li>
+<li>MkDocs gained Mike-based documentation versioning.</li>
+<li>Studio removed Tailwind/DaisyUI build files and upgraded its React-based UI.</li>
+<li>GitHub Actions and snapshot/site deployment configuration were updated.</li>
+<li>Test classes were renamed and expanded, especially for interruption,
+  subgraph, serializer, agent approval, and DSL behavior.</li>
+<li>The root <code>CHANGELOG.md</code> differs because <code>develop</code> contains the 1.8.x release
+  history while the feature branch is preparing the 1.9 line; this guide is the
+  migration-focused replacement, not a copy of that release history.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.integrate", "toc.integrate.toc", "toc.integrate.toc.inline", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
