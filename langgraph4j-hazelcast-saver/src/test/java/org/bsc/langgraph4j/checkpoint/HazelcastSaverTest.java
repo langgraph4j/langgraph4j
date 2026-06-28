@@ -5,6 +5,7 @@ import com.hazelcast.config.JoinConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.bsc.langgraph4j.CompileConfig;
+import org.bsc.langgraph4j.GraphInput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -107,7 +108,7 @@ public class HazelcastSaverTest {
         var runnableConfig = RunnableConfig.builder().build();
         var workflow = graph.compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke( GraphInput.args(Map.of("input", "test1")), runnableConfig);
         assertTrue(result.isPresent());
 
         var history = workflow.getStateHistory(runnableConfig);
@@ -134,7 +135,7 @@ public class HazelcastSaverTest {
         var runnableConfig = RunnableConfig.builder().build();
         var workflow = graph.compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
         assertTrue(result.isPresent());
 
         var history = workflow.getStateHistory(runnableConfig);
@@ -197,7 +198,7 @@ public class HazelcastSaverTest {
                 .releaseThread(false)
                 .build());
 
-        workflow.invoke(Map.of("input", "test-serializer"), runnableConfig);
+        workflow.invoke(GraphInput.args(Map.of("input", "test-serializer")), runnableConfig);
 
         var history = workflow.getStateHistory(runnableConfig);
         assertFalse(history.isEmpty());
