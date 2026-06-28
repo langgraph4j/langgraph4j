@@ -11,23 +11,9 @@
 
 	<artifactId>langgraph4j-springai-agentexecutor</artifactId>
 	<packaging>jar</packaging>
-    <url>https://github.com/langgraph4j/langgraph4j</url>
 
 	<name>langgraph4j::springai::agentexecutor</name>
 	<description>Sample using Langgraph4j with SpringAI</description>
-
-	
-	<licenses>
-		<license/>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>Bartolomeo Sorrentino</name>
-			<email>bartolomeo.sorrentino@gmail.com</email>
-			<url>https://bsorrentino.github.io/bsorrentino/</url>
-		</developer>
-	</developers>
 
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>

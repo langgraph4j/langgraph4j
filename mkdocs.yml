@@ -46,7 +46,8 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
 nav:
-  - Home: 
+  - Home:
+    - What's new in 1.9: whats-new-v1.9.md
     - Overview: index.md    
     # - Core Library:       
     #   - Examples: https://github.com/langgraph4j/langgraph4j-examples
