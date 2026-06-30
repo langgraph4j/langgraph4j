@@ -83,8 +83,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
     private final ProcessedNodesEdgesAndConfig<State> processedData;
 
-    private int maxIterations;
-
     public final CompileConfig compileConfig;
 
     /**
@@ -93,8 +91,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @param stateGraph the StateGraph to be used in this CompiledGraph
      */
     CompiledGraph(StateGraph<State> stateGraph, CompileConfig compileConfig ) throws GraphStateException {
-
-        maxIterations = compileConfig.recursionLimit();
 
         this.stateGraph = stateGraph;
 
@@ -862,6 +858,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             try {
 
+                final var maxIterations = compileConfig.recursionLimit();
                 var iteration = 0;
                 for(;;) {
                     // GUARD: CHECK MAX ITERATION REACHED
@@ -1242,6 +1239,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         @Override
         public Data<Output> next() {
+
+            final var maxIterations = compileConfig.recursionLimit();
 
             try {
                 // GUARD: CHECK MAX ITERATION REACHED
