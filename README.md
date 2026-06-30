@@ -21,7 +21,15 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 ## Star History
 
-[![Star History Chart](https://starchart.cc/langgraph4j/langgraph4j.svg)](https://starchart.cc/langgraph4j/langgraph4j)
+<!--[![Star History Chart](https://starchart.cc/langgraph4j/langgraph4j.svg)](https://starchart.cc/langgraph4j/langgraph4j)-->
+<a href="https://star-history.com/#langgraph4j/langgraph4j&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=langgraph4j/langgraph4j&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=langgraph4j/langgraph4j&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=langgraph4j/langgraph4j&type=Date" />
+  </picture>
+</a>
+
 
 # Getting Started
 
