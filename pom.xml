@@ -44,8 +44,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <langchain4j.version>1.17.1</langchain4j.version>
-        <langchain4j.beta>1.17.1-beta27</langchain4j.beta>
+        <langchain4j.version>1.17.2</langchain4j.version>
+        <langchain4j.beta>1.17.2-beta27</langchain4j.beta>
         <spring-ai.version>2.0.0</spring-ai.version>
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
