@@ -24,7 +24,7 @@
         <dependency>
             <groupId>io.javelit</groupId>
             <artifactId>javelit</artifactId>
-            <version>0.86.0</version>
+            <version>0.89.0</version>
         </dependency>
 
         <dependency>
