@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     name:  deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: develop
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
           java-version: '17'
@@ -40,7 +40,7 @@ jobs:
         run: mvn -B clean source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml
       - name: Upload all module artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: all-targets
           path: '**/target/**'
@@ -49,11 +49,11 @@ jobs:
     name: deploy javelit
     needs: deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: develop
       - name: Set up JDK 22
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
           java-version: '22'
