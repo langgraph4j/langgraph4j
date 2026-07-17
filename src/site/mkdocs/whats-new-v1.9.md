@@ -5,7 +5,7 @@ This guide describes all the new features and the refactored ones from 1.8.x  th
 
 ## Refactor internal streaming engine to support event emitting
 
-This new feature rely on the `AsyncGeneratorFlow` from [async-generator](https://github.com/bsorrentino/java-async-generator) 5.0. This model is closer to Java Reactive Stream and will guarantee, 
+This new feature rely on the `AsyncGeneratorFlow` from [async-generator 5.0](https://github.com/bsorrentino/java-async-generator). This model is closer to Java Reactive Stream and will guarantee, 
 in the near future (2.0),  the support to [Reactor Flow](https://projectreactor.io) and the possibility to emit custom event during graph execution as requinder in [#402](https://github.com/langgraph4j/langgraph4j/issues/402)
 
 Core graph execution and the Spring AI/LangChain4j streaming generators now use the new `AsyncGeneratorFlow`.
@@ -15,7 +15,7 @@ Core graph execution and the Spring AI/LangChain4j streaming generators now use 
 Normal iteration through `stream()` remains source-compatible, but code that subclasses streaming
 generators, supplies a `BlockingQueue`, or depends on `AsyncGenerator.WithResult` must migrate.
 
-## ‼️ Release thread is true by default ‼️
+## Release thread by default
 
 With a checkpoint saver configured, a completed run now releases its active
 thread automatically remains consistent across graph executions. Releasing archives/tags the checkpoints according to the saver implementation and removes the active checkpoint set. This affects code that expects to inspect, resume, replay, or manually release the same active thread after completion.
@@ -38,7 +38,8 @@ The thread is not released in these cases:
 
 ### Compatibility
 
-This is potentially a **BREAKING CHANGE** only if, **after the graph completes normally**, you update the graph state and run the graph again. In that case, use `CompileConfig.builder().releaseThread(false)` for long-lived conversations, time travel, manual checkpoint lifecycle management, or any flow that resumes after a normally completed invocation. 
+⚠️ **BREAKING CHANGE**:
+Only if, **after the graph completes normally**, you update the graph state and run the graph again, in that case, use `CompileConfig.builder().releaseThread(false)` to keep backward compatibility. 
 
 **❌ Doesn't work**
 ```java
@@ -233,7 +234,7 @@ We have introduced the sub agent abstraction  providing a concrete skill based i
 
 Take a look to this article for further details: [Skill-Based Sub-Agents with LangGraph4j and Spring AI](https://bsorrentino.github.io/bsorrentino/ai/2026/04/28/LangGraph4j-SubAgent.html)
 
-⚠️ BREAKING CHANGE: 
+⚠️ **BREAKING CHANGE**: 
 > The `spring-ai-agent-utils` dependency in the Spring AI agent module has been moved to test scope, its skill implementation has been removed by Spring AI module. Applications that used it transitively must declare it directly.
 
 ### Agent migration
