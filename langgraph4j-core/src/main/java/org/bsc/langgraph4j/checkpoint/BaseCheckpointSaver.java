@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.RunnableConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -56,7 +57,7 @@ public interface BaseCheckpointSaver {
 
     Tag release(RunnableConfig config) throws Exception;
 
-    Optional<Tag> tag( RunnableConfig config, Integer version ) throws Exception;
+    Optional<Tag> tag( RunnableConfig config, @Nullable Integer version ) throws Exception;
 
 
     default Optional<Tag> lastTag(  RunnableConfig config ) throws Exception {
