@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
+import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
@@ -209,9 +210,10 @@ public interface LangGraphStudioServer {
             requireNonNull(id, "id cannot be null");
             try {
                 var compiledGraph = graph.compile();
-                var graph = compiledGraph.getGraph(GraphRepresentation.Type.MERMAID, /*initData.title()*/ null, false);
-
-                return new InitGraphData(id, title(), graph.content(), args());
+                //var graphMermaid = compiledGraph.getGraph(GraphRepresentation.Type.MERMAID, /*initData.title()*/ null, false);
+                // return new InitGraphData(id, title(), graphMermaid.content(), args());
+                var graphDsl = compiledGraph.reduce( new JsonDslGenerator<>() );
+                return new InitGraphData(id, title(), graphDsl, args());
 
             } catch (GraphStateException e) {
 
