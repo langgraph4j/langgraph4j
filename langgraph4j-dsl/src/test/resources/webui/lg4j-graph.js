@@ -18,11 +18,17 @@ import {
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
-const ROOT_X_GAP = 190;
-const ROOT_Y_GAP = 132;
-const CHILD_X_GAP = 170;
-const CHILD_Y_GAP = 104;
+const DEFAULT_NODE_GAP = 100;
+const ROOT_PADDING_X = 120;
+const ROOT_PADDING_TOP = 40;
+const SUBGRAPH_PADDING_X = 40;
 const SUBGRAPH_PADDING_TOP = 64;
+const SUBGRAPH_PADDING_BOTTOM = 40;
+
+function parseNodeGap(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_NODE_GAP;
+}
 
 function CircleNode({ data }) {
   const kind = data?.kind === 'start' ? 'start' : 'end';
@@ -65,9 +71,10 @@ const nodeTypes = {
 function nodeSize(node, collapsedSubgraphs) {
   const isSubgraph = node.data?.kind === 'subgraph';
   const isBoundary = node.data?.kind === 'start' || node.data?.kind === 'end';
+  const layoutSize = node.data?.layoutSize;
   return {
-    width: isSubgraph ? 320 : isBoundary ? 54 : 140,
-    height: isSubgraph ? (collapsedSubgraphs.has(node.id) ? 56 : 300) : isBoundary ? 54 : 48
+    width: isSubgraph && layoutSize ? layoutSize.width : isSubgraph ? 320 : isBoundary ? 54 : 140,
+    height: isSubgraph && layoutSize ? layoutSize.height : isSubgraph ? (collapsedSubgraphs.has(node.id) ? 56 : 300) : isBoundary ? 54 : 48
   };
 }
 
@@ -282,42 +289,194 @@ function removeCycleEdges(outgoing, groupNodes, groupKey) {
   return acyclicOutgoing;
 }
 
-function autoLayoutNodes(nodes, layoutEdges, savedPositions) {
+function rankBuckets(groupNodes, layoutEdges, groupKey) {
+  const ranks = rankGroupNodes(groupNodes, layoutEdges, groupKey);
+  const byRank = new Map();
+  for (const node of groupNodes) {
+    const rank = ranks.get(node.id) || 0;
+    const bucket = byRank.get(rank) || [];
+    bucket.push(node);
+    byRank.set(rank, bucket);
+  }
+  return [...byRank.entries()].sort(([left], [right]) => left - right);
+}
+
+function nodeLayoutSize(node, collapsedSubgraphs) {
+  return nodeSize(node, collapsedSubgraphs);
+}
+
+function layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs) {
+  const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
+  const sizes = orderedNodes.map((node) => nodeLayoutSize(node, collapsedSubgraphs));
+  const totalWidth = sizes.reduce((sum, size) => sum + size.width, 0) + Math.max(0, sizes.length - 1) * nodeGap;
+  let x = -totalWidth / 2;
+  let maxHeight = 0;
+  return {
+    placements: orderedNodes.map((node, index) => {
+      const size = sizes[index];
+      const position = { node, x, y };
+      x += size.width + nodeGap;
+      maxHeight = Math.max(maxHeight, size.height);
+      return position;
+    }),
+    height: maxHeight
+  };
+}
+
+function layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSequence) {
+  const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
+  const mainNodes = orderedNodes.filter((node) => node.data?.kind !== 'subgraph');
+  const subgraphNodes = orderedNodes.filter((node) => node.data?.kind === 'subgraph');
+  const mainLayout = layoutRank(mainNodes, y, nodeGap, collapsedSubgraphs);
+  const placements = [...mainLayout.placements];
+  let maxHeight = mainLayout.height;
+  const mainBounds = placements.reduce((bounds, placement) => {
+    const size = nodeLayoutSize(placement.node, collapsedSubgraphs);
+    return {
+      minX: Math.min(bounds.minX, placement.x),
+      maxX: Math.max(bounds.maxX, placement.x + size.width)
+    };
+  }, { minX: 0, maxX: 0 });
+  let rightX = mainBounds.maxX + nodeGap;
+  let leftX = mainBounds.minX - nodeGap;
+
+  const placedIds = new Set(placements.map((placement) => placement.node.id));
+  for (const node of subgraphNodes) {
+    if (placedIds.has(node.id)) {
+      continue;
+    }
+    const size = nodeLayoutSize(node, collapsedSubgraphs);
+    const placeRight = subgraphSequence.count % 2 === 0;
+    placements.push({
+      node,
+      x: placeRight ? rightX : leftX - size.width,
+      y
+    });
+    if (placeRight) {
+      rightX += size.width + nodeGap;
+    }
+    else {
+      leftX -= size.width + nodeGap;
+    }
+    subgraphSequence.count += 1;
+    maxHeight = Math.max(maxHeight, size.height);
+  }
+
+  return { placements, height: maxHeight };
+}
+
+function boundsOf(nodes, collapsedSubgraphs) {
+  return nodes.reduce((bounds, node) => {
+    const size = nodeLayoutSize(node, collapsedSubgraphs);
+    return {
+      minX: Math.min(bounds.minX, node.position.x),
+      minY: Math.min(bounds.minY, node.position.y),
+      maxX: Math.max(bounds.maxX, node.position.x + size.width),
+      maxY: Math.max(bounds.maxY, node.position.y + size.height)
+    };
+  }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+}
+
+function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs, nodeGap) {
   const groups = collectLayoutGroups(nodes);
   const nextNodes = [];
-  for (const [groupKey, groupNodes] of groups.entries()) {
-    const ranks = rankGroupNodes(groupNodes, layoutEdges, groupKey);
-    const byRank = new Map();
+  const visitedGroups = new Set();
+
+  const layoutGroup = (groupKey) => {
+    if (visitedGroups.has(groupKey)) {
+      return null;
+    }
+    visitedGroups.add(groupKey);
+    const groupNodes = (groups.get(groupKey) || []).map((node) => ({ ...node, data: { ...(node.data || {}) } }));
     for (const node of groupNodes) {
-      const rank = ranks.get(node.id) || 0;
-      const bucket = byRank.get(rank) || [];
-      bucket.push(node);
-      byRank.set(rank, bucket);
+      if (node.data?.kind === 'subgraph' && !collapsedSubgraphs.has(node.id)) {
+        const layoutSize = layoutGroup(node.id);
+        if (layoutSize) {
+          node.data.layoutSize = layoutSize;
+        }
+      }
     }
 
-    for (const [rank, rankNodes] of byRank.entries()) {
-      rankNodes.sort((left, right) => left.id.localeCompare(right.id));
-      const xGap = groupKey === ROOT_PARENT ? ROOT_X_GAP : CHILD_X_GAP;
-      const yGap = groupKey === ROOT_PARENT ? ROOT_Y_GAP : CHILD_Y_GAP;
-      const yBase = groupKey === ROOT_PARENT ? 40 : SUBGRAPH_PADDING_TOP;
-      const totalWidth = (rankNodes.length - 1) * xGap;
-      rankNodes.forEach((node, index) => {
+    let y = groupKey === ROOT_PARENT ? ROOT_PADDING_TOP : SUBGRAPH_PADDING_TOP;
+    const subgraphSequence = { count: 0 };
+    for (const [, rankNodes] of rankBuckets(groupNodes, layoutEdges, groupKey)) {
+      const rankLayout = groupKey === ROOT_PARENT
+        ? layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSequence)
+        : layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs);
+
+      rankLayout.placements.forEach(({ node, x }) => {
         const savedPosition = savedPositions.get(node.id);
         nextNodes.push({
           ...node,
           position: savedPosition || {
-            x: groupKey === ROOT_PARENT ? 120 + index * xGap - totalWidth / 2 : 40 + index * xGap,
-            y: yBase + rank * yGap
+            x: groupKey === ROOT_PARENT ? x : SUBGRAPH_PADDING_X + x,
+            y
           }
         });
       });
+      y += rankLayout.height + nodeGap;
+    }
+
+    const groupLayoutNodes = nextNodes.filter((node) => parentKey(node) === groupKey);
+    if (groupLayoutNodes.length === 0) {
+      return null;
+    }
+
+    const groupBounds = boundsOf(groupLayoutNodes, collapsedSubgraphs);
+    if (groupKey !== ROOT_PARENT) {
+      const shiftX = SUBGRAPH_PADDING_X - groupBounds.minX;
+      if (shiftX !== 0) {
+        for (const node of groupLayoutNodes) {
+          if (!savedPositions.has(node.id)) {
+            node.position = {
+              x: node.position.x + shiftX,
+              y: node.position.y
+            };
+          }
+        }
+      }
+      const shiftedBounds = boundsOf(groupLayoutNodes, collapsedSubgraphs);
+      return {
+        width: Math.max(320, shiftedBounds.maxX + SUBGRAPH_PADDING_X),
+        height: Math.max(180, shiftedBounds.maxY + SUBGRAPH_PADDING_BOTTOM)
+      };
+    }
+
+    return null;
+  };
+
+  layoutGroup(ROOT_PARENT);
+  for (const groupKey of groups.keys()) {
+    layoutGroup(groupKey);
+  }
+
+  const rootNodes = nextNodes.filter((node) => !node.parentId && !savedPositions.has(node.id));
+  if (rootNodes.length > 0) {
+    const bounds = boundsOf(rootNodes, collapsedSubgraphs);
+    const shiftX = ROOT_PADDING_X - bounds.minX;
+    for (const node of rootNodes) {
+      node.position = {
+        x: node.position.x + shiftX,
+        y: node.position.y
+      };
     }
   }
-  return nextNodes;
+
+  const depthOf = (node) => {
+    let depth = 0;
+    let parentId = node.parentId;
+    while (parentId) {
+      depth += 1;
+      parentId = nodes.find((candidate) => candidate.id === parentId)?.parentId;
+    }
+    return depth;
+  };
+
+  return nextNodes.sort((left, right) => depthOf(left) - depthOf(right));
 }
 
 
-function GraphFlow({ source, activeNodeId }) {
+function GraphFlow({ source, activeNodeId, nodeGap }) {
   const [dsl, setDsl] = useState(null);
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -345,10 +504,10 @@ function GraphFlow({ source, activeNodeId }) {
     const graphEdges = rewriteSubgraphBoundaryEdges(nextDsl);
     const visibleNodes = nextDsl.nodes
       .filter((node) => !isHiddenByCollapsedParent(node, parentIndex, nextCollapsedSubgraphs));
-    const layoutNodes = autoLayoutNodes(visibleNodes, nextDsl.edges, savedPositionsRef.current);
+    const layoutNodes = autoLayoutNodes(visibleNodes, nextDsl.edges, savedPositionsRef.current, nextCollapsedSubgraphs, nodeGap);
     setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current, activeNodeId)));
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
-  }, [activeNodeId, setEdges, setNodes, toggleSubgraph]);
+  }, [activeNodeId, nodeGap, setEdges, setNodes, toggleSubgraph]);
 
   const handleNodesChange = useCallback((changes) => {
     for (const change of changes) {
@@ -566,6 +725,10 @@ function componentStyles() {
 
 export class LG4JDSLViewElement extends HTMLElement {
 
+  static get observedAttributes() {
+    return ['node-gap'];
+  }
+
   constructor() {
     super();
     
@@ -577,6 +740,10 @@ export class LG4JDSLViewElement extends HTMLElement {
 
     this.render = this.render.bind(this);
     this.onActive = this.onActive.bind(this);
+  }
+
+  attributeChangedCallback() {
+    this.update();
   }
 
   connectedCallback() {
@@ -617,8 +784,8 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.root?.render( 
       h('main', { className: 'app' },
         h('section', { className: 'graph' }, 
-          h( ReactFlowProvider, null,
-             h( GraphFlow, { source: this.source, activeNodeId: this.activeNodeId } )
+             h( ReactFlowProvider, null,
+             h( GraphFlow, { source: this.source, activeNodeId: this.activeNodeId, nodeGap: parseNodeGap(this.getAttribute('node-gap')) } )
           )
         )
       )
