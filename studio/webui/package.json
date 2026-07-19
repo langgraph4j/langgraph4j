@@ -9,14 +9,20 @@
     "build": "./build.sh",
     "deploy": "./deploy.sh"
   },
-  "dependencies": {
+  "deprecated": {
     "@alenaksu/json-viewer": "^2.0.1",
-    "@lit/task": "^1.0.1",
-    "@microlink/react-json-view": "^1.27.0",
-    "lit": "^3.2.1",
     "mermaid": "10.9.3"
   },
+  "dependencies": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "@lit/task": "^1.0.1",
+    "@microlink/react-json-view": "^1.27.0",
+    "@xyflow/react": "12.8.5",
+    "lit": "^3.2.1"
+  },
   "devDependencies": {
+    "@parcel/transformer-inline-string": "2.16.4",
     "@types/bun": "^1.1.14",
     "@types/d3": "^7.4.3",
     "@types/node": "^20.14.10",
