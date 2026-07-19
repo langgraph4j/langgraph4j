@@ -98,7 +98,7 @@ export class LG4JExecutorTestElement extends HTMLElement {
   }
 
   async loadGraph() {
-    const response = await fetch('/api/graph');
+    const response = await fetch('http://localhost:8080/api/graph');
     if (!response.ok) {
       throw new Error(`Graph request failed: ${response.status}`);
     }

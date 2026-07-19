@@ -22,7 +22,6 @@ template.innerHTML = `
       min-height: 100vh;
     }
 
-    .graph,
     .side,
     .result,
     .executor {
@@ -31,7 +30,26 @@ template.innerHTML = `
     }
 
     .graph {
-      background: #eef2f7;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      border: 1px solid #d1d5db;
+      overflow: hidden;
+    }
+
+    slot[name="graph"] {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    ::slotted([slot="graph"]) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
     }
 
     .side {
@@ -48,12 +66,6 @@ template.innerHTML = `
 
     .executor {
       border-top: 1px solid #d8dee8;
-    }
-
-    slot[name="graph"]::slotted(*) {
-      width: 100%;
-      height: 100%;
-      min-height: 100vh;
     }
 
     slot[name="result"]::slotted(*) {

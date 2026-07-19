@@ -481,6 +481,7 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const flowWrapperRef = React.useRef(null);
   const savedPositionsRef = React.useRef(new Map());
   const savedSizesRef = React.useRef(new Map());
 
@@ -543,14 +544,38 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     }
     try {
       renderDsl(source);
-      fitView({ padding: 0.16, duration: 200 });
     }
     catch (caught) {
       console.error(caught);
     }
   }, [renderDsl, source]);
 
-  const flow = useMemo(() => h(ReactFlow, {
+  React.useEffect(() => {
+    if (nodes.length === 0) {
+      return;
+    }
+    requestAnimationFrame(() => fitView({ padding: 0.16, duration: 200 }));
+  }, [fitView, nodes.length]);
+
+  React.useEffect(() => {
+    if (!flowWrapperRef.current) {
+      return undefined;
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry || entry.contentRect.width === 0 || entry.contentRect.height === 0 || nodes.length === 0) {
+        return;
+      }
+      requestAnimationFrame(() => fitView({ padding: 0.16, duration: 120 }));
+    });
+
+    resizeObserver.observe(flowWrapperRef.current);
+    return () => resizeObserver.disconnect();
+  }, [fitView, nodes.length]);
+
+  const flow = useMemo(() => h('div', { className: 'flow-wrapper', ref: flowWrapperRef },
+    h(ReactFlow, {
       nodes,
       edges,
       nodeTypes,
@@ -560,12 +585,13 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       fitView: true,
       fitViewOptions: { padding: 0.16 },
       minZoom: 0.2,
-      maxZoom: 1.5
+      maxZoom: 1.5,
+      style: { width: '100%', height: '100%' }
     },
     // h(MiniMap, null),
     h(Controls, null),
     h(Background, { gap: 18, size: 1 })
-  ), [edges, handleNodesChange, nodes, onEdgesChange]);
+  )), [edges, handleNodesChange, nodes, onEdgesChange]);
 
   return flow;
 }
@@ -589,10 +615,17 @@ function componentStyles() {
       box-sizing: border-box;
     }
 
+    .mount {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+    }
+
     .app {
       width: 100%;
-      height: 100vh;
-      min-height: 100%;
+      height: 100%;
+      min-height: 0;
       display: block;
     }
 
@@ -600,8 +633,15 @@ function componentStyles() {
       width: 100%;
       height: 100%;
       min-width: 0;
-      min-height: 100%;
+      min-height: 0;
       background: #eef2f7;
+    }
+
+    .flow-wrapper {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
     }
 
     .react-flow__node-default {
@@ -736,6 +776,7 @@ export class LG4JDSLViewElement extends HTMLElement {
     const style = document.createElement('style');
     style.textContent = componentStyles();
     this.mount = document.createElement('div');
+    this.mount.className = 'mount';
     shadow.append(style, this.mount);
 
     this.render = this.render.bind(this);
