@@ -105,8 +105,24 @@ export class LG4JWorkbenchElement extends LitElement {
     .graph-panel {
       flex: 1;
       min-height: 0;
+      display: flex;
       border: 1px solid #d1d5db;
-      overflow: auto;
+      overflow: hidden;
+    }
+
+    slot[name="graph"] {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    ::slotted([slot="graph"]) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
     }
 
     .result-panel {
