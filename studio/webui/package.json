@@ -9,7 +9,7 @@
     "build": "./build.sh",
     "deploy": "./deploy.sh"
   },
-  "deprecated": {
+  "dependenciesDeprecated": {
     "@alenaksu/json-viewer": "^2.0.1",
     "mermaid": "10.9.3"
   },
@@ -21,16 +21,18 @@
     "@xyflow/react": "12.8.5",
     "lit": "^3.2.1"
   },
+  "devDependenciesDeprecated": {
+    "@types/d3": "^7.4.3",
+    "crypto-browserify": "^3.12.1",
+    "svgo": "^3.3.2"
+  },
   "devDependencies": {
     "@parcel/transformer-inline-string": "2.16.4",
     "@types/bun": "^1.1.14",
-    "@types/d3": "^7.4.3",
     "@types/node": "^20.14.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "crypto-browserify": "^3.12.1",
     "parcel": "^2.13.2",
-    "svgo": "^3.3.2",
     "typescript": "^5.5.4"
   }
 }
