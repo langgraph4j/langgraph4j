@@ -39,7 +39,7 @@ public class LangGraphDslVisualizerApplication {
 
         @GetMapping(value = "/api/graph", produces = MediaType.APPLICATION_JSON_VALUE)
         String graph() throws GraphStateException {
-            return sampleGraphDslService.agentExecutor();
+            return sampleGraphDslService.graphWithSubgraph();
         }
     }
 
