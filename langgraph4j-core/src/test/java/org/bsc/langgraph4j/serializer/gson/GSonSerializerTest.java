@@ -75,15 +75,15 @@ public class GSonSerializerTest {
 
         GsonSerializer serializer = new GsonSerializer();
 
-        NodeOutput<AgentState> output = new NodeOutput<>("node", null);
+        NodeOutput<AgentState> output = new NodeOutput<>("node", new State(Map.of()));
         String json = serializer.getGson().toJson(output);
 
-        assertEquals( "{\"node\":\"node\",\"state\":null}", json );
+        assertEquals( "{\"node\":\"node\",\"state\":{\"data\":{}}}", json );
 
-        output = new NodeOutput<>("node", null);
+        output = new NodeOutput<>("node", new State(Map.of()));
         json = serializer.getGson().toJson(output);
 
-        assertEquals( "{\"node\":\"node\",\"state\":null}", json );
+        assertEquals( "{\"node\":\"node\",\"state\":{\"data\":{}}}", json );
     }
 
 

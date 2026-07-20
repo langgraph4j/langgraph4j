@@ -69,6 +69,7 @@ public class StreamingTest {
         final var generator = StreamingChatGenerator.<MessagesState<Message>>builder()
                 .mapResult(res -> Map.of("messages", res ))
                 .startingNode("node")
+                .startingState(new MessagesState<>( Map.of() ))
                 .build( flux.subscribeOn(Schedulers.parallel()) );
 
         for (var output : generator) {

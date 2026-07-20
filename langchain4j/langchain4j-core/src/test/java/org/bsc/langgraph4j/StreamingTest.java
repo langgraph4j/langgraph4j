@@ -39,6 +39,7 @@ public class StreamingTest {
 
         var generator = StreamingChatGenerator.<MessagesState<ChatMessage>>builder()
                 .mapResult(res -> Map.of("messages", res.aiMessage()))
+                .startingState( new MessagesState<>( Map.of() ))
                 .startingNode("node")
                 .build();
 

@@ -60,6 +60,7 @@ class Issue388Test {
         var generator = StreamingChatGenerator.<MessagesState<Message>>builder()
                 .mapResult(res -> Map.of("messages", res))
                 .startingNode("node")
+                .startingState(new MessagesState<>( Map.of() ))
                 .build(flux);
 
         // Iterate through all outputs — must NOT throw NullPointerException
@@ -83,6 +84,7 @@ class Issue388Test {
         var generator = StreamingChatGenerator.<MessagesState<Message>>builder()
                 .mapResult(res -> Map.of("messages", res))
                 .startingNode("node")
+                .startingState(new MessagesState<>( Map.of() ))
                 .build(flux);
 
         assertDoesNotThrow(() -> {

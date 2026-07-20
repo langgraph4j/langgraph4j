@@ -88,17 +88,17 @@ public class JacksonSerializerTest {
 
         final var serializer = new MyJacksonStateSerializer();
 
-        NodeOutput<AgentState> output = new NodeOutput<>("node", null);
+        NodeOutput<AgentState> output = new NodeOutput<>("node", new State(Map.of()));
         var mapper = serializer.objectMapper();
         var json = mapper.writeValueAsString(output);
         assertEquals("""
-                {"end":false,"node":"node","start":false,"state":null}""", json );
+                {"end":false,"node":"node","start":false,"state":{"data":{}}}""", json );
 
-        output = new NodeOutput<>("node", null);
+        output = new NodeOutput<>("node", new State(Map.of()));
         json = serializer.objectMapper().writeValueAsString(output);
 
         assertEquals( """
-                {"end":false,"node":"node","start":false,"state":null}""", json );
+                {"end":false,"node":"node","start":false,"state":{"data":{}}}""", json );
     }
 
     @Test
