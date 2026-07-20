@@ -10,6 +10,15 @@ import java.util.Objects;
 import static java.lang.String.*;
 
 public final class StateSnapshot<State extends AgentState> extends NodeOutput<State> implements SnapshotOutput {
+    public static <State extends AgentState> StateSnapshot<State> of(Checkpoint checkpoint, RunnableConfig config, AgentStateFactory<State> factory) {
+
+        RunnableConfig newConfig = RunnableConfig.builder(config)
+                .checkPointId( checkpoint.getId() )
+                .nextNode( checkpoint.getNextNodeId() )
+                .build() ;
+        return new StateSnapshot<>( checkpoint.getNodeId(), factory.apply(checkpoint.getState()), newConfig);
+    }
+
     private final RunnableConfig config;
 
     public String next( ) {
@@ -21,8 +30,7 @@ public final class StateSnapshot<State extends AgentState> extends NodeOutput<St
     }
 
     private StateSnapshot( String node, State state, RunnableConfig config) {
-        super(  Objects.requireNonNull(node, "node cannot be null"),
-                Objects.requireNonNull(state, "state cannot be null") );
+        super( node, state );
         this.config = Objects.requireNonNull(config, "config cannot be null");
     }
 
@@ -32,14 +40,6 @@ public final class StateSnapshot<State extends AgentState> extends NodeOutput<St
         return format("StateSnapshot{node=%s, state=%s, config=%s}", node(), state(), config());
     }
 
-    public static <State extends AgentState> StateSnapshot<State> of(Checkpoint checkpoint, RunnableConfig config, AgentStateFactory<State> factory) {
-
-        RunnableConfig newConfig = RunnableConfig.builder(config)
-                                .checkPointId( checkpoint.getId() )
-                                .nextNode( checkpoint.getNextNodeId() )
-                                .build() ;
-        return new StateSnapshot<>( checkpoint.getNodeId(), factory.apply(checkpoint.getState()), newConfig);
-    }
 
 
 }
