@@ -815,8 +815,8 @@ export class LG4JDSLViewElement extends HTMLElement {
   }
 
   onActive(event) {
-    const detail = event.detail;
-    this.activeNodeId = typeof detail === 'string' ? detail : detail?.node;
+    const { detail: { node, subgraphNode } } = event;
+    this.activeNodeId = subgraphNode ?? node
     this.update();
   }
 
