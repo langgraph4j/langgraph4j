@@ -65,7 +65,7 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
         final var subGraphRunnableConfigBuilder = RunnableConfig.builder(config)
                     .putMetadata(RunnableConfig.GRAPH_PATH, config.graphPath().append(nodeId))
                     .putMetadata(RunnableConfig.GRAPH_NODE_PATH, config.nodePath().append(nodeId))
-                ;
+                    ;
         subGraph.compileConfig.graphId()
                 .ifPresent( id ->
                         subGraphRunnableConfigBuilder.putMetadata(RunnableConfig.GRAPH_ID, id));
@@ -97,8 +97,8 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
                     GraphInput.resume( state.data() ) :
                     GraphInput.args(state.data());
 
-            var generator = subGraph.stream(input, subGraphRunnableConfig)
-                    .map( n -> SubGraphOutputFactory.createFromNodeOutput( n, nodeId) );
+            var generator = subGraph.streamSnapshots(input, subGraphRunnableConfig)
+                    .map( n -> SubGraphOutputFactory.createFromNodeOutput( n, nodeId, subGraphRunnableConfig) );
 
             return completedFuture( Map.of("%s_%s".formatted(subGraphId(), UUID.randomUUID()), generator));
 
