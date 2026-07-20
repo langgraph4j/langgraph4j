@@ -1,6 +1,8 @@
 package org.bsc.langgraph4j.subgraph;
 
+import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.NodeOutput;
+import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.state.AgentState;
 
 import static java.lang.String.format;
@@ -28,8 +30,8 @@ public sealed class SubGraphOutput<State extends AgentState> extends NodeOutput<
 
     }
 
-    public SubGraphOutput( NodeOutput<State> output, String subGraphId) {
-        super( output );
+    public SubGraphOutput(NodeOutput<State> output, String subGraphId, HasMetadata metadataProvider) {
+        super( output.node(), output.state(), metadataProvider );
         this.subGraphId = requireNonNull(subGraphId, "subGraphId cannot be null");
     }
 
