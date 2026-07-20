@@ -1,18 +1,18 @@
 package org.bsc.langgraph4j.dsl;
 
 import org.bsc.langgraph4j.GraphDefinition;
+import org.bsc.langgraph4j.GraphPath;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.SubGraphNode;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 
@@ -20,6 +20,10 @@ import static org.bsc.langgraph4j.StateGraph.START;
  * Generates a JSON graph DSL .
  */
 public class JsonDslGenerator<State extends AgentState> implements GraphDefinition.Reducer<State, String> {
+
+    public static String nodeIdFromNodePath(GraphPath nodePath ) {
+        return nodePath.stream().collect(Collectors.joining("-"));
+    }
 
     private static final String VERSION = "1.0";
 
@@ -35,7 +39,7 @@ public class JsonDslGenerator<State extends AgentState> implements GraphDefiniti
             subgraphs.clear();
             edgeCounter = 0;
 
-            appendGraph(graphNodes, graphEdges, "", null, 0);
+            appendGraph(graphNodes, graphEdges, GraphPath.empty(), 0);
 
             return Json.toJson(Map.of(
                     "type", "langgraph4j",
@@ -47,75 +51,83 @@ public class JsonDslGenerator<State extends AgentState> implements GraphDefiniti
         };
 
     private void appendGraph(GraphDefinition.Nodes<State> graphNodes,
-                                                        GraphDefinition.Edges<State> graphEdges,
-                                                        String prefix,
-                                                        String parentId,
-                                                        int depth) {
-        appendSpecialNode(nodeId(prefix, START), START, parentId, "start", "input", depth, 0);
-        appendSpecialNode(nodeId(prefix, END), END, parentId, "end", "output", depth, 1);
+                             GraphDefinition.Edges<State> graphEdges,
+                             @NonNull GraphPath nodePath,
+                             int depth) {
+        requireNonNull(nodePath, "nodePath cannot be null");
+
+        appendSpecialNode( nodePath.append(START), START, "start", "input", depth, 0);
+        appendSpecialNode( nodePath.append(END), END, "end", "output", depth, 1);
 
         int index = 2;
         for (var node : graphNodes.elements) {
-            var currentNodeId = nodeId(prefix, node.id());
+            var currentNodeId = nodePath.append(node.id());
 
             if (node instanceof SubGraphNode<?> subGraphNode) {
-                appendNode(currentNodeId, node.id(), parentId, "subgraph", "group", depth, index++);
-                appendSubgraph(currentNodeId, parentId);
+                appendNode(currentNodeId,
+                        node.id(),
+                        "subgraph",
+                        "group",
+                        depth,
+                        index++);
+                appendSubgraph(currentNodeId);
 
                 @SuppressWarnings("unchecked")
                 var subGraph = (StateGraph<State>) subGraphNode.subGraph();
 
                 subGraph.reduce( ( nodes, edges ) -> {
-                    appendGraph(nodes, edges, currentNodeId + "-", currentNodeId, depth + 1);
+                    appendGraph( nodes, edges,
+                                currentNodeId,
+                            depth + 1);
                     return null;
                 });
             }
             else {
-                appendNode(currentNodeId, node.id(), parentId, nodeKind(node), "default", depth, index++);
+                appendNode(currentNodeId, node.id(), nodeKind(node), "default", depth, index++);
             }
         }
 
-        appendEdges(graphEdges, prefix);
+        appendEdges(graphEdges, nodePath);
     }
 
-    private void appendSpecialNode(String id,
+    private void appendSpecialNode(GraphPath nodePath,
                                    String label,
-                                   String parentId,
                                    String kind,
                                    String type,
                                    int depth,
                                    int index) {
-        appendNode(id, label, parentId, kind, type, depth, index);
+        appendNode(nodePath, label, kind, type, depth, index);
     }
 
-    private void appendNode(String id,
+    private void appendNode(GraphPath nodePath,
                             String label,
-                            String parentId,
                             String kind,
                             String type,
                             int depth,
                             int index) {
         var node = new LinkedHashMap<String, Object>();
-        node.put("id", id);
+        node.put("id", nodeIdFromNodePath(nodePath));
         node.put("type", type);
         node.put("data", Map.of(
                 "label", label,
                 "kind", kind
         ));
 
-        if (parentId != null) {
-            node.put("parentId", parentId);
+        final var parent = nodePath.parent();
+        if (!parent.isEmpty()) {
+            node.put("parentId", nodeIdFromNodePath(parent));
             node.put("extent", "parent");
         }
 
         nodes.add(node);
     }
 
-    private void appendSubgraph(String id, String parentId) {
+    private void appendSubgraph(GraphPath nodePath) {
         var subgraph = new LinkedHashMap<String, Object>();
-        subgraph.put("id", id);
-        if (parentId != null) {
-            subgraph.put("parentId", parentId);
+        subgraph.put("id", nodeIdFromNodePath(nodePath));
+        final var parent = nodePath.parent();
+        if (!parent.isEmpty()) {
+            subgraph.put("parentId", nodeIdFromNodePath(parent));
         }
         subgraphs.add(subgraph);
     }
@@ -124,36 +136,36 @@ public class JsonDslGenerator<State extends AgentState> implements GraphDefiniti
         return node.isParallel() ? "parallel" : "node";
     }
 
-    private void appendEdges(StateGraph.Edges<State> graphEdges, String prefix) {
+    private void appendEdges(StateGraph.Edges<State> graphEdges, GraphPath nodePath) {
         for (var edge : graphEdges.elements) {
             if (edge.isParallel()) {
                 for (var target : edge.targets()) {
-                    appendEdge(prefix, edge.sourceId(), target, "parallel", null);
+                    appendEdge(nodePath, edge.sourceId(), target, "parallel", null);
                 }
             }
             else {
                 var target = edge.target();
                 if (target.id() != null) {
-                    appendEdge(prefix, edge.sourceId(), target, "default", null);
+                    appendEdge(nodePath, edge.sourceId(), target, "default", null);
                 }
                 else if (target.value() != null) {
                     for (var mapping : target.value().mappings().entrySet()) {
-                        appendEdge(prefix, edge.sourceId(), new EdgeValue<>(mapping.getValue()), "conditional", mapping.getKey());
+                        appendEdge(nodePath, edge.sourceId(), new EdgeValue<>(mapping.getValue()), "conditional", mapping.getKey());
                     }
                 }
             }
         }
     }
 
-    private void appendEdge(String prefix,
-                                                       String source,
-                                                       EdgeValue<State> target,
-                                                       String kind,
-                                                       String condition) {
+    private void appendEdge(GraphPath nodePath,
+                            String source,
+                            EdgeValue<State> target,
+                            String kind,
+                            String condition) {
         var edge = new LinkedHashMap<String, Object>();
         edge.put("id", "e%d".formatted(++edgeCounter));
-        edge.put("source", nodeId(prefix, source));
-        edge.put("target", nodeId(prefix, target.id()));
+        edge.put("source", nodeIdFromNodePath(nodePath.append(source)));
+        edge.put("target", nodeIdFromNodePath(nodePath.append(target.id())));
         edge.put("type", kind);
 
         var data = new LinkedHashMap<String, Object>();
@@ -165,10 +177,6 @@ public class JsonDslGenerator<State extends AgentState> implements GraphDefiniti
         edge.put("data", data);
 
         edges.add(edge);
-    }
-
-    private String nodeId(String prefix, String id) {
-        return "%s%s".formatted(prefix, Objects.requireNonNull(id, "id cannot be null"));
     }
 
     private static final class Json {
