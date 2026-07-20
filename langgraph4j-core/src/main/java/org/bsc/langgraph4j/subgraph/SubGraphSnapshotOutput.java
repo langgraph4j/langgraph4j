@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.subgraph;
 
+import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.SnapshotOutput;
 import org.bsc.langgraph4j.state.AgentState;
@@ -18,8 +19,8 @@ public final class SubGraphSnapshotOutput<State extends AgentState> extends SubG
         return config;
     }
 
-    public SubGraphSnapshotOutput(StateSnapshot<State> snapshot, String subGraphId) {
-        super(snapshot, subGraphId);
+    public SubGraphSnapshotOutput(StateSnapshot<State> snapshot, String subGraphId, HasMetadata metadataProvider) {
+        super(snapshot, subGraphId, metadataProvider);
         this.config = snapshot.config();
     }
 
