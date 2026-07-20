@@ -44,9 +44,9 @@ import static org.bsc.langgraph4j.utils.CollectionsUtils.entryOf;
  * Interface for a LangGraph Streaming Server.
  * Provides methods to start the server and manage streaming of graph data.
  */
-public interface LangGraphStudioServer {
+public interface LangGraphStudioServer extends LG4JLoggable {
 
-    Logger log = LoggerFactory.getLogger(LangGraphStudioServer.class);
+    boolean LEGACY_MERMAID_SUPPORT  = false;
 
     /**
      * Configuration for persistent session data.
@@ -210,10 +210,13 @@ public interface LangGraphStudioServer {
             requireNonNull(id, "id cannot be null");
             try {
                 var compiledGraph = graph.compile();
-                //var graphMermaid = compiledGraph.getGraph(GraphRepresentation.Type.MERMAID, /*initData.title()*/ null, false);
-                // return new InitGraphData(id, title(), graphMermaid.content(), args());
-                var graphDsl = compiledGraph.reduce( new JsonDslGenerator<>() );
-                return new InitGraphData(id, title(), graphDsl, args());
+
+                final var representation = (LEGACY_MERMAID_SUPPORT ) ?
+                        compiledGraph.getGraph(GraphRepresentation.Type.MERMAID, /*initData.title()*/ null, false)
+                                        .content() :
+                        compiledGraph.reduce( new JsonDslGenerator<>() );
+
+                return new InitGraphData(id, title(), representation, args());
 
             } catch (GraphStateException e) {
 
@@ -355,7 +358,7 @@ public interface LangGraphStudioServer {
     }
 
     /**
-     * Servlet for initializing the graph in mermaid format.
+     * Servlet for initializing the graph representation format.
      */
     class GraphInitServlet extends HttpServlet {
 
@@ -484,11 +487,17 @@ public interface LangGraphStudioServer {
          * @param threadId the ID of the thread.
          * @param output the output to serialize.
          */
-        private void serializeOutput( Instance instance, PrintWriter writer, String threadId, NodeOutput<? extends AgentState> output) {
+        private void serializeOutput( Instance instance,
+                                      PrintWriter writer,
+                                      String threadId,
+                                      NodeOutput<? extends AgentState> output) {
             try {
                 writer.printf("[ \"%s\",", threadId);
                 writer.println();
-                var outputAsString = instance.objectMapper().writeValueAsString(output);
+                var outputAsString = instance.objectMapper()
+                        .writer()
+                        //.withAttribute( "nodePath", config.nodePath() )
+                        .writeValueAsString(output);
                 writer.println(outputAsString);
                 writer.println("]");
             } catch (IOException e) {
