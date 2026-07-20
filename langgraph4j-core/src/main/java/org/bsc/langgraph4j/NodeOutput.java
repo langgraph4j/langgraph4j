@@ -1,11 +1,13 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -66,9 +68,9 @@ public class NodeOutput<State extends AgentState> implements HasMetadata {
         return Objects.equals(node(), END);
     }
 
-    public NodeOutput(String node, State state, HasMetadata metadataSupplier) {
-        this.node = node;
-        this.state = state;
+    public NodeOutput(String node, State state, @Nullable HasMetadata metadataSupplier) {
+        this.node = requireNonNull(node, "node cannot be null");
+        this.state = requireNonNull(state, "state cannot be null");
         this.metadataSupplier = metadataSupplier;
     }
 
@@ -76,9 +78,6 @@ public class NodeOutput<State extends AgentState> implements HasMetadata {
         this(node, state, null);
     }
 
-    public NodeOutput( NodeOutput<State> nodeOutput ) {
-        this(nodeOutput.node(), nodeOutput.state(), nodeOutput.metadataSupplier);
-    }
 
     @Override
     public String toString() {
