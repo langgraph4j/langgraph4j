@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.utils.TypeRef;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,9 +55,17 @@ public interface HasMetadata {
 
         protected Builder() {}
 
-        protected Builder( Map<String,Object> metadata ) {
+        protected Builder( @Nullable Map<String,Object> metadata ) {
             if( metadata != null && !metadata.isEmpty() ) {
                 this.metadata = new HashMap<>(metadata);
+            }
+        }
+
+        protected Builder( HasMetadata metadataSupplier ) {
+            requireNonNull(metadataSupplier, "metadataSupplier must not be null");
+            for( var key: metadataSupplier.metadataKeys()) {
+                metadataSupplier.metadata(key)
+                        .ifPresent( v -> putMetadata(key, v) );
             }
         }
 
