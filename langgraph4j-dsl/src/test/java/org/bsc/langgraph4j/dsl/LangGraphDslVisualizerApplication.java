@@ -39,7 +39,7 @@ public class LangGraphDslVisualizerApplication {
 
         @GetMapping(value = "/api/graph", produces = MediaType.APPLICATION_JSON_VALUE)
         String graph() throws GraphStateException {
-            return sampleGraphDslService.graphWithSubgraph();
+            return  sampleGraphDslService.nestedSubgraphs();
         }
     }
 
@@ -94,5 +94,43 @@ public class LangGraphDslVisualizerApplication {
                     .reduce( jsonDslGenerator );
         }
 
+        String nestedSubgraphs() throws GraphStateException {
+            var mockedAction = AsyncNodeAction.node_async((ignored) -> Map.of());
+
+            var subSubGraph = new StateGraph<>(AgentState::new)
+                    .addNode("foo1", mockedAction)
+                    .addNode("foo2", mockedAction)
+                    .addNode("foo3", mockedAction)
+                    .addEdge(StateGraph.START, "foo1")
+                    .addEdge("foo1", "foo2")
+                    .addEdge("foo2", "foo3")
+                    .addEdge("foo3", StateGraph.END)
+                    .compile()
+                    ;
+
+            var subGraph = new StateGraph<>(AgentState::new)
+                    .addNode("bar1", mockedAction)
+                    .addNode("subGraph2", subSubGraph)
+                    .addNode("bar2", mockedAction)
+                    .addEdge(StateGraph.START, "bar1")
+                    .addEdge("bar1", "subGraph2")
+                    .addEdge("subGraph2", "bar2")
+                    .addEdge("bar2", StateGraph.END)
+                    .compile()
+                    ;
+
+            return new StateGraph<>(AgentState::new)
+                    .addNode("main1", mockedAction)
+                    .addNode("subgraph1", subGraph)
+                    .addNode("main2", mockedAction)
+                    .addEdge(StateGraph.START, "main1")
+                    .addEdge("main1", "subgraph1")
+                    .addEdge("subgraph1", "main2")
+                    .addEdge("main2", StateGraph.END)
+                    .compile()
+                    .reduce( jsonDslGenerator )
+                    ;
+
+        }
     }
 }
