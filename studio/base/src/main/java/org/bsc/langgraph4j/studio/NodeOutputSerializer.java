@@ -3,12 +3,19 @@ package org.bsc.langgraph4j.studio;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.bsc.langgraph4j.GraphPath;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.NodeOutput;
+import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
+import org.bsc.langgraph4j.subgraph.SubGraphSnapshotOutput;
+import org.bsc.langgraph4j.utils.TypeRef;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static java.lang.String.format;
 
@@ -17,8 +24,7 @@ import static java.lang.String.format;
  * This class is responsible for converting NodeOutput instances into JSON format.
  */
 @SuppressWarnings("rawtypes")
-class NodeOutputSerializer extends StdSerializer<NodeOutput> {
-    Logger log = LangGraphStudioServer.log;
+class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLoggable {
 
     /**
      * Constructs a new NodeOutputSerializer.
@@ -41,6 +47,7 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> {
             IOException {
         log.trace( "NodeOutputSerializer start! {}", nodeOutput.getClass() );
         gen.writeStartObject();
+
         if( nodeOutput instanceof StateSnapshot<?> snapshot) {
             var checkpoint = snapshot.config().checkPointId();
             log.trace( "checkpoint: {}", checkpoint );
@@ -52,11 +59,24 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> {
         gen.writeStringField("node", nodeOutput.node());
         if( nodeOutput instanceof SubGraphOutput<?> subgraph) {
 
-            var node = (nodeOutput.isSTART() || nodeOutput.isEND() ) ?
+            final String subGraphNode;
+
+            if( LangGraphStudioServer.LEGACY_MERMAID_SUPPORT ) {
+                final var node = (nodeOutput.isSTART() || nodeOutput.isEND()) ?
                         nodeOutput.node() :
                         nodeOutput.node().concat("_");
 
-            gen.writeStringField("subgraphNode", node.concat(subgraph.subGraphId()) );
+                subGraphNode = node.concat(subgraph.subGraphId());
+            }
+            else {
+                final var nodePath = subgraph.metadata(RunnableConfig.GRAPH_NODE_PATH, new TypeRef<GraphPath>() {})
+                        .orElseThrow( () -> new IllegalStateException( "No '%s' key found in metadata".formatted(RunnableConfig.GRAPH_NODE_PATH)));
+
+                subGraphNode = JsonDslGenerator.nodeIdFromNodePath(nodePath);
+                // subGraphNode = JsonDslGenerator.subgraphNodePrefix(subgraph.subGraphId())
+                //                 .concat(nodeOutput.node());
+            }
+            gen.writeStringField("subgraphNode", subGraphNode);
         }
 
         // serializerProvider.defaultSerializeField("state", nodeOutput.state().data(), gen);
