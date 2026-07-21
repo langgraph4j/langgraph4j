@@ -606,6 +606,7 @@ function componentStyles() {
       height: 100%;
       min-height: 100%;
       color-scheme: light;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f6f7f9;
       color: #1f2933;
@@ -649,7 +650,7 @@ function componentStyles() {
       border: 1px solid #b8c2d1;
       background: #ffffff;
       color: #1f2933;
-      font-size: 12px;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       min-width: 120px;
       text-align: center;
     }
@@ -663,7 +664,7 @@ function componentStyles() {
       border: 2px solid #64748b;
       background: #ffffff;
       color: #17212f;
-      font-size: 11px;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-weight: 700;
       text-transform: uppercase;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
@@ -700,7 +701,7 @@ function componentStyles() {
       padding: 0 10px;
       border-bottom: 1px solid rgba(100, 116, 139, 0.28);
       background: rgba(248, 250, 252, 0.9);
-      font-size: 12px;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-weight: 700;
     }
 

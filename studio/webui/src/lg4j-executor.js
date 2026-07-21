@@ -78,6 +78,7 @@ export class LG4JExecutorElement extends LitElement {
     :host {
       display: block;
       color: #e5e7eb;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -222,7 +223,7 @@ export class LG4JExecutorElement extends LitElement {
 
     #error_message {
       margin: 0;
-      font-size: 1.125rem;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-weight: 700;
     }
   `];

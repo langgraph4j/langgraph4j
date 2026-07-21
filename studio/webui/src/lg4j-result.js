@@ -20,11 +20,12 @@ export class LG4JResultElement extends LitElement {
       display: block;
       height: 100%;
       color: #e5e7eb;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     json-viewer {
-      --font-size: .8rem;
+      --font-size: var(--lg4j-workbench-font-size, 12px);
     }
 
     .result-root {
@@ -117,7 +118,7 @@ export class LG4JResultElement extends LitElement {
       content: "+";
       position: absolute;
       right: 1rem;
-      font-size: 1.25rem;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       line-height: 1;
     }
 

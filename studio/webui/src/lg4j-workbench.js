@@ -19,6 +19,7 @@ export class LG4JWorkbenchElement extends LitElement {
       min-height: 100vh;
       color: #e5e7eb;
       background: #0f172a;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -46,7 +47,7 @@ export class LG4JWorkbenchElement extends LitElement {
       min-height: 3rem;
       padding: 0 0.5rem;
       color: #f9fafb;
-      font-size: 1.25rem;
+      font-size: var(--lg4j-workbench-font-size, 12px);
       font-weight: 700;
       text-decoration: none;
     }
