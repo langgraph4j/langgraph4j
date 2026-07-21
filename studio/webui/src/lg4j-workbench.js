@@ -32,6 +32,7 @@ export class LG4JWorkbenchElement extends LitElement {
     .navbar {
       display: flex;
       align-items: center;
+      gap: 1rem;
       min-height: 4rem;
       padding: 0 1rem;
       background: #111827;
@@ -67,6 +68,36 @@ export class LG4JWorkbenchElement extends LitElement {
       white-space: nowrap;
     }
 
+    .toggle-results {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: inline-grid;
+      place-items: center;
+      flex-shrink: 0;
+      border: 1px solid #374151;
+      border-radius: 0.375rem;
+      color: #e5e7eb;
+      background: #1f2937;
+      cursor: pointer;
+    }
+
+    .toggle-results:hover {
+      color: #ffffff;
+      background: #273548;
+      border-color: #4b5563;
+    }
+
+    .toggle-results:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    .toggle-results svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      display: block;
+    }
+
     .hidden {
       display: none;
     }
@@ -93,6 +124,10 @@ export class LG4JWorkbenchElement extends LitElement {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       column-gap: 0.5rem;
       padding: 0.5rem;
+    }
+
+    .layout.results-hidden {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .left-column {
@@ -130,6 +165,10 @@ export class LG4JWorkbenchElement extends LitElement {
       overflow: hidden;
     }
 
+    .result-panel[hidden] {
+      display: none;
+    }
+
     .executor-panel {
       flex-shrink: 0;
       min-height: 0;
@@ -139,10 +178,16 @@ export class LG4JWorkbenchElement extends LitElement {
 
   static properties = {
     title: {},
+    resultPanelVisible: { state: true },
   }
 
   constructor() {
     super();
+    this.resultPanelVisible = true;
+  }
+
+  #toggleResultPanel() {
+    this.resultPanelVisible = !this.resultPanelVisible;
   }
 
   /**
@@ -280,6 +325,8 @@ export class LG4JWorkbenchElement extends LitElement {
   // }
   
   render() {
+    const resultToggleLabel = this.resultPanelVisible ? 'Hide result panel' : 'Show result panel';
+
     return html`
 <div class="shell">
 
@@ -294,15 +341,26 @@ export class LG4JWorkbenchElement extends LitElement {
       <span id="message"></span>
     </div>
 
+    <button
+      class="toggle-results"
+      type="button"
+      title="${resultToggleLabel}"
+      aria-label="${resultToggleLabel}"
+      aria-expanded="${this.resultPanelVisible}"
+      @click="${this.#toggleResultPanel}">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      </svg>
+    </button>
 
 </div>
 
-  <div class="layout">    
+  <div class="layout ${this.resultPanelVisible ? '' : 'results-hidden'}">    
     <div class="left-column">
       <div class="graph-panel"><slot name="graph">LEFT</slot></div>
       <div class="executor-panel"><slot name="executor">BOTTOM</slot></div>
     </div>
-    <div class="result-panel"><slot name="result">RIGHT</slot></div>
+    <div class="result-panel" ?hidden="${!this.resultPanelVisible}"><slot name="result">RIGHT</slot></div>
   </div>
 </div>
     `;
