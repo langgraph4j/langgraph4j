@@ -61,103 +61,8 @@ public interface LangGraphStudioServer extends LG4JLoggable {
         }
     }
 
-    /**
-     * Metadata for an argument in a request.
-     *
-     * @param name the name of the argument.
-     * @param type the type of the argument.
-     * @param required whether the argument is required.
-     */
-    record ArgumentMetadata(
-            String name,
-            ArgumentType type,
-            boolean required,
-            @JsonIgnore Function<Object,Object> converter
-    ) {
-        public ArgumentMetadata {
-            requireNonNull(name, "name cannot be null");
-            requireNonNull(type, "type cannot be null");
-        }
-        public ArgumentMetadata(String name, ArgumentType type, boolean required) {
-            this(name, type, required, null);
-        }
 
-        public enum ArgumentType { STRING, IMAGE };
-    }
 
-    /**
-     * Represents an entry in a thread with its outputs.
-     *
-     * @param id the ID of the thread.
-     * @param entries the outputs of the thread.
-     */
-    record ThreadEntry(String id, List<? extends NodeOutput<? extends AgentState>> entries) {}
-
-    /**
-     * Initialization data for the graph.
-     *
-     * @param id the graph identifier
-     * @param title the title of the graph.
-     * @param diagram the graph content.
-     * @param args the arguments for the graph.
-     * @param threads the thread entries.
-     */
-    record InitGraphData(
-            String id,
-            String title,
-            String diagram,
-            List<ArgumentMetadata> args,
-            List<ThreadEntry> threads) {
-
-        public InitGraphData {
-            requireNonNull( id, "id cannot be null");
-        }
-        public InitGraphData(String id, String title, String diagram, List<ArgumentMetadata> args) {
-            this(id, title, diagram, args, List.of(new ThreadEntry("default", List.of())));
-        }
-    }
-
-    /**
-     * Serializer for InitData objects.
-     */
-    class InitDataSerializer extends StdSerializer<InitGraphData> {
-        Logger log = LangGraphStudioServer.log;
-
-        protected InitDataSerializer(Class<InitGraphData> t) {
-            super(t);
-        }
-
-        /**
-         * Serializes the InitData object to JSON.
-         *
-         * @param initData the InitData object to serialize.
-         * @param jsonGenerator the JSON generator.
-         * @param serializerProvider the serializer provider.
-         * @throws IOException if an I/O error occurs.
-         */
-        @Override
-        public void serialize(InitGraphData initData, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-            log.trace("InitDataSerializer start!");
-            jsonGenerator.writeStartObject();
-
-            jsonGenerator.writeStringField("id", initData.id());
-            jsonGenerator.writeStringField("graph", initData.diagram());
-            jsonGenerator.writeStringField("title", initData.title());
-            jsonGenerator.writeObjectField("args", initData.args());
-
-            jsonGenerator.writeArrayFieldStart("threads");
-            for (var thread : initData.threads()) {
-                jsonGenerator.writeStartArray();
-                jsonGenerator.writeString(thread.id());
-                jsonGenerator.writeStartArray(thread.entries());
-                jsonGenerator.writeEndArray();
-                jsonGenerator.writeEndArray();
-            }
-            jsonGenerator.writeEndArray();
-
-            jsonGenerator.writeEndObject();
-        }
-    }
 
     class CacheEntry {
         final CompiledGraph<? extends AgentState> compiledGraph;
@@ -233,7 +138,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
         }
 
         public static class Builder {
-            private final List<LangGraphStudioServer.ArgumentMetadata> inputArgs = new ArrayList<>();
+            private final List<ArgumentMetadata> inputArgs = new ArrayList<>();
             private String title = null;
             private CompileConfig compileConfig;
             private StateGraph<? extends AgentState> graph;
@@ -256,7 +161,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
             }
 
             public Builder addInputStringArg(String name, boolean required, Function<Object,Object> converter) {
-                inputArgs.add(new LangGraphStudioServer.ArgumentMetadata(name, LangGraphStudioServer.ArgumentMetadata.ArgumentType.STRING, required, converter));
+                inputArgs.add(new ArgumentMetadata(name, ArgumentMetadata.ArgumentType.STRING, required, converter));
                 return this;
             }
 
@@ -289,7 +194,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
              * @return the Builder instance
              */
             public Builder addInputImageArg(String name, boolean required) {
-                inputArgs.add(new LangGraphStudioServer.ArgumentMetadata(name, LangGraphStudioServer.ArgumentMetadata.ArgumentType.IMAGE, required, null));
+                inputArgs.add(new ArgumentMetadata(name, ArgumentMetadata.ArgumentType.IMAGE, required, null));
                 return this;
             }
 
@@ -305,7 +210,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
 
 
             public Builder addInputImageArg(String name, boolean required, Function<Object,Object> converter) {
-                inputArgs.add(new LangGraphStudioServer.ArgumentMetadata(name, LangGraphStudioServer.ArgumentMetadata.ArgumentType.IMAGE, required, converter));
+                inputArgs.add(new ArgumentMetadata(name, ArgumentMetadata.ArgumentType.IMAGE, required, converter));
                 return this;
             }
 
@@ -379,7 +284,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
             super.init(config);
 
             var module = new SimpleModule();
-            module.addSerializer(InitGraphData.class, new InitDataSerializer(InitGraphData.class));
+            module.addSerializer(InitGraphData.class, new InitGraphDataSerializer(InitGraphData.class));
             objectMapper.registerModule(module);
 
         }
@@ -611,7 +516,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
                         .map( entry -> {
                             var newValue = instance.args().stream()
                                     .filter(arg -> arg.name().equals(entry.getKey()) && arg.converter() != null).findAny()
-                                    .map(arg -> arg.converter.apply(entry.getValue()));
+                                    .map(arg -> arg.converter().apply(entry.getValue()));
                             return newValue.map( v -> entryOf(entry.getKey(), v ))
                                     .orElse(entry);
                         })
