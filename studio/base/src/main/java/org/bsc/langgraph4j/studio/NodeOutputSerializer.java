@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 /**
  * Serializer for NodeOutput objects, extending the StdSerializer class.
@@ -46,6 +47,14 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLogg
     public void serialize(NodeOutput nodeOutput, JsonGenerator gen, SerializerProvider serializerProvider) throws
             IOException {
         log.trace( "NodeOutputSerializer start! {}", nodeOutput.getClass() );
+
+        final var threadId = ofNullable(serializerProvider.getAttribute("threadId"))
+                .map(Object::toString)
+                .orElse("default");
+
+        gen.writeStartArray();
+        gen.writeString(threadId);
+
         gen.writeStartObject();
 
         if( nodeOutput instanceof StateSnapshot<?> snapshot) {
@@ -87,5 +96,6 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLogg
             gen.writeObjectField("next", snapshot.next() );
         }
         gen.writeEndObject();
+        gen.writeEndArray();
     }
 }
