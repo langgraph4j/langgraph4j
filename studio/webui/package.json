@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "viewer:dev": "parcel index_viewer_dev.html --no-cache",
     "dev": "parcel index_dev.html --no-cache",
     "parcel:build": "parcel build index.html --public-url '.'",
     "build": "./build.sh",
