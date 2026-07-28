@@ -74,13 +74,11 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
                                      String threadId,
                                      NodeOutput<? extends AgentState> output) {
             try {
-                writer.printf("[ \"%s\",", threadId);
-                writer.println();
-                var outputAsString = objectMapper
+                final var outputAsString = objectMapper
                         .writer()
+                        .withAttribute( "threadId", threadId )
                         .writeValueAsString(output);
                 writer.println(outputAsString);
-                writer.println("]");
             } catch (IOException e) {
                 log.warn("error serializing state", e);
             }

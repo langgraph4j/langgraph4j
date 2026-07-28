@@ -397,14 +397,11 @@ public interface LangGraphStudioServer extends LG4JLoggable {
                                       String threadId,
                                       NodeOutput<? extends AgentState> output) {
             try {
-                writer.printf("[ \"%s\",", threadId);
-                writer.println();
-                var outputAsString = instance.objectMapper()
+                final var outputAsString = instance.objectMapper()
                         .writer()
-                        //.withAttribute( "nodePath", config.nodePath() )
+                        .withAttribute( "threadId", threadId )
                         .writeValueAsString(output);
                 writer.println(outputAsString);
-                writer.println("]");
             } catch (IOException e) {
                 log.warn("error serializing state", e);
             }
