@@ -691,6 +691,15 @@ export class LG4JExecutorElement extends LitElement {
 
 class LG4JViewerExecutorElement extends LG4JExecutorElement {
 
+  static styles = [
+    ...LG4JExecutorElement.styles,
+    css`
+      :host {
+        display: none;
+      }
+    `
+  ];
+
   get _contextPath() {
     return super._contextPath.concat('/viewer')
   }
