@@ -6,6 +6,7 @@ import { html, css, LitElement, CSSResult } from 'lit';
 import { debug } from './debug.js';
 
 const _DBG = debug( { on: true, topic: 'LG4JExecutor' } )
+const _DBGW = debug( { on: true, topic: 'LG4JViewerExecutor' } )
 
 
 /**
@@ -252,7 +253,7 @@ export class LG4JExecutorElement extends LitElement {
    * 
    * @type {string|undefined} - thread id
    */
-  #selectedThread
+  _selectedThread
 
   /**
    * current state for update 
@@ -287,7 +288,7 @@ export class LG4JExecutorElement extends LitElement {
    * 
    * @returns {string} - context path
    */
-  get #contextPath() {
+  get _contextPath() {
     // vadidate url
     const url = new URL(this.url || window.location.href);
 
@@ -352,7 +353,7 @@ export class LG4JExecutorElement extends LitElement {
    */
   #onThreadUpdated(e) {
     _DBG('thread-updated', e.detail)
-    this.#selectedThread = e.detail
+    this._selectedThread = e.detail
     this.#updatedState = null
     this.requestUpdate()
   }
@@ -378,7 +379,7 @@ export class LG4JExecutorElement extends LitElement {
     // @ts-ignore
     this.addEventListener('node-updated', this.#onNodeUpdated)
 
-    this.#callInit()
+    this._callInit()
 
   }
 
@@ -416,8 +417,9 @@ export class LG4JExecutorElement extends LitElement {
   
   }
 
-  async #callInit() {    
-    const initResponse = await fetch(`${this.#contextPath}/init${window.location.search}`, {
+  // PROTECTED METHOD
+  async _callInit() {    
+    const initResponse = await fetch(`${this._contextPath}/init${window.location.search}`, {
       method: 'GET',
       credentials: 'include'
     })
@@ -475,7 +477,7 @@ export class LG4JExecutorElement extends LitElement {
 
   async #callResumeAction() {
 
-    const execResponse = await fetch(`${this.#contextPath}/stream/${this.#instanceId}?thread=${this.#selectedThread}&resume=true&node=${this.#updatedState?.node}&checkpoint=${this.#updatedState?.checkpoint}`, {
+    const execResponse = await fetch(`${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}&resume=true&node=${this.#updatedState?.node}&checkpoint=${this.#updatedState?.checkpoint}`, {
       method: 'POST', // *GET, POST, PUT, DELETE, etc.
       credentials: 'include',
       headers: {
@@ -510,8 +512,10 @@ export class LG4JExecutorElement extends LitElement {
 
   }
 
-  async #callSubmit() {
+  async _callSubmit() {
 
+    _DBG('callSubmit')
+    
     this.#startExecution()
     let result = null
 
@@ -543,7 +547,7 @@ export class LG4JExecutorElement extends LitElement {
     // If not executing, ignore
     if (!this._executing) return;
 
-    const execResponse = await fetch(`${this.#contextPath}/stream/${this.#instanceId}?thread=${this.#selectedThread}&cancel=true`, {
+    const execResponse = await fetch(`${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}&cancel=true`, {
       method: 'DELETE', // *GET, POST, PUT, DELETE, etc.
       credentials: 'include'
     });
@@ -554,7 +558,7 @@ export class LG4JExecutorElement extends LitElement {
 
     /** @typedef {CustomEvent<[string,ResultData]>} */
     const event = new CustomEvent('result',{
-        detail: [ this.#selectedThread, { cancelled:true } ],
+        detail: [ this._selectedThread, { cancelled:true } ],
         bubbles: true,
         composed: true,
         cancelable: true
@@ -588,7 +592,7 @@ export class LG4JExecutorElement extends LitElement {
     }, result);
 
     
-    const execResponse = await fetch(`${this.#contextPath}/stream/${this.#instanceId}?thread=${this.#selectedThread}`, {
+    const execResponse = await fetch(`${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}`, {
         method: 'POST', // *GET, POST, PUT, DELETE, etc.
         credentials: 'include',
         headers: {
@@ -642,7 +646,7 @@ export class LG4JExecutorElement extends LitElement {
             }
           })}
           <div class="commands">
-            <button id="submit" ?disabled=${this._executing} @click="${this.#callSubmit}" class="primary item1">Submit</button>
+            <button id="submit" ?disabled=${this._executing} @click="${this._callSubmit}" class="primary item1">Submit</button>
             <button id="resume" ?disabled=${!this.#updatedState || this._executing} @click="${this.#callResume}" class="secondary item2">
             Resume ${this.#updatedState ? '(from ' + this.#updatedState?.node + ')' : ''}
             </button>
@@ -684,4 +688,27 @@ export class LG4JExecutorElement extends LitElement {
   }
 
 }
+
+class LG4JViewerExecutorElement extends LG4JExecutorElement {
+
+  get _contextPath() {
+    return super._contextPath.concat('/viewer')
+  }
+
+  async _callInit() {    
+    _DBGW('_callInit')
+    const result = await super._callInit()
+
+    setTimeout(async () => {
+      this._selectedThread = 'default'
+      await this._callSubmit()
+    }, 1000);
+  
+    return result
+
+  }
+
+}
+
 window.customElements.define('lg4j-executor', LG4JExecutorElement);
+window.customElements.define('lg4j-viewer-executor', LG4JViewerExecutorElement);
