@@ -694,11 +694,18 @@ class LG4JViewerExecutorElement extends LG4JExecutorElement {
   static styles = [
     ...LG4JExecutorElement.styles,
     css`
-      :host {
-        display: none;
+      :host,
+      :host([hidden]) {
+        display: none !important;
       }
     `
   ];
+
+  connectedCallback() {
+    this.hidden = true
+    this.setAttribute('aria-hidden', 'true')
+    super.connectedCallback()
+  }
 
   get _contextPath() {
     return super._contextPath.concat('/viewer')
