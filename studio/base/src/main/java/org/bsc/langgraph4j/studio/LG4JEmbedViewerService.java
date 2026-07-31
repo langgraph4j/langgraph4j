@@ -35,6 +35,12 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
      */
     private class LG4JViewerServlet extends HttpServlet {
 
+        private final long asyncContextTimeout;
+
+        private LG4JViewerServlet( long asyncContextTimeout ) {
+            this.asyncContextTimeout = asyncContextTimeout;
+        }
+
         @Override
         public void init(ServletConfig config) throws ServletException {
             super.init(config);
@@ -107,6 +113,7 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
 
             // Start asynchronous processing
             var asyncContext = req.startAsync();
+            asyncContext.setTimeout(asyncContextTimeout);
 
             try (final AsyncGeneratorFlow.Generator<? extends NodeOutput<? extends AgentState>> generator = AsyncGeneratorFlow.builder()
                     .processor(processor)
@@ -129,7 +136,7 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
                                 log.info("graph iteration completed with result {}!", result);
                             }
 
-                            writer.close();
+                            //writer.close();
                             asyncContext.complete();
 
                         });
@@ -146,6 +153,7 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
         private String id = "graph_instance";
         private String title;
         private String diagram;
+        private long asyncContextTimeout = 300_000;
 
         public Builder id(String id) {
             this.id = id;
@@ -163,6 +171,11 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
             return this;
         }
 
+        public Builder asyncContextTimeout(long asyncContextTimeout) {
+            this.asyncContextTimeout = asyncContextTimeout;
+            return this;
+        }
+
         public LG4JEmbedViewerService build() {
             return new LG4JEmbedViewerService(this);
         }
@@ -175,10 +188,12 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final InitGraphData initGraphData;
     public final AsyncGeneratorFlow.Processor<NodeOutput<? extends AgentState>> processor = new BlockingQueueProcessor<>();
-    private final HttpServlet viewerServlet = new LG4JViewerServlet();
+    private final HttpServlet viewerServlet;
+
 
     public LG4JEmbedViewerService(Builder builder) {
         this.initGraphData = new InitGraphData(builder.id, builder.title, builder.diagram);
+        this.viewerServlet = new LG4JViewerServlet(builder.asyncContextTimeout);
 
         final var module = new SimpleModule();
         module.addSerializer(InitGraphData.class, new InitGraphDataSerializer(InitGraphData.class));
