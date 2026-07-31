@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.8.20</version>
+        <version>1.8.21</version>
     </parent>
 
     <artifactId>langgraph4j-javelit</artifactId>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>io.javelit</groupId>
             <artifactId>javelit</artifactId>
-            <version>0.86.0</version>
+            <version>0.89.0</version>
         </dependency>
 
         <dependency>
