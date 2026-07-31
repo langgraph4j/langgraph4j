@@ -60,6 +60,17 @@ async function* streamingResponse(response) {
   }
 }
 
+class LG4JFetchError extends Error {
+
+  /**
+   * @param {Response} response
+   */
+  constructor(response) {
+    super(response.statusText || 'Retrieve data error');
+  }
+
+}
+
 /**
  * LG4JInputElement is a custom web component that extends LitElement.
  * It provides a styled input container with a placeholder.
@@ -487,7 +498,7 @@ export class LG4JExecutorElement extends LitElement {
     });
 
     if( !execResponse.ok ) {
-      throw new Error( execResponse.statusText )
+      throw new LG4JFetchError( execResponse )
     }
 
     this.#updatedState = null
@@ -528,14 +539,13 @@ export class LG4JExecutorElement extends LitElement {
       result = await this.#callSubmitAction()
     }
     catch (err) {
-      if(err instanceof Error) {
+      if(err instanceof LG4JFetchError) {
         this.#requestShowError(err.message)
         result = err
       }
     }
     finally {
-        this.#stopExecution(result)
-
+      this.#stopExecution(result)
     }
   }
 
@@ -553,7 +563,7 @@ export class LG4JExecutorElement extends LitElement {
     });
 
     if( !execResponse.ok ) {
-      throw new Error( execResponse.statusText )
+      throw new LG4JFetchError( execResponse )
     }
 
     /** @typedef {CustomEvent<[string,ResultData]>} */
@@ -602,7 +612,7 @@ export class LG4JExecutorElement extends LitElement {
       });
   
     if( !execResponse.ok ) {
-      throw new Error( execResponse.statusText )
+      throw new LG4JFetchError( execResponse )
     }
 
     /** @type [ string, UpdatedState & { next: string } ]|null */
