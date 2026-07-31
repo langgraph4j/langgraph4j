@@ -1,5 +1,5 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.8.20
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.20
+//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.8.21
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.21
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS dev.langchain4j:langchain4j-bom:1.9.1@pom
 //DEPS dev.langchain4j:langchain4j-github-models
