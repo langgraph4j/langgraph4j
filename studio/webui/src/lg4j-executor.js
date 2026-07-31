@@ -694,9 +694,8 @@ class LG4JViewerExecutorElement extends LG4JExecutorElement {
   static styles = [
     ...LG4JExecutorElement.styles,
     css`
-      :host,
-      :host([hidden]) {
-        display: none !important;
+      .container {
+        display: none;
       }
     `
   ];
