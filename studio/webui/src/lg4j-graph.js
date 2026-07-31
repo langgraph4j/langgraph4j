@@ -18,7 +18,7 @@ import {
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
-const DEFAULT_NODE_GAP = 100;
+const DEFAULT_NODE_GAP = 50;
 const ROOT_PADDING_X = 120;
 const ROOT_PADDING_TOP = 40;
 const SUBGRAPH_PADDING_X = 40;
