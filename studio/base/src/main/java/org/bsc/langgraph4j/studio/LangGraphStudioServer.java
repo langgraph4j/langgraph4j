@@ -474,6 +474,9 @@ public interface LangGraphStudioServer extends LG4JLoggable {
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
+            final var asyncContextTimeout = ofNullable(getServletConfig().getInitParameter("asyncContextTimeout"))
+                    .map(Long::parseLong);
+
             resp.setHeader("Accept", "application/json");
             resp.setContentType("text/plain");
             resp.setCharacterEncoding("UTF-8");
@@ -495,6 +498,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
 
             // Start asynchronous processing
             var asyncContext = req.startAsync();
+            asyncContextTimeout.ifPresent(asyncContext::setTimeout);
 
             try {
 
