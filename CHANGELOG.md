@@ -2,6 +2,38 @@
 
 
 
+<!-- "name: v1.8.21" is a release tag -->
+
+## [v1.8.21](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.21) (2026-07-31)
+
+
+
+
+
+### Documentation
+
+ -  update star history chart to use new API ([b7facaed9aedf1d](https://github.com/bsorrentino/langgraph4j/commit/b7facaed9aedf1ded759a1f0ba52ac578c18f28d))
+
+ -  update changelog ([174858f49738aca](https://github.com/bsorrentino/langgraph4j/commit/174858f49738aca3b239c5f871759442403dddf7))
+
+
+### ALM 
+
+ -  bump to next version 1.8.21 ([04b6d1f3cc668fa](https://github.com/bsorrentino/langgraph4j/commit/04b6d1f3cc668fa45816845ef23f23dc3be06eb5))
+   
+ -  update langchain4j version to 1.18.1 and beta version to 1.18.1-beta28 ([fb853dc3f996581](https://github.com/bsorrentino/langgraph4j/commit/fb853dc3f9965818ba367b509609f4bcb5b96b8e))
+   
+ -  update javelit version to 0.89.0 ([325393daa279b09](https://github.com/bsorrentino/langgraph4j/commit/325393daa279b093148299a9d6e4904f4a57d009))
+   
+ -  update langchain4j version to 1.17.2 and beta version to 1.17.2-beta27 ([aa5db5d0132416f](https://github.com/bsorrentino/langgraph4j/commit/aa5db5d0132416fe5f531568d85888c3dafd336e))
+   
+ -  update langchain4j version to 1.17.1 and beta version to 1.17.1-beta27 ([db68e33b406153e](https://github.com/bsorrentino/langgraph4j/commit/db68e33b406153e15bfda11e38a0b74150c03fed))
+   
+
+
+
+
+
 <!-- "name: v1.8.20" is a release tag -->
 
 ## [v1.8.20](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.20) (2026-06-27)
