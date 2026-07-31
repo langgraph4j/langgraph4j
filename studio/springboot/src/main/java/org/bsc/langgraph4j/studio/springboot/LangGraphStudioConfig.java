@@ -35,6 +35,8 @@ public abstract class LangGraphStudioConfig {
         var bean = new ServletRegistrationBean<>(
                 initServlet, "/stream/*");
         bean.setLoadOnStartup(1);
+        bean.setInitParameters(Map.of("asyncContextTimeout", "300000"));
+
         return bean;
     }
 
