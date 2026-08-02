@@ -1,9 +1,7 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.langgraph4j.CompileConfig;
-import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.action.NodeAction;
+import org.bsc.langgraph4j.*;
+import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
@@ -16,10 +14,11 @@ import org.sqlite.SQLiteDataSource;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -60,6 +59,11 @@ public class SQLiteSaverTest {
                 .datasource(ds);
     }
 
+    private AsyncNodeAction<AgentState> makeNode( String node ) {
+        return state ->
+            completedFuture( Map.of( "%s:attr".formatted(node), "%s:value".formatted(node)));
+
+    }
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)
     public void testCheckpointWithReleasedThread(StateSerializerEnum param) throws Exception {
@@ -68,10 +72,10 @@ public class SQLiteSaverTest {
                 .stateSerializer(param.stateSerializer)
                 .build();
 
-        NodeAction<AgentState> agent1 = state -> Map.of("agent_1:prop1", "agent_1:test");
+        final var agent1 = makeNode("agent_1");
 
         var graph = new StateGraph<>(AgentState::new)
-                .addNode("agent_1", node_async(agent1))
+                .addNode("agent_1", agent1)
                 .addEdge(START, "agent_1")
                 .addEdge("agent_1", END);
 
@@ -83,7 +87,7 @@ public class SQLiteSaverTest {
         var runnableConfig = RunnableConfig.builder().build();
         var workflow = graph.compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
 
         assertTrue(result.isPresent());
         assertTrue(workflow.getStateHistory(runnableConfig).isEmpty());
@@ -97,10 +101,10 @@ public class SQLiteSaverTest {
                 .stateSerializer(param.stateSerializer)
                 .build();
 
-        NodeAction<AgentState> agent1 = state -> Map.of("agent_1:prop1", "agent_1:test");
+        final var agent1 = makeNode("agent_1");
 
         var graph = new StateGraph<>(AgentState::new)
-                .addNode("agent_1", node_async(agent1))
+                .addNode("agent_1", agent1)
                 .addEdge(START, "agent_1")
                 .addEdge("agent_1", END);
 
@@ -112,7 +116,7 @@ public class SQLiteSaverTest {
         var runnableConfig = RunnableConfig.builder().build();
         var workflow = graph.compile(compileConfig);
 
-        var result = workflow.invoke(Map.of("input", "test1"), runnableConfig);
+        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
 
         assertTrue(result.isPresent());
 
@@ -161,6 +165,100 @@ public class SQLiteSaverTest {
         assertEquals(END, updatedSnapshot.get().next());
 
         saver.release(runnableConfig);
+    }
+
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    public void testCheckpointWithInterruption(StateSerializerEnum param) throws Exception {
+
+        final var agent1 = makeNode( "agent_1" );
+        final var agent2 = makeNode( "agent_2" );
+
+        final var graph = new StateGraph<>(AgentState::new)
+                .addNode("agent_1", agent1)
+                .addNode("agent_2", agent2)
+                .addEdge(START, "agent_1")
+                .addEdge("agent_1", "agent_2")
+                .addEdge("agent_2", END);
+
+        var compileConfig = CompileConfig.builder()
+                .interruptBefore("agent_2")
+                .releaseThread(true)
+                .build();
+
+        final var threadId = switch( param ){
+            case JSON -> "json-thread";
+            case BINARY -> "binary-thread";
+        };
+
+        var runnableConfig = RunnableConfig.builder()
+                .threadId(threadId)
+                .build();
+
+        { // STEP 1
+            var saver = buildSQLiteSaverWithExistingDatasource("interruption.db")
+                    .createTables(true)
+                    .stateSerializer(param.stateSerializer)
+                    .build();
+
+            var workflow = graph.compile(CompileConfig.builder(compileConfig)
+                                            .checkpointSaver(saver)
+                                            .build());
+
+            workflow.stream(GraphInput.noArgs(), runnableConfig).toCompletableFuture()
+                    .thenApply(GraphResult::from)
+                    .thenAccept(result -> {
+                        assertTrue(result.isInterruptionMetadata());
+
+                        final var im = result.asInterruptionMetadata();
+
+                        assertEquals(1, im.state().data().size());
+
+                        Optional<String> value = im.state().value("agent_1:attr");
+                        assertTrue(value.isPresent());
+                        assertEquals("agent_1:value", value.get());
+                    })
+                    .join();
+        }
+
+        { // STEP 2
+
+            var saver = buildSQLiteSaverWithExistingDatasource("interruption.db")
+                    .stateSerializer(param.stateSerializer)
+                    .build();
+
+            var workflow = graph.compile(CompileConfig.builder(compileConfig)
+                    .checkpointSaver(saver)
+                    .build());
+
+            try {
+                workflow.stream(GraphInput.resume(), runnableConfig).toCompletableFuture()
+                        .thenApply(GraphResult::from)
+                        .thenAccept(result -> {
+                            assertTrue(result.isCheckpointSaverTag());
+
+                            final var im = result.asCheckpointSaverTag()
+                                    .checkpoints()
+                                    .stream()
+                                    .findFirst();
+                            assertTrue(im.isPresent());
+
+                            final var state = new AgentState(im.get().getState());
+                            assertEquals(2, state.data().size());
+
+                            Optional<String> value = state.value("agent_1:attr");
+                            assertTrue(value.isPresent());
+                            assertEquals("agent_1:value", value.get());
+                            value = state.value("agent_2:attr");
+                            assertTrue(value.isPresent());
+                            assertEquals("agent_2:value", value.get());
+                        })
+                        .join();
+            }
+            catch (Exception e) {
+                saver.release(runnableConfig);
+            }
+        }
     }
 
     @ParameterizedTest
