@@ -130,6 +130,12 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-sqlite-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- studio -->
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
