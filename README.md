@@ -130,6 +130,7 @@ langgraph4j/
 ├── langgraph4j-mysql-saver              # LangGraph4j persistent checkpoint saver based on MySQL
 ├── langgraph4j-oracle-saver             # LangGraph4j persistent checkpoint saver based on OracleDB
 ├── langgraph4j-postgres-saver           # LangGraph4j persistent checkpoint saver based on PostgresSQL
+├── langgraph4j-sqlite-saver             # LangGraph4j persistent checkpoint saver based on SQLite
 ├── langgraph4j-dynamodb-saver           # LangGraph4j persistent checkpoint saver based on Amazon DynamoDB
 ├── langgraph4j-cockroachdb-saver        # LangGraph4j persistent checkpoint saver based on CockroachDB
 ├── langgraph4j-redis-saver              # LangGraph4j persistent checkpoint saver based on Redis
