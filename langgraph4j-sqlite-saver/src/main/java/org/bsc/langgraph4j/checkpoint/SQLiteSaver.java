@@ -11,15 +11,9 @@ import org.sqlite.SQLiteDataSource;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -448,7 +442,7 @@ public class SQLiteSaver extends AbstractCheckpointSaver {
                         ++rows;
                     }
                     if (rows == 0) {
-                        throw new IllegalStateException(format("active Thread '%s' not found", threadId));
+                        return new Tag(threadId, null);
                     }
                     if (rows > 1) {
                         throw new IllegalStateException(format("duplicate active Thread '%s' found", threadId));
@@ -474,15 +468,4 @@ public class SQLiteSaver extends AbstractCheckpointSaver {
         return connection;
     }
 
-    /**
-     * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
-     *
-     * @param threadId the thread identifier whose cached checkpoints must be cleared
-     * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
-     * @deprecated this method do nothing because currently this saver don't use cache anymore
-     */
-    @Deprecated(forRemoval = true)
-    public Collection<Checkpoint> clearCheckpointsCache(String threadId) {
-        return List.of();
-    }
 }
