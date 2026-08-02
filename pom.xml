@@ -238,6 +238,7 @@
         <!-- module>studio/quarkus</module -->
 
         <module>langgraph4j-postgres-saver</module>
+        <module>langgraph4j-sqlite-saver</module>
         <module>langgraph4j-oracle-saver</module>
         <module>langgraph4j-mysql-saver</module>
         <module>langgraph4j-redis-saver</module>
