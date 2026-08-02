@@ -448,7 +448,7 @@ public class SQLiteSaver extends AbstractCheckpointSaver {
                         ++rows;
                     }
                     if (rows == 0) {
-                        throw new IllegalStateException(format("active Thread '%s' not found", threadId));
+                        return new Tag(threadUUID, null);
                     }
                     if (rows > 1) {
                         throw new IllegalStateException(format("duplicate active Thread '%s' found", threadId));
@@ -474,15 +474,4 @@ public class SQLiteSaver extends AbstractCheckpointSaver {
         return connection;
     }
 
-    /**
-     * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
-     *
-     * @param threadId the thread identifier whose cached checkpoints must be cleared
-     * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
-     * @deprecated this method do nothing because currently this saver don't use cache anymore
-     */
-    @Deprecated(forRemoval = true)
-    public Collection<Checkpoint> clearCheckpointsCache(String threadId) {
-        return List.of();
-    }
 }
