@@ -139,6 +139,7 @@ langgraph4j/
 ├── langgraph4j-cockroachdb-saver        # LangGraph4j persistent checkpoint saver based on CockroachDB
 ├── langgraph4j-redis-saver              # LangGraph4j persistent checkpoint saver based on Redis
 ├── langgraph4j-hazelcast-saver          # LangGraph4j persistent checkpoint saver based on Hazelcast
+├── langgraph4j-sqlite-saver             # LangGraph4j persistent checkpoint saver based on SQLite
 ├── langchain4j/                         # LangChain4j integration
 │   ├── langchain4j-core/                # LangChain4j core components (integration required)
 │   └── langchain4j-agent/               # LangChain4j agent executor
