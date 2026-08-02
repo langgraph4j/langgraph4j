@@ -448,7 +448,7 @@ public class SQLiteSaver extends AbstractCheckpointSaver {
                         ++rows;
                     }
                     if (rows == 0) {
-                        return new Tag(threadUUID, null);
+                        return new Tag(threadId, null);
                     }
                     if (rows > 1) {
                         throw new IllegalStateException(format("duplicate active Thread '%s' found", threadId));
