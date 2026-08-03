@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.8.21</version>
+        <version>1.8.22</version>
     </parent>
 
     <artifactId>langgraph4j-bom</artifactId>
@@ -90,6 +90,11 @@
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
                 <artifactId>langgraph4j-postgres-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-sqlite-saver</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
