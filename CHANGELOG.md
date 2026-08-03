@@ -2,6 +2,55 @@
 
 
 
+<!-- "name: v1.8.22" is a release tag -->
+
+## [v1.8.22](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.22) (2026-08-03)
+
+### Features
+
+ *  **sqllite-saver**  add langgraph4j-sqlite-saver module to project ([432e76daa12b9c9](https://github.com/bsorrentino/langgraph4j/commit/432e76daa12b9c965522a5bf7f6d2fe60844eca5))
+   
+
+### Bug Fixes
+
+ -  **SQLiteSaver**  correct variable name from threadUUID to threadId in tag return ([5a54d4f6b5af6fe](https://github.com/bsorrentino/langgraph4j/commit/5a54d4f6b5af6fe634055da2ddfb7de6578224a2))
+
+ -  **SQLiteSaver**  return an ampty tag when no active thread found in releaseCheckpoints ([fab2f842783a162](https://github.com/bsorrentino/langgraph4j/commit/fab2f842783a162a4e134c8051edf8e8cebc41f5))
+
+
+
+### Test 
+
+ -  **SQLiteSaverTest**  add interruption test ([798c3bb9f814b41](https://github.com/bsorrentino/langgraph4j/commit/798c3bb9f814b4184850677098195b3031418ce3))
+   
+
+### Documentation
+
+ -  add langgraph4j-sqlite-saver module to README ([3bbb663b40b6119](https://github.com/bsorrentino/langgraph4j/commit/3bbb663b40b61194b4273b17c86e279dc61f8828))
+     > work on #421
+
+ -  **ai**  instruction to add langgraph4j-sqlite-saver module for SQLite checkpoint saving ([d02f5dd7ca91240](https://github.com/bsorrentino/langgraph4j/commit/d02f5dd7ca91240fcc7ac445f7be64d0fe27770d))
+     > work on #421
+
+ -  update changelog ([b67d532d7b5798d](https://github.com/bsorrentino/langgraph4j/commit/b67d532d7b5798ded61fbee1815480eaaf2723cf))
+
+
+### ALM 
+
+ -  bump to next version 1.8.22 ([c1053abe9232253](https://github.com/bsorrentino/langgraph4j/commit/c1053abe923225391c6fb2398316b087a0206168))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([78bffaec35237b4](https://github.com/bsorrentino/langgraph4j/commit/78bffaec35237b41bc562fe99a075aa829f78a98))
+   
+ -  add langgraph4j-sqlite-saver module to project ([732d36865531999](https://github.com/bsorrentino/langgraph4j/commit/732d36865531999d6bc36d112e60154e59631b1c))
+   
+ -  **bom**  add langgraph4j-sqlite-saver module ([14d5db008c85399](https://github.com/bsorrentino/langgraph4j/commit/14d5db008c85399dc57915b3dfadb4af4fcf7339))
+    > work on #421
+
+
+
+
+
+
 <!-- "name: v1.8.21" is a release tag -->
 
 ## [v1.8.21](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.21) (2026-07-31)
