@@ -103,7 +103,7 @@ export class LG4JResultElement extends LitElement {
       display: flex;
       align-items: center;
       min-height: 3rem;
-      padding: 0.75rem 2.5rem 0.75rem 1rem;
+      padding: 0rem 2.5rem 0rem 1rem;
       font-weight: 700;
       cursor: pointer;
       list-style: none;
@@ -342,7 +342,7 @@ export class LG4JResultElement extends LitElement {
   #renderResult(result, index) {
     
     return html`
-    <details open>
+    <details>
       <summary>${result.cancelled ? '"CANCELLED"' : result.node}</summary>
       <div class="details-content">
         <lg4j-node-output id="(${result.node})[${index}]" value="${JSON.stringify(result).trim()}"></lg4j-node-output>
@@ -415,7 +415,7 @@ export class LG4JResultElement extends LitElement {
     #renderResultDeprecated(result, index) {
 
       return html`
-      <details open>
+      <details>
         <summary>${result.node}</summary>
         <div class="details-content">
         ${Object.entries(result.
@@ -442,7 +442,7 @@ export class LG4JResultElement extends LitElement {
     <div class="card">
     <div class="card-body">
       <h2 class="card-title">${result.node}</h2>
-      <details open>
+      <details>
         <summary>${result.node}</summary>
         <div class="details-content">
         ${Object.entries(result.state).map(([key, value]) => html`
