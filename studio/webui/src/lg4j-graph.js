@@ -1,10 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+// @ts-ignore Parcel bundle-text imports are resolved by the bundler.
 import * as reactFlowStyles from "bundle-text:@xyflow/react/dist/style.css";
+// @ts-ignore React Flow runtime exports are resolved by the bundler.
 import {
   ReactFlowProvider,
   Background,
   Controls,
+  // @ts-ignore React Flow exposes Handle at runtime, but its package types flag it in checked JS.
   Handle,
   MarkerType,
   MiniMap,
@@ -16,6 +19,21 @@ import {
   useReactFlow
 } from '@xyflow/react';
 
+/**
+ * @file React Flow based LangGraph4j graph viewer.
+ * @typedef {import('react').ReactElement} ReactElement
+ * @typedef {import('@xyflow/react').NodeChange<import('./types.js').GraphNode>} GraphNodeChange
+ * @typedef {import('./types.js').Bounds} Bounds
+ * @typedef {import('./types.js').GraphDsl} GraphDsl
+ * @typedef {import('./types.js').GraphEdge} GraphEdge
+ * @typedef {import('./types.js').GraphNode} GraphNode
+ * @typedef {import('./types.js').NextNodeData} NextNodeData
+ * @typedef {import('./types.js').Point} Point
+ * @typedef {import('./types.js').RankLayout} RankLayout
+ * @typedef {import('./types.js').Size} Size
+ * @typedef {import('./types.js').SubgraphSequence} SubgraphSequence
+ */
+
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
 const DEFAULT_NODE_GAP = 50;
@@ -25,11 +43,23 @@ const SUBGRAPH_PADDING_X = 40;
 const SUBGRAPH_PADDING_TOP = 64;
 const SUBGRAPH_PADDING_BOTTOM = 40;
 
+/**
+ * Parses the node-gap attribute value, falling back to the default gap.
+ *
+ * @param {string | null} value - Raw attribute value.
+ * @returns {number} Non-negative node gap in pixels.
+ */
 function parseNodeGap(value) {
-  const parsed = Number.parseInt(value, 10);
+  const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_NODE_GAP;
 }
 
+/**
+ * Renders a circular start or end node.
+ *
+ * @param {{ data: import('./types.js').GraphNodeData }} props - React Flow node props.
+ * @returns {ReactElement} Circle node element.
+ */
 function CircleNode({ data }) {
   const kind = data?.kind === 'start' ? 'start' : 'end';
   return h('div', { className: `circle-node ${kind}` },
@@ -39,6 +69,12 @@ function CircleNode({ data }) {
   );
 }
 
+/**
+ * Renders a resizable subgraph container node.
+ *
+ * @param {{ data: import('./types.js').GraphNodeData, selected: boolean }} props - React Flow node props.
+ * @returns {ReactElement} Subgraph node element.
+ */
 function SubgraphNode({ data, selected }) {
   return h('div', { className: data.collapsed ? 'subgraph-node collapsed' : 'subgraph-node' },
     h(NodeResizer, {
@@ -55,7 +91,7 @@ function SubgraphNode({ data, selected }) {
         title: data.collapsed ? 'Expand subgraph' : 'Collapse subgraph',
         onClick: (event) => {
           event.stopPropagation();
-          data.onToggle();
+          data.onToggle?.();
         }
       }, data.collapsed ? '+' : '-')
     ),
@@ -68,6 +104,13 @@ const nodeTypes = {
   subgraph: SubgraphNode
 };
 
+/**
+ * Returns the display size used by React Flow and the layout engine.
+ *
+ * @param {GraphNode} node - Graph node to measure.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {Size} Width and height in pixels.
+ */
 function nodeSize(node, collapsedSubgraphs) {
   const isSubgraph = node.data?.kind === 'subgraph';
   const isBoundary = node.data?.kind === 'start' || node.data?.kind === 'end';
@@ -78,6 +121,17 @@ function nodeSize(node, collapsedSubgraphs) {
   };
 }
 
+/**
+ * Converts a DSL node into a React Flow node with runtime viewer state.
+ *
+ * @param {GraphNode} node - Node to normalize.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @param {(id: string) => void} toggleSubgraph - Callback that toggles a subgraph.
+ * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
+ * @param {Map<string, Size>} savedSizes - User-adjusted subgraph sizes.
+ * @param {string | undefined} activeNodeId - Currently active node id.
+ * @returns {GraphNode} Normalized React Flow node.
+ */
 function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId) {
   const size = nodeSize(node, collapsedSubgraphs);
   const savedSize = savedSizes.get(node.id);
@@ -117,6 +171,12 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
   };
 }
 
+/**
+ * Converts a DSL edge into a styled React Flow edge.
+ *
+ * @param {GraphEdge} edge - Edge to normalize.
+ * @returns {GraphEdge} Normalized React Flow edge.
+ */
 function normalizeEdge(edge) {
   return {
     ...edge,
@@ -131,6 +191,12 @@ function normalizeEdge(edge) {
   };
 }
 
+/**
+ * Rewrites edges connected to expanded subgraph containers to their boundary nodes.
+ *
+ * @param {GraphDsl} dsl - Parsed LangGraph4j DSL document.
+ * @returns {GraphEdge[]} Edges with subgraph endpoints mapped to start/end boundary nodes.
+ */
 function rewriteSubgraphBoundaryEdges(dsl) {
   const subgraphIds = new Set((dsl.subgraphs || []).map((subgraph) => subgraph.id));
   return dsl.edges.map((edge) => {
@@ -147,10 +213,24 @@ function rewriteSubgraphBoundaryEdges(dsl) {
   });
 }
 
+/**
+ * Builds a lookup from node id to parent id.
+ *
+ * @param {GraphNode[]} nodes - Nodes to index.
+ * @returns {Map<string, string | undefined>} Parent id by node id.
+ */
 function buildParentIndex(nodes) {
   return new Map(nodes.map((node) => [node.id, node.parentId]));
 }
 
+/**
+ * Finds the nearest collapsed ancestor for a node.
+ *
+ * @param {string} nodeId - Node id to inspect.
+ * @param {Map<string, string | undefined>} parentIndex - Parent id by node id.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {string | null} Collapsed ancestor id, or null when visible.
+ */
 function collapsedAncestor(nodeId, parentIndex, collapsedSubgraphs) {
   let current = parentIndex.get(nodeId);
   while (current) {
@@ -162,10 +242,26 @@ function collapsedAncestor(nodeId, parentIndex, collapsedSubgraphs) {
   return null;
 }
 
+/**
+ * Checks whether a node is hidden inside a collapsed subgraph.
+ *
+ * @param {GraphNode} node - Node to inspect.
+ * @param {Map<string, string | undefined>} parentIndex - Parent id by node id.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {boolean} True when a collapsed parent hides the node.
+ */
 function isHiddenByCollapsedParent(node, parentIndex, collapsedSubgraphs) {
   return collapsedAncestor(node.id, parentIndex, collapsedSubgraphs) !== null;
 }
 
+/**
+ * Re-targets edges that cross collapsed subgraphs and removes duplicates.
+ *
+ * @param {GraphEdge[]} edges - Candidate visible edges.
+ * @param {Map<string, string | undefined>} parentIndex - Parent id by node id.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {GraphEdge[]} Visible edge list.
+ */
 function visibleEdges(edges, parentIndex, collapsedSubgraphs) {
   return edges
     .map((edge) => {
@@ -187,14 +283,32 @@ function visibleEdges(edges, parentIndex, collapsedSubgraphs) {
     );
 }
 
+/**
+ * Returns the layout group key for a node.
+ *
+ * @param {GraphNode} node - Node to classify.
+ * @returns {string} Parent id or the root group id.
+ */
 function parentKey(node) {
   return node.parentId || ROOT_PARENT;
 }
 
+/**
+ * Returns the synthetic start node id for a layout group.
+ *
+ * @param {string} parentId - Layout group id.
+ * @returns {string} Start node id.
+ */
 function startNodeId(parentId) {
   return parentId === ROOT_PARENT ? '__START__' : `${parentId}-__START__`;
 }
 
+/**
+ * Groups nodes by parent for recursive layout.
+ *
+ * @param {GraphNode[]} nodes - Nodes to group.
+ * @returns {Map<string, GraphNode[]>} Nodes keyed by layout group.
+ */
 function collectLayoutGroups(nodes) {
   const groups = new Map();
   for (const node of nodes) {
@@ -206,8 +320,17 @@ function collectLayoutGroups(nodes) {
   return groups;
 }
 
+/**
+ * Assigns vertical ranks to nodes in one layout group.
+ *
+ * @param {GraphNode[]} groupNodes - Nodes in the current group.
+ * @param {GraphEdge[]} layoutEdges - Edges used to infer node order.
+ * @param {string} groupKey - Current layout group id.
+ * @returns {Map<string, number>} Rank by node id.
+ */
 function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
   const ids = new Set(groupNodes.map((node) => node.id));
+  /** @type {Map<string, string[]>} */
   const outgoing = new Map();
   for (const edge of layoutEdges) {
     if (ids.has(edge.source) && ids.has(edge.target)) {
@@ -220,14 +343,19 @@ function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
   }
 
   const acyclicOutgoing = removeCycleEdges(outgoing, groupNodes, groupKey);
+  /** @type {Map<string, number>} */
   const ranks = new Map();
   const queue = [startNodeId(groupKey)];
   ranks.set(startNodeId(groupKey), 0);
   while (queue.length > 0) {
     const current = queue.shift();
+    if (!current) {
+      break;
+    }
     const nextRank = (ranks.get(current) || 0) + 1;
     for (const target of acyclicOutgoing.get(current) || []) {
-      if (!ranks.has(target) || nextRank > ranks.get(target)) {
+      const targetRank = ranks.get(target);
+      if (targetRank === undefined || nextRank > targetRank) {
         ranks.set(target, nextRank);
         queue.push(target);
       }
@@ -243,9 +371,20 @@ function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
   return ranks;
 }
 
+/**
+ * Removes back-edges from the adjacency map so rank calculation stays acyclic.
+ *
+ * @param {Map<string, string[]>} outgoing - Directed adjacency list.
+ * @param {GraphNode[]} groupNodes - Nodes in traversal order scope.
+ * @param {string} groupKey - Current layout group id.
+ * @returns {Map<string, string[]>} Acyclic adjacency list.
+ */
 function removeCycleEdges(outgoing, groupNodes, groupKey) {
+  /** @type {Set<string>} */
   const visiting = new Set();
+  /** @type {Set<string>} */
   const visited = new Set();
+  /** @type {Set<string>} */
   const skippedEdges = new Set();
   const nodeIds = groupNodes.map((node) => node.id);
   const start = startNodeId(groupKey);
@@ -254,6 +393,7 @@ function removeCycleEdges(outgoing, groupNodes, groupKey) {
     ...nodeIds.filter((id) => id !== start).sort()
   ];
 
+  /** @type {(id: string) => void} */
   const visit = (id) => {
     if (visited.has(id)) {
       return;
@@ -289,8 +429,17 @@ function removeCycleEdges(outgoing, groupNodes, groupKey) {
   return acyclicOutgoing;
 }
 
+/**
+ * Buckets nodes by rank for layout.
+ *
+ * @param {GraphNode[]} groupNodes - Nodes in the current group.
+ * @param {GraphEdge[]} layoutEdges - Edges used to infer ranks.
+ * @param {string} groupKey - Current layout group id.
+ * @returns {Array<[number, GraphNode[]]>} Sorted rank buckets.
+ */
 function rankBuckets(groupNodes, layoutEdges, groupKey) {
   const ranks = rankGroupNodes(groupNodes, layoutEdges, groupKey);
+  /** @type {Map<number, GraphNode[]>} */
   const byRank = new Map();
   for (const node of groupNodes) {
     const rank = ranks.get(node.id) || 0;
@@ -301,10 +450,26 @@ function rankBuckets(groupNodes, layoutEdges, groupKey) {
   return [...byRank.entries()].sort(([left], [right]) => left - right);
 }
 
+/**
+ * Returns the size used for automatic layout.
+ *
+ * @param {GraphNode} node - Node to measure.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {Size} Layout size in pixels.
+ */
 function nodeLayoutSize(node, collapsedSubgraphs) {
   return nodeSize(node, collapsedSubgraphs);
 }
 
+/**
+ * Lays out one rank around a centered horizontal axis.
+ *
+ * @param {GraphNode[]} rankNodes - Nodes in the rank.
+ * @param {number} y - Vertical position for the rank.
+ * @param {number} nodeGap - Horizontal gap between nodes.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {RankLayout} Node placements and rank height.
+ */
 function layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs) {
   const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
   const sizes = orderedNodes.map((node) => nodeLayoutSize(node, collapsedSubgraphs));
@@ -323,6 +488,16 @@ function layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs) {
   };
 }
 
+/**
+ * Lays out a root rank, placing subgraphs beside the main flow when needed.
+ *
+ * @param {GraphNode[]} rankNodes - Nodes in the root rank.
+ * @param {number} y - Vertical position for the rank.
+ * @param {number} nodeGap - Horizontal gap between nodes.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @param {SubgraphSequence} subgraphSequence - Mutable subgraph placement counter.
+ * @returns {RankLayout} Node placements and rank height.
+ */
 function layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSequence) {
   const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
   const mainNodes = orderedNodes.filter((node) => node.data?.kind !== 'subgraph');
@@ -365,6 +540,13 @@ function layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSeque
   return { placements, height: maxHeight };
 }
 
+/**
+ * Calculates bounds around positioned nodes.
+ *
+ * @param {GraphNode[]} nodes - Positioned nodes.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {Bounds} Bounds around all nodes.
+ */
 function boundsOf(nodes, collapsedSubgraphs) {
   return nodes.reduce((bounds, node) => {
     const size = nodeLayoutSize(node, collapsedSubgraphs);
@@ -377,11 +559,29 @@ function boundsOf(nodes, collapsedSubgraphs) {
   }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
 }
 
+/**
+ * Calculates default node positions recursively for root and subgraph groups.
+ *
+ * @param {GraphNode[]} nodes - Visible nodes to place.
+ * @param {GraphEdge[]} layoutEdges - Edges used to infer ranks.
+ * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @param {number} nodeGap - Gap between nodes in pixels.
+ * @returns {GraphNode[]} Positioned nodes sorted by parent depth.
+ */
 function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs, nodeGap) {
   const groups = collectLayoutGroups(nodes);
+  /** @type {GraphNode[]} */
   const nextNodes = [];
+  /** @type {Set<string>} */
   const visitedGroups = new Set();
 
+  /**
+   * Lays out a group and returns the size required by its parent subgraph.
+   *
+   * @param {string} groupKey - Group id to layout.
+   * @returns {Size | null} Required subgraph size, or null for the root group.
+   */
   const layoutGroup = (groupKey) => {
     if (visitedGroups.has(groupKey)) {
       return null;
@@ -398,6 +598,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
     }
 
     let y = groupKey === ROOT_PARENT ? ROOT_PADDING_TOP : SUBGRAPH_PADDING_TOP;
+    /** @type {SubgraphSequence} */
     const subgraphSequence = { count: 0 };
     for (const [, rankNodes] of rankBuckets(groupNodes, layoutEdges, groupKey)) {
       const rankLayout = groupKey === ROOT_PARENT
@@ -462,6 +663,7 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
     }
   }
 
+  /** @type {(node: GraphNode) => number} */
   const depthOf = (node) => {
     let depth = 0;
     let parentId = node.parentId;
@@ -476,17 +678,30 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
 }
 
 
+/**
+ * React component that renders a parsed DSL document with React Flow.
+ *
+ * @param {{ source?: string, activeNodeId?: string, nodeGap: number }} props - Viewer properties.
+ * @returns {ReactElement} React Flow graph component.
+ */
 function GraphFlow({ source, activeNodeId, nodeGap }) {
-  const [dsl, setDsl] = useState(null);
-  const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(new Set());
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const flowWrapperRef = React.useRef(null);
-  const savedPositionsRef = React.useRef(new Map());
-  const savedSizesRef = React.useRef(new Map());
+  const [dsl, setDsl] = useState(/** @type {GraphDsl | null} */ (null));
+  const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(/** @type {Set<string>} */ (new Set()));
+  const [nodes, setNodes, onNodesChange] = useNodesState(/** @type {GraphNode[]} */ ([]));
+  const [edges, setEdges, onEdgesChange] = useEdgesState(/** @type {GraphEdge[]} */ ([]));
+  const flowWrapperRef = React.useRef(/** @type {HTMLDivElement | null} */ (null));
+  const savedPositionsRef = React.useRef(/** @type {Map<string, Point>} */ (new Map()));
+  const savedSizesRef = React.useRef(/** @type {Map<string, Size>} */ (new Map()));
 
   const { fitView } = useReactFlow();
       
+  /**
+   * Toggles a subgraph collapsed state.
+   *
+   * @param {string} id - Subgraph id.
+   * @returns {void}
+   */
+  /** @type {(id: string) => void} */
   const toggleSubgraph = useCallback((id) => {
     setCollapsedSubgraphs((current) => {
       const next = new Set(current);
@@ -500,6 +715,14 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     });
   }, []);
 
+  /**
+   * Applies a parsed DSL document to React Flow state.
+   *
+   * @param {GraphDsl} nextDsl - DSL document to render.
+   * @param {Set<string>} nextCollapsedSubgraphs - Collapsed subgraph ids.
+   * @returns {void}
+   */
+  /** @type {(nextDsl: GraphDsl, nextCollapsedSubgraphs: Set<string>) => void} */
   const applyDsl = useCallback((nextDsl, nextCollapsedSubgraphs) => {
     const parentIndex = buildParentIndex(nextDsl.nodes);
     const graphEdges = rewriteSubgraphBoundaryEdges(nextDsl);
@@ -510,6 +733,13 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
   }, [activeNodeId, nodeGap, setEdges, setNodes, toggleSubgraph]);
 
+  /**
+   * Tracks user-positioned nodes before delegating to React Flow.
+   *
+   * @param {GraphNodeChange[]} changes - React Flow node changes.
+   * @returns {void}
+   */
+  /** @type {(changes: GraphNodeChange[]) => void} */
   const handleNodesChange = useCallback((changes) => {
     for (const change of changes) {
       if (change.type === 'position' && change.position) {
@@ -519,8 +749,15 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     onNodesChange(changes);
   }, [onNodesChange]);
 
+  /**
+   * Parses and renders a LangGraph4j DSL JSON string.
+   *
+   * @param {string} value - Serialized DSL document.
+   * @returns {void}
+   */
+  /** @type {(value: string) => void} */
   const renderDsl = useCallback((value) => {
-    const nextDsl = JSON.parse(value);
+    const nextDsl = /** @type {GraphDsl} */ (JSON.parse(value));
     if (nextDsl.type !== 'langgraph4j' || !Array.isArray(nextDsl.nodes) || !Array.isArray(nextDsl.edges)) {
       throw new Error('JSON is not a Langgraph4j DSL document.');
     }
@@ -596,6 +833,11 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   return flow;
 }
 
+/**
+ * Returns the CSS used inside the graph viewer shadow root.
+ *
+ * @returns {string} Component stylesheet.
+ */
 function componentStyles() {
   return `
     ${reactFlowStyles}
@@ -764,30 +1006,61 @@ function componentStyles() {
   `;
 }
 
+/**
+ * Custom element that hosts the React Flow graph viewer.
+ *
+ * @class
+ */
 export class LG4JDSLViewElement extends HTMLElement {
 
+  /**
+   * Attributes observed by the custom element.
+   *
+   * @returns {string[]} Observed attribute names.
+   */
   static get observedAttributes() {
     return ['node-gap'];
   }
 
+  /**
+   * Creates the shadow root, style element, and React mount point.
+   */
   constructor() {
     super();
     
     const shadow = this.attachShadow({ mode: 'open' });
     const style = document.createElement('style');
     style.textContent = componentStyles();
+    /** @type {HTMLDivElement} React mount point inside the shadow root. */
     this.mount = document.createElement('div');
     this.mount.className = 'mount';
     shadow.append(style, this.mount);
+
+    /** @type {import('react-dom/client').Root | null} React root for the viewer. */
+    this.root = null;
+    /** @type {string | undefined} Last serialized graph DSL received from events. */
+    this.source = undefined;
+    /** @type {string | undefined} Active node id highlighted in the graph. */
+    this.activeNodeId = undefined;
 
     this.render = this.render.bind(this);
     this.onActive = this.onActive.bind(this);
   }
 
+  /**
+   * Reacts to observed attribute changes by re-rendering the graph.
+   *
+   * @returns {void}
+   */
   attributeChangedCallback() {
     this.update();
   }
 
+  /**
+   * Mounts the React root and registers graph event listeners.
+   *
+   * @returns {void}
+   */
   connectedCallback() {
 
     // mount root
@@ -795,32 +1068,54 @@ export class LG4JDSLViewElement extends HTMLElement {
       this.root = createRoot(this.mount);
     }
 
-    this.addEventListener('graph', this.render);
-    this.addEventListener('graph-active', this.onActive);
+    this.addEventListener('graph', /** @type {EventListener} */ (this.render));
+    this.addEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
 
   }
 
+  /**
+   * Removes event listeners and unmounts the React root.
+   *
+   * @returns {void}
+   */
   disconnectedCallback() {
 
-    this.removeEventListener('graph', this.render);
-    this.removeEventListener('graph-active', this.onActive);
+    this.removeEventListener('graph', /** @type {EventListener} */ (this.render));
+    this.removeEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
 
     // unmount root
     this.root?.unmount();
     this.root = null;
   }
 
+  /**
+   * Handles graph content events.
+   *
+   * @param {CustomEvent<string>} event - Event containing serialized DSL content.
+   * @returns {void}
+   */
   render(event) {
     this.source = event.detail;
     this.update();
   }
 
+  /**
+   * Handles active node events from the executor.
+   *
+   * @param {CustomEvent<NextNodeData>} event - Event containing active node ids.
+   * @returns {void}
+   */
   onActive(event) {
     const { detail: { node, subgraphNode } } = event;
     this.activeNodeId = subgraphNode ?? node
     this.update();
   }
 
+  /**
+   * Renders the current graph source into the React root.
+   *
+   * @returns {void}
+   */
   update() {
 
     this.root?.render( 

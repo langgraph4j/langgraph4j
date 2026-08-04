@@ -61,3 +61,98 @@
  * @typedef {Array<Instance>} InitData
  */
 
+/**
+ * Two-dimensional coordinate used by graph nodes.
+ *
+ * @typedef {Object} Point
+ * @property {number} x
+ * @property {number} y
+ */
+
+/**
+ * Width and height pair used by graph layout calculations.
+ *
+ * @typedef {Object} Size
+ * @property {number} width
+ * @property {number} height
+ */
+
+/**
+ * Rectangular bounds around a group of positioned graph nodes.
+ *
+ * @typedef {Object} Bounds
+ * @property {number} minX
+ * @property {number} minY
+ * @property {number} maxX
+ * @property {number} maxY
+ */
+
+/**
+ * Mutable counter used while alternating root subgraph placement.
+ *
+ * @typedef {Object} SubgraphSequence
+ * @property {number} count
+ */
+
+/**
+ * Data carried by a LangGraph4j graph node rendered through React Flow.
+ *
+ * @typedef {Object} GraphNodeData
+ * @property {string} [kind] - Semantic node kind, for example start, end, or subgraph.
+ * @property {string} [label] - Display label.
+ * @property {Size} [layoutSize] - Calculated size for expanded subgraphs.
+ * @property {boolean} [active] - True when the node represents the active execution step.
+ * @property {boolean} [collapsed] - True when a subgraph node is collapsed.
+ * @property {() => void} [onToggle] - Toggles a subgraph node between collapsed and expanded states.
+ * @property {(event: unknown, params: Size) => void} [onResizeEnd] - Persists the resized subgraph dimensions.
+ * @property {Record<string, any>} [extra] - Additional server-provided node metadata.
+ */
+
+/**
+ * A graph node from the LangGraph4j DSL, compatible with React Flow nodes.
+ *
+ * @typedef {import('@xyflow/react').Node<GraphNodeData>} GraphNode
+ */
+
+/**
+ * Data carried by a LangGraph4j graph edge rendered through React Flow.
+ *
+ * @typedef {Object} GraphEdgeData
+ * @property {string} [condition] - Conditional edge label.
+ * @property {string} [originalSource] - Subgraph id before boundary edge rewriting.
+ * @property {string} [originalTarget] - Subgraph id before boundary edge rewriting.
+ * @property {Record<string, any>} [extra] - Additional server-provided edge metadata.
+ */
+
+/**
+ * A graph edge from the LangGraph4j DSL, compatible with React Flow edges.
+ *
+ * @typedef {import('@xyflow/react').Edge<GraphEdgeData>} GraphEdge
+ */
+
+/**
+ * LangGraph4j graph document consumed by the graph viewer.
+ *
+ * @typedef {Object} GraphDsl
+ * @property {'langgraph4j'} type
+ * @property {GraphNode[]} nodes
+ * @property {GraphEdge[]} edges
+ * @property {Array<{ id: string }>} [subgraphs]
+ */
+
+/**
+ * Node placement calculated for a rank during automatic layout.
+ *
+ * @typedef {Object} LayoutPlacement
+ * @property {GraphNode} node
+ * @property {number} x
+ * @property {number} y
+ */
+
+/**
+ * Calculated placements and height for a single layout rank.
+ *
+ * @typedef {Object} RankLayout
+ * @property {LayoutPlacement[]} placements
+ * @property {number} height
+ */
