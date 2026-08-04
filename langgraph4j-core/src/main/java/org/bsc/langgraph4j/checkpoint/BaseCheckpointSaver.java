@@ -16,7 +16,7 @@ public interface BaseCheckpointSaver {
         private final Integer version;
         private final List<Checkpoint> checkpoints;
 
-        public Tag(String threadId, Integer version, Collection<Checkpoint> checkpoints) {
+        public Tag(String threadId, @Nullable Integer version, @Nullable Collection<Checkpoint> checkpoints) {
             this.threadId = requireNonNull(threadId, "threadId cannot be null");
             this.checkpoints = ofNullable(checkpoints).map(List::copyOf).orElseGet(List::of);
             this.version = version;
