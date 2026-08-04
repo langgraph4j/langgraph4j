@@ -48,8 +48,8 @@ export class LG4JResultElement extends LitElement {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 2.5rem;
-      padding: 0 1rem;
+      height: 1.5rem;
+      padding: 0 0.75rem;
       border-bottom: 2px solid transparent;
       color: #cbd5e1;
       text-decoration: none;
@@ -391,7 +391,7 @@ export class LG4JResultElement extends LitElement {
         <div role="tablist" class="tabs">
             ${this.#renderTabs()}
             <a role="tab" class="tab add-tab" @click="${this.#onNewTab}">
-              <svg  xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+              <svg  xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 20 20">
                 <circle cx="10" cy="10" r="9" fill="none" stroke="white" stroke-width="1.5"/>
                 <line x1="5" y1="10" x2="15" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
                 <line x1="10" y1="5" x2="10" y2="15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
