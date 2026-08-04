@@ -57,6 +57,7 @@ nav:
       - Agent Executor: how-tos/agentexecutor.ipynb
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
       - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
+      - Basic Reflection: how-tos/basic-reflection.ipynb
       - Add persistence (“memory”) to your graph: how-tos/persistence.ipynb
       - View and Update past graph state: how-tos/time-travel.ipynb
       - Wait for User input: how-tos/wait-user-input.ipynb
@@ -88,6 +89,7 @@ nav:
       - Agent Executor: how-tos/agentexecutor.ipynb
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
       - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
+      - Basic Reflection: how-tos/basic-reflection.ipynb
       - Add persistence (“memory”) to your graph: how-tos/persistence.ipynb
       - View and Update past graph state: how-tos/time-travel.ipynb
       - Wait for User input: how-tos/wait-user-input.ipynb

@@ -30,6 +30,7 @@
             <item name="Adaptive Rag" href="adaptiverag.html"/>
             <item name="Agent Executor" href="agentexecutor.html"/>
             <item name="Multi-agent supervisor" href="multi-agent-supervisor.html"/>
+            <item name="Basic Reflection" href="basic-reflection.html"/>
             <item name="How to add persistence to your graph" href="persistence.html"/>
             <item name="How to view and update past graph state" href="time-travel.html"/>
             <item name="Wait for user input" href="wait-user-input.html"/>
