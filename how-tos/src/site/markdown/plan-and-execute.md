@@ -21,4 +21,9 @@ START → planner → agent → replan ──► (continue) → agent
 | `agent` | Execute the first remaining step |
 | `replan` | Refresh the plan or emit the final answer |
 
-The notebook includes a deterministic stub implementation so the graph runs without an LLM API key. Replace stub nodes with LangChain4j `AiServices` / agent-executor for a live model.
+## Modes
+
+1. **Stub** — deterministic nodes (no API key). Covered by `PlanAndExecuteStubTest`.
+2. **LLM** — LangChain4j `AiServices` planner / tool agent / replanner. Requires `OPENAI_API_KEY`. Covered by `PlanAndExecuteITest` (excluded from default Surefire via `*ITest`).
+
+Replace `SearchTools` with Tavily / HTTP / MCP tools for production-style demos.
