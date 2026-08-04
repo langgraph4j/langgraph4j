@@ -34,7 +34,8 @@ export class LG4JWorkbenchElement extends LitElement {
       display: flex;
       align-items: center;
       gap: 1rem;
-      min-height: 4rem;
+      min-height: 1rem;
+      height: 2.1rem;
       padding: 0 1rem;
       background: #111827;
       border-bottom: 1px solid #1f2937;
@@ -70,8 +71,9 @@ export class LG4JWorkbenchElement extends LitElement {
     }
 
     .toggle-results {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
       display: inline-grid;
       place-items: center;
       flex-shrink: 0;
@@ -80,6 +82,7 @@ export class LG4JWorkbenchElement extends LitElement {
       color: #e5e7eb;
       background: #1f2937;
       cursor: pointer;
+      line-height: 0;
     }
 
     .toggle-results:hover {
@@ -94,8 +97,8 @@ export class LG4JWorkbenchElement extends LitElement {
     }
 
     .toggle-results svg {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 1rem;
+      height: 1rem;
       display: block;
     }
 
@@ -104,8 +107,8 @@ export class LG4JWorkbenchElement extends LitElement {
     }
 
     .spinner {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 1rem;
+      height: 1rem;
       border: 3px solid rgba(96, 165, 250, 0.25);
       border-top-color: #60a5fa;
       border-radius: 999px;
