@@ -86,9 +86,9 @@ public class BasicReflectionStubTest {
                 ))
                 .compile();
 
-        var result = app.invoke(Map.of(
-                "messages", "Write a short essay about the benefits of journaling."
-        ));
+        var result = app.invoke(GraphInput.args(Map.of(
+                "messages", "Write a short essay about the benefits of journaling.")),
+                RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         var state = result.get();

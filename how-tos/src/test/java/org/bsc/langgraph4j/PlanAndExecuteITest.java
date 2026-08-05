@@ -251,9 +251,9 @@ public class PlanAndExecuteITest {
                 ))
                 .compile();
 
-        var result = app.invoke(Map.of(
-                PlanExecuteState.INPUT, "What is the weather in San Francisco?"
-        ));
+        var result = app.invoke(GraphInput.args(Map.of(
+                PlanExecuteState.INPUT, "What is the weather in San Francisco?")),
+                RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         var state = result.get();
