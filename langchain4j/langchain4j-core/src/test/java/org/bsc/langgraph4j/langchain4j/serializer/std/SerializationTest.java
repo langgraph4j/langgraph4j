@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.langchain4j.serializer.std;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -141,6 +142,86 @@ public class SerializationTest {
         };
 
 
+
+    }
+
+    @Test
+    public void AiMessageTextAndToolExecutionRequestsSerializerTest() throws Exception {
+
+        var aiMessage = AiMessage.builder()
+                .text( "Some message for the user" )
+                .toolExecutionRequests( List.of(
+                        ToolExecutionRequest.builder()
+                                .id( "1" )
+                                .name( "someTool" )
+                                .arguments( "{}" )
+                                .build()
+                ) )
+                .build();
+
+        var serializer = new LC4jStateSerializer<>(State::new);
+
+        var state = new State( Map.of(
+                "messages", List.of(aiMessage) )
+        );
+
+        try(var baos = new ByteArrayOutputStream(); var out = new ObjectOutputStream(baos) ) {
+
+            serializer.write(state, out);
+
+            try( var in = new ObjectInputStream( new ByteArrayInputStream(baos.toByteArray() )) ) {
+
+                var newState = serializer.read( in );
+
+                assertNotNull( newState );
+                assertEquals( 1, newState.messages().size());
+                var message = newState.messages().get( 0 );
+                assertInstanceOf( AiMessage.class, message );
+
+                var newAiMessage = (AiMessage)message;
+
+                assertEquals( aiMessage.text(), newAiMessage.text() );
+                assertEquals( aiMessage.toolExecutionRequests(), newAiMessage.toolExecutionRequests() );
+            }
+
+        };
+
+    }
+
+    @Test
+    public void AiMessageOnlyToolExecutionRequestsSerializerTest() throws Exception {
+
+        var aiMessage = AiMessage.builder()
+                .toolExecutionRequests( List.of(
+                        ToolExecutionRequest.builder()
+                                .id( "1" )
+                                .name( "someTool" )
+                                .arguments( "{}" )
+                                .build()
+                ) )
+                .build();
+
+        var serializer = new LC4jStateSerializer<>(State::new);
+
+        var state = new State( Map.of(
+                "messages", List.of(aiMessage) )
+        );
+
+        try(var baos = new ByteArrayOutputStream(); var out = new ObjectOutputStream(baos) ) {
+
+            serializer.write(state, out);
+
+            try( var in = new ObjectInputStream( new ByteArrayInputStream(baos.toByteArray() )) ) {
+
+                var newState = serializer.read( in );
+
+                var newAiMessage = (AiMessage)newState.messages().get( 0 );
+
+                assertNull( newAiMessage.text() );
+                assertEquals( aiMessage.toolExecutionRequests(), newAiMessage.toolExecutionRequests() );
+            }
+
+        };
 
     }
 }
