@@ -17,7 +17,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
-  useReactFlow
+  useReactFlow,
 } from '@xyflow/react';
 
 /**
@@ -474,6 +474,7 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(/** @type {Set<string>} */ (new Set()));
   const [nodes, setNodes, onNodesChange] = useNodesState(/** @type {GraphNode[]} */ ([]));
   const [edges, setEdges, onEdgesChange] = useEdgesState(/** @type {GraphEdge[]} */ ([]));
+  const [interactive, setInteractive] = useState(true);
   const flowWrapperRef = React.useRef(/** @type {HTMLDivElement | null} */ (null));
   const savedPositionsRef = React.useRef(/** @type {Map<string, Point>} */ (new Map()));
   const savedSizesRef = React.useRef(/** @type {Map<string, Size>} */ (new Map()));
@@ -527,13 +528,16 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
    */
   /** @type {(changes: GraphNodeChange[]) => void} */
   const handleNodesChange = useCallback((changes) => {
+    if (!interactive) {
+      return;
+    }
     for (const change of changes) {
       if (change.type === 'position' && change.position) {
         savedPositionsRef.current.set(change.id, change.position);
       }
     }
     onNodesChange(changes);
-  }, [onNodesChange]);
+  }, [onNodesChange, interactive]);
 
   /**
    * Parses and renders a LangGraph4j DSL JSON string.
@@ -609,10 +613,21 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       fitViewOptions: { padding: 0.16 },
       minZoom: 0.2,
       maxZoom: 1.5,
-      style: { width: '100%', height: '100%' }
+      style: { width: '100%', height: '100%' },
+      // interaction properties: false
+      nodesDraggable: interactive,
+      elementsSelectable: interactive,
+      nodesConnectable: interactive,
+
     },
     // h(MiniMap, null),
-    h(Controls, null),
+    h(Controls, {
+      
+      onInteractiveChange: (prev) => { 
+        console.log('Interactive status changed:', prev);
+        setInteractive(!interactive);
+      }
+    }),
     h(Background, { gap: 18, size: 1 })
   )), [edges, handleNodesChange, nodes, onEdgesChange]);
 
