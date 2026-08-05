@@ -290,17 +290,15 @@ function LayoutToggleButton({ enabled, disabled, onToggle }) {
   h('svg', {
     className: 'layout-toggle-icon',
     viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 2,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
+    fill: 'currentColor',
     'aria-hidden': true
   },
-  h('path', { d: 'M5 4h11l3 3v13H5z' }),
-  h('path', { d: 'M8 4v6h8V4' }),
-  h('path', { d: 'M8 20v-7h8v7' }),
-  enabled ? h('path', { d: 'M7 12l3 3 7-7' }) : null
+  h('path', { d: 'M9 3h6v5H9z' }),
+  h('path', { d: 'M4 16h6v5H4z' }),
+  h('path', { d: 'M14 16h6v5h-6z' }),
+  h('path', { d: 'M11 9h2v4H11z' }),
+  h('path', { d: 'M6 13h12v2H6z' }),
+  h('path', { d: 'M11 15h2v2H11z' })
   ));
 }
 
