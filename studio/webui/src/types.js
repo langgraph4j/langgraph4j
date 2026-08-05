@@ -78,23 +78,6 @@
  */
 
 /**
- * Rectangular bounds around a group of positioned graph nodes.
- *
- * @typedef {Object} Bounds
- * @property {number} minX
- * @property {number} minY
- * @property {number} maxX
- * @property {number} maxY
- */
-
-/**
- * Mutable counter used while alternating root subgraph placement.
- *
- * @typedef {Object} SubgraphSequence
- * @property {number} count
- */
-
-/**
  * Data carried by a LangGraph4j graph node rendered through React Flow.
  *
  * @typedef {Object} GraphNodeData
@@ -138,21 +121,4 @@
  * @property {GraphNode[]} nodes
  * @property {GraphEdge[]} edges
  * @property {Array<{ id: string }>} [subgraphs]
- */
-
-/**
- * Node placement calculated for a rank during automatic layout.
- *
- * @typedef {Object} LayoutPlacement
- * @property {GraphNode} node
- * @property {number} x
- * @property {number} y
- */
-
-/**
- * Calculated placements and height for a single layout rank.
- *
- * @typedef {Object} RankLayout
- * @property {LayoutPlacement[]} placements
- * @property {number} height
  */
