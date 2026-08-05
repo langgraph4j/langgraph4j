@@ -6,6 +6,7 @@ They are a collection of how-to(_s_) for LangGraph4j implemented using the [Java
 
 * [Langchain4j Adaptive Rag](adaptiverag.md)
 * [Langchain4j Agent Executor](agentexecutor.md)
+* [Plan-and-Execute](plan-and-execute.md)
 * [How to add persistence to your graph](persistence.md)
 * [How to view and update past graph state](time-travel.md)
 * [Wait for user input](wait-user-input.md)
