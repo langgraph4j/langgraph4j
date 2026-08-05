@@ -8,7 +8,6 @@ import java.util.Map;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
-import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
 
 
@@ -35,12 +34,12 @@ public class AiMessageSerializer implements NullableObjectSerializer<AiMessage> 
 
         if( hasToolExecutionRequests ) {
             out.writeObject( object.toolExecutionRequests() );
-
-        }
-        else {
-            Serializer.writeUTF(object.text(), out);
         }
 
+        // text and tool execution requests are NOT mutually exclusive (e.g. Gemini and other
+        // providers can return both in the same turn) — always write text, regardless of whether
+        // tool execution requests are also present.
+        writeNullableUTF( object.text(), out );
     }
 
     /**
@@ -66,9 +65,8 @@ public class AiMessageSerializer implements NullableObjectSerializer<AiMessage> 
             List<ToolExecutionRequest> toolExecutionRequests = (List<ToolExecutionRequest>)in.readObject();
             builder.toolExecutionRequests( toolExecutionRequests );
         }
-        else {
-            builder.text( Serializer.readUTF(in) );
-        }
+
+        readNullableUTF(in).ifPresent( builder::text );
 
         return builder.build();
     }
