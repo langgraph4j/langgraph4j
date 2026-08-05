@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import dagre from '@dagrejs/dagre';
 // @ts-ignore Parcel bundle-text imports are resolved by the bundler.
 import * as reactFlowStyles from "bundle-text:@xyflow/react/dist/style.css";
 // @ts-ignore React Flow runtime exports are resolved by the bundler.
@@ -10,7 +11,7 @@ import {
   // @ts-ignore React Flow exposes Handle at runtime, but its package types flag it in checked JS.
   Handle,
   MarkerType,
-  MiniMap,
+  //MiniMap,
   NodeResizer,
   Position,
   ReactFlow,
@@ -23,22 +24,18 @@ import {
  * @file React Flow based LangGraph4j graph viewer.
  * @typedef {import('react').ReactElement} ReactElement
  * @typedef {import('@xyflow/react').NodeChange<import('./types.js').GraphNode>} GraphNodeChange
- * @typedef {import('./types.js').Bounds} Bounds
  * @typedef {import('./types.js').GraphDsl} GraphDsl
  * @typedef {import('./types.js').GraphEdge} GraphEdge
  * @typedef {import('./types.js').GraphNode} GraphNode
  * @typedef {import('./types.js').NextNodeData} NextNodeData
  * @typedef {import('./types.js').Point} Point
- * @typedef {import('./types.js').RankLayout} RankLayout
  * @typedef {import('./types.js').Size} Size
- * @typedef {import('./types.js').SubgraphSequence} SubgraphSequence
  */
 
 const h = React.createElement;
 const ROOT_PARENT = '__ROOT__';
 const DEFAULT_NODE_GAP = 50;
-const ROOT_PADDING_X = 120;
-const ROOT_PADDING_TOP = 40;
+const DAGRE_RANK_GAP_OFFSET = 32;
 const SUBGRAPH_PADDING_X = 40;
 const SUBGRAPH_PADDING_TOP = 64;
 const SUBGRAPH_PADDING_BOTTOM = 40;
@@ -294,16 +291,6 @@ function parentKey(node) {
 }
 
 /**
- * Returns the synthetic start node id for a layout group.
- *
- * @param {string} parentId - Layout group id.
- * @returns {string} Start node id.
- */
-function startNodeId(parentId) {
-  return parentId === ROOT_PARENT ? '__START__' : `${parentId}-__START__`;
-}
-
-/**
  * Groups nodes by parent for recursive layout.
  *
  * @param {GraphNode[]} nodes - Nodes to group.
@@ -321,249 +308,85 @@ function collectLayoutGroups(nodes) {
 }
 
 /**
- * Assigns vertical ranks to nodes in one layout group.
+ * Creates a Dagre graph configured for a single React Flow parent group.
  *
- * @param {GraphNode[]} groupNodes - Nodes in the current group.
- * @param {GraphEdge[]} layoutEdges - Edges used to infer node order.
- * @param {string} groupKey - Current layout group id.
- * @returns {Map<string, number>} Rank by node id.
+ * @param {string} groupKey - Group id being laid out.
+ * @param {number} nodeGap - Gap between nodes in pixels.
+ * @returns {dagre.graphlib.Graph} Configured Dagre graph.
  */
-function rankGroupNodes(groupNodes, layoutEdges, groupKey) {
-  const ids = new Set(groupNodes.map((node) => node.id));
-  /** @type {Map<string, string[]>} */
-  const outgoing = new Map();
-  for (const edge of layoutEdges) {
-    if (ids.has(edge.source) && ids.has(edge.target)) {
-      const next = outgoing.get(edge.source) || [];
-      if (!next.includes(edge.target)) {
-        next.push(edge.target);
-        outgoing.set(edge.source, next);
-      }
-    }
-  }
-
-  const acyclicOutgoing = removeCycleEdges(outgoing, groupNodes, groupKey);
-  /** @type {Map<string, number>} */
-  const ranks = new Map();
-  const queue = [startNodeId(groupKey)];
-  ranks.set(startNodeId(groupKey), 0);
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) {
-      break;
-    }
-    const nextRank = (ranks.get(current) || 0) + 1;
-    for (const target of acyclicOutgoing.get(current) || []) {
-      const targetRank = ranks.get(target);
-      if (targetRank === undefined || nextRank > targetRank) {
-        ranks.set(target, nextRank);
-        queue.push(target);
-      }
-    }
-  }
-
-  let fallbackRank = ranks.size;
-  for (const node of groupNodes) {
-    if (!ranks.has(node.id)) {
-      ranks.set(node.id, fallbackRank++);
-    }
-  }
-  return ranks;
-}
-
-/**
- * Removes back-edges from the adjacency map so rank calculation stays acyclic.
- *
- * @param {Map<string, string[]>} outgoing - Directed adjacency list.
- * @param {GraphNode[]} groupNodes - Nodes in traversal order scope.
- * @param {string} groupKey - Current layout group id.
- * @returns {Map<string, string[]>} Acyclic adjacency list.
- */
-function removeCycleEdges(outgoing, groupNodes, groupKey) {
-  /** @type {Set<string>} */
-  const visiting = new Set();
-  /** @type {Set<string>} */
-  const visited = new Set();
-  /** @type {Set<string>} */
-  const skippedEdges = new Set();
-  const nodeIds = groupNodes.map((node) => node.id);
-  const start = startNodeId(groupKey);
-  const orderedIds = [
-    ...(nodeIds.includes(start) ? [start] : []),
-    ...nodeIds.filter((id) => id !== start).sort()
-  ];
-
-  /** @type {(id: string) => void} */
-  const visit = (id) => {
-    if (visited.has(id)) {
-      return;
-    }
-    visiting.add(id);
-    for (const target of outgoing.get(id) || []) {
-      const edgeKey = `${id}\u0000${target}`;
-      if (visiting.has(target)) {
-        skippedEdges.add(edgeKey);
-        continue;
-      }
-      visit(target);
-    }
-    visiting.delete(id);
-    visited.add(id);
-  };
-
-  for (const id of orderedIds) {
-    visit(id);
-  }
-
-  if (skippedEdges.size === 0) {
-    return outgoing;
-  }
-
-  const acyclicOutgoing = new Map();
-  for (const [source, targets] of outgoing.entries()) {
-    const acyclicTargets = targets.filter((target) => !skippedEdges.has(`${source}\u0000${target}`));
-    if (acyclicTargets.length > 0) {
-      acyclicOutgoing.set(source, acyclicTargets);
-    }
-  }
-  return acyclicOutgoing;
-}
-
-/**
- * Buckets nodes by rank for layout.
- *
- * @param {GraphNode[]} groupNodes - Nodes in the current group.
- * @param {GraphEdge[]} layoutEdges - Edges used to infer ranks.
- * @param {string} groupKey - Current layout group id.
- * @returns {Array<[number, GraphNode[]]>} Sorted rank buckets.
- */
-function rankBuckets(groupNodes, layoutEdges, groupKey) {
-  const ranks = rankGroupNodes(groupNodes, layoutEdges, groupKey);
-  /** @type {Map<number, GraphNode[]>} */
-  const byRank = new Map();
-  for (const node of groupNodes) {
-    const rank = ranks.get(node.id) || 0;
-    const bucket = byRank.get(rank) || [];
-    bucket.push(node);
-    byRank.set(rank, bucket);
-  }
-  return [...byRank.entries()].sort(([left], [right]) => left - right);
-}
-
-/**
- * Returns the size used for automatic layout.
- *
- * @param {GraphNode} node - Node to measure.
- * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
- * @returns {Size} Layout size in pixels.
- */
-function nodeLayoutSize(node, collapsedSubgraphs) {
-  return nodeSize(node, collapsedSubgraphs);
-}
-
-/**
- * Lays out one rank around a centered horizontal axis.
- *
- * @param {GraphNode[]} rankNodes - Nodes in the rank.
- * @param {number} y - Vertical position for the rank.
- * @param {number} nodeGap - Horizontal gap between nodes.
- * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
- * @returns {RankLayout} Node placements and rank height.
- */
-function layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs) {
-  const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
-  const sizes = orderedNodes.map((node) => nodeLayoutSize(node, collapsedSubgraphs));
-  const totalWidth = sizes.reduce((sum, size) => sum + size.width, 0) + Math.max(0, sizes.length - 1) * nodeGap;
-  let x = -totalWidth / 2;
-  let maxHeight = 0;
-  return {
-    placements: orderedNodes.map((node, index) => {
-      const size = sizes[index];
-      const position = { node, x, y };
-      x += size.width + nodeGap;
-      maxHeight = Math.max(maxHeight, size.height);
-      return position;
-    }),
-    height: maxHeight
-  };
-}
-
-/**
- * Lays out a root rank, placing subgraphs beside the main flow when needed.
- *
- * @param {GraphNode[]} rankNodes - Nodes in the root rank.
- * @param {number} y - Vertical position for the rank.
- * @param {number} nodeGap - Horizontal gap between nodes.
- * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
- * @param {SubgraphSequence} subgraphSequence - Mutable subgraph placement counter.
- * @returns {RankLayout} Node placements and rank height.
- */
-function layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSequence) {
-  const orderedNodes = [...rankNodes].sort((left, right) => left.id.localeCompare(right.id));
-  const mainNodes = orderedNodes.filter((node) => node.data?.kind !== 'subgraph');
-  const subgraphNodes = orderedNodes.filter((node) => node.data?.kind === 'subgraph');
-  const mainLayout = layoutRank(mainNodes, y, nodeGap, collapsedSubgraphs);
-  const placements = [...mainLayout.placements];
-  let maxHeight = mainLayout.height;
-  const mainBounds = placements.reduce((bounds, placement) => {
-    const size = nodeLayoutSize(placement.node, collapsedSubgraphs);
-    return {
-      minX: Math.min(bounds.minX, placement.x),
-      maxX: Math.max(bounds.maxX, placement.x + size.width)
-    };
-  }, { minX: 0, maxX: 0 });
-  let rightX = mainBounds.maxX + nodeGap;
-  let leftX = mainBounds.minX - nodeGap;
-
-  const placedIds = new Set(placements.map((placement) => placement.node.id));
-  for (const node of subgraphNodes) {
-    if (placedIds.has(node.id)) {
-      continue;
-    }
-    const size = nodeLayoutSize(node, collapsedSubgraphs);
-    const placeRight = subgraphSequence.count % 2 === 0;
-    placements.push({
-      node,
-      x: placeRight ? rightX : leftX - size.width,
-      y
+function createDagreGraph(groupKey, nodeGap) {
+  const marginX = groupKey === ROOT_PARENT ? nodeGap : SUBGRAPH_PADDING_X;
+  const marginY = groupKey === ROOT_PARENT ? nodeGap : SUBGRAPH_PADDING_TOP;
+  return new dagre.graphlib.Graph()
+    .setDefaultEdgeLabel(() => ({}))
+    .setGraph({
+      rankdir: 'TB',
+      align: 'UL',
+      nodesep: nodeGap,
+      ranksep: nodeGap + DAGRE_RANK_GAP_OFFSET,
+      marginx: marginX,
+      marginy: marginY
     });
-    if (placeRight) {
-      rightX += size.width + nodeGap;
-    }
-    else {
-      leftX -= size.width + nodeGap;
-    }
-    subgraphSequence.count += 1;
-    maxHeight = Math.max(maxHeight, size.height);
-  }
-
-  return { placements, height: maxHeight };
 }
 
 /**
- * Calculates bounds around positioned nodes.
+ * Returns a copied node with mutable data for layout annotations.
  *
- * @param {GraphNode[]} nodes - Positioned nodes.
- * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
- * @returns {Bounds} Bounds around all nodes.
+ * @param {GraphNode} node - Node to copy.
+ * @returns {GraphNode} Copied node.
  */
-function boundsOf(nodes, collapsedSubgraphs) {
-  return nodes.reduce((bounds, node) => {
-    const size = nodeLayoutSize(node, collapsedSubgraphs);
-    return {
-      minX: Math.min(bounds.minX, node.position.x),
-      minY: Math.min(bounds.minY, node.position.y),
-      maxX: Math.max(bounds.maxX, node.position.x + size.width),
-      maxY: Math.max(bounds.maxY, node.position.y + size.height)
-    };
-  }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+function copyLayoutNode(node) {
+  return {
+    ...node,
+    data: { ...(node.data || {}) }
+  };
 }
 
 /**
- * Calculates default node positions recursively for root and subgraph groups.
+ * Adds same-parent edges to a Dagre graph.
+ *
+ * @param {dagre.graphlib.Graph} dagreGraph - Dagre graph to populate.
+ * @param {Set<string>} groupNodeIds - Node ids that belong to the current group.
+ * @param {GraphEdge[]} layoutEdges - Edges used by Dagre.
+ * @returns {void}
+ */
+function addDagreEdges(dagreGraph, groupNodeIds, layoutEdges) {
+  for (const edge of layoutEdges) {
+    if (groupNodeIds.has(edge.source) && groupNodeIds.has(edge.target)) {
+      dagreGraph.setEdge(edge.source, edge.target);
+    }
+  }
+}
+
+/**
+ * Applies Dagre-calculated positions to the group nodes.
+ *
+ * @param {dagre.graphlib.Graph} dagreGraph - Dagre graph after layout.
+ * @param {GraphNode[]} groupNodes - Nodes in the current group.
+ * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {GraphNode[]} Positioned nodes.
+ */
+function positionDagreNodes(dagreGraph, groupNodes, savedPositions, collapsedSubgraphs) {
+  return groupNodes.map((node) => {
+    const size = nodeSize(node, collapsedSubgraphs);
+    const dagreNode = dagreGraph.node(node.id);
+    const position = savedPositions.get(node.id) || {
+      x: dagreNode.x - size.width / 2,
+      y: dagreNode.y - size.height / 2
+    };
+    return {
+      ...node,
+      position
+    };
+  });
+}
+
+/**
+ * Calculates default node positions recursively for root and subgraph groups with Dagre.
  *
  * @param {GraphNode[]} nodes - Visible nodes to place.
- * @param {GraphEdge[]} layoutEdges - Edges used to infer ranks.
+ * @param {GraphEdge[]} layoutEdges - Edges used by Dagre.
  * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
  * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
  * @param {number} nodeGap - Gap between nodes in pixels.
@@ -580,14 +403,19 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
    * Lays out a group and returns the size required by its parent subgraph.
    *
    * @param {string} groupKey - Group id to layout.
-   * @returns {Size | null} Required subgraph size, or null for the root group.
+   * @returns {Size | null} Required subgraph size, or null for an empty group.
    */
   const layoutGroup = (groupKey) => {
     if (visitedGroups.has(groupKey)) {
       return null;
     }
     visitedGroups.add(groupKey);
-    const groupNodes = (groups.get(groupKey) || []).map((node) => ({ ...node, data: { ...(node.data || {}) } }));
+
+    const groupNodes = (groups.get(groupKey) || []).map(copyLayoutNode);
+    if (groupNodes.length === 0) {
+      return null;
+    }
+
     for (const node of groupNodes) {
       if (node.data?.kind === 'subgraph' && !collapsedSubgraphs.has(node.id)) {
         const layoutSize = layoutGroup(node.id);
@@ -597,70 +425,27 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
       }
     }
 
-    let y = groupKey === ROOT_PARENT ? ROOT_PADDING_TOP : SUBGRAPH_PADDING_TOP;
-    /** @type {SubgraphSequence} */
-    const subgraphSequence = { count: 0 };
-    for (const [, rankNodes] of rankBuckets(groupNodes, layoutEdges, groupKey)) {
-      const rankLayout = groupKey === ROOT_PARENT
-        ? layoutRootRank(rankNodes, y, nodeGap, collapsedSubgraphs, subgraphSequence)
-        : layoutRank(rankNodes, y, nodeGap, collapsedSubgraphs);
-
-      rankLayout.placements.forEach(({ node, x }) => {
-        const savedPosition = savedPositions.get(node.id);
-        nextNodes.push({
-          ...node,
-          position: savedPosition || {
-            x: groupKey === ROOT_PARENT ? x : SUBGRAPH_PADDING_X + x,
-            y
-          }
-        });
-      });
-      y += rankLayout.height + nodeGap;
+    const dagreGraph = createDagreGraph(groupKey, nodeGap);
+    const groupNodeIds = new Set(groupNodes.map((node) => node.id));
+    for (const node of groupNodes) {
+      dagreGraph.setNode(node.id, nodeSize(node, collapsedSubgraphs));
     }
+    addDagreEdges(dagreGraph, groupNodeIds, layoutEdges);
+    dagre.layout(dagreGraph);
 
-    const groupLayoutNodes = nextNodes.filter((node) => parentKey(node) === groupKey);
-    if (groupLayoutNodes.length === 0) {
-      return null;
-    }
+    const positionedNodes = positionDagreNodes(dagreGraph, groupNodes, savedPositions, collapsedSubgraphs);
+    nextNodes.push(...positionedNodes);
 
-    const groupBounds = boundsOf(groupLayoutNodes, collapsedSubgraphs);
-    if (groupKey !== ROOT_PARENT) {
-      const shiftX = SUBGRAPH_PADDING_X - groupBounds.minX;
-      if (shiftX !== 0) {
-        for (const node of groupLayoutNodes) {
-          if (!savedPositions.has(node.id)) {
-            node.position = {
-              x: node.position.x + shiftX,
-              y: node.position.y
-            };
-          }
-        }
-      }
-      const shiftedBounds = boundsOf(groupLayoutNodes, collapsedSubgraphs);
-      return {
-        width: Math.max(320, shiftedBounds.maxX + SUBGRAPH_PADDING_X),
-        height: Math.max(180, shiftedBounds.maxY + SUBGRAPH_PADDING_BOTTOM)
-      };
-    }
-
-    return null;
+    const graphSize = dagreGraph.graph();
+    return {
+      width: Math.max(320, graphSize.width + (groupKey === ROOT_PARENT ? 0 : SUBGRAPH_PADDING_X)),
+      height: Math.max(180, graphSize.height + (groupKey === ROOT_PARENT ? 0 : SUBGRAPH_PADDING_BOTTOM))
+    };
   };
 
   layoutGroup(ROOT_PARENT);
   for (const groupKey of groups.keys()) {
     layoutGroup(groupKey);
-  }
-
-  const rootNodes = nextNodes.filter((node) => !node.parentId && !savedPositions.has(node.id));
-  if (rootNodes.length > 0) {
-    const bounds = boundsOf(rootNodes, collapsedSubgraphs);
-    const shiftX = ROOT_PADDING_X - bounds.minX;
-    for (const node of rootNodes) {
-      node.position = {
-        x: node.position.x + shiftX,
-        y: node.position.y
-      };
-    }
   }
 
   /** @type {(node: GraphNode) => number} */
@@ -726,9 +511,10 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   const applyDsl = useCallback((nextDsl, nextCollapsedSubgraphs) => {
     const parentIndex = buildParentIndex(nextDsl.nodes);
     const graphEdges = rewriteSubgraphBoundaryEdges(nextDsl);
+    const layoutEdges = visibleEdges(nextDsl.edges, parentIndex, nextCollapsedSubgraphs);
     const visibleNodes = nextDsl.nodes
       .filter((node) => !isHiddenByCollapsedParent(node, parentIndex, nextCollapsedSubgraphs));
-    const layoutNodes = autoLayoutNodes(visibleNodes, nextDsl.edges, savedPositionsRef.current, nextCollapsedSubgraphs, nodeGap);
+    const layoutNodes = autoLayoutNodes(visibleNodes, layoutEdges, savedPositionsRef.current, nextCollapsedSubgraphs, nodeGap);
     setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current, activeNodeId)));
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
   }, [activeNodeId, nodeGap, setEdges, setNodes, toggleSubgraph]);
