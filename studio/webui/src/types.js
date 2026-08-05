@@ -122,3 +122,12 @@
  * @property {GraphEdge[]} edges
  * @property {Array<{ id: string }>} [subgraphs]
  */
+
+/**
+ * Persisted graph layout stored for the current browser session.
+ *
+ * @typedef {Object} StoredGraphLayout
+ * @property {Record<string, Point>} positions - Node positions keyed by node id.
+ * @property {Record<string, Size>} sizes - Resized subgraph dimensions keyed by node id.
+ * @property {string[]} collapsedSubgraphs - Collapsed subgraph ids.
+ */

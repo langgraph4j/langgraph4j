@@ -7,6 +7,7 @@ import * as reactFlowStyles from "bundle-text:@xyflow/react/dist/style.css";
 import {
   ReactFlowProvider,
   Background,
+  ControlButton,
   Controls,
   // @ts-ignore React Flow exposes Handle at runtime, but its package types flag it in checked JS.
   Handle,
@@ -30,6 +31,7 @@ import {
  * @typedef {import('./types.js').NextNodeData} NextNodeData
  * @typedef {import('./types.js').Point} Point
  * @typedef {import('./types.js').Size} Size
+ * @typedef {import('./types.js').StoredGraphLayout} StoredGraphLayout
  */
 
 const h = React.createElement;
@@ -39,6 +41,175 @@ const DAGRE_RANK_GAP_OFFSET = 32;
 const SUBGRAPH_PADDING_X = 40;
 const SUBGRAPH_PADDING_TOP = 64;
 const SUBGRAPH_PADDING_BOTTOM = 40;
+const LAYOUT_STORAGE_PREFIX = 'lg4j-studio.graph-layout.';
+
+/**
+ * Builds a stable session storage key for a serialized graph document.
+ *
+ * @param {string} source - Serialized DSL document.
+ * @returns {string} Session storage key scoped to the graph content.
+ */
+function graphLayoutStorageKey(source) {
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = ((hash << 5) - hash + source.charCodeAt(index)) | 0;
+  }
+  return `${LAYOUT_STORAGE_PREFIX}${Math.abs(hash).toString(36)}`;
+}
+
+/**
+ * Checks whether a value is a finite two-dimensional point.
+ *
+ * @param {unknown} value - Candidate point.
+ * @returns {value is Point} True when the value can be used as a node position.
+ */
+function isPoint(value) {
+  return Boolean(value) &&
+    typeof value === 'object' &&
+    Number.isFinite(/** @type {{ x?: unknown }} */ (value).x) &&
+    Number.isFinite(/** @type {{ y?: unknown }} */ (value).y);
+}
+
+/**
+ * Checks whether a value is a finite positive size.
+ *
+ * @param {unknown} value - Candidate size.
+ * @returns {value is Size} True when the value can be used as a node size.
+ */
+function isSize(value) {
+  return Boolean(value) &&
+    typeof value === 'object' &&
+    Number.isFinite(/** @type {{ width?: unknown }} */ (value).width) &&
+    Number.isFinite(/** @type {{ height?: unknown }} */ (value).height) &&
+    /** @type {{ width: number, height: number }} */ (value).width > 0 &&
+    /** @type {{ width: number, height: number }} */ (value).height > 0;
+}
+
+/**
+ * Reads a stored graph layout from session storage.
+ *
+ * @param {string} storageKey - Session storage key.
+ * @returns {StoredGraphLayout | null} Parsed layout, or null when missing or invalid.
+ */
+function readStoredGraphLayout(storageKey) {
+  try {
+    const rawLayout = window.sessionStorage.getItem(storageKey);
+    if (!rawLayout) {
+      return null;
+    }
+
+    const parsed = /** @type {unknown} */ (JSON.parse(rawLayout));
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const layout = /** @type {{ positions?: unknown, sizes?: unknown, collapsedSubgraphs?: unknown }} */ (parsed);
+    if (!layout.positions || typeof layout.positions !== 'object' || !layout.sizes || typeof layout.sizes !== 'object') {
+      return null;
+    }
+
+    /** @type {Record<string, Point>} */
+    const positions = {};
+    for (const [id, position] of Object.entries(layout.positions)) {
+      if (isPoint(position)) {
+        positions[id] = { x: position.x, y: position.y };
+      }
+    }
+
+    /** @type {Record<string, Size>} */
+    const sizes = {};
+    for (const [id, size] of Object.entries(layout.sizes)) {
+      if (isSize(size)) {
+        sizes[id] = { width: size.width, height: size.height };
+      }
+    }
+
+    const collapsedSubgraphs = Array.isArray(layout.collapsedSubgraphs)
+      ? layout.collapsedSubgraphs.filter((id) => typeof id === 'string')
+      : [];
+
+    return { positions, sizes, collapsedSubgraphs };
+  }
+  catch (caught) {
+    console.warn('Unable to read saved graph layout from sessionStorage.', caught);
+    return null;
+  }
+}
+
+/**
+ * Converts a record of points to a map.
+ *
+ * @param {Record<string, Point>} positions - Positions keyed by node id.
+ * @returns {Map<string, Point>} Position map.
+ */
+function positionsToMap(positions) {
+  return new Map(Object.entries(positions));
+}
+
+/**
+ * Converts a record of sizes to a map.
+ *
+ * @param {Record<string, Size>} sizes - Sizes keyed by node id.
+ * @returns {Map<string, Size>} Size map.
+ */
+function sizesToMap(sizes) {
+  return new Map(Object.entries(sizes));
+}
+
+/**
+ * Persists the current graph layout in session storage.
+ *
+ * @param {string} storageKey - Session storage key.
+ * @param {GraphNode[]} nodes - Current React Flow nodes.
+ * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
+ * @param {Map<string, Size>} savedSizes - User-adjusted subgraph sizes.
+ * @param {Set<string>} collapsedSubgraphs - Collapsed subgraph ids.
+ * @returns {void}
+ */
+function saveGraphLayout(storageKey, nodes, savedPositions, savedSizes, collapsedSubgraphs) {
+  /** @type {Record<string, Point>} */
+  const positions = {};
+  for (const node of nodes) {
+    const position = savedPositions.get(node.id) || node.position;
+    if (isPoint(position)) {
+      positions[node.id] = { x: position.x, y: position.y };
+    }
+  }
+
+  /** @type {Record<string, Size>} */
+  const sizes = {};
+  for (const [id, size] of savedSizes.entries()) {
+    if (isSize(size)) {
+      sizes[id] = { width: size.width, height: size.height };
+    }
+  }
+
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify({
+      positions,
+      sizes,
+      collapsedSubgraphs: [...collapsedSubgraphs]
+    }));
+  }
+  catch (caught) {
+    console.warn('Unable to save graph layout to sessionStorage.', caught);
+  }
+}
+
+/**
+ * Removes a saved graph layout from session storage.
+ *
+ * @param {string} storageKey - Session storage key.
+ * @returns {void}
+ */
+function removeGraphLayout(storageKey) {
+  try {
+    window.sessionStorage.removeItem(storageKey);
+  }
+  catch (caught) {
+    console.warn('Unable to remove saved graph layout from sessionStorage.', caught);
+  }
+}
 
 /**
  * Parses the node-gap attribute value, falling back to the default gap.
@@ -102,6 +273,38 @@ const nodeTypes = {
 };
 
 /**
+ * Control button that toggles session persistence for the current graph layout.
+ *
+ * @param {{ enabled: boolean, disabled: boolean, onToggle: () => void }} props - Button properties.
+ * @returns {ReactElement} React Flow control button.
+ */
+function LayoutToggleButton({ enabled, disabled, onToggle }) {
+  const title = enabled ? 'Remove saved layout' : 'Save layout';
+  return h(ControlButton, {
+    className: enabled ? 'layout-toggle-button saved' : 'layout-toggle-button',
+    disabled,
+    title,
+    'aria-label': title,
+    onClick: onToggle
+  },
+  h('svg', {
+    className: 'layout-toggle-icon',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true
+  },
+  h('path', { d: 'M5 4h11l3 3v13H5z' }),
+  h('path', { d: 'M8 4v6h8V4' }),
+  h('path', { d: 'M8 20v-7h8v7' }),
+  enabled ? h('path', { d: 'M7 12l3 3 7-7' }) : null
+  ));
+}
+
+/**
  * Returns the display size used by React Flow and the layout engine.
  *
  * @param {GraphNode} node - Graph node to measure.
@@ -127,9 +330,10 @@ function nodeSize(node, collapsedSubgraphs) {
  * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
  * @param {Map<string, Size>} savedSizes - User-adjusted subgraph sizes.
  * @param {string | undefined} activeNodeId - Currently active node id.
+ * @param {() => void} onLayoutChanged - Callback invoked after mutable layout data changes.
  * @returns {GraphNode} Normalized React Flow node.
  */
-function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId) {
+function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId, onLayoutChanged) {
   const size = nodeSize(node, collapsedSubgraphs);
   const savedSize = savedSizes.get(node.id);
   const renderedSize = node.data?.kind === 'subgraph' && savedSize && !collapsedSubgraphs.has(node.id)
@@ -162,6 +366,7 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
           width: params.width,
           height: params.height
         });
+        onLayoutChanged();
       } : undefined
     },
     zIndex: node.data?.kind === 'subgraph' ? -1 : undefined
@@ -475,11 +680,52 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(/** @type {GraphNode[]} */ ([]));
   const [edges, setEdges, onEdgesChange] = useEdgesState(/** @type {GraphEdge[]} */ ([]));
   const [interactive, setInteractive] = useState(true);
+  const [layoutSaved, setLayoutSaved] = useState(false);
+  const [layoutStorageKey, setLayoutStorageKey] = useState(/** @type {string | null} */ (null));
   const flowWrapperRef = React.useRef(/** @type {HTMLDivElement | null} */ (null));
   const savedPositionsRef = React.useRef(/** @type {Map<string, Point>} */ (new Map()));
   const savedSizesRef = React.useRef(/** @type {Map<string, Size>} */ (new Map()));
+  const nodesRef = React.useRef(/** @type {GraphNode[]} */ ([]));
+  const collapsedSubgraphsRef = React.useRef(/** @type {Set<string>} */ (new Set()));
+  const layoutSavedRef = React.useRef(false);
+  const layoutStorageKeyRef = React.useRef(/** @type {string | null} */ (null));
 
   const { fitView } = useReactFlow();
+
+  React.useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  React.useEffect(() => {
+    collapsedSubgraphsRef.current = collapsedSubgraphs;
+  }, [collapsedSubgraphs]);
+
+  React.useEffect(() => {
+    layoutSavedRef.current = layoutSaved;
+  }, [layoutSaved]);
+
+  React.useEffect(() => {
+    layoutStorageKeyRef.current = layoutStorageKey;
+  }, [layoutStorageKey]);
+
+  /**
+   * Persists the latest layout when layout persistence is enabled.
+   *
+   * @returns {void}
+   */
+  const persistSavedLayout = useCallback(() => {
+    const storageKey = layoutStorageKeyRef.current;
+    if (!layoutSavedRef.current || !storageKey || nodesRef.current.length === 0) {
+      return;
+    }
+    saveGraphLayout(
+      storageKey,
+      nodesRef.current,
+      savedPositionsRef.current,
+      savedSizesRef.current,
+      collapsedSubgraphsRef.current
+    );
+  }, []);
       
   /**
    * Toggles a subgraph collapsed state.
@@ -497,9 +743,11 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       else {
         next.add(id);
       }
+      collapsedSubgraphsRef.current = next;
       return next;
     });
-  }, []);
+    requestAnimationFrame(persistSavedLayout);
+  }, [persistSavedLayout]);
 
   /**
    * Applies a parsed DSL document to React Flow state.
@@ -516,9 +764,19 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     const visibleNodes = nextDsl.nodes
       .filter((node) => !isHiddenByCollapsedParent(node, parentIndex, nextCollapsedSubgraphs));
     const layoutNodes = autoLayoutNodes(visibleNodes, layoutEdges, savedPositionsRef.current, nextCollapsedSubgraphs, nodeGap);
-    setNodes(layoutNodes.map((node) => normalizeNode(node, nextCollapsedSubgraphs, toggleSubgraph, savedPositionsRef.current, savedSizesRef.current, activeNodeId)));
+    const normalizedNodes = layoutNodes.map((node) => normalizeNode(
+      node,
+      nextCollapsedSubgraphs,
+      toggleSubgraph,
+      savedPositionsRef.current,
+      savedSizesRef.current,
+      activeNodeId,
+      persistSavedLayout
+    ));
+    nodesRef.current = normalizedNodes;
+    setNodes(normalizedNodes);
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
-  }, [activeNodeId, nodeGap, setEdges, setNodes, toggleSubgraph]);
+  }, [activeNodeId, nodeGap, persistSavedLayout, setEdges, setNodes, toggleSubgraph]);
 
   /**
    * Tracks user-positioned nodes before delegating to React Flow.
@@ -537,7 +795,8 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       }
     }
     onNodesChange(changes);
-  }, [onNodesChange, interactive]);
+    requestAnimationFrame(persistSavedLayout);
+  }, [onNodesChange, interactive, persistSavedLayout]);
 
   /**
    * Parses and renders a LangGraph4j DSL JSON string.
@@ -552,10 +811,20 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       throw new Error('JSON is not a Langgraph4j DSL document.');
     }
     console.log( 'Parsed DSL:', JSON.stringify(nextDsl, null, 2) );
+
+    const nextLayoutStorageKey = graphLayoutStorageKey(value);
+    const storedLayout = readStoredGraphLayout(nextLayoutStorageKey);
+    savedPositionsRef.current = storedLayout ? positionsToMap(storedLayout.positions) : new Map();
+    savedSizesRef.current = storedLayout ? sizesToMap(storedLayout.sizes) : new Map();
     
-    const nextCollapsedSubgraphs = new Set();
+    const nextCollapsedSubgraphs = new Set(storedLayout?.collapsedSubgraphs || []);
+    collapsedSubgraphsRef.current = nextCollapsedSubgraphs;
+    layoutStorageKeyRef.current = nextLayoutStorageKey;
+    layoutSavedRef.current = Boolean(storedLayout);
     setDsl(nextDsl);
     setCollapsedSubgraphs(nextCollapsedSubgraphs);
+    setLayoutStorageKey(nextLayoutStorageKey);
+    setLayoutSaved(Boolean(storedLayout));
     applyDsl(nextDsl, nextCollapsedSubgraphs);
   }, [applyDsl]);
 
@@ -585,6 +854,10 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
   }, [fitView, nodes.length]);
 
   React.useEffect(() => {
+    requestAnimationFrame(persistSavedLayout);
+  }, [collapsedSubgraphs, nodes, persistSavedLayout]);
+
+  React.useEffect(() => {
     if (!flowWrapperRef.current) {
       return undefined;
     }
@@ -600,6 +873,29 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     resizeObserver.observe(flowWrapperRef.current);
     return () => resizeObserver.disconnect();
   }, [fitView, nodes.length]);
+
+  /**
+   * Toggles the persisted layout for the currently rendered graph.
+   *
+   * @returns {void}
+   */
+  const handleLayoutToggle = useCallback(() => {
+    const storageKey = layoutStorageKeyRef.current;
+    if (!storageKey) {
+      return;
+    }
+
+    if (layoutSavedRef.current) {
+      removeGraphLayout(storageKey);
+      layoutSavedRef.current = false;
+      setLayoutSaved(false);
+      return;
+    }
+
+    saveGraphLayout(storageKey, nodesRef.current, savedPositionsRef.current, savedSizesRef.current, collapsedSubgraphsRef.current);
+    layoutSavedRef.current = true;
+    setLayoutSaved(true);
+  }, []);
 
   const flow = useMemo(() => h('div', { className: 'flow-wrapper', ref: flowWrapperRef },
     h(ReactFlow, {
@@ -627,9 +923,14 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
         console.log('Interactive status changed:', prev);
         setInteractive(!interactive);
       }
-    }),
+    },
+    h(LayoutToggleButton, {
+      enabled: layoutSaved,
+      disabled: !layoutStorageKey || nodes.length === 0,
+      onToggle: handleLayoutToggle
+    })),
     h(Background, { gap: 18, size: 1 })
-  )), [edges, handleNodesChange, nodes, onEdgesChange]);
+  )), [edges, handleLayoutToggle, handleNodesChange, interactive, layoutSaved, layoutStorageKey, nodes, onEdgesChange]);
 
   return flow;
 }
@@ -664,6 +965,26 @@ function componentStyles() {
       height: 100%;
       min-width: 0;
       min-height: 0;
+    }
+
+    .layout-toggle-button {
+      color: #4b5563;
+    }
+
+    .layout-toggle-button.saved {
+      color: #047857;
+      background: #ecfdf5;
+    }
+
+    .layout-toggle-button:disabled {
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .layout-toggle-icon {
+      width: 16px;
+      height: 16px;
+      display: block;
     }
 
     .app {
