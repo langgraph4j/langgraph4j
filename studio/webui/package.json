@@ -15,12 +15,13 @@
     "mermaid": "10.9.3"
   },
   "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "@dagrejs/dagre": "^3.1.0",
     "@lit/task": "^1.0.1",
     "@microlink/react-json-view": "^1.27.0",
     "@xyflow/react": "12.8.5",
-    "lit": "^3.2.1"
+    "lit": "^3.2.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependenciesDeprecated": {
     "@types/d3": "^7.4.3",
