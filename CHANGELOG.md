@@ -16,9 +16,206 @@
 
 
 
-<!-- "name: 1.9.0-beta1" is a release tag -->
+<!-- "name: v1.9.0-beta2" is a release tag -->
 
-## [1.9.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/1.9.0-beta1) (2026-07-17)
+## [v1.9.0-beta2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta2) (2026-08-06)
+
+### Features
+
+ *  **studio**  add async dispatch utility method to LG4JEmbedViewerService ([42bf46e09697b44](https://github.com/bsorrentino/langgraph4j/commit/42bf46e09697b44240ae5a18017924a82ecb5fe9))
+   
+ *  **how-tos**  add basic reflection use case ([317e927166a5779](https://github.com/bsorrentino/langgraph4j/commit/317e927166a5779e60435e0ab6af1f1a0db91475))
+   
+ *  **how-tos**  add plan and execute use case ([ae3a82d617ac120](https://github.com/bsorrentino/langgraph4j/commit/ae3a82d617ac12036d2d9d217c2ab2c51b839178))
+   
+ *  **studio/webui**  update icon of "graph layout saving" button ([a4c2c00e505ed53](https://github.com/bsorrentino/langgraph4j/commit/a4c2c00e505ed53b00c57d1a08547e2298686146))
+   
+ *  **studio/webui**  implement session storage for graph layout persistence ([6a1f5d93d23ff20](https://github.com/bsorrentino/langgraph4j/commit/6a1f5d93d23ff20f4068dfaabe2fbea80b2882a2))
+   
+ *  **studio/webui**  add interactive state management ([89b6aaf1734b9d0](https://github.com/bsorrentino/langgraph4j/commit/89b6aaf1734b9d0ee30b5a0ee376d30b4a72f77b))
+   
+ *  **studio/webui**  integrate Dagre for graph layout management ([7a46bb2c5b97ac6](https://github.com/bsorrentino/langgraph4j/commit/7a46bb2c5b97ac6116c51905cf6b12c3ce0dfb6e))
+   
+ *  **studio/webui**  add detailed JSDoc comments and type annotations ([089afea59fd6c1a](https://github.com/bsorrentino/langgraph4j/commit/089afea59fd6c1ae00c57b34d22367299d45869b))
+   
+ *  **sqllite-saver**  add langgraph4j-sqlite-saver module to project ([f68fa5ae83d082b](https://github.com/bsorrentino/langgraph4j/commit/f68fa5ae83d082b20fb3fa91b78406ebca29d7be))
+   
+ *  **studio**  add configurable async context timeout to LG4JViewerServlet ([6d8592951ca62f7](https://github.com/bsorrentino/langgraph4j/commit/6d8592951ca62f7b78118a91e7add8084b6e3546))
+   
+ *  **studio/spring**  set async context timeout to 300000 ms ([e53ab72d8756072](https://github.com/bsorrentino/langgraph4j/commit/e53ab72d875607249aacb0cae8dfe49f785aa577))
+   
+ *  **studio**  add async context timeout configuration for improved request handling ([7dbaf40de4de6cb](https://github.com/bsorrentino/langgraph4j/commit/7dbaf40de4de6cb38832e210b5634a720d7ca285))
+   
+ *  **studio/webui**  reduce default node gap from 100 to 50 ([bdf9593d65bb2d6](https://github.com/bsorrentino/langgraph4j/commit/bdf9593d65bb2d6d3c18f180e677c5f0403bbf2f))
+   
+ *  **studio/webui**  introduce LG4JFetchError class for improved error handling ([0f48e3c72a0c285](https://github.com/bsorrentino/langgraph4j/commit/0f48e3c72a0c2850f3393ffb87e7c497511f565b))
+   
+ *  **studio/webui**  update styles to hide container element by default ([6e8960d5bb1832a](https://github.com/bsorrentino/langgraph4j/commit/6e8960d5bb1832a6a544ae7e6e983b4e6ccb8d3b))
+   
+ *  **studio/webui**  hide LG4JViewerExecutorElement by default and set aria-hidden attribute ([bfd36e6a15151a1](https://github.com/bsorrentino/langgraph4j/commit/bfd36e6a15151a162aff1e568610d9831387a1ba))
+   
+ *  **studio/webui**  add styles to hide LG4JViewerExecutorElement by default ([616ef351774df2c](https://github.com/bsorrentino/langgraph4j/commit/616ef351774df2c1360daba938f7c2528557e899))
+   
+ *  **studio**  include thread ID as an attribute in serialized output ([cf53132590746c2](https://github.com/bsorrentino/langgraph4j/commit/cf53132590746c2d897d4e6bec2a50c3305f67a0))
+   
+ *  **studio**  enhance NodeOutputSerializer to include thread ID in serialization ([763e39379abb592](https://github.com/bsorrentino/langgraph4j/commit/763e39379abb59238208bc1a7aa0c5b30bf6239e))
+   
+ *  **studio**  implement LG4JEmbedViewerService for provide a real-time graph animated viewer ([57e4cfcd461b71e](https://github.com/bsorrentino/langgraph4j/commit/57e4cfcd461b71e0166777562803d6e02f87e3d5))
+   
+ *  **studio/webui**  add initial HTML structure for LangGraph4j viewer ([745dc3421704f46](https://github.com/bsorrentino/langgraph4j/commit/745dc3421704f4601d4fcbc91b58b3bdac2f10f9))
+   
+ *  **studio/webui**  add LG4JViewerExecutor for viewer functionality ([5757639d03660c6](https://github.com/bsorrentino/langgraph4j/commit/5757639d03660c66c8aba9129f28cf86467b2697))
+   
+ *  **studio/webui**  improve UI configurability by aligning font sizes across panels using CSS variables. ([fd61f6a62b33399](https://github.com/bsorrentino/langgraph4j/commit/fd61f6a62b3339949a34985d7ad458312c76b077))
+     > - Apply requirements F004_LG4J_STUDIO.md
+   
+ *  **studio/webui**  add toggle button for result panel visibility ([6d7a390b6352f08](https://github.com/bsorrentino/langgraph4j/commit/6d7a390b6352f082ee6ea2dbc704833fddd5dbde))
+   
+ *  **NodeOutputSerializer**  enhance subgraph node output serialization with legacy support toggle ([87970d5c81d5b4a](https://github.com/bsorrentino/langgraph4j/commit/87970d5c81d5b4a9a99f5cc7f16faf6f8cb8414c))
+   
+ *  **LangGraphStudioServer**  add legacy mermaid support toggle and enable Dsl support by default ([f75065052ec0bc4](https://github.com/bsorrentino/langgraph4j/commit/f75065052ec0bc43c32c29e30c0ee94a43684a74))
+   
+ *  **SubCompiledGraphNodeAction**  update generator to use streamSnapshots and pass RunnableConfig ([6edffb2e6595316](https://github.com/bsorrentino/langgraph4j/commit/6edffb2e65953160d5c28e719b0d000f5660cdeb))
+   
+ *  **SubGraphOutput**  update constructor to accept HasMetadata for enhanced metadata support ([6db08eeb5d00d7d](https://github.com/bsorrentino/langgraph4j/commit/6db08eeb5d00d7de67222adbc986ca45e03ca726))
+   
+ *  **SubGraphSnapshotOutput**  extend constructor to accept HasMetadata for improved metadata handling ([f85a0384bedfa25](https://github.com/bsorrentino/langgraph4j/commit/f85a0384bedfa254454fdde1c510a288e0af738b))
+   
+ *  **SubGraphOutputFactory**  enhance createFromNodeOutput to include RunnableConfig and metadata ([f1fe7a528756130](https://github.com/bsorrentino/langgraph4j/commit/f1fe7a5287561304c90ace14ffed9def17243855))
+   
+ *  **NodeOutput**  add nullable metadata support ([bc20fd2cca8238a](https://github.com/bsorrentino/langgraph4j/commit/bc20fd2cca8238ae5a147815ea1aa08fa55e0e9b))
+   
+ *  **metadata**  introduce MetadataBag class with builder for independent metadata handling ([35681f1d7cd7306](https://github.com/bsorrentino/langgraph4j/commit/35681f1d7cd7306f47f44a39ffbf761216b1698c))
+   
+ *  **JsonDslGenerator**  refactor graph node and edge handling with GraphPath ([6a51f4acd32b3b6](https://github.com/bsorrentino/langgraph4j/commit/6a51f4acd32b3b6455bfeb29af35e7a9095f8ad7))
+   
+ *  **hasMetadata**  add nullable metadata support in Builder constructor ([cf56c75326e8199](https://github.com/bsorrentino/langgraph4j/commit/cf56c75326e8199cabdfb6715df761b1ecdb826c))
+   
+ *  **studio/webui**  improve flow component responsiveness and layout ([e29cd8ef0316255](https://github.com/bsorrentino/langgraph4j/commit/e29cd8ef0316255cbbb7553ef77e8ba4ff56f6c1))
+     > - apply F002_LG4J_STUDIO.md
+   
+ *  **studio/webui**  enhance graph panel layout ([0cd5acf852669ca](https://github.com/bsorrentino/langgraph4j/commit/0cd5acf852669ca3ac9097f52fdbddf1088ade5e))
+     > - apply F002_LG4J_STUDIO.md
+   
+ *  **studio/core**  update graph compilation to use JsonDslGenerator ([adf78e0a59a958d](https://github.com/bsorrentino/langgraph4j/commit/adf78e0a59a958ded6823ca026b74aa092a20e3b))
+   
+ *  **studio/webui**  add react flow dep ([e13caece79c72b3](https://github.com/bsorrentino/langgraph4j/commit/e13caece79c72b3381bda5569a6d1d672be5199b))
+   
+ *  **studio/webui**  rename mermaid component ([4ba5b4ea727c04b](https://github.com/bsorrentino/langgraph4j/commit/4ba5b4ea727c04b2bd4d60cb80956d5ae3e327a6))
+   
+ *  **studio/webui**  add graph visualization based on react flow ([e4e69de8fda798a](https://github.com/bsorrentino/langgraph4j/commit/e4e69de8fda798afdcae008ea31810ed8f3055da))
+   
+ *  **dsl**  apply requirements F011_LG4J_DSL.md ([331b8e9f9daa99e](https://github.com/bsorrentino/langgraph4j/commit/331b8e9f9daa99e333c9282a876d4e7bbfd1fb29))
+   
+
+### Bug Fixes
+
+ -  **studio/webui**  remove empty URL attribute from lg4j-executor in index.html ([20ee246ef80b2bc](https://github.com/bsorrentino/langgraph4j/commit/20ee246ef80b2bc4bb7a93ddbbecbecc3ff5cf9c))
+
+ -  **studio/webui**  improve URL handling in lg4j-executor.js ([7b81df3b1c47f8f](https://github.com/bsorrentino/langgraph4j/commit/7b81df3b1c47f8fcac815a5a1ffee50efd32d5f3))
+
+ -  **studio/webui**  add index-viewer.html to distribution ([048b3d92366c519](https://github.com/bsorrentino/langgraph4j/commit/048b3d92366c5195886840885808c93a76e45593))
+
+ -  **studio/webui**  update lg4j-viewer-executor URL and add node-gap attribute ([5ae32c14c20f13e](https://github.com/bsorrentino/langgraph4j/commit/5ae32c14c20f13ed47c8f1e51902e43e67abef61))
+
+ -  **studio/webui**  update lg4j-executor URL to point to the correct port ([201fce3073ffeba](https://github.com/bsorrentino/langgraph4j/commit/201fce3073ffeba2c15ff65b69bb53b269b7631b))
+
+ -  **langchain4j**  ensure text is always written regardless of tool execution requests ([2284965e0b5af79](https://github.com/bsorrentino/langgraph4j/commit/2284965e0b5af79bf535ed3e73e265701d9f03e3))
+
+ -  **SQLiteSaver**  return an ampty tag when no active thread found in releaseCheckpoints ([86ead824c15895a](https://github.com/bsorrentino/langgraph4j/commit/86ead824c15895acf7b04c29803b7d199040df3f))
+
+
+### Refactor
+
+ -  **studio**  add exception handling to viewer service and servlet initialization ([fa16013fec09995](https://github.com/bsorrentino/langgraph4j/commit/fa16013fec09995981bac7e304a67693345a998b))
+   
+ -  **studio/webui**  update details elements to close by default ([3a7b8f67d664d30](https://github.com/bsorrentino/langgraph4j/commit/3a7b8f67d664d3040507f2674fcce81c671b6af0))
+   
+ -  **BaseCheckpointSaver**  make version and checkpoints nullable in Tag constructor ([a2f74b76a4b046c](https://github.com/bsorrentino/langgraph4j/commit/a2f74b76a4b046c09b4b3f9201f84d15f22ebc27))
+   
+ -  **studio/webui**  simplify active node ID assignment in onActive event handler ([305137a25740e70](https://github.com/bsorrentino/langgraph4j/commit/305137a25740e70db37fad524ccdc0b552095fc8))
+   
+
+### Test 
+
+ -  **studio**  simplify tests reusing the graphs definitions from base project ([2b66c2fc0b25f63](https://github.com/bsorrentino/langgraph4j/commit/2b66c2fc0b25f630f7753e218527b570268d73ae))
+   
+ -  **studio**  simplify tests reusing the graphs definitions from base project ([6d5fbb2646f242e](https://github.com/bsorrentino/langgraph4j/commit/6d5fbb2646f242e9f19c3d4393a90177a5e078e6))
+   
+ -  **studio**  simplify tests reusing the graphs definitions from base project ([6da4bea669c8bc2](https://github.com/bsorrentino/langgraph4j/commit/6da4bea669c8bc230de5e3e0b7ce806ca09ae8c9))
+   
+ -  **langchain4j**  ensure text is always written regardless of tool execution requests ([920ba2c769e663a](https://github.com/bsorrentino/langgraph4j/commit/920ba2c769e663ae18293ae17abeff4c12d942a1))
+   
+ -  **SQLiteSaverTest**  add interruption test ([1c2de8860e7d22d](https://github.com/bsorrentino/langgraph4j/commit/1c2de8860e7d22df369e3c1de6934c2dba96cf3d))
+   
+ -  fix test passing null state to graph output ([6aae9d71de420fc](https://github.com/bsorrentino/langgraph4j/commit/6aae9d71de420fcc95cd443c1ab1c578cee3f581))
+   
+ -  **dsl**  enhance webui ([6d49f13d1d37d71](https://github.com/bsorrentino/langgraph4j/commit/6d49f13d1d37d71b9e2db1d40f3429e89bea3a73))
+   
+ -  **LangGraphDslVisualizerApplication**  verify nestedSubgraphs visualization ([a471ae447bc73d4](https://github.com/bsorrentino/langgraph4j/commit/a471ae447bc73d4fcaf40c1725f8a3e68aac8a3a))
+   
+ -  **dsl/webui**  align implementation with the studio one ([70266914c265a06](https://github.com/bsorrentino/langgraph4j/commit/70266914c265a065b813ff0e3b169f00faefcbdd))
+   
+ -  **dsl**  update graph endpoint to return graph with subgraph ([de5bd19b2e89ec2](https://github.com/bsorrentino/langgraph4j/commit/de5bd19b2e89ec2c3c7c498f493eeaaa484f3417))
+   
+
+### Documentation
+
+ -  **ai**  instruction to implement session storage for graph layout persistence ([0d478053b9468ba](https://github.com/bsorrentino/langgraph4j/commit/0d478053b9468bafa82694a419fe1f8527fc18b7))
+
+ -  **ai**  instructions to add layout management using Dagre for React Flow ([4a4b19875e3a48a](https://github.com/bsorrentino/langgraph4j/commit/4a4b19875e3a48a76d2ad8f64bbd875b289cc93d))
+
+ -  **ai**  instructions to add JSDoc comments with type definitions for compatibility with TypeScript ([1112e04131f8a77](https://github.com/bsorrentino/langgraph4j/commit/1112e04131f8a77043f4ac4cbbb4403ecb99f1df))
+
+ -  update README to include langgraph4j-sqlite-saver module ([00fe0fb0912cd50](https://github.com/bsorrentino/langgraph4j/commit/00fe0fb0912cd50539c0241ff39486d4788b99c6))
+
+ -  **studio/webui**  requirements to improve UI configurability by aligning font sizes across panels using CSS variables ([b95405a5102e2f5](https://github.com/bsorrentino/langgraph4j/commit/b95405a5102e2f5067eb59c2090f454bafb0099f))
+
+ -  **studio/webui**  requirements to implement toggle functionality for result panel in graph visualization ([01440acdbab2ea6](https://github.com/bsorrentino/langgraph4j/commit/01440acdbab2ea650574a44dbdbb9203d8241f00))
+
+ -  **studio/webui**  fix graph component layout to utilize available space ([f17a8cc7903a370](https://github.com/bsorrentino/langgraph4j/commit/f17a8cc7903a3706030751f7edf7e194f900cd3a))
+
+ -  update changelog ([a681fba8c850785](https://github.com/bsorrentino/langgraph4j/commit/a681fba8c850785351587a2380c62ebbe392bc53))
+
+
+### ALM 
+
+ -  bump to next version 1.9.0-beta2 ([950490165eca926](https://github.com/bsorrentino/langgraph4j/commit/950490165eca926be642d38e50b92c2aada1bcfd))
+   
+ -  **studio**  update distribution ([33a0d94ca31eb91](https://github.com/bsorrentino/langgraph4j/commit/33a0d94ca31eb91956c076a78d4a3d2cac69c1b5))
+   
+ -  **studio**  update distribution ([9fab89feb425ae7](https://github.com/bsorrentino/langgraph4j/commit/9fab89feb425ae7d45a9b4b85df4d23c168c4ea2))
+   
+ -  **studio/webui**  update build script to include viewer ([6bba7ed6e35bebb](https://github.com/bsorrentino/langgraph4j/commit/6bba7ed6e35bebb5b60aea9c8b4592443fc54aca))
+   
+ -  **dynamodb-saver**  skip tests during build process ([229ee78bad9d5f0](https://github.com/bsorrentino/langgraph4j/commit/229ee78bad9d5f04b5156e9d32cc8183530d2cd0))
+   
+ -  **mkdocs**  update navigation to include plan-and-execute and basic reflection use cases ([c7402be8bf6dcff](https://github.com/bsorrentino/langgraph4j/commit/c7402be8bf6dcff2b59f4749c45207acf7aa7cd7))
+   
+ -  **studio/webui**  add dependencies @dagrejs/dagre ([a1069479b3d28dd](https://github.com/bsorrentino/langgraph4j/commit/a1069479b3d28dd59f0a79d95f1e503177db9c13))
+   
+ -  add langgraph4j-sqlite-saver module to the project ([6e16535fc7afcfd](https://github.com/bsorrentino/langgraph4j/commit/6e16535fc7afcfd99c65dd7ba55c69a571d8cc5b))
+   
+ -  **bom**  add langgraph4j-sqlite-saver dependency ([553b62b1a438431](https://github.com/bsorrentino/langgraph4j/commit/553b62b1a4384310282dbc17e796e371e402e8b1))
+   
+ -  update langchain4j version to 1.18.1 and beta version to 1.18.1-beta28 ([80a4963241983a6](https://github.com/bsorrentino/langgraph4j/commit/80a4963241983a6310d9e98eea6390a7d7dd547f))
+   
+ -  **studio/webui**  add development script for run viewer using Parcel ([777d28113779448](https://github.com/bsorrentino/langgraph4j/commit/777d2811377944847abf1e6988c2ad0e682c4525))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([4801f01b91256f6](https://github.com/bsorrentino/langgraph4j/commit/4801f01b91256f61e9c554aace540e37236ea3da))
+   
+ -  **studio/webui**  remove unused deps in package.json ([b6d9b300327e42d](https://github.com/bsorrentino/langgraph4j/commit/b6d9b300327e42dd6bc90281f86362edc929e54a))
+   
+ -  **studio/core**  add langgraph4j-dsl dependency ([1eeebdfcde6215b](https://github.com/bsorrentino/langgraph4j/commit/1eeebdfcde6215bf7b54037d1692b12eb59410c8))
+   
+
+
+
+
+
+<!-- "name: v1.9.0-beta1" is a release tag -->
+
+## [v1.9.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta1) (2026-07-17)
 
 ### Features
 
