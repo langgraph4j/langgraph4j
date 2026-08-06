@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Bean;
 
 public abstract class LG4JEmbedViewerConfig {
 
-    protected abstract  LG4JEmbedViewerService viewerService();
+    protected abstract  LG4JEmbedViewerService viewerService() throws Exception;
 
     @Bean
-    public ServletRegistrationBean<HttpServlet> initViewerServletBean() {
+    public ServletRegistrationBean<HttpServlet> initViewerServletBean() throws Exception {
 
         return viewerService().registerServlet( ( path, servlet ) ->{
             final var bean = new ServletRegistrationBean<>(servlet, path);
