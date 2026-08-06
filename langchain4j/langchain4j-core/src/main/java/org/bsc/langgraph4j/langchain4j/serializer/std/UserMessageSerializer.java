@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The UserMessageSerializer class implements the NullableObjectSerializer interface for the UserMessage type.
@@ -35,6 +36,7 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
             out.writeObject( object.contents() );
         }
         writeNullableUTF( object.name(), out);
+        out.writeObject( object.attributes() );
     }
 
     /**
@@ -48,9 +50,10 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
     @Override
     public UserMessage read(ObjectInput in) throws IOException, ClassNotFoundException {
 
+        UserMessage message;
         try {
             var text = Serializer.readUTF(in);
-            return readNullableUTF(in)
+            message = readNullableUTF(in)
                     .map(name -> UserMessage.from(name, text))
                     .orElseGet(() -> UserMessage.from(text));
         }
@@ -59,10 +62,13 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
 
             @SuppressWarnings("unchecked")
             var contents = (List<Content>)in.readObject();
-            return readNullableUTF(in)
+            message = readNullableUTF(in)
                     .map( name -> UserMessage.from(name, contents)
                     ).orElseGet(() -> UserMessage.from(contents));
         }
 
+        @SuppressWarnings("unchecked")
+        var attributes = (Map<String, Object>) in.readObject();
+        return message.toBuilder().attributes(attributes).build();
     }
 }

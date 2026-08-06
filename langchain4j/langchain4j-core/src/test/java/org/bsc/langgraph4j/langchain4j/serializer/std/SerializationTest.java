@@ -224,4 +224,65 @@ public class SerializationTest {
         };
 
     }
+
+    @Test
+    public void UserMessageAttributesSerializerTest() throws Exception {
+
+        var userMessage = UserMessage.builder()
+                .name("query")
+                .addContent(new TextContent("query text"))
+                .attributes(Map.of("documentIds", List.of("doc-1", "doc-2")))
+                .build();
+
+        var serializer = new LC4jStateSerializer<>(State::new);
+
+        var state = new State(Map.of(
+                "messages", List.of(userMessage))
+        );
+
+        try (var baos = new ByteArrayOutputStream(); var out = new ObjectOutputStream(baos)) {
+
+            serializer.write(state, out);
+
+            try (var in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+
+                var newState = serializer.read(in);
+
+                var newUserMessage = (UserMessage) newState.messages().get(0);
+
+                assertEquals(userMessage.attributes(), newUserMessage.attributes());
+            }
+        };
+    }
+
+    @Test
+    public void ToolExecutionResultMessageAttributesSerializerTest() throws Exception {
+
+        var toolResult = ToolExecutionResultMessage.builder()
+                .id("1")
+                .toolName("someTool")
+                .text("result")
+                .attributes(Map.of("someKey", "someValue"))
+                .build();
+
+        var serializer = new LC4jStateSerializer<>(State::new);
+
+        var state = new State(Map.of(
+                "messages", List.of(toolResult))
+        );
+
+        try (var baos = new ByteArrayOutputStream(); var out = new ObjectOutputStream(baos)) {
+
+            serializer.write(state, out);
+
+            try (var in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+
+                var newState = serializer.read(in);
+
+                var newToolResult = (ToolExecutionResultMessage) newState.messages().get(0);
+
+                assertEquals(toolResult.attributes(), newToolResult.attributes());
+            }
+        };
+    }
 }
