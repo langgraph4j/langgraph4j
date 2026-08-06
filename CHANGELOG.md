@@ -2,6 +2,83 @@
 
 
 
+<!-- "name: v1.8.23" is a release tag -->
+
+## [v1.8.23](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.23) (2026-08-06)
+
+### Features
+
+ *  **how-tos**  add optional LLM mode for Plan-and-Execute ([b5aa8f2b8294961](https://github.com/bsorrentino/langgraph4j/commit/b5aa8f2b8294961f74acbd7b8426aee1e077d1db))
+     > Extend the Plan-and-Execute how-to with LangChain4j AiServices
+     > planner/agent/replan nodes (OPENAI_API_KEY gated), matching ITest,
+     > and a notebook generator script. Stub mode remains the default
+     > offline/CI path.
+     > Co-authored-by: li xuanqun &lt;793005378@qq.com&gt;
+   
+
+### Bug Fixes
+
+ -  **AiMessageSerializer**  always write/read text alongside tool execution requests ([c2b3ea916c747f3](https://github.com/bsorrentino/langgraph4j/commit/c2b3ea916c747f3519a520a418501fcc47a59ede))
+     > AiMessageSerializer treated text and tool execution requests as mutually
+     > exclusive: when hasToolExecutionRequests() was true, text was never
+     > written, so it came back null after a checkpoint round-trip even if it
+     > was non-null going in. Several providers (e.g. Gemini) legitimately
+     > return a text part and a function-call part in the same turn — this
+     > silently dropped the model&#x27;s message on every persisted state that
+     > includes such a turn.
+     > Write text unconditionally (nullable), regardless of whether tool
+     > execution requests are also present; read it back the same way.
+     > BREAKING CHANGE: this changes the on-wire format for any AiMessage that
+     > has tool execution requests — the writer now appends a trailing nullable
+     > UTF field that older checkpoints don&#x27;t have. Reading a pre-fix checkpoint
+     > with this fixed reader will throw (EOFException or similar) instead of
+     > silently returning truncated data — by design, so callers can detect it
+     > and fall back to the previous serializer for that checkpoint rather than
+     > getting corrupted results. Applications persisting AgentExecutor state
+     > across this upgrade should keep a fallback path (old serializer) for
+     > checkpoints written before the upgrade, or expect to start fresh threads.
+     > Adds AiMessageTextAndToolExecutionRequestsSerializerTest and
+     > AiMessageOnlyToolExecutionRequestsSerializerTest to
+     > SerializationTest, covering the previously-untested AiMessage
+     > serialization path.
+
+
+### Refactor
+
+ -  **how-tos**  upgrade langchain4j versions ([44d9acc87250706](https://github.com/bsorrentino/langgraph4j/commit/44d9acc87250706b76d740f3c949ec5658f8aefa))
+   
+ -  **how-tos**  upgrade langchain4j version ([85f75855aeb6ded](https://github.com/bsorrentino/langgraph4j/commit/85f75855aeb6dedeba2fbd7d6669d44313bee006))
+   
+
+
+### Documentation
+
+ -  **how-tos**  add Basic Reflection notebook (related to #8) ([ab029f2c17f0655](https://github.com/bsorrentino/langgraph4j/commit/ab029f2c17f06557356870e2698ae408baef0b5d))
+     > Add generate/reflect loop how-to with stub and optional LangChain4j
+     > LLM modes, CI stub test, optional ITest, docs/nav updates, and
+     > notebook generator script.
+     > Co-authored-by: li xuanqun &lt;793005378@qq.com&gt;
+
+ -  **how-tos**  add Plan-and-Execute notebook skeleton ([a2978a1d0f7773e](https://github.com/bsorrentino/langgraph4j/commit/a2978a1d0f7773e8f36a9de4f1c9d0b31b2c5165))
+     > Add a stub Plan-and-Execute how-to (related to #8) with StateGraph
+     > wiring, PlantUML visualization, offline stub nodes, CI coverage via
+     > PlanAndExecuteStubTest, and docs/nav index updates.
+     > Co-authored-by: li xuanqun &lt;793005378@qq.com&gt;
+
+ -  update changelog ([eaf3040e1db49b0](https://github.com/bsorrentino/langgraph4j/commit/eaf3040e1db49b0fd0fb6da13ba878d54ee6447c))
+
+
+### ALM 
+
+ -  bump to next version 1.8.23 ([09c4f3b0dd0066d](https://github.com/bsorrentino/langgraph4j/commit/09c4f3b0dd0066dfddda60130acee64427ea4583))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([373ed6f99a0c101](https://github.com/bsorrentino/langgraph4j/commit/373ed6f99a0c101894edd50d73cdc6e8f5a6e110))
+   
+
+
+
+
+
 <!-- "name: v1.8.22" is a release tag -->
 
 ## [v1.8.22](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.22) (2026-08-03)
