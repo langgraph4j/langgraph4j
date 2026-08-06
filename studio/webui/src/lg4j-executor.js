@@ -302,7 +302,7 @@ export class LG4JExecutorElement extends LitElement {
    */
   get _contextPath() {
     // vadidate url
-    const url = new URL(this.url || window.location.href);
+    const url = new URL(this.url || `${window.location.protocol}//${window.location.host}`);
 
     const pathName =  (( this.url ) ? 
       url.toString() : // if url is set, use it as is
@@ -718,6 +718,7 @@ class LG4JViewerExecutorElement extends LG4JExecutorElement {
   }
 
   get _contextPath() {
+    
     return super._contextPath.concat('/viewer')
   }
 
