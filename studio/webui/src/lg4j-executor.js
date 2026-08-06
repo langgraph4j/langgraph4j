@@ -97,7 +97,7 @@ export class LG4JExecutorElement extends LitElement {
     .container {
       display: flex;
       flex-direction: column;
-      row-gap: 10px;
+      row-gap: 5px;
     }
 
     .commands {
@@ -118,7 +118,7 @@ export class LG4JExecutorElement extends LitElement {
     }
 
     textarea {
-      min-height: 6rem;
+      min-height: 3rem;
       width: 100%;
       box-sizing: border-box;
       padding: 0.75rem 1rem;
@@ -142,8 +142,9 @@ export class LG4JExecutorElement extends LitElement {
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      min-height: 2.75rem;
+      min-height: 0.75rem;
       padding: 0.65rem 1rem;
+      margin-top: 0.25rem;
       border: 1px solid transparent;
       border-radius: 0.5rem;
       color: #ffffff;
@@ -183,8 +184,8 @@ export class LG4JExecutorElement extends LitElement {
     }
 
     .icon {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 0.75rem;
+      height: 0.75rem;
       flex-shrink: 0;
       stroke: currentColor;
     }
