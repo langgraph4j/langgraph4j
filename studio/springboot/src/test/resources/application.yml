@@ -3,3 +3,7 @@ spring:
     name: langgraph4j::studio::springboot
 cors:
   allowed-origins: "http://localhost:1234"
+server:
+  port : 8081
+  compression:
+    enabled: false
