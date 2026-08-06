@@ -1,5 +1,0 @@
-spring:
-  application:
-    name: langgraph4j::dsl::application
-cors:
-  allowed-origins: "http://localhost:1234"
