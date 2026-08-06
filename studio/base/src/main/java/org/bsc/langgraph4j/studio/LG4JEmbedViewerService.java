@@ -7,11 +7,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.bsc.async.AsyncGenerator;
 import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.subgraph.SubGraphOutput;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -204,5 +206,14 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
 
     public <R> R registerServlet(BiFunction<String, HttpServlet, R> servletRegistrar) {
         return servletRegistrar.apply("/viewer/*", viewerServlet);
+    }
+
+    public void dispatchAsync(NodeOutput<? extends AgentState> output) {
+
+        processor.dispatchAsync( AsyncGenerator.Data.of(output));
+        if(output.isEND() && !(output instanceof SubGraphOutput<?>) ) {
+            processor.dispatchAsync( AsyncGenerator.Data.done(output) );
+        }
+
     }
 }
