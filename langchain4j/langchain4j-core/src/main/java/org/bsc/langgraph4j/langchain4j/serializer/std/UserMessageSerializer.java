@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.langchain4j.serializer.std;
 
 import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
@@ -50,25 +51,22 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
     @Override
     public UserMessage read(ObjectInput in) throws IOException, ClassNotFoundException {
 
-        UserMessage message;
+        final var builder = UserMessage.builder();
         try {
-            var text = Serializer.readUTF(in);
-            message = readNullableUTF(in)
-                    .map(name -> UserMessage.from(name, text))
-                    .orElseGet(() -> UserMessage.from(text));
+            final var text = Serializer.readUTF(in);
+            builder.addContent(TextContent.from(text));
         }
         catch( EOFException ex ) {
             // This exception is managed to keep backward compatibility
 
             @SuppressWarnings("unchecked")
-            var contents = (List<Content>)in.readObject();
-            message = readNullableUTF(in)
-                    .map( name -> UserMessage.from(name, contents)
-                    ).orElseGet(() -> UserMessage.from(contents));
+            final var contents = (List<Content>)in.readObject();
+            builder.contents(contents);
         }
+        readNullableUTF(in).ifPresent(builder::name);
 
         @SuppressWarnings("unchecked")
-        var attributes = (Map<String, Object>) in.readObject();
-        return message.toBuilder().attributes(attributes).build();
+        final var attributes = (Map<String, Object>) in.readObject();
+        return builder.attributes(attributes).build();
     }
 }
