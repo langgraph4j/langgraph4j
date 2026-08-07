@@ -130,7 +130,7 @@
                     <excludes>
                         <exclude>**/*ITest.java</exclude>
                     </excludes>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
         </plugins>
