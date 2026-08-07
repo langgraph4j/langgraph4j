@@ -49,7 +49,7 @@ public class SerializationTest {
     public void UserMessageSingleTextSerializerTest() throws Exception {
         var userMessage = UserMessage.builder()
                 .name("query")
-                .addContent( new TextContent("query text") )
+                .addContent( TextContent.from("query text") )
                 .build();
 
         assertNotNull( userMessage );
@@ -95,7 +95,7 @@ public class SerializationTest {
 
         var userMessage = UserMessage.builder()
                 .name("query")
-                .addContent( new TextContent("query text") )
+                .addContent( TextContent.from("query text") )
                 .addContent( imageContent )
                 .build();
 
@@ -230,7 +230,7 @@ public class SerializationTest {
 
         var userMessage = UserMessage.builder()
                 .name("query")
-                .addContent(new TextContent("query text"))
+                .addContent(TextContent.from("query text"))
                 .attributes(Map.of("documentIds", List.of("doc-1", "doc-2")))
                 .build();
 
