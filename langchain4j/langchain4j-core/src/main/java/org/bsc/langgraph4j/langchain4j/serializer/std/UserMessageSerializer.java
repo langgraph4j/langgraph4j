@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.langchain4j.serializer.std;
 
 import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The UserMessageSerializer class implements the NullableObjectSerializer interface for the UserMessage type.
@@ -35,6 +37,7 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
             out.writeObject( object.contents() );
         }
         writeNullableUTF( object.name(), out);
+        out.writeObject( object.attributes() );
     }
 
     /**
@@ -48,21 +51,22 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
     @Override
     public UserMessage read(ObjectInput in) throws IOException, ClassNotFoundException {
 
+        final var builder = UserMessage.builder();
         try {
-            var text = Serializer.readUTF(in);
-            return readNullableUTF(in)
-                    .map(name -> UserMessage.from(name, text))
-                    .orElseGet(() -> UserMessage.from(text));
+            final var text = Serializer.readUTF(in);
+            builder.addContent(TextContent.from(text));
         }
         catch( EOFException ex ) {
             // This exception is managed to keep backward compatibility
 
             @SuppressWarnings("unchecked")
-            var contents = (List<Content>)in.readObject();
-            return readNullableUTF(in)
-                    .map( name -> UserMessage.from(name, contents)
-                    ).orElseGet(() -> UserMessage.from(contents));
+            final var contents = (List<Content>)in.readObject();
+            builder.contents(contents);
         }
+        readNullableUTF(in).ifPresent(builder::name);
 
+        @SuppressWarnings("unchecked")
+        final var attributes = (Map<String, Object>) in.readObject();
+        return builder.attributes(attributes).build();
     }
 }
