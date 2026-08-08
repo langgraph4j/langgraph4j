@@ -2,6 +2,56 @@
 
 
 
+<!-- "name: v1.8.24" is a release tag -->
+
+## [v1.8.24](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.24) (2026-08-08)
+
+
+### Bug Fixes
+
+ -  **langchain4j/UserMessageSerializer**  add attributes serialization ([df8f31401d6f3ff](https://github.com/bsorrentino/langgraph4j/commit/df8f31401d6f3ffe39a44d4e10bd738157fabe5b))
+
+ -  **UserMessageSerializer**  **ToolExecutionResultMessageSerializer**  persist attributes() ([c3002eb0d72546f](https://github.com/bsorrentino/langgraph4j/commit/c3002eb0d72546f5d80f7a3a31025b72e7afa464))
+     > Both serializers silently dropped the message&#x27;s attributes() map on every
+     > checkpoint round-trip — it was never written, so it always came back
+     > empty on read, even if it was non-empty going in. AiMessageSerializer
+     > already persists attributes(); UserMessage and ToolExecutionResultMessage
+     > expose the same attributes()/attribute() API but lost it entirely.
+     > Write attributes() unconditionally as a trailing field on both
+     > serializers; read it back the same way.
+     > BREAKING CHANGE: this changes the on-wire format for UserMessage and
+     > ToolExecutionResultMessage — both writers now append a trailing
+     > attributes map that older checkpoints don&#x27;t have. Reading a pre-fix
+     > checkpoint with this fixed reader will throw (EOFException or similar)
+     > instead of silently returning truncated data — by design, so callers can
+     > detect it and fall back to the previous serializer for that checkpoint
+     > rather than getting corrupted results. Applications persisting
+     > AgentExecutor state across this upgrade should keep a fallback path (old
+     > serializer) for checkpoints written before the upgrade, or expect to
+     > start fresh threads.
+     > Adds UserMessageAttributesSerializerTest and
+     > ToolExecutionResultMessageAttributesSerializerTest to SerializationTest,
+     > covering the previously-untested attributes round-trip for both types.
+
+
+
+
+### Documentation
+
+ -  update changelog ([9c2e4a80a26b952](https://github.com/bsorrentino/langgraph4j/commit/9c2e4a80a26b952ab235e968441571ebc9ac3ad0))
+
+
+### ALM 
+
+ -  bump to next version 1.8.24 ([9c827222119e934](https://github.com/bsorrentino/langgraph4j/commit/9c827222119e9340d70206ce6e2f0d8ea2c80fb2))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([9e827b2f45c86e6](https://github.com/bsorrentino/langgraph4j/commit/9e827b2f45c86e63323a09b935eb223a896fe61e))
+   
+
+
+
+
+
 <!-- "name: v1.8.23" is a release tag -->
 
 ## [v1.8.23](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.23) (2026-08-06)
