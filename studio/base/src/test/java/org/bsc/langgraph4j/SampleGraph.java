@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.GraphDefinition.END;
 import static org.bsc.langgraph4j.GraphDefinition.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
@@ -20,7 +21,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 public interface SampleGraph {
 
     static StateGraph<? extends AgentState> agentExecutor() throws GraphStateException {
-        AsyncNodeAction<AgentState> action = state -> CompletableFuture.completedFuture(Map.of());
+        AsyncNodeAction<AgentState> action = state -> completedFuture(Map.of());
 
         return new StateGraph<>(AgentState::new)
                 .addNode("model", action)
@@ -28,7 +29,7 @@ public interface SampleGraph {
                 .addEdge(START, "model")
                 .addConditionalEdges(
                         "model",
-                        state -> CompletableFuture.completedFuture(""),
+                        state -> completedFuture(END),
                         EdgeMappings.builder()
                                 .to("tools")
                                 .toEND()
@@ -39,7 +40,7 @@ public interface SampleGraph {
 
     static StateGraph<? extends AgentState> withSubgraph() throws GraphStateException {
         AsyncNodeAction<AgentState> action = state ->
-                CompletableFuture.completedFuture(Map.of());
+                completedFuture(Map.of());
 
         var toolSubgraph = new StateGraph<>(AgentState::new)
                 .addNode("call_tool", action)
@@ -56,7 +57,7 @@ public interface SampleGraph {
                 .addEdge(START, "planner")
                 .addConditionalEdges(
                         "planner",
-                        state -> CompletableFuture.completedFuture("tool"),
+                        state -> completedFuture("tool"),
                         EdgeMappings.builder()
                                 .to("tool_executor", "tool")
                                 .to("responder", "answer")

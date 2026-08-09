@@ -21,7 +21,8 @@ public class LG4JEmbedViewerSampleConfig extends LG4JEmbedViewerConfig {
 
     @Bean
     public StateGraph<? extends AgentState> graph() throws GraphStateException {
-        return SampleGraph.withSubgraph();
+//        return SampleGraph.withSubgraph();
+        return SampleGraph.agentExecutor();
     }
 
     @Bean
