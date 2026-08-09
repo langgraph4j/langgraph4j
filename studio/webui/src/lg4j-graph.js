@@ -7,8 +7,10 @@ import * as reactFlowStyles from "bundle-text:@xyflow/react/dist/style.css";
 import {
   ReactFlowProvider,
   Background,
+  BaseEdge,
   ControlButton,
   Controls,
+  getBezierPath,
   // @ts-ignore React Flow exposes Handle at runtime, but its package types flag it in checked JS.
   Handle,
   MarkerType,
@@ -42,6 +44,7 @@ const SUBGRAPH_PADDING_X = 40;
 const SUBGRAPH_PADDING_TOP = 64;
 const SUBGRAPH_PADDING_BOTTOM = 40;
 const LAYOUT_STORAGE_PREFIX = 'lg4j-studio.graph-layout.';
+const EDGE_LABEL_PROGRESS = 0.74;
 
 /**
  * Builds a stable session storage key for a serialized graph document.
@@ -270,6 +273,81 @@ function SubgraphNode({ data, selected }) {
 const nodeTypes = {
   circle: CircleNode,
   subgraph: SubgraphNode
+};
+
+/**
+ * Finds a point along an edge, biased toward the target node.
+ *
+ * @param {number} sourceX - Source x coordinate.
+ * @param {number} sourceY - Source y coordinate.
+ * @param {number} targetX - Target x coordinate.
+ * @param {number} targetY - Target y coordinate.
+ * @returns {Point} Label coordinates.
+ */
+function targetBiasedLabelPoint(sourceX, sourceY, targetX, targetY) {
+  return {
+    x: sourceX + ((targetX - sourceX) * EDGE_LABEL_PROGRESS),
+    y: sourceY + ((targetY - sourceY) * EDGE_LABEL_PROGRESS)
+  };
+}
+
+/**
+ * Renders LangGraph4j semantic edges registered as React Flow custom edge types.
+ *
+ * @param {import('@xyflow/react').EdgeProps<GraphEdge>} props - React Flow edge props.
+ * @returns {ReactElement} Edge element.
+ */
+function LangGraphEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition = Position.Bottom,
+  targetPosition = Position.Top,
+  label,
+  labelStyle,
+  labelShowBg,
+  labelBgStyle,
+  labelBgPadding,
+  labelBgBorderRadius,
+  style,
+  markerEnd,
+  markerStart,
+  interactionWidth
+}) {
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition
+  });
+  const labelPoint = targetBiasedLabelPoint(sourceX, sourceY, targetX, targetY);
+
+  return h(BaseEdge, {
+    id,
+    path: edgePath,
+    labelX: labelPoint.x,
+    labelY: labelPoint.y,
+    label,
+    labelStyle,
+    labelShowBg: false,
+    labelBgStyle,
+    labelBgPadding,
+    labelBgBorderRadius,
+    style,
+    markerEnd,
+    markerStart,
+    interactionWidth
+  });
+}
+
+const edgeTypes = {
+  default: LangGraphEdge,
+  conditional: LangGraphEdge,
+  parallel: LangGraphEdge
 };
 
 /**
@@ -900,6 +978,7 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       nodes,
       edges,
       nodeTypes,
+      edgeTypes,
       onNodesChange: handleNodesChange,
       onEdgesChange,
       //onInit: (instance) => {},
