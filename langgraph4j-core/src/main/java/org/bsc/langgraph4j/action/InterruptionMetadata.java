@@ -19,6 +19,7 @@ import static java.util.Optional.ofNullable;
  * @param <State> the type of the agent state, which must extend {@link AgentState}
  */
 public final class InterruptionMetadata<State extends AgentState> implements HasMetadata  {
+    public static final String INTERRUPTION_REASON = "LG4J_INTERRUPTION_REASON";
 
     private final String nodeId;
     private final State state;
@@ -47,6 +48,15 @@ public final class InterruptionMetadata<State extends AgentState> implements Has
      */
     public State state() {
         return state;
+    }
+
+    /**
+     * Gets the reason for the interruption, if available.
+     *
+     * @return an {@link Optional} containing the interruption reason, or an empty {@link Optional} if not available
+     */
+    public Optional<String> reason() {
+        return metadata(INTERRUPTION_REASON).map( Object::toString );
     }
 
     /**
@@ -106,6 +116,10 @@ public final class InterruptionMetadata<State extends AgentState> implements Has
         public Builder( String nodeId, State state ) {
             this.nodeId = nodeId;
             this.state = state;
+        }
+
+        public Builder<State> reason(String reason) {
+            return putMetadata(INTERRUPTION_REASON, reason);
         }
 
         /**
