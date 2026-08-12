@@ -801,7 +801,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 return stateGraph.getStateFactory().apply( data);
             };
 
-            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, runnableConfig, stateFactory, stateGraph.getChannels() )
+            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() )
                     .thenApply(TryFunction.Try(result -> {
                         if( result.hasPartialState() ) {
                             return result.partialState().thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
@@ -917,6 +917,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     // CHECK ON PREVIOUS NODE
                     if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
                         final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        if( compileConfig.checkpointSaver().isPresent() ) {
+                            compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
+                        }
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done( interruptionMetadata ));
                         break;
@@ -924,6 +927,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
                         final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        if( compileConfig.checkpointSaver().isPresent() ) {
+                            compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
+                        }
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done(interruptionMetadata ));
                         break;
@@ -1193,7 +1199,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 context.setCurrentState( data );
                 return stateGraph.getStateFactory().apply( data);
             };
-            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, runnableConfig, stateFactory, stateGraph.getChannels() )
+            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() )
                 .thenApply(TryFunction.Try(result -> {
                     if( result.hasPartialState() ) {
                         return result.partialState().thenApply( TryFunction.<Map<String,Object>, Data<Output>, Exception>Try(partial -> {
