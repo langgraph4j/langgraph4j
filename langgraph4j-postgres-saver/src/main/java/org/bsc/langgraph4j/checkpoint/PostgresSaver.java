@@ -1,6 +1,8 @@
 package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
@@ -13,12 +15,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public class PostgresSaver extends AbstractCheckpointSaver {
-    private static final Logger log = LoggerFactory.getLogger(PostgresSaver.class);
+public class PostgresSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     public static class Builder {
         public StateSerializer<? extends AgentState> stateSerializer;
@@ -473,7 +476,7 @@ public class PostgresSaver extends AbstractCheckpointSaver {
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, String message) throws Exception {
         final var threadId = threadId( config );
 
         var selectThreadSql = """
@@ -520,6 +523,17 @@ public class PostgresSaver extends AbstractCheckpointSaver {
         }
 
         return new Tag( threadId, checkpoints );
+    }
+
+
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+    }
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
     }
 
     /**

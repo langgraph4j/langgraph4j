@@ -1,9 +1,12 @@
 package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -12,9 +15,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * Amazon DynamoDB-backed checkpoint saver for LangGraph4j.
@@ -63,7 +68,7 @@ import static java.util.Objects.requireNonNull;
  *     .build();
  * }</pre>
  */
-public class DynamoDBSaver extends AbstractCheckpointSaver {
+public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     private static final Logger log = LoggerFactory.getLogger(DynamoDBSaver.class);
 
@@ -363,11 +368,21 @@ public class DynamoDBSaver extends AbstractCheckpointSaver {
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final String threadId = threadId(config);
         log.debug("Releasing thread '{}'", threadId);
         repository.markThreadReleased(threadId);
         return new Tag(threadId, checkpoints);
+    }
+
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+    }
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
     }
 
     /**

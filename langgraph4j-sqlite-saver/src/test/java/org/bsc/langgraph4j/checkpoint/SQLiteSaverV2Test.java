@@ -22,7 +22,7 @@ import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
+public class SQLiteSaverV2Test implements LG4JTestUtil, LG4JLoggable {
 
     static class MyJacksonStateSerializer extends JacksonStateSerializer<SimpleMState> {
 
@@ -51,20 +51,15 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
     static void setUp() {
         log.info("tempDir: {}", tempDir);
 
-        tempDir = Path.of("target");
+        tempDir = Path.of( "target");
 
         ds = new SQLiteDataSource();
-        ds.setUrl("jdbc:sqlite:".concat(tempDir.resolve("SQLiteSaverTest.db").toString()));
+        ds.setUrl("jdbc:sqlite:".concat(tempDir.resolve("SQLiteSaverV2Test.db").toString()));
     }
 
-    static SQLiteSaver.Builder buildSQLiteSaverWithExistingDS() {
-        return SQLiteSaver.builder()
+    static SQLiteSaverV2.Builder buildSQLiteSaverWithExistingDS() {
+        return SQLiteSaverV2.builder()
                 .datasource(ds);
-    }
-
-    SQLiteSaver.Builder buildSQLiteSaver(String databaseName) {
-        return SQLiteSaver.builder()
-                .databasePath(tempDir.resolve(databaseName).toString());
     }
 
     @ParameterizedTest
@@ -98,9 +93,11 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)
     public void testCheckpointWithNotReleasedThread(StateSerializerEnum param) throws Exception {
+        final var threadId = "testCheckpointWithNotReleasedThread";
+
         var saver = buildSQLiteSaverWithExistingDS()
-                .dropTablesFirst(true)
                 .stateSerializer(param.stateSerializer)
+                .createTables(true)
                 .build();
 
         final var agent1 = CustomAction.of("agent_1");
@@ -115,58 +112,68 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                 .releaseThread(false)
                 .build();
 
-        var runnableConfig = RunnableConfig.builder().build();
+        var runnableConfig = RunnableConfig.builder()
+                .threadId(threadId)
+                .build();
+
         var workflow = graph.compile(compileConfig);
 
-        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
+        try {
+            var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
 
-        assertTrue(result.isPresent());
+            assertTrue(result.isPresent());
 
-        var history = workflow.getStateHistory(runnableConfig);
+            var history = workflow.getStateHistory(runnableConfig);
 
-        assertFalse(history.isEmpty());
-        assertEquals(2, history.size());
+            assertFalse(history.isEmpty());
+            assertEquals(2, history.size());
 
-        var lastSnapshot = workflow.lastStateOf(runnableConfig);
+            var lastSnapshot = workflow.lastStateOf(runnableConfig);
 
-        assertTrue(lastSnapshot.isPresent());
-        assertEquals("agent_1", lastSnapshot.get().node());
-        assertEquals(END, lastSnapshot.get().next());
+            assertTrue(lastSnapshot.isPresent());
+            assertEquals("agent_1", lastSnapshot.get().node());
+            assertEquals(END, lastSnapshot.get().next());
 
-        final var updatedConfig = workflow.updateState(lastSnapshot.get().config(), Map.of("update", "update test"));
+            var updatedConfig = workflow.updateState(lastSnapshot.get().config(), Map.of("update", "update test"));
 
-        var updatedSnapshot = workflow.stateOf(updatedConfig);
-        assertTrue(updatedSnapshot.isPresent());
-        assertEquals("agent_1", updatedSnapshot.get().node());
-        assertTrue(updatedSnapshot.get().state().value("update").isPresent());
-        assertEquals("update test", updatedSnapshot.get().state().value("update").get());
-        assertEquals(END, updatedSnapshot.get().next());
+            var updatedSnapshot = workflow.stateOf(updatedConfig);
+            assertTrue(updatedSnapshot.isPresent());
+            assertEquals("agent_1", updatedSnapshot.get().node());
+            assertTrue(updatedSnapshot.get().state().value("update").isPresent());
+            assertEquals("update test", updatedSnapshot.get().state().value("update").get());
+            assertEquals(END, updatedSnapshot.get().next());
 
-        saver = buildSQLiteSaverWithExistingDS()
-                .stateSerializer(param.stateSerializer)
-                .build();
+            saver = buildSQLiteSaverWithExistingDS()
+                    .stateSerializer(param.stateSerializer)
+                    .build();
 
-        compileConfig = CompileConfig.builder()
-                .checkpointSaver(saver)
-                .releaseThread(false)
-                .build();
+            compileConfig = CompileConfig.builder()
+                    .checkpointSaver(saver)
+                    .releaseThread(false)
+                    .build();
 
-        workflow = graph.compile(compileConfig);
+            workflow = graph.compile(compileConfig);
 
-        history = workflow.getStateHistory(runnableConfig);
+            history = workflow.getStateHistory(runnableConfig);
 
-        assertFalse(history.isEmpty());
-        assertEquals(2, history.size());
+            assertFalse(history.isEmpty());
+            assertEquals(2, history.size());
 
-        updatedSnapshot = workflow.stateOf(updatedConfig);
+            updatedSnapshot = workflow.stateOf(updatedConfig);
 
-        assertTrue(updatedSnapshot.isPresent());
-        assertEquals("agent_1", updatedSnapshot.get().node());
-        assertTrue(updatedSnapshot.get().state().value("update").isPresent());
-        assertEquals("update test", updatedSnapshot.get().state().value("update").get());
-        assertEquals(END, updatedSnapshot.get().next());
+            assertTrue(updatedSnapshot.isPresent());
+            assertEquals("agent_1", updatedSnapshot.get().node());
+            assertTrue(updatedSnapshot.get().state().value("update").isPresent());
+            assertEquals("update test", updatedSnapshot.get().state().value("update").get());
+            assertEquals(END, updatedSnapshot.get().next());
 
-        saver.release(runnableConfig);
+            saver.release(runnableConfig);
+
+        }
+        catch (Exception e) {
+            saver.releaseOnError(runnableConfig, e);
+        }
+
     }
 
     @ParameterizedTest
@@ -187,9 +194,9 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                 .interruptBefore("agent_2")
                 .build();
 
-        final var threadId = switch (param) {
-            case JSON -> "json-thread";
-            case BINARY -> "binary-thread";
+        final var threadId = switch( param ){
+            case JSON -> "json-thread-testCheckpointWithInterruption";
+            case BINARY -> "binary-thread-testCheckpointWithInterruption";
         };
 
         var runnableConfig = RunnableConfig.builder()
@@ -203,8 +210,8 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                     .build();
 
             var workflow = graph.compile(CompileConfig.builder(compileConfig)
-                    .checkpointSaver(saver)
-                    .build());
+                                            .checkpointSaver(saver)
+                                            .build());
 
             try {
                 workflow.stream(GraphInput.noArgs(), runnableConfig).toCompletableFuture()
@@ -221,7 +228,8 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                             assertEquals("agent_1", value.get());
                         })
                         .join();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 saver.releaseOnError(runnableConfig, e);
             }
         }
@@ -259,7 +267,8 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                             assertEquals("agent_2", value.get());
                         })
                         .join();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 saver.releaseOnError(runnableConfig, e);
             }
         }
@@ -268,6 +277,7 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)
     public void testCreateTablesIsIdempotent(StateSerializerEnum param) throws Exception {
+
         SQLiteSaverV2.builder()
                 .databasePath(tempDir.resolve("idempotent.db").toString())
                 .createTables(true)
@@ -280,5 +290,59 @@ public class SQLiteSaverTest implements LG4JTestUtil, LG4JLoggable {
                 .stateSerializer(param.stateSerializer)
                 .build();
     }
-}
 
+    @Test
+    void testLoadCommandsFromResource() throws Exception {
+
+        var sqlCommandResource = new SqlResource.Commands("db/v1.9__commands.sql");
+
+        String cmd = sqlCommandResource.get("sqlDropTables");
+
+        assertNotNull(cmd);
+        assertEquals("""
+                        DROP TABLE IF EXISTS LG4JCheckpoint;
+                        DROP TABLE IF EXISTS LG4JThread;
+                        DROP TABLE IF EXISTS LG4JThreadTag;
+
+                        """,cmd);
+
+        cmd = sqlCommandResource.get("sqlReleaseThread_insertTag");
+
+        assertNotNull(cmd);
+        assertEquals("""
+INSERT INTO LG4JThreadTag (
+thread_id,
+thread_name,
+released_version,
+parent_thread_id,
+is_released,
+is_error,
+message,
+created_at
+)
+SELECT
+t.thread_id,
+t.thread_name,
+COALESCE(
+(
+SELECT MAX(tag.released_version)
+FROM LG4JThreadTag AS tag
+WHERE tag.thread_name = t.thread_name
+),
+0
+) + 1,
+t.parent_thread_id,
+1,
+?,
+?,
+t.created_at
+FROM LG4JThread AS t
+WHERE t.thread_name = ?
+RETURNING thread_id;
+
+                """,cmd);
+
+    }
+
+
+}

@@ -2,12 +2,14 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
 import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -15,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +25,7 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 
 /**
@@ -156,7 +160,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
      * @throws Exception If an error occurs during file operations or releasing from memory.
      */
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final var currentPath = getPath(config);
 
         if (!Files.exists(currentPath)) {
@@ -183,7 +187,16 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
 
         return new Tag( threadId(config), lastVersion, checkpoints );
 
+    }
 
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+    }
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
     }
 
     @Override
@@ -247,5 +260,8 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
                             return filter.test( matcher.group(1), Integer.parseInt(matcher.group(2)) );
                         });
     }
+
+
+
 }
 

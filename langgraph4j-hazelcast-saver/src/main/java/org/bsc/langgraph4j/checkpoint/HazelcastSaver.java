@@ -3,7 +3,9 @@ package org.bsc.langgraph4j.checkpoint;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.CPMap;
 import com.hazelcast.map.IMap;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
@@ -15,6 +17,9 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * <p>{@code HazelcastSaver} persists LangGraph4j workflow checkpoints in a Hazelcast
@@ -75,7 +80,7 @@ import java.util.Objects;
  *         .build();
  * }</pre>
  */
-public class HazelcastSaver extends AbstractCheckpointSaver {
+public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     /** Default name of the Hazelcast map holding the checkpoints. */
     public static final String DEFAULT_MAP_NAME = "langgraph4j-checkpoints";
@@ -144,11 +149,23 @@ public class HazelcastSaver extends AbstractCheckpointSaver {
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, String message) throws Exception {
         final String threadId = threadId(config);
         store.remove(threadId);
         return new Tag(threadId, checkpoints);
     }
+
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+    }
+
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
+    }
+
 
     // -------------------------------------------------------------------------
     // Encoding / decoding (whole checkpoint list <-> String map value)

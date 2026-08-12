@@ -2,6 +2,7 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.utils.TryFunction;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,7 +22,9 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
 
     protected abstract void updatedCheckpoint( RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception;
 
-    protected abstract Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints ) throws Exception;
+    protected abstract Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message ) throws Exception;
+
+    protected abstract Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception ) throws Exception;
 
     private <T> T loadOrInitCheckpoints(RunnableConfig config,
                                                 TryFunction<LinkedList<Checkpoint>, T, Exception> transformer) throws Exception {
@@ -95,7 +98,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
     }
 
     @Override
-    public final Tag release(RunnableConfig config) throws Exception {
+    public Tag release(RunnableConfig config, @Nullable String message) throws Exception {
 
         return loadOrInitCheckpoints( config, checkpoints -> {
 
@@ -112,9 +115,43 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
                     subGraphSaver.release( subGraphConfig );
                 }
             }
-            return releaseCheckpoints( config, checkpoints );
+            return releaseCheckpoints( config, checkpoints, message );
         });
     }
+
+    @Override
+    public Tag releaseOnError(RunnableConfig config, Exception exception) throws Exception {
+        return loadOrInitCheckpoints( config, checkpoints -> {
+
+            final var subGraphSaversByThread = _subGraphSaversByThread.remove( threadId(config) );
+            if( subGraphSaversByThread != null ) {
+                for( var entry: subGraphSaversByThread.entrySet() ) {
+                    final var subThreadId = entry.getKey();
+                    final var subGraphSaver = entry.getValue();
+
+                    final var subGraphConfig = RunnableConfig.builder(config)
+                            .threadId(subThreadId)
+                            .build();
+
+                    subGraphSaver.releaseOnError( subGraphConfig, exception );
+                }
+            }
+            return releaseCheckpointsOnError( config, checkpoints, exception );
+        });
+    }
+
+    /**
+     * Release the checkpoints for the given config and return a Tag object that contains
+     * the threadId, version, and list of checkpoints.
+     * @param config the RunnableConfig for which to release checkpoints
+     * @return a Tag object containing the threadId, version, and list of checkpoints
+     * @throws Exception if an error occurs while releasing checkpoints
+     */
+    @Override
+    public final Tag release(RunnableConfig config) throws Exception {
+        return release( config, null );
+    }
+
 
     @Override
     public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
