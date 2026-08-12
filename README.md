@@ -494,6 +494,7 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 ## Projects using LangGraph4j
 
+* [Agentic CI/CD Orchestrator](https://github.com/veerjain-1/agentic-cicd-orchestrator)
 * [OpenHuskyAgent (_Agent Runtime Platform_)](https://github.com/HandleCoding/OpenHuskyAgent/tree/main)
 * [spring-ai-alibaba (_use an embedded version in spring-ai-alibaba-graph-core_)](https://github.com/alibaba/spring-ai-alibaba/tree/main)
 * [An ACP bridge to langraph4j and langchain4j](https://github.com/OsgiliathEnterprise/acp-langgraph-langchain-bridge)
