@@ -8,13 +8,20 @@ import oracle.jdbc.OracleType;
 import oracle.jdbc.OracleTypes;
 import oracle.jdbc.provider.oson.OsonFactory;
 import oracle.sql.json.OracleJsonDatum;
+import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.TryFunction;
+import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * <p>
@@ -67,7 +74,7 @@ import java.util.*;
  * </pre>
  * </p>
  */
-public class OracleSaver extends AbstractCheckpointSaver {
+public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     // DDL statements
     private static final String CREATE_THREAD_TABLE = """
@@ -314,7 +321,7 @@ public class OracleSaver extends AbstractCheckpointSaver {
      *                   released
      */
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final String threadName = threadId(config);
 
         try (Connection connection = dataSource.getConnection();
@@ -327,6 +334,19 @@ public class OracleSaver extends AbstractCheckpointSaver {
 
         return new Tag(threadName, checkpoints);
     }
+
+
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+    }
+
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
+    }
+
 
     /**
      * If the checkpoint exists, updates the checkpoint, otherwise it inserts it.
