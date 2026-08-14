@@ -65,7 +65,7 @@ public class MysqlSaver extends AbstractMysqlServer {
          *
          * @return the new instance of MysqlSaver.
          */
-        public MysqlSaver build() {
+        public MysqlSaver build() throws Exception {
             return new MysqlSaver(this);
         }
     }
@@ -76,7 +76,7 @@ public class MysqlSaver extends AbstractMysqlServer {
      * 
      * @param builder   Builder instance
      */
-    private MysqlSaver(Builder builder) {
+    private MysqlSaver(Builder builder) throws Exception {
         super(builder);
     }
 

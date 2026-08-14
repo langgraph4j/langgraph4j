@@ -4,93 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.utils.TryFunction;
+import org.bsc.langgraph4j.utils.SqlResource;
+import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implements LG4JLoggable {
-    // DDL statements
-    private static final String CREATE_THREAD_TABLE = """
-            CREATE TABLE IF NOT EXISTS LANGRAPH4J_THREAD (
-               thread_id VARCHAR(36) PRIMARY KEY,
-               thread_name VARCHAR(255),
-               is_released BOOLEAN DEFAULT FALSE NOT NULL
-            )""";
-
-    private static final String INDEX_THREAD_TABLE = """
-            CREATE UNIQUE INDEX IDX_LANGRAPH4J_THREAD_NAME_RELEASED
-              ON LANGRAPH4J_THREAD(thread_name, is_released)
-            """;
-
-    private static final String CREATE_CHECKPOINT_TABLE = """
-            CREATE TABLE IF NOT EXISTS LANGRAPH4J_CHECKPOINT (
-               id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY,
-               checkpoint_id VARCHAR(36) PRIMARY KEY,
-               thread_id VARCHAR(36) NOT NULL,
-               node_id VARCHAR(255),
-               next_node_id VARCHAR(255),
-               state_data JSON NOT NULL,
-               saved_at TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
-                
-            
-               CONSTRAINT LANGRAPH4J_FK_THREAD
-                   FOREIGN KEY (thread_id)
-                   REFERENCES LANGRAPH4J_THREAD(thread_id)
-                   ON DELETE CASCADE
-            )""";
-
-    private static final String DROP_CHECKPOINT_TABLE = "DROP TABLE IF EXISTS LANGRAPH4J_CHECKPOINT";
-    private static final String DROP_THREAD_TABLE = "DROP TABLE IF EXISTS LANGRAPH4J_THREAD";
-
-    // DML statements
-    private static final String UPSERT_THREAD = """
-            INSERT INTO LANGRAPH4J_THREAD (thread_id, thread_name, is_released)
-            VALUES (?, ?, FALSE)
-            ON DUPLICATE KEY UPDATE thread_id = thread_id
-            """;
-
-    private static final String INSERT_CHECKPOINT = """
-            INSERT INTO LANGRAPH4J_CHECKPOINT(checkpoint_id, thread_id, node_id, next_node_id, state_data)
-            SELECT ?, thread_id, ?, ?, ?
-            FROM LANGRAPH4J_THREAD
-            WHERE thread_name = ? AND is_released = FALSE
-            """;
-
-    private static final String UPDATE_CHECKPOINT = """
-            UPDATE LANGRAPH4J_CHECKPOINT
-            SET
-              checkpoint_id = ?,
-              node_id = ?,
-              next_node_id = ?,
-              state_data = ?
-            WHERE checkpoint_id = ?
-            """;
-
-    private static final String SELECT_CHECKPOINTS = """
-            SELECT
-              c.checkpoint_id,
-              c.node_id,
-              c.next_node_id,
-              c.state_data
-            FROM LANGRAPH4J_CHECKPOINT c
-              INNER JOIN LANGRAPH4J_THREAD t ON c.thread_id = t.thread_id
-            WHERE t.thread_name = ? AND t.is_released != TRUE
-            ORDER BY c.saved_at DESC, c.id DESC
-            """;
-
-    private static final String DELETE_CHECKPOINTS = """
-                DELETE FROM LANGRAPH4J_CHECKPOINT WHERE checkpoint_id = ?
-            """;
-
-    private static final String RELEASE_THREAD = """
-            UPDATE LANGRAPH4J_THREAD SET is_released = TRUE WHERE thread_name = ? AND is_released = FALSE
-            """;
 
     /**
      * A builder for MysqlSaver.
@@ -98,6 +26,7 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         protected DataSource dataSource;
         protected CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
+        public StateSerializer<? extends AgentState> stateSerializer;
 
         @SuppressWarnings("unchecked")
         private B this$() {
@@ -125,26 +54,105 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
             return this$();
         }
 
+        /**
+         * Sets the state serializer
+         *
+         * @param stateSerializer the state serializer
+         * @return this builder
+         */
+        public B stateSerializer(StateSerializer<? extends AgentState> stateSerializer) {
+            this.stateSerializer = stateSerializer;
+            return this$();
+        }
     }
 
     // Configuration
     protected final DataSource dataSource;
     protected final CreateOption createOption;
     protected final ObjectMapper objectMapper;
-
+    protected final  StateSerializer<? extends AgentState> stateSerializer;
+    protected final SqlResource.Commands sqlCommands;
     /**
      * protected constructor used by the builder to create a new instance of
      * MysqlSaver.
      *
      * @param builder   Builder instance
      */
-    protected AbstractMysqlServer(AbstractBuilder<? > builder) {
+    protected AbstractMysqlServer(AbstractBuilder<? > builder) throws Exception {
         this.dataSource = builder.dataSource;
         this.createOption = builder.createOption;
-        this.objectMapper = new ObjectMapper();
+        this.stateSerializer = builder.stateSerializer;
+        this.objectMapper = ( builder.stateSerializer == null) ? new ObjectMapper() : null;
+        this.sqlCommands = new SqlResource.Commands("db/v1.1__commands.sql");
         initTables();
     }
 
+    /**
+     * Initializes the database according the create options.
+     */
+    protected void initTables() throws Exception {
+        SqlResource.loadSql("db/migration/v1.1__init.sql", sqlCreateTables -> {
+
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement()) {
+
+                if (createOption == CreateOption.CREATE_OR_REPLACE) {
+                    final var sqlDropTables = sqlCommands.get("sqlDropTables");
+                    executeSqlStatements(statement, sqlDropTables);
+                }
+                if (createOption == CreateOption.CREATE_OR_REPLACE ||
+                        createOption == CreateOption.CREATE_IF_NOT_EXISTS) {
+
+                    executeSqlStatements(statement, sqlCreateTables);
+                }
+                return null;
+            }});
+    }
+
+    private void executeSqlStatements(Statement statement, String sqlStatements) throws SQLException {
+        var statements = Stream.of(sqlStatements.split(";"))
+                .map(String::trim)
+                .filter(sql -> !sql.isEmpty())
+                .toList();
+
+        for (var sql : statements) {
+            statement.execute(sql);
+        }
+    }
+
+
+    private String encodeState(Map<String, Object> data) throws IOException {
+        Objects.requireNonNull(data, "data cannot be null");
+
+        if (stateSerializer == null) {
+            return objectMapper.writeValueAsString(data);
+        }
+
+        var bytes = stateSerializer.dataToBytes(data);
+        return Base64.getEncoder().encodeToString(bytes);
+
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> decodeState(String statePayload,
+                                            @Nullable  String stateContentType ) throws IOException, ClassNotFoundException {
+
+        if (stateSerializer == null) {
+            return objectMapper.readValue(statePayload, Map.class);
+        }
+
+        if (stateContentType!=null && !Objects.equals(stateContentType, stateSerializer.contentType())) {
+            throw new IllegalStateException(
+                    "Content Type used for stored state '%s' is different from one '%s' used to deserialize it".formatted(
+                            stateContentType,
+                            stateSerializer.contentType()));
+        }
+
+        var bytes = Base64.getDecoder().decode(statePayload);
+
+        return stateSerializer.dataFromBytes(bytes);
+    }
 
     /**
      * If the list of checkpoints is empty, loads the checkpoints from the database.
@@ -160,20 +168,18 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
         final var checkpoints = new LinkedList<Checkpoint>();
         final var threadName = threadId(config);
 
+        final var sqlSelectCheckpoints = sqlCommands.get("sqlSelectCheckpoints");
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_CHECKPOINTS)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectCheckpoints)) {
 
             preparedStatement.setString(1, threadName);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    String jsonString = resultSet.getString(4);
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> state = objectMapper.readValue(jsonString, Map.class);
                     Checkpoint checkpoint = Checkpoint.builder()
                             .id(resultSet.getString(1))
                             .nodeId(resultSet.getString(2))
                             .nextNodeId(resultSet.getString(3))
-                            .state(state)
+                            .state( decodeState(resultSet.getString(4), null))
                             .build();
                     checkpoints.add(checkpoint);
                 }
@@ -197,21 +203,37 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
 
-        final String threadName = config.threadId().orElse(THREAD_ID_DEFAULT);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement upsertStatement = connection.prepareStatement(UPSERT_THREAD);
-             PreparedStatement insertCheckpointStatement = connection.prepareStatement(INSERT_CHECKPOINT)) {
+        final String threadName = threadId(config);
 
-            upsertStatement.setString(1, UUID.randomUUID().toString());
-            upsertStatement.setString(2, threadName);
+        final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread_insert");
+        final var sqlLastInsertId = sqlCommands.get("sqlUpsertThread_last_insert_id");
+        final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement upsertStatement = connection.prepareStatement(sqlUpsertThread);
+             PreparedStatement lastInsertId = connection.prepareStatement(sqlLastInsertId);
+             PreparedStatement insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
+
+            upsertStatement.setString(1, threadName);
             upsertStatement.execute();
 
-            insertCheckpointStatement.setString(1, checkpoint.getId());
-            insertCheckpointStatement.setString(2, checkpoint.getNodeId());
-            insertCheckpointStatement.setString(3, checkpoint.getNextNodeId());
-            insertCheckpointStatement.setString(4, objectMapper.writeValueAsString(checkpoint.getState()));
-            insertCheckpointStatement.setString(5, threadName);
+            long threadKey = -1;
+            try( ResultSet rs = lastInsertId.executeQuery() ) {
+                if( rs.next() ) {
+                    threadKey = rs.getLong(1);
+                    log.trace( "threadId {} for thread {}",threadKey, threadName);
+                }
+            };
 
+
+            var index = 0;
+            insertCheckpointStatement.setString(++index, checkpoint.getId());
+            insertCheckpointStatement.setNull(++index, Types.VARCHAR);
+            insertCheckpointStatement.setLong(++index, threadKey);
+            insertCheckpointStatement.setString(++index, checkpoint.getNodeId());
+            insertCheckpointStatement.setString(++index, checkpoint.getNextNodeId());
+            insertCheckpointStatement.setString(++index, encodeState(checkpoint.getState()));
+            insertCheckpointStatement.setNull(++index, Types.VARCHAR);
             insertCheckpointStatement.execute();
         } catch (SQLException sqlException) {
             throw new RuntimeException("Unable to insert checkpoint", sqlException);
@@ -231,8 +253,9 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
     protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, String message) throws Exception {
         final String threadName = threadId(config);
 
+        final var sqlReleaseThread = sqlCommands.get("sqlReleaseThread");
         try (Connection connection = dataSource.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(RELEASE_THREAD)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlReleaseThread)) {
             preparedStatement.setString(1, threadName);
             preparedStatement.execute();
         } catch (SQLException sqlException) {
@@ -266,12 +289,13 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
     protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
         if (config.checkPointId().isPresent()) {
+            final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
             try (Connection connection = dataSource.getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CHECKPOINT)) {
+                 PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
                 preparedStatement.setString(1, checkpoint.getId());
                 preparedStatement.setString(2, checkpoint.getNodeId());
                 preparedStatement.setString(3, checkpoint.getNextNodeId());
-                preparedStatement.setString(4, objectMapper.writeValueAsString(checkpoint.getState()));
+                preparedStatement.setString(4, encodeState(checkpoint.getState()));
                 preparedStatement.setString(5, config.checkPointId().get());
                 preparedStatement.execute();
             } catch (SQLException sqlException) {
@@ -282,45 +306,14 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
         }
     }
 
-    /**
-     * Initializes the database according the create options.
-     */
-    protected void initTables() {
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
-            if (createOption == CreateOption.CREATE_OR_REPLACE) {
-                // Drop tables (indexes are automatically dropped with tables in MySQL)
-                statement.addBatch(DROP_CHECKPOINT_TABLE);
-                statement.addBatch(DROP_THREAD_TABLE);
-                statement.executeBatch();
-            }
-            if (createOption == CreateOption.CREATE_OR_REPLACE ||
-                    createOption == CreateOption.CREATE_IF_NOT_EXISTS) {
-                statement.execute(CREATE_THREAD_TABLE);
-                statement.execute(CREATE_CHECKPOINT_TABLE);
 
-                // Try to create index, ignore error if it already exists
-                try {
-                    statement.execute(INDEX_THREAD_TABLE);
-                } catch (SQLException e) {
-                    // Ignore "Duplicate key name" error (error code 1061)
-                    if (e.getErrorCode() != 1061) {
-                        throw e;
-                    }
-                }
-            }
-        } catch (SQLException sqlException) {
-            throw new RuntimeException("Unable to create tables", sqlException);
-        }
-    }
-
-    /**
-     * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
-     *
-     * @param threadId the thread identifier whose cached checkpoints must be cleared
-     * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
-     * @deprecated this method do nothing because currently this saver don't use cache anymore
-     */
+        /**
+         * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
+         *
+         * @param threadId the thread identifier whose cached checkpoints must be cleared
+         * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
+         * @deprecated this method do nothing because currently this saver don't use cache anymore
+         */
     @Deprecated(forRemoval = true)
     public Collection<Checkpoint> clearCheckpointsCache( String threadId ) {
         return List.of();
