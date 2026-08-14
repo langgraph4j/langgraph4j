@@ -1,3 +1,4 @@
+-- sqlCreateTables
 CREATE TABLE IF NOT EXISTS LANGRAPH4J_THREAD (
     thread_id BIGINT NOT NULL AUTO_INCREMENT,
     thread_name VARCHAR(255),

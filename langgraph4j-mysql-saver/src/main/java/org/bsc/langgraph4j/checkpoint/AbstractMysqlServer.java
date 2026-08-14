@@ -83,7 +83,7 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
         this.createOption = builder.createOption;
         this.stateSerializer = builder.stateSerializer;
         this.objectMapper = ( builder.stateSerializer == null) ? new ObjectMapper() : null;
-        this.sqlCommands = new SqlResource.Commands("db/v1.1__commands.sql");
+        this.sqlCommands = SqlResource.Commands.load("db/v1.1__commands.sql");
         initTables();
     }
 
@@ -91,35 +91,27 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
      * Initializes the database according the create options.
      */
     protected void initTables() throws Exception {
-        SqlResource.loadSql("db/migration/v1.1__init.sql", sqlCreateTables -> {
+
+        final var sqlInitCommands = SqlResource.Commands.load("db/migration/v1.1__init.sql");
 
             try (Connection connection = dataSource.getConnection();
                  Statement statement = connection.createStatement()) {
 
                 if (createOption == CreateOption.CREATE_OR_REPLACE) {
-                    final var sqlDropTables = sqlCommands.get("sqlDropTables");
-                    executeSqlStatements(statement, sqlDropTables);
+                    for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
+                        log.trace("Executing drop table:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
                 }
                 if (createOption == CreateOption.CREATE_OR_REPLACE ||
                         createOption == CreateOption.CREATE_IF_NOT_EXISTS) {
-
-                    executeSqlStatements(statement, sqlCreateTables);
+                    for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
+                        log.trace("Executing create tables:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
                 }
-                return null;
-            }});
+            }
     }
-
-    private void executeSqlStatements(Statement statement, String sqlStatements) throws SQLException {
-        var statements = Stream.of(sqlStatements.split(";"))
-                .map(String::trim)
-                .filter(sql -> !sql.isEmpty())
-                .toList();
-
-        for (var sql : statements) {
-            statement.execute(sql);
-        }
-    }
-
 
     private String encodeState(Map<String, Object> data) throws IOException {
         Objects.requireNonNull(data, "data cannot be null");

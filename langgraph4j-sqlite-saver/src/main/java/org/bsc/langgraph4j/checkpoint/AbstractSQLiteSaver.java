@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
+import org.bsc.langgraph4j.utils.TryFunction;
 import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
@@ -13,18 +14,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implements LG4JLoggable {
-
-    @FunctionalInterface
-    public interface ExecStatement<R> {
-        R apply(Connection connection) throws Exception;
-    }
 
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         public StateSerializer<? extends AgentState> stateSerializer;
@@ -107,7 +102,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         this.stateSerializer = requireNonNull(builder.stateSerializer, "stateSerializer cannot be null");
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
-        sqlCommands = new SqlResource.Commands(sqlCommandsResourcePath());
+        sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
 
         initTable(builder.dropTablesFirst, builder.createTables || builder.dropTablesFirst);
     }
@@ -119,24 +114,25 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
 
-        SqlResource.loadSql(sqlInitResourcePath(), sqlCreateTables ->
-                execTransaction(conn -> {
-                    String sqlCommand = null;
+        final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
+
+        execTransaction(conn -> {
                     try (Statement statement = conn.createStatement()) {
                         if (dropTablesFirst) {
-                            sqlCommand = sqlCommands.get("sqlDropTables");
-                            log.trace("Executing drop tables:\n---\n{}---", sqlCommand);
-                            executeSqlStatements(statement, sqlCommand);
+                            for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
+                                log.trace("Executing drop table:\n---\n{}---", sql);
+                                statement.execute(sql);
+                            }
                         }
                         if (createTables) {
-                            log.trace("Executing create tables:\n---\n{}---", sqlCreateTables);
-                            sqlCommand = sqlCreateTables;
-                            executeSqlStatements(statement, sqlCommand);
+                            for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
+                                log.trace("Executing create tables:\n---\n{}---", sql);
+                                statement.execute(sql);
+                            }
                         }
                     }
                     return null;
-                })
-        );
+                });
 
     }
 
@@ -172,17 +168,6 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
             return ser.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
         }
         return stateSerializer.dataFromBytes(bytes);
-    }
-
-    private void executeSqlStatements(Statement statement, String sqlStatements) throws SQLException {
-        var statements = Stream.of(sqlStatements.split(";"))
-                .map(String::trim)
-                .filter(sql -> !sql.isEmpty())
-                .toList();
-
-        for (var sql : statements) {
-            statement.execute(sql);
-        }
     }
 
     @Override
@@ -300,7 +285,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
     }
 
 
-    protected final  <R> R exec(ExecStatement<R> execStatement) throws Exception {
+    protected final  <R> R exec(TryFunction<Connection,R,Exception> execStatement) throws Exception {
         final var connection = datasource.getConnection();
 
         connection.setAutoCommit(true);
@@ -308,10 +293,10 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
             statement.execute(sqlCommands.get("sqlEnableForeignKeys"));
         }
 
-        return execStatement.apply(connection);
+        return execStatement.tryApply(connection);
     }
 
-    protected final <R> R execTransaction(ExecStatement<R> execStatement) throws Exception {
+    protected final <R> R execTransaction(TryFunction<Connection,R,Exception> execStatement) throws Exception {
         final var connection = datasource.getConnection();
 
         final var previousAutoCommit = connection.getAutoCommit();
@@ -323,7 +308,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
         connection.setAutoCommit(false);
         try {
-            return execStatement.apply(connection);
+            return execStatement.tryApply(connection);
         } catch (Exception e) {
             log.error("Error executing statement", e);
             connection.rollback();

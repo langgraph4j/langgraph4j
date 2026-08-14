@@ -48,7 +48,7 @@ public class SQLiteSaverV2Test extends AbstractCheckpointSaverTest {
     @Test
     void testLoadCommandsFromResource() throws Exception {
 
-        var sqlCommandResource = new SqlResource.Commands("db/v2.0__commands.sql");
+        var sqlCommandResource = SqlResource.Commands.load("db/v2.0__commands.sql");
 
         String cmd = sqlCommandResource.get("sqlDropTables");
 
@@ -64,36 +64,36 @@ public class SQLiteSaverV2Test extends AbstractCheckpointSaverTest {
 
         assertNotNull(cmd);
         assertEquals("""
-INSERT INTO LG4JThreadTag (
-thread_id,
-thread_name,
-released_version,
-parent_thread_id,
-is_released,
-is_error,
-message,
-created_at
-)
-SELECT
-t.thread_id,
-t.thread_name,
-COALESCE(
-(
-SELECT MAX(tag.released_version)
-FROM LG4JThreadTag AS tag
-WHERE tag.thread_name = t.thread_name
-),
-0
-) + 1,
-t.parent_thread_id,
-1,
-?,
-?,
-t.created_at
-FROM LG4JThread AS t
-WHERE t.thread_name = ?
-RETURNING thread_id;
-
+                INSERT INTO LG4JThreadTag (
+                    thread_id,
+                    thread_name,
+                    released_version,
+                    parent_thread_id,
+                    is_released,
+                    is_error,
+                    message,
+                    created_at
+                )
+                SELECT
+                    t.thread_id,
+                    t.thread_name,
+                    COALESCE(
+                        (
+                            SELECT MAX(tag.released_version)
+                            FROM LG4JThreadTag AS tag
+                            WHERE tag.thread_name = t.thread_name
+                        ),
+                        0
+                    ) + 1,
+                    t.parent_thread_id,
+                    1,
+                    ?,
+                    ?,
+                    t.created_at
+                FROM LG4JThread AS t
+                WHERE t.thread_name = ?
+                RETURNING thread_id;
+                
                 """,cmd);
 
     }
