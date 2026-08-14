@@ -35,12 +35,12 @@ public class SQLiteSaverV2 extends AbstractSQLiteSaver {
 
     @Override
     protected final String sqlCommandsResourcePath() {
-        return "db/v1.9__commands.sql";
+        return "db/v2.0__commands.sql";
     }
 
     @Override
     protected final String sqlInitResourcePath() {
-        return "db/migration/v1.9__init.sql";
+        return "db/migration/v2.0__init.sql";
     }
 
     private Tag internalReleaseCheckpoints(String threadId,
