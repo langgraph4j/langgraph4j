@@ -509,6 +509,7 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 ## Articles
 
+* [Spring AI Recipe: Building a Graph-Based Agentic Workflow with LangGraph4j](https://www.linkedin.com/pulse/spring-ai-recipe-building-graph-based-agentic-workflow-craig-walls-ztfqc/)
 * [Skill-Based Sub-Agents with LangGraph4j and Spring AI](https://dev.to/bsorrentino/skill-based-sub-agents-with-langgraph4j-and-spring-ai-52b0)
 * [Building AI-Powered Workflows in Java: A Hands-On Guide to Spring AI and LangGraph4j](https://medium.com/@kandisa.ganesh/building-ai-powered-workflows-in-java-a-hands-on-guide-to-spring-ai-and-langgraph4j-805464ab8a2e)
 * [Beyond the Basics: Building Real-World AI Workflows with LangGraph4j](https://medium.com/@kandisa.ganesh/beyond-the-basics-building-real-world-ai-workflows-with-langgraph4j-8e2f7765c505)
