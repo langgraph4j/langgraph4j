@@ -12,12 +12,6 @@ import static java.util.Optional.ofNullable;
 
 public interface SqlResource extends LG4JLoggable  {
 
-    @FunctionalInterface
-    interface Process<R>  {
-
-        R apply(String content) throws Exception;
-    }
-
     class Commands {
         private final Map<String, String> sqlCommands;
 
@@ -32,7 +26,7 @@ public interface SqlResource extends LG4JLoggable  {
 
         private Map<String, String> extractSqlCommands(String resourcePath) throws Exception {
 
-            final Optional<Map<String, String>> result = load(
+            final Optional<Map<String, String>> result = loadSql(
                     requireNonNull(resourcePath, "resourcePath cannot be null"), (String content) -> {
 
                         var commands = new LinkedHashMap<String, String>();
@@ -75,7 +69,7 @@ public interface SqlResource extends LG4JLoggable  {
 
     }
 
-    static <R> Optional<R> load(String resourcePath, Process<R> process ) throws Exception {
+    static <R> Optional<R> loadSql(String resourcePath, TryFunction<String, R, Exception> process ) throws Exception {
         requireNonNull(resourcePath, "resourceName cannot be null");
         final var classLoader = SqlResource.class.getClassLoader();
 
@@ -84,7 +78,7 @@ public interface SqlResource extends LG4JLoggable  {
                 return Optional.empty();
             }
             final var content =  new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            return ofNullable(process.apply(content));
+            return ofNullable(process.tryApply(content));
         }
     }
 

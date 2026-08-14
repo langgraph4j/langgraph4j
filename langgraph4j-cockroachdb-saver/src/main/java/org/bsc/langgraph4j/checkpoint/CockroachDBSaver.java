@@ -8,8 +8,6 @@ import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.IOException;

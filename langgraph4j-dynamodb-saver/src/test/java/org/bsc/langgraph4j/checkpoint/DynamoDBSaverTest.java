@@ -1,15 +1,13 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.langgraph4j.CompileConfig;
-import org.bsc.langgraph4j.GraphInput;
-import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.StateGraph;
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -52,10 +50,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * </pre>
  */
 @Testcontainers
-public class DynamoDBSaverTest {
+public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
 
-    static class State extends AgentState {
-        public State(Map<String, Object> initData) {
+    static class ChatState extends AgentState {
+        public ChatState(Map<String, Object> initData) {
             super(initData);
         }
 
@@ -63,24 +61,6 @@ public class DynamoDBSaverTest {
             return this.value("history");
         }
 
-    }
-    // ─── Serializer variants ─────────────────────────────────────────────────────
-
-    static class MyJacksonStateSerializer extends JacksonStateSerializer<State> {
-        public MyJacksonStateSerializer(AgentStateFactory<State> stateFactory) {
-            super(stateFactory);
-        }
-    }
-
-    public enum StateSerializerEnum {
-        BINARY(new ObjectStreamStateSerializer<>(State::new)),
-        JSON(new MyJacksonStateSerializer(State::new));
-
-        final StateSerializer<State> stateSerializer;
-
-        StateSerializerEnum(StateSerializer<State> stateSerializer) {
-            this.stateSerializer = stateSerializer;
-        }
     }
 
     // ─── Container setup ─────────────────────────────────────────────────────────
@@ -125,8 +105,9 @@ public class DynamoDBSaverTest {
      * {@code dropTableFirst=true} ensures a clean table for every test.
      */
     DynamoDBSaver buildSaver(StateSerializerEnum param) {
-        String endpoint = "http://" + dynamoContainer.getHost()
-                        + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
+        final var endpoint = "http://%s:%d".formatted(
+                dynamoContainer.getHost(),
+                dynamoContainer.getMappedPort(DYNAMODB_PORT));
 
         var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
             .region(software.amazon.awssdk.regions.Region.US_EAST_1)
@@ -157,8 +138,9 @@ public class DynamoDBSaverTest {
      * (i.e., they are truly persisted, not just held in memory).
      */
     DynamoDBSaver buildSaverReuse(StateSerializerEnum param) {
-        String endpoint = "http://" + dynamoContainer.getHost()
-                        + ":" + dynamoContainer.getMappedPort(DYNAMODB_PORT);
+        final var endpoint = "http://%s:%d".formatted(
+                dynamoContainer.getHost(),
+                dynamoContainer.getMappedPort(DYNAMODB_PORT));
 
         var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
             .region(software.amazon.awssdk.regions.Region.US_EAST_1)
@@ -182,6 +164,34 @@ public class DynamoDBSaverTest {
             .build();
     }
 
+    @Override
+    protected BaseCheckpointSaver buildCheckpointSaver(StateSerializer<? extends AgentState> stateSerializer, @Nullable String threadId) throws Exception {
+        final var endpoint = "http://%s:%d".formatted(
+                dynamoContainer.getHost(),
+                dynamoContainer.getMappedPort(DYNAMODB_PORT));
+
+        final var client = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder()
+                .region(software.amazon.awssdk.regions.Region.US_EAST_1)
+                .endpointOverride(java.net.URI.create(endpoint))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "dummy")))
+                .httpClientBuilder(ApacheHttpClient.builder()
+                        .connectionMaxIdleTime(Duration.ofSeconds(1))
+                        .connectionTimeToLive(Duration.ofSeconds(10))
+                        .connectionTimeout(Duration.ofSeconds(5))
+                        .socketTimeout(Duration.ofSeconds(5)))
+                .overrideConfiguration(b -> b
+                        .apiCallAttemptTimeout(Duration.ofSeconds(6))
+                        .apiCallTimeout(Duration.ofSeconds(20)))
+                .build();
+
+        return DynamoDBSaver.builder()
+                .tableName(TABLE_NAME)
+                .dynamoDbClient(client)
+                .stateSerializer(stateSerializer)
+                .createTableIfNotExists(true)
+                .build();
+    }
+
     // ─── Test graph helper ───────────────────────────────────────────────────────
 
     static StateGraph<State> singleNodeGraph() throws Exception {
@@ -192,8 +202,8 @@ public class DynamoDBSaverTest {
             .addEdge("agent_1", END);
     }
 
-    static StateGraph<State> chatGraph() throws Exception {
-        NodeAction<State> chatbot = state -> {
+    static StateGraph<ChatState> chatGraph() throws Exception {
+        NodeAction<ChatState> chatbot = state -> {
             String userInput = (String) state.value("user_input").orElse("");
             List<String> history = new ArrayList<>(state.history().orElseGet(List::of));
 
@@ -210,7 +220,7 @@ public class DynamoDBSaverTest {
             return Map.of("history", history);
         };
 
-        return new StateGraph<>(State::new)
+        return new StateGraph<>(ChatState::new)
                 .addNode("chatbot", node_async(chatbot))
                 .addEdge(START, "chatbot")
                 .addEdge("chatbot", END);
@@ -218,92 +228,6 @@ public class DynamoDBSaverTest {
 
     // ─── Tests ───────────────────────────────────────────────────────────────────
 
-    /**
-     * After the graph runs with {@code releaseThread=true}, state history must be empty
-     * because the thread is marked as released and checkpoints are no longer returned.
-     */
-    @ParameterizedTest
-    @EnumSource(StateSerializerEnum.class)
-    void testCheckpointWithReleasedThread(StateSerializerEnum param) throws Exception {
-        var saver = buildSaver(param);
-
-        var compileConfig = CompileConfig.builder()
-            .checkpointSaver(saver)
-            .releaseThread(true)
-            .build();
-
-        var runnableConfig = RunnableConfig.builder().threadId("thread-released").build();
-        var workflow = singleNodeGraph().compile(compileConfig);
-
-        var result = workflow.invoke( GraphInput.args(Map.of("input", "test1")), runnableConfig);
-
-        assertTrue(result.isPresent(), "Workflow must produce a result");
-
-        var history = workflow.getStateHistory(runnableConfig);
-        assertTrue(history.isEmpty(), "History must be empty after thread is released");
-    }
-
-    /**
-     * Full lifecycle test: invoke graph, verify history, update state, reload via a fresh
-     * saver instance to confirm DynamoDB persistence (not just in-memory cache).
-     */
-    @ParameterizedTest
-    @EnumSource(StateSerializerEnum.class)
-    void testCheckpointWithNotReleasedThread(StateSerializerEnum param) throws Exception {
-        var saver = buildSaver(param);
-
-        var compileConfig = CompileConfig.builder()
-            .checkpointSaver(saver)
-            .releaseThread(false)
-            .build();
-
-        var runnableConfig = RunnableConfig.builder().threadId("thread-not-released").build();
-        var workflow = singleNodeGraph().compile(compileConfig);
-
-        // ── Step 1: invoke ──
-        var result = workflow.invoke(GraphInput.args(Map.of("input", "test1")), runnableConfig);
-        assertTrue(result.isPresent());
-
-        // ── Step 2: verify history ──
-        var history = workflow.getStateHistory(runnableConfig);
-        assertFalse(history.isEmpty());
-        assertEquals(2, history.size(), "Expected __START__ + agent_1 checkpoints");
-
-        // ── Step 3: inspect last snapshot ──
-        var lastSnapshot = workflow.lastStateOf(runnableConfig);
-        assertTrue(lastSnapshot.isPresent());
-        assertEquals("agent_1", lastSnapshot.get().node());
-        assertEquals(END, lastSnapshot.get().next());
-
-        // ── Step 4: updateState round-trip ──
-        var updatedConfig = workflow.updateState(
-            lastSnapshot.get().config(), Map.of("update", "update test"));
-
-        var updatedSnapshot = workflow.stateOf(updatedConfig);
-        assertTrue(updatedSnapshot.isPresent());
-        assertEquals("agent_1", updatedSnapshot.get().node());
-        assertTrue(updatedSnapshot.get().state().value("update").isPresent());
-        assertEquals("update test", updatedSnapshot.get().state().value("update").get());
-        assertEquals(END, lastSnapshot.get().next());
-
-        // ── Step 5: fresh saver reloads from DynamoDB ──
-        var saver2 = buildSaverReuse(param);
-        var workflow2 = singleNodeGraph().compile(
-            CompileConfig.builder().checkpointSaver(saver2).releaseThread(false).build());
-
-        var history2 = workflow2.getStateHistory(runnableConfig);
-        assertFalse(history2.isEmpty());
-        assertEquals(2, history2.size(), "Fresh saver instance must reload same checkpoints");
-
-        var reloadedSnapshot = workflow2.stateOf(updatedConfig);
-        assertTrue(reloadedSnapshot.isPresent());
-        assertEquals("agent_1", reloadedSnapshot.get().node());
-        assertEquals(END, reloadedSnapshot.get().next());
-        assertTrue(reloadedSnapshot.get().state().value("update").isPresent());
-        assertEquals("update test", reloadedSnapshot.get().state().value("update").get());
-
-        saver2.release(runnableConfig);
-    }
 
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)

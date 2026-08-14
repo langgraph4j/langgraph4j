@@ -340,8 +340,8 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
     private RedisSaver(Builder builder) {
         this.redissonClient = Objects.requireNonNull(builder.redissonClient, "redissonClient cannot be null");
         this.keyNamingStrategy = builder.keyNamingStrategy != null ? builder.keyNamingStrategy : new DefaultKeyNamingStrategy();
-        this.objectMapper = new ObjectMapper();
         this.stateSerializer = builder.stateSerializer;
+        this.objectMapper = (builder.stateSerializer == null) ? new ObjectMapper() : null;
         this.ttl = builder.ttl;
         this.ttlUnit = builder.ttlUnit;
     }

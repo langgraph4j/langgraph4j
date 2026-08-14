@@ -33,6 +33,11 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+
         <!-- Needed at runtime only for the JSON path (JacksonCheckpointListSerializer). Declared
              "provided" like langgraph4j-core so binary-only consumers don't pull Jackson transitively;
              supply Jackson yourself when using a JacksonStateSerializer. -->
@@ -42,7 +47,13 @@
             <version>${jackson.version}</version>
             <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.bsc.langgraph4j</groupId>
+            <artifactId>langgraph4j-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

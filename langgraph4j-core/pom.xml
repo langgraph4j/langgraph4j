@@ -34,7 +34,6 @@
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
-            <scope>provideid</scope>
         </dependency>
 
         <dependency>
@@ -77,6 +76,27 @@
     </dependencyManagement>
 
     <build>
+        <plugins>
+            <!-- generate a test-jar artifact for the tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/LG4JTestUtil*.class</include>
+                                <include>**/AbstractCheckpointSaverTest*.class</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
     </build>
 
 

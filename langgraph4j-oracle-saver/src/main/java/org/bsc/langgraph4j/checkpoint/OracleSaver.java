@@ -11,12 +11,13 @@ import oracle.sql.json.OracleJsonDatum;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.utils.TryFunction;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -95,7 +96,7 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
                thread_id VARCHAR2(36) NOT NULL,
                node_id VARCHAR(255),
                next_node_id VARCHAR(255),
-               state_data JSON NOT NULL,
+               state_data CLOB NOT NULL,
                saved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
                CONSTRAINT LANGRAPH4J_FK_THREAD
@@ -161,6 +162,7 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
     public static class Builder {
         private DataSource dataSource;
         private CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
+        public StateSerializer<? extends AgentState> stateSerializer;
 
         /**
          * Sets the datasource
@@ -181,6 +183,11 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
          */
         public Builder createOption(CreateOption createOption) {
             this.createOption = createOption;
+            return this;
+        }
+
+        public Builder stateSerializer(StateSerializer<? extends AgentState> stateSerializer) {
+            this.stateSerializer = stateSerializer;
             return this;
         }
 
@@ -209,6 +216,8 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
     // Configuration
     private final DataSource dataSource;
     private final CreateOption createOption;
+    private final StateSerializer<? extends AgentState> stateSerializer;
+    private final ObjectMapper objectMapper;
 
     /**
      * Private constructor used by the builder to create a new instance of
@@ -219,7 +228,50 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
     private OracleSaver(Builder builder) {
         this.dataSource = builder.dataSource;
         this.createOption = builder.createOption;
+        this.stateSerializer = builder.stateSerializer;
+        if( builder.stateSerializer != null ) {
+            objectMapper = null;
+        }
+        else {
+            JsonFactory osonFactory = new OsonFactory();
+            objectMapper = new ObjectMapper(osonFactory);
+        }
+
         initTables();
+    }
+
+
+    private String encodeState(Map<String, Object> data) throws IOException {
+        Objects.requireNonNull(data, "data cannot be null");
+
+        if (stateSerializer == null) {
+            return objectMapper.writeValueAsString(data);
+        }
+
+        var bytes = stateSerializer.dataToBytes(data);
+        return Base64.getEncoder().encodeToString(bytes);
+
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> decodeState(String statePayload,
+                                            @Nullable  String stateContentType ) throws IOException, ClassNotFoundException {
+
+        if (stateSerializer == null) {
+            return objectMapper.readValue(statePayload, Map.class);
+        }
+
+        if (stateContentType!=null && !Objects.equals(stateContentType, stateSerializer.contentType())) {
+            throw new IllegalStateException(
+                    "Content Type used for stored state '%s' is different from one '%s' used to deserialize it".formatted(
+                            stateContentType,
+                            stateSerializer.contentType()));
+        }
+
+        var bytes = Base64.getDecoder().decode(statePayload);
+
+        return stateSerializer.dataFromBytes(bytes);
     }
 
     /**
@@ -235,8 +287,6 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
     protected LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception {
         final var checkpoints = new LinkedList<Checkpoint>();
         final String threadName = threadId(config);
-        JsonFactory osonFactory = new OsonFactory();
-        ObjectMapper objectMapper = new ObjectMapper(osonFactory);
 
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(SELECT_CHECKPOINTS)) {
@@ -255,18 +305,17 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
             oracleStatement.defineColumnType(1, OracleTypes.VARCHAR); // checkpoint_id
             oracleStatement.defineColumnType(2, OracleTypes.VARCHAR); // node_id
             oracleStatement.defineColumnType(3, OracleTypes.VARCHAR); // next_node_id
-            oracleStatement.defineColumnType(4, OracleTypes.JSON, Integer.MAX_VALUE); // state_data
+            oracleStatement.defineColumnType(4, OracleTypes.CLOB ); // state_data
             oracleStatement.setLobPrefetchSize(Integer.MAX_VALUE); // Workaround for Oracle JDBC bug 37030121
 
             preparedStatement.setString(1, threadName);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    byte[] osonBytes = resultSet.getObject(4, OracleJsonDatum.class).shareBytes();
                     Checkpoint checkpoint = Checkpoint.builder()
                             .id(resultSet.getString(1))
                             .nodeId(resultSet.getString(2))
                             .nextNodeId(resultSet.getString(3))
-                            .state(objectMapper.readValue(osonBytes, new TypeReference<Map<String, Object>>() {}))
+                            .state( decodeState(resultSet.getString(4), null ) )
                             .build();
                     checkpoints.add(checkpoint);
                 }
@@ -302,7 +351,7 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
             insertCheckpointStatement.setString(1, checkpoint.getId());
             insertCheckpointStatement.setString(2, checkpoint.getNodeId());
             insertCheckpointStatement.setString(3, checkpoint.getNextNodeId());
-            insertCheckpointStatement.setObject(4, checkpoint.getState(), OracleType.JSON);
+            insertCheckpointStatement.setString(4, encodeState(checkpoint.getState()));
             insertCheckpointStatement.setString(5, threadName);
 
             insertCheckpointStatement.execute();
@@ -368,7 +417,7 @@ public class OracleSaver extends AbstractCheckpointSaver implements LG4JLoggable
                 preparedStatement.setString(1, checkpoint.getId());
                 preparedStatement.setString(2, checkpoint.getNodeId());
                 preparedStatement.setString(3, checkpoint.getNextNodeId());
-                preparedStatement.setObject(4, checkpoint.getState(), OracleType.JSON);
+                preparedStatement.setString(4, encodeState(checkpoint.getState()));
                 preparedStatement.setString(5, config.checkPointId().get());
                 preparedStatement.execute();
             } catch (SQLException sqlException) {
