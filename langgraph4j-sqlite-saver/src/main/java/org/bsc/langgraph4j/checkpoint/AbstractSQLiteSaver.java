@@ -119,7 +119,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
 
-        SqlResource.load(sqlInitResourcePath(), sqlCreateTables ->
+        SqlResource.loadSql(sqlInitResourcePath(), sqlCreateTables ->
                 execTransaction(conn -> {
                     String sqlCommand = null;
                     try (Statement statement = conn.createStatement()) {
