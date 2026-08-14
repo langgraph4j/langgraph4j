@@ -30,11 +30,11 @@ public class SQLiteSaver extends AbstractSQLiteSaver {
 
     @Override
     protected final String sqlCommandsResourcePath() {
-        return "db/v1.8__commands.sql";
+        return "db/v1.0__commands.sql";
     }
 
     @Override
-    protected final String sqlInitResourcePath() { return "db/migration/v1.8__init.sql"; }
+    protected final String sqlInitResourcePath() { return "db/migration/v1.0__init.sql"; }
 
 
     @Override
