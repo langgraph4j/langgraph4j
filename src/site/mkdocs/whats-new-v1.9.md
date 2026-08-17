@@ -127,6 +127,26 @@ This allows a parent saver to release checkpoint savers created by compiled subg
 
 The `AbstractCheckpointSaver` already provide a reference implementations for subgraphs registration.
 
+### Error and interruption handling
+
+Checkpoint savers now expose explicit hooks for interrupted and failed executions:
+
+```java
+void registerInterruption(RunnableConfig config, InterruptionMetadata interruptionMetadata) throws Exception;
+
+Tag releaseCheckpointsOnError(RunnableConfig config, Throwable error) throws Exception;
+```
+
+To improve the graph running post analysis very important in production environment we added
+the possibility to preserve the reason for an interruption and distinguish normal completion from an error release. `InterruptionMetadata` now exposes also the interruption reason.
+
+The **in-memory**, **file-system**, **Redis**, **Postgres**, **Oracle**, **MySQL**, **CockroachDB**, **DynamoDB**, and **Hazelcast** savers have been aligned with this contract providing a default implementation.
+
+
+### SQLite saver upgrade (V2)
+
+The SQLite module now includes a `SQLiteSaverV2` implementation backed by versioned SQL resources. `SQLiteSaverV2` is aligned with the new checkpoint saver release/error/interruption contract, while the existing `SQLiteSaver` remains available for the V1 schema.
+
 ## Starting, resuming, and invoking graphs
 
 `GraphInput` is now the preferred and explicit execution API.
@@ -159,6 +179,15 @@ The following overloads remain available in 1.9 but are deprecated for removal:
 
 `RunnableConfig.empty()` is a reusable empty configuration for executions that
 do not need a thread ID, checkpoint ID, metadata, or custom stream mode.
+
+## Runtime diagnostics and metadata
+
+`GraphRunnerException` now carries more execution context:
+
+- `config()` returns the `RunnableConfig` associated with the failed run.
+- `nodeId()` returns the failing node id when it is available.
+
+`RunnableConfig` also tracks the current graph node path through `nodePath()`. This replaces the older partial `graphPath()` usage and is available for regular nodes as well as subgraph execution.
 
 
 ## State cloning and transient attributes
@@ -254,6 +283,15 @@ Its responsibilities are split into:
 The default serializer for the LangChain4j `AgentExecutorEx` changes from the standard Java object serializer to its JSON serializer. Persisted checkpoints must be read with a serializer compatible with the format that created them;
 do not mix old binary checkpoint files with the new default.
 
+### Message attribute serialization
+
+The standard LangChain4j serializers now preserve attributes on:
+
+- `UserMessage`
+- `ToolExecutionResultMessage`
+
+This matters for applications that attach provider-specific metadata or tool execution details to LangChain4j messages and then persist graph state through LangGraph4j serializers.
+
 ### Removal
 
 The deprecated LangChain4j `LLMStreamingGenerator` class has been removed. Use
@@ -306,6 +344,7 @@ These changes affect project contributors or documentation deployment rather tha
 - Maven/site documentation was reorganized and old generated Spring AI pages
   were removed in favor of maintained module READMEs.
 - MkDocs gained Mike-based documentation versioning.
+- A `SECURITY.md` policy was added with supported-version and vulnerability-reporting guidance.
 - GitHub Actions and snapshot/site deployment configuration were updated.
 
 
@@ -326,7 +365,6 @@ Change the LangGraph4j version in your BOM or individual dependencies:
   </dependencies>
 </dependencyManagement>
 ```
-
 
 
 
