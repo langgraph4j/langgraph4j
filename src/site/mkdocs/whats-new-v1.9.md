@@ -358,7 +358,7 @@ Change the LangGraph4j version in your BOM or individual dependencies:
     <dependency>
       <groupId>org.bsc.langgraph4j</groupId>
       <artifactId>langgraph4j-bom</artifactId>
-      <version>1.9.0-beta2</version>
+      <version>1.9.0-beta3</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
