@@ -23,6 +23,10 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 
+import { debug } from './debug.js';
+
+const _DBG = debug( { on: true, topic: 'LG4JGraph' } )
+
 /**
  * @file React Flow based LangGraph4j graph viewer.
  * @typedef {import('react').ReactElement} ReactElement
@@ -886,7 +890,7 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     if (nextDsl.type !== 'langgraph4j' || !Array.isArray(nextDsl.nodes) || !Array.isArray(nextDsl.edges)) {
       throw new Error('JSON is not a Langgraph4j DSL document.');
     }
-    console.log( 'Parsed DSL:', JSON.stringify(nextDsl, null, 2) );
+    //console.log( 'Parsed DSL:', JSON.stringify(nextDsl, null, 2) );
 
     const nextLayoutStorageKey = graphLayoutStorageKey(value);
     const storedLayout = readStoredGraphLayout(nextLayoutStorageKey);
@@ -997,7 +1001,7 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
     h(Controls, {
       
       onInteractiveChange: (prev) => { 
-        console.log('Interactive status changed:', prev);
+        _DBG('Interactive status changed:', prev);
         setInteractive(!interactive);
       }
     },
@@ -1305,6 +1309,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    * @returns {void}
    */
   onActive(event) {
+    _DBG('Active node changed:', event.detail);
     const { detail: { node, subgraphNode } } = event;
     this.activeNodeId = subgraphNode ?? node
     this.update();
