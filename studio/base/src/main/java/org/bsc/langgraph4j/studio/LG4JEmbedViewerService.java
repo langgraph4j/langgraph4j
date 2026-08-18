@@ -212,7 +212,7 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
 
         processor.dispatchAsync( AsyncGenerator.Data.of(output));
         if(output.isEND() && !(output instanceof SubGraphOutput<?>) ) {
-            processor.dispatchAsync( AsyncGenerator.Data.done(output) );
+            processor.dispatchAsync( AsyncGenerator.Data.done() );
         }
 
     }
