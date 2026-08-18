@@ -3,6 +3,7 @@ package org.bsc.langgraph4j.studio.springboot;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.studio.LG4JEmbedViewerService;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,12 +22,12 @@ public class LG4jEmbedViewerApplication {
 
     @Controller
     public static class ConsoleController implements CommandLineRunner {
-        final StateGraph<? extends AgentState> graph;
+        final LangGraphStudioServer.Instance instance;
         final LG4JEmbedViewerService viewerService;
 
 
-        public ConsoleController(StateGraph<? extends AgentState> graph, LG4JEmbedViewerService viewerService) {
-            this.graph = graph;
+        public ConsoleController(LangGraphStudioServer.Instance instance, LG4JEmbedViewerService viewerService) {
+            this.instance = instance;
             this.viewerService = viewerService;
         }
 
@@ -41,12 +42,17 @@ public class LG4jEmbedViewerApplication {
          */
         @Override
         public void run(String... args) throws Exception {
-            final var agent = graph.compile();
+            final var agent = instance.graph().compile(instance.compileConfig());
+
             final var reader = new BufferedReader(new InputStreamReader(System.in));
 
             while (askToContinue(reader)) {
                 agent.streamSnapshots(GraphInput.noArgs(), RunnableConfig.empty())
                         .forEachAsync(viewerService::dispatchAsync)
+                        .thenAccept(snapshots -> {
+
+
+                        })
                         .join();
 
             }

@@ -1,28 +1,18 @@
 package org.bsc.langgraph4j.studio.springboot;
 
-import org.bsc.langgraph4j.GraphStateException;
-import org.bsc.langgraph4j.SampleGraph;
-import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.action.EdgeAction;
-import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.studio.LG4JEmbedViewerService;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Map;
-
-import static org.bsc.langgraph4j.GraphDefinition.END;
-import static org.bsc.langgraph4j.GraphDefinition.START;
-import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 @Configuration
 public class LG4JEmbedViewerSampleConfig extends LG4JEmbedViewerConfig {
 
     @Bean
-    public StateGraph<? extends AgentState> graph() throws GraphStateException {
+    public LangGraphStudioServer.Instance graphInstance() throws GraphStateException {
 //        return SampleGraph.withSubgraph();
-        return SampleGraph.agentExecutor();
+        return SampleGraph.withInterruption();
     }
 
     @Bean
@@ -30,8 +20,8 @@ public class LG4JEmbedViewerSampleConfig extends LG4JEmbedViewerConfig {
     protected LG4JEmbedViewerService viewerService() throws Exception {
             return LG4JEmbedViewerService.builder()
                     .id("lg4j-embed-viewer-sample")
-                    .title("LangGraph4J Embed Viewer Sample")
-                    .diagram(graph())
+                    .title(graphInstance().title())
+                    .diagram(graphInstance().graph())
                     .build();
     }
 }

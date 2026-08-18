@@ -3,22 +3,11 @@ package org.bsc.langgraph4j.studio.springboot;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.SampleGraph;
-import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
-import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
-import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
-import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
-
-import static org.bsc.langgraph4j.StateGraph.END;
-import static org.bsc.langgraph4j.StateGraph.START;
-import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 @Configuration
 public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
@@ -49,7 +38,7 @@ public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
                          .checkpointSaver( new MemorySaver() )
                          .interruptBefore("claudeNode")
                          .build())
-                .graph(SampleGraph.issue241())
+                .graph(SampleGraph.issue241().graph())
                 .addInputStringArg( "input")
                 .build());
 
@@ -59,7 +48,7 @@ public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
 
         return  Map.entry( "sample", LangGraphStudioServer.Instance.builder()
                                         .title("LangGraph Studio (Sample)")
-                                        .graph( SampleGraph.withConditionalEdge() )
+                                        .graph( SampleGraph.withConditionalEdge().graph() )
                                         .build());
 
     }
@@ -69,7 +58,7 @@ public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
 
         return   Map.entry( "state_subgraph", LangGraphStudioServer.Instance.builder()
                                         .title("LangGraph Studio (Merged Subgraph)")
-                                        .graph( SampleGraph.withStateSubgraph() )
+                                        .graph( SampleGraph.withStateSubgraph().graph() )
                                         .build());
 
     }
@@ -77,7 +66,7 @@ public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
     private Map.Entry<String, LangGraphStudioServer.Instance> withCompiledSubgraphSample() throws GraphStateException {
         return  Map.entry( "compiled_subgraph", LangGraphStudioServer.Instance.builder()
                                         .title("LangGraph Studio (Compiled Subgraph)")
-                                        .graph( SampleGraph.withCompiledSubgraph() )
+                                        .graph( SampleGraph.withCompiledSubgraph().graph() )
                                         .build());
     }
 
@@ -85,7 +74,7 @@ public class LangGraphStudioSampleConfig extends LangGraphStudioConfig {
 
         return  Map.entry( "nested_subgraph", LangGraphStudioServer.Instance.builder()
                 .title("LangGraph Studio (Nested Subgraph)")
-                .graph( SampleGraph.withNestedSubgraph() )
+                .graph( SampleGraph.withNestedSubgraph().graph() )
                 .build());
 
     }

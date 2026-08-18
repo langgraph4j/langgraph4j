@@ -1,7 +1,9 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.EdgeAction;
+import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
 import org.bsc.langgraph4j.state.AgentState;
@@ -9,7 +11,6 @@ import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -20,10 +21,10 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public interface SampleGraph {
 
-    static StateGraph<? extends AgentState> agentExecutor() throws GraphStateException {
+    static LangGraphStudioServer.Instance agentExecutor() throws GraphStateException {
         AsyncNodeAction<AgentState> action = state -> completedFuture(Map.of());
 
-        return new StateGraph<>(AgentState::new)
+        final var graph =  new StateGraph<>(AgentState::new)
                 .addNode("model", action)
                 .addNode("tools", action)
                 .addEdge(START, "model")
@@ -35,10 +36,56 @@ public interface SampleGraph {
                                 .toEND()
                                 .build())
                 .addEdge("tools", "model");
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Agent Executor)")
+                .graph(graph)
+                .addInputStringArg("input")
+                .build();
 
     }
 
-    static StateGraph<? extends AgentState> withSubgraph() throws GraphStateException {
+    static LangGraphStudioServer.Instance withInterruption() throws GraphStateException {
+        class State extends MessagesState<String> {
+
+            public State(Map<String, Object> initData) {
+                super(initData);
+            }
+        }
+
+        AsyncNodeActionWithConfig<State> action = (state,config) ->
+                completedFuture(Map.of("messages",config.nodeId()));
+
+        var graph = new StateGraph<>( State.SCHEMA, State::new)
+                .addNode("A", action)
+                .addNode("B", action)
+                .addNode("C", action)
+                .addConditionalEdges("B",
+                        edge_async(state ->
+                                state.lastMessage().orElse(END)),
+                        EdgeMappings.builder()
+                                .to("A")
+                                .to("C")
+                                .toEND()
+                                .build())
+                .addEdge(START, "A")
+                .addEdge("A", "B")
+                .addEdge("C", END);
+
+        final var compileConfig = CompileConfig.builder()
+                .checkpointSaver(new MemorySaver())
+                .interruptAfter("B")
+                .interruptBeforeEdge(true)
+                .build();
+
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Interruption Demo)")
+                .compileConfig(compileConfig)
+                .graph(graph)
+                .build();
+
+    }
+
+    static LangGraphStudioServer.Instance withSubgraph() throws GraphStateException {
         AsyncNodeAction<AgentState> action = state ->
                 completedFuture(Map.of());
 
@@ -50,7 +97,7 @@ public interface SampleGraph {
                 .addEdge("format_result", END)
                 .compile();
 
-        return new StateGraph<>(AgentState::new)
+        final var graph = new StateGraph<>(AgentState::new)
                 .addNode("planner", action)
                 .addNode("tool_executor", toolSubgraph)
                 .addNode("responder", action)
@@ -64,9 +111,14 @@ public interface SampleGraph {
                                 .build())
                 .addEdge("tool_executor", "responder")
                 .addEdge("responder", END);
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Subgraph Demo)")
+                .graph(graph)
+                .build();
+
     }
 
-    static StateGraph<? extends AgentState> withNestedSubgraphs() throws GraphStateException {
+    static LangGraphStudioServer.Instance withNestedSubgraphs() throws GraphStateException {
         var mockedAction = AsyncNodeAction.node_async((ignored) -> Map.of());
 
         var subSubGraph = new StateGraph<>(AgentState::new)
@@ -89,7 +141,7 @@ public interface SampleGraph {
                 .addEdge("bar2", StateGraph.END)
                 .compile();
 
-        return new StateGraph<>(AgentState::new)
+        final var graph = new StateGraph<>(AgentState::new)
                 .addNode("main1", mockedAction)
                 .addNode("subgraph1", subGraph)
                 .addNode("main2", mockedAction)
@@ -98,10 +150,14 @@ public interface SampleGraph {
                 .addEdge("subgraph1", "main2")
                 .addEdge("main2", StateGraph.END)
                 ;
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Nested Subgraph Demo)")
+                .graph(graph)
+                .build();
 
     }
 
-    static StateGraph<AgentState> withConditionalEdge() throws GraphStateException {
+    static LangGraphStudioServer.Instance withConditionalEdge() throws GraphStateException {
         final EdgeAction<AgentState> conditionalAge = new EdgeAction<>() {
             int steps = 0;
 
@@ -115,7 +171,7 @@ public interface SampleGraph {
             }
         };
 
-        return new StateGraph<>(AgentState::new)
+        final var graph = new StateGraph<>(AgentState::new)
                 .addNode("agent", node_async((state) -> {
                     System.out.println("agent ");
                     System.out.println(state);
@@ -134,23 +190,37 @@ public interface SampleGraph {
                 .addConditionalEdges("agent",
                         edge_async(conditionalAge), Map.of("next", "action", "end", END))
                 ;
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Sample)")
+                .graph( graph )
+                .build();
     }
 
-    static StateGraph<? extends AgentState> issue241() throws GraphStateException {
+    static LangGraphStudioServer.Instance issue241() throws GraphStateException {
 
         final Function<String, AsyncNodeAction<MessagesState<String>>> _makeNode = (String id) ->
                 node_async(state ->
                         Map.of("messages", id));
 
 
-        return new StateGraph<MessagesState<String>>(MessagesState::new)
+       final var graph = new StateGraph<MessagesState<String>>(MessagesState::new)
                 .addNode("claudeNode", _makeNode.apply("claudeNode"))
                 .addEdge(START, "claudeNode")
                 .addEdge("claudeNode", END)
                 ;
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Issue241)")
+                .compileConfig(CompileConfig.builder()
+                        .releaseThread(true)
+                        .checkpointSaver( new MemorySaver() )
+                        .interruptBefore("claudeNode")
+                        .build())
+                .graph(graph)
+                .addInputStringArg( "input")
+                .build();
     }
 
-    static StateGraph<? extends AgentState> withStateSubgraph() throws GraphStateException {
+    static LangGraphStudioServer.Instance withStateSubgraph() throws GraphStateException {
 
         final Function<String, AsyncNodeAction<MessagesState<String>>> _makeNode = (String id) ->
                 node_async(state ->
@@ -167,7 +237,7 @@ public interface SampleGraph {
                         Map.of(END, END, "c", "C"))
                 .addEdge("C", END);
 
-        return new MessagesStateGraph<String>()
+        final var graph = new MessagesStateGraph<String>()
                 .addNode("A", _makeNode.apply("A"))
                 .addNode("B", workflowChild)
                 .addNode("C", _makeNode.apply("C"))
@@ -178,9 +248,13 @@ public interface SampleGraph {
                 .addEdge("B", "C")
                 .addEdge("C", END)
                 ;
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Merged Subgraph)")
+                .graph( graph )
+                .build();
     }
 
-    static StateGraph<? extends AgentState> withCompiledSubgraph() throws GraphStateException {
+    static LangGraphStudioServer.Instance withCompiledSubgraph() throws GraphStateException {
 
         final Function<String, AsyncNodeAction<MessagesState<String>>> _makeNode = (String id) ->
                 node_async(state ->
@@ -198,7 +272,7 @@ public interface SampleGraph {
                 .addEdge("C", END)
                 .compile();
 
-        return new MessagesStateGraph<String>()
+        final var graph = new MessagesStateGraph<String>()
                 .addNode("A", _makeNode.apply("A"))
                 .addNode("B", workflowChild)
                 .addNode("C", _makeNode.apply("C"))
@@ -209,10 +283,14 @@ public interface SampleGraph {
                 .addEdge("B", "C")
                 .addEdge("C", END)
                 ;
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Compiled Subgraph)")
+                .graph( graph )
+                .build();
 
     }
 
-    static StateGraph<? extends AgentState> withNestedSubgraph() throws GraphStateException {
+    static LangGraphStudioServer.Instance withNestedSubgraph() throws GraphStateException {
         var mockedAction = AsyncNodeAction.node_async((ignored) -> Map.of());
 
         var subSubGraph = new StateGraph<>(AgentState::new)
@@ -235,7 +313,7 @@ public interface SampleGraph {
                 .addEdge("bar2", StateGraph.END)
                 .compile();
 
-        return new StateGraph<>(AgentState::new)
+        final var graph = new StateGraph<>(AgentState::new)
                 .addNode("main1", mockedAction)
                 .addNode("subgraph1", subGraph)
                 .addNode("main2", mockedAction)
@@ -244,7 +322,10 @@ public interface SampleGraph {
                 .addEdge("subgraph1", "main2")
                 .addEdge("main2", StateGraph.END)
                 ;
-
+        return LangGraphStudioServer.Instance.builder()
+                .title("LangGraph Studio (Nested Subgraph)")
+                .graph( graph )
+                .build();
     }
 
 }
