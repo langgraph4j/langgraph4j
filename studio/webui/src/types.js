@@ -85,6 +85,7 @@
  * @property {string} [label] - Display label.
  * @property {Size} [layoutSize] - Calculated size for expanded subgraphs.
  * @property {boolean} [active] - True when the node represents the active execution step.
+ * @property {boolean} [interrupted] - True when the node represents an interrupted execution step.
  * @property {boolean} [collapsed] - True when a subgraph node is collapsed.
  * @property {() => void} [onToggle] - Toggles a subgraph node between collapsed and expanded states.
  * @property {(event: unknown, params: Size) => void} [onResizeEnd] - Persists the resized subgraph dimensions.
