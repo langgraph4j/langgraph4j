@@ -16,6 +16,129 @@
 
 
 
+<!-- "name: v1.9.0-beta3" is a release tag -->
+
+## [v1.9.0-beta3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta3) (2026-08-18)
+
+### Features
+
+ *  **how-tos**  Agentic RAG tutorial (related to #8 ([a5bf5bd22ac8c4f](https://github.com/bsorrentino/langgraph4j/commit/a5bf5bd22ac8c4f0bcba054e3e90f66c1eb485f3))
+     > Merge pull request #433
+
+ *  **MysqlServer**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([1c4f510adb4460a](https://github.com/bsorrentino/langgraph4j/commit/1c4f510adb4460ac51d9a3fb9aeb168a7bf3d28f))
+     > work on #428
+
+ *  **DynamoDBSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([0c853301ffb11e6](https://github.com/bsorrentino/langgraph4j/commit/0c853301ffb11e65df9c68c8dd73caf4916efa29))
+     > work on #428
+
+ *  **CockroachDBSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([30396c1a7b1ee5e](https://github.com/bsorrentino/langgraph4j/commit/30396c1a7b1ee5eccf8d0f6e63034dd43f02deac))
+     > work on #428
+
+ *  **SQLiteSaverV2**  implementing  a new version (v2)  compliant with new BaseCheckpointSaver that full manage releaseCheckpointsOnError and registerInterruption methods ([18b006a94070570](https://github.com/bsorrentino/langgraph4j/commit/18b006a94070570a6f52c932417834f1f4f9ceae))
+     > The previous implementation is still available and backward compatible by code but not on the db schema
+     > work on #428
+
+ *  **RedisSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([ad34b44b1dbaaf9](https://github.com/bsorrentino/langgraph4j/commit/ad34b44b1dbaaf9495c63e041e5c9d4bcee6138b))
+     > work on #428
+
+ *  **PostgresSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([846a7cecbe1dadd](https://github.com/bsorrentino/langgraph4j/commit/846a7cecbe1dadd84512d08ae953cd605e08031a))
+     > work on #428
+
+ *  **OracleSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([1398b0b31aca0cb](https://github.com/bsorrentino/langgraph4j/commit/1398b0b31aca0cbfb451b212c5a0062c28178b2d))
+     > work on #428
+
+ *  **HazelcastSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([667cb5f7a6c1e87](https://github.com/bsorrentino/langgraph4j/commit/667cb5f7a6c1e8719c0f2fac398e9c75279c4005))
+     > work on #428
+
+ *  **FileSystemSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([85146b5749efc72](https://github.com/bsorrentino/langgraph4j/commit/85146b5749efc72bd2eb10dfa469911a606058c1))
+     > work on #428
+
+ *  **MemorySaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([48df1befe1e3510](https://github.com/bsorrentino/langgraph4j/commit/48df1befe1e351063eb01407357706387a64de9f))
+     > work on #428
+
+ *  **core**  add SqlResource utilities for managing SQL commands from resources ([ea7567379a27a64](https://github.com/bsorrentino/langgraph4j/commit/ea7567379a27a64e2afa0361548f79ec172046d4))
+
+ *  **checkpoint**  enhance release methods to support error handling and optional messages ([cbd27477f17e8a9](https://github.com/bsorrentino/langgraph4j/commit/cbd27477f17e8a9bfb7a238537c86792efc52bf8))
+     > work on #428
+
+ *  **core**  add support for register interruptions in checkpoint saver ([791dd0f62ef99d6](https://github.com/bsorrentino/langgraph4j/commit/791dd0f62ef99d6af5f42a8b68bcad0a32724ea8))
+     > work on #428
+
+ *  **interruption**  add reason retrieval for interruptions in metadata ([085120c4aed1832](https://github.com/bsorrentino/langgraph4j/commit/085120c4aed1832f477e50ab6e67ac61465a0dce))
+     > work on #428
+
+ *  **checkpoint**  add methods for releasing checkpoints and handling interruptions ([f2959beff6c2bbc](https://github.com/bsorrentino/langgraph4j/commit/f2959beff6c2bbccbe881c4d1f9ea72606972cba))
+     > work on #428
+
+ *  **studio/webui**  add custom edge rendering with target-biased labels ([fe81451e1137722](https://github.com/bsorrentino/langgraph4j/commit/fe81451e11377220129992c8b011b5167beb78ae))
+
+ *  **langchain4j/serializer**  enhance ToolExecutionResultMessageSerializer to support attributes ([b8a3ed15c0ab4b8](https://github.com/bsorrentino/langgraph4j/commit/b8a3ed15c0ab4b8040274d395c614db67a6cf9e2))
+
+ *  **langchain4j/serializer**  enhance UserMessageSerializer to support attributes ([f4e9ad8f7a2dd7f](https://github.com/bsorrentino/langgraph4j/commit/f4e9ad8f7a2dd7f34e7536e21e81552321429bc1))
+
+
+
+### Refactor
+
+ -  **OracleSaver**  add `AbstractOracleSaver` allowing multiple implementation and remove  coded command in favour of Resource based ones ([9cc1942dd6a3656](https://github.com/bsorrentino/langgraph4j/commit/9cc1942dd6a36564986daa86a4559ad35106b271))
+
+ -  **PostgresSaver**  add Abstract PostgresSaver allowing multiple implementation and remove  coded command in favour of Resource based ones ([c502849946d45c5](https://github.com/bsorrentino/langgraph4j/commit/c502849946d45c5dcd780f2d37533762786969fe))
+
+ -  **SqlResource**  streamline SQL command loading and simplify command retrieval methods ([444f6a2d710a9eb](https://github.com/bsorrentino/langgraph4j/commit/444f6a2d710a9ebaf59dbabf5d276e695b33afee))
+    > - update all module affected
+
+ -  **MysqlServer**  remove coded sql commands in favour of resource files ([9e3770150a2fb2b](https://github.com/bsorrentino/langgraph4j/commit/9e3770150a2fb2b46684d1de16f924a6f89be51f))
+
+
+### Test
+
+ -  **saver**  share a single unit test module between every saver to enforce consistency an control ([c5ac98118206f32](https://github.com/bsorrentino/langgraph4j/commit/c5ac98118206f328a3f0ccefab3f056b357ecd99))
+
+ -  **SQLiteSaver**  add test utilities interface and custom action classes for asynchronous node actions ([92a55d4c8d5260e](https://github.com/bsorrentino/langgraph4j/commit/92a55d4c8d5260e3d90541bf29ca4070ee1d1c5b))
+
+ -  **studio**  fix agent executor use case ([c37ca95321f7538](https://github.com/bsorrentino/langgraph4j/commit/c37ca95321f7538aeb7c351ab5e013c8af38a670))
+
+ -  **langchain4j**  add tests for UserMessage and ToolExecutionResultMessage attribute serialization ([4e708c8c261fb00](https://github.com/bsorrentino/langgraph4j/commit/4e708c8c261fb0074e07464cac6ae691a2bef333))
+
+
+### Documentation
+
+ -  **README**  update release information for version stream 1.9.x ([49e352d67644083](https://github.com/bsorrentino/langgraph4j/commit/49e352d676440830ab47e3919939842ae8b7aab9))
+
+ -  **README**  update Star History chart URLs ([c142e961e3cf10f](https://github.com/bsorrentino/langgraph4j/commit/c142e961e3cf10f872aebf44ebe8456d4cc103ef))
+     > Replace the Star History links and image sources with the star-history.dera.page endpoint for the README chart.
+
+ -  **ai**  specs to create tracking changes from v1.9-beta1 ([45336fd3549a62c](https://github.com/bsorrentino/langgraph4j/commit/45336fd3549a62c7f80f760fc2709ff817d28214))
+
+ -  **whats-new**  update v1.9 release notes with error handling, SQLite saver upgrade, and runtime diagnostics ([d5f2197b47642c1](https://github.com/bsorrentino/langgraph4j/commit/d5f2197b47642c14e682c5249ad5bcf46def025a))
+
+ -  **readme**  add links to Agentic CI/CD Orchestrator and Spring AI Recipe article ([9da33ca1dcca317](https://github.com/bsorrentino/langgraph4j/commit/9da33ca1dcca317f4cc79863662764ddaa41a5e0))
+
+ -  **security**  add security policy document for outlining supported versions and vulnerability reporting ([14c657cf46967c9](https://github.com/bsorrentino/langgraph4j/commit/14c657cf46967c97603a83ed0630ffc70fef3718))
+
+ -  **ai**  instructions to implement AbstractOracleSaver and replace hardcoded SQL commands with resource loading ([5675daa1288c546](https://github.com/bsorrentino/langgraph4j/commit/5675daa1288c5468a2120df9d532c41818f34340))
+
+ -  **ai**  instructions to implement AbstractPostgresSaver and replace hardcoded SQL commands with resource loading ([8bc0248c7aff25e](https://github.com/bsorrentino/langgraph4j/commit/8bc0248c7aff25ed55f1e8d48652320b80da01a0))
+
+ -  **ai**  add custom edge rendering with target-biased labels ([29008bc14ff93c6](https://github.com/bsorrentino/langgraph4j/commit/29008bc14ff93c63e8f39a36c2098b965562cddf))
+
+ -  update changelog ([80834859a6f0a50](https://github.com/bsorrentino/langgraph4j/commit/80834859a6f0a5018c30b2700d47b3cb70e781e0))
+
+
+### ALM
+
+ -  bump to next version 1.9.0-beta3 ([28a5a43425f4a3c](https://github.com/bsorrentino/langgraph4j/commit/28a5a43425f4a3c2d57168c4d2f2215b540f78d8))
+
+ -  update langchain4j dependencies ([8fe0b6c14aba69e](https://github.com/bsorrentino/langgraph4j/commit/8fe0b6c14aba69e50b5940d7413009ac0e38f5d5))
+    > Bump LangChain4j from 1.18.1 to 1.19.0 and LangChain4j beta from 1.18.1-beta28 to 1.19.0-beta29.
+
+ -  bump to next dev version 1.9-SNAPSHOT ([10eb184b03e507a](https://github.com/bsorrentino/langgraph4j/commit/10eb184b03e507ab018410037fb24d37ec6310bd))
+
+
+
+
+
+
 <!-- "name: v1.9.0-beta2" is a release tag -->
 
 ## [v1.9.0-beta2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta2) (2026-08-06)
