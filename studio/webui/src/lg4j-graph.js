@@ -49,6 +49,7 @@ const SUBGRAPH_PADDING_TOP = 64;
 const SUBGRAPH_PADDING_BOTTOM = 40;
 const LAYOUT_STORAGE_PREFIX = 'lg4j-studio.graph-layout.';
 const EDGE_LABEL_PROGRESS = 0.74;
+const INTERRUPTED_NODE = '__INTERRUPTED__';
 
 /**
  * Builds a stable session storage key for a serialized graph document.
@@ -410,10 +411,11 @@ function nodeSize(node, collapsedSubgraphs) {
  * @param {Map<string, Point>} savedPositions - User-adjusted node positions.
  * @param {Map<string, Size>} savedSizes - User-adjusted subgraph sizes.
  * @param {string | undefined} activeNodeId - Currently active node id.
+ * @param {string | undefined} interruptedNodeId - Interrupted node id.
  * @param {() => void} onLayoutChanged - Callback invoked after mutable layout data changes.
  * @returns {GraphNode} Normalized React Flow node.
  */
-function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId, onLayoutChanged) {
+function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions, savedSizes, activeNodeId, interruptedNodeId, onLayoutChanged) {
   const size = nodeSize(node, collapsedSubgraphs);
   const savedSize = savedSizes.get(node.id);
   const renderedSize = node.data?.kind === 'subgraph' && savedSize && !collapsedSubgraphs.has(node.id)
@@ -421,11 +423,18 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
     : size;
   const savedPosition = savedPositions.get(node.id);
   const active = activeNodeId === node.id;
+  const interrupted = interruptedNodeId === node.id;
   const activeBoundary = active && (node.data?.kind === 'start' || node.data?.kind === 'end');
+  const className = [
+    node.className,
+    active ? 'active-node' : null,
+    activeBoundary ? 'active-boundary-node' : null,
+    interrupted ? 'interrupted-node' : null
+  ].filter(Boolean).join(' ');
   return {
     ...node,
     type: node.data?.kind === 'subgraph' ? 'subgraph' : node.data?.kind === 'start' || node.data?.kind === 'end' ? 'circle' : node.type,
-    className: active ? [node.className, 'active-node', activeBoundary ? 'active-boundary-node' : null].filter(Boolean).join(' ') : node.className,
+    className,
     draggable: true,
     extent: node.parentId ? 'parent' : node.extent,
     position: savedPosition || node.position,
@@ -439,6 +448,7 @@ function normalizeNode(node, collapsedSubgraphs, toggleSubgraph, savedPositions,
     data: {
       ...node.data,
       active,
+      interrupted,
       collapsed: node.data?.kind === 'subgraph' && collapsedSubgraphs.has(node.id),
       onToggle: node.data?.kind === 'subgraph' ? () => toggleSubgraph(node.id) : undefined,
       onResizeEnd: node.data?.kind === 'subgraph' ? (_, params) => {
@@ -751,10 +761,10 @@ function autoLayoutNodes(nodes, layoutEdges, savedPositions, collapsedSubgraphs,
 /**
  * React component that renders a parsed DSL document with React Flow.
  *
- * @param {{ source?: string, activeNodeId?: string, nodeGap: number }} props - Viewer properties.
+ * @param {{ source?: string, activeNodeId?: string, interruptedNodeId?: string, nodeGap: number }} props - Viewer properties.
  * @returns {ReactElement} React Flow graph component.
  */
-function GraphFlow({ source, activeNodeId, nodeGap }) {
+function GraphFlow({ source, activeNodeId, interruptedNodeId, nodeGap }) {
   const [dsl, setDsl] = useState(/** @type {GraphDsl | null} */ (null));
   const [collapsedSubgraphs, setCollapsedSubgraphs] = useState(/** @type {Set<string>} */ (new Set()));
   const [nodes, setNodes, onNodesChange] = useNodesState(/** @type {GraphNode[]} */ ([]));
@@ -851,12 +861,13 @@ function GraphFlow({ source, activeNodeId, nodeGap }) {
       savedPositionsRef.current,
       savedSizesRef.current,
       activeNodeId,
+      interruptedNodeId,
       persistSavedLayout
     ));
     nodesRef.current = normalizedNodes;
     setNodes(normalizedNodes);
     setEdges(visibleEdges(graphEdges, parentIndex, nextCollapsedSubgraphs).map(normalizeEdge));
-  }, [activeNodeId, nodeGap, persistSavedLayout, setEdges, setNodes, toggleSubgraph]);
+  }, [activeNodeId, interruptedNodeId, nodeGap, persistSavedLayout, setEdges, setNodes, toggleSubgraph]);
 
   /**
    * Tracks user-positioned nodes before delegating to React Flow.
@@ -1200,6 +1211,25 @@ function componentStyles() {
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
     }
 
+    .react-flow__node.interrupted-node {
+      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.35));
+    }
+
+    .react-flow__node.interrupted-node::after {
+      content: none;
+    }
+
+    .react-flow__node.interrupted-node.react-flow__node-default {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
+    }
+
+    .react-flow__node.interrupted-node .circle-node,
+    .react-flow__node.interrupted-node .subgraph-node {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
+    }
+
     @keyframes lg4j-spin {
       to {
         transform: rotate(360deg);
@@ -1245,6 +1275,10 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.source = undefined;
     /** @type {string | undefined} Active node id highlighted in the graph. */
     this.activeNodeId = undefined;
+    /** @type {string | undefined} Last valid active node id received from executor events. */
+    this.lastActiveNodeId = undefined;
+    /** @type {string | undefined} Interrupted node id highlighted in the graph. */
+    this.interruptedNodeId = undefined;
 
     this.render = this.render.bind(this);
     this.onActive = this.onActive.bind(this);
@@ -1311,7 +1345,16 @@ export class LG4JDSLViewElement extends HTMLElement {
   onActive(event) {
     _DBG('Active node changed:', event.detail);
     const { detail: { node, subgraphNode } } = event;
-    this.activeNodeId = subgraphNode ?? node
+    if (node === INTERRUPTED_NODE) {
+      this.activeNodeId = undefined;
+      this.interruptedNodeId = this.lastActiveNodeId;
+      this.update();
+      return;
+    }
+
+    this.activeNodeId = subgraphNode ?? node;
+    this.lastActiveNodeId = this.activeNodeId;
+    this.interruptedNodeId = undefined;
     this.update();
   }
 
@@ -1326,7 +1369,7 @@ export class LG4JDSLViewElement extends HTMLElement {
       h('main', { className: 'app' },
         h('section', { className: 'graph' }, 
              h( ReactFlowProvider, null,
-             h( GraphFlow, { source: this.source, activeNodeId: this.activeNodeId, nodeGap: parseNodeGap(this.getAttribute('node-gap')) } )
+             h( GraphFlow, { source: this.source, activeNodeId: this.activeNodeId, interruptedNodeId: this.interruptedNodeId, nodeGap: parseNodeGap(this.getAttribute('node-gap')) } )
           )
         )
       )
