@@ -10,6 +10,8 @@
       
       
       
+        <link rel="next" href="..">
+      
       
         
       
@@ -19,7 +21,7 @@
     
     
       
-        <title>Migrating from LangGraph4j 1.8.x to 1.9 - LangGraph4j</title>
+        <title>What's new in 1.9 - LangGraph4j</title>
       
     
     
@@ -107,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Migrating from LangGraph4j 1.8.x to 1.9
+              What's new in 1.9
             
           </span>
         </div>
@@ -218,11 +220,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href=".." class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -400,26 +404,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
             
   
   
@@ -437,7 +446,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -447,6 +456,470 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new in 1.9
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's new in 1.9
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#refactor-internal-streaming-engine-to-support-event-emitting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactor internal streaming engine to support event emitting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Refactor internal streaming engine to support event emitting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-thread-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release thread by default
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release thread by default">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compatibility_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoint-saver-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint Saver upgrade
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checkpoint Saver upgrade">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning-experimental" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning (experimental)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint-savers-and-subgraphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint savers and subgraphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-and-interruption-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error and interruption handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlite-saver-upgrade-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQLite saver upgrade (V2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-resuming-and-invoking-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting, resuming, and invoking graphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-diagnostics-and-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime diagnostics and metadata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-cloning-and-transient-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State cloning and transient attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="State cloning and transient attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional-state-clone-bypass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional state-clone bypass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transient-state-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transient state attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-framework-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent framework changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agent framework changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#skills-api-experimental" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills API (experimental)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-agentex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core AgentEx
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spring-ai-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spring AI integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Spring AI integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reusable-sub-agent-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reusable sub-agent types:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agent-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#langchain4j-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LangChain4j integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LangChain4j integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-serializer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default serializer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-attribute-serialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message attribute serialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-json-graph-dsl-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New JSON graph DSL module
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#javelit-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Javelit integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-core-api-removals-renames-and-behavior-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Core API removals, renames, and behavior changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Core API removals, renames, and behavior changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runtime-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-end-marker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming end marker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-and-documentation-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository and documentation changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependencies-and-coordinates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies and coordinates
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
             
               
                 
@@ -517,17 +990,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="">
             
   
   
@@ -545,8 +1021,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1025,17 +1501,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" >
         
           
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="">
             
   
   
@@ -1053,8 +1532,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
             <span class="md-nav__icon md-icon"></span>
             
   
