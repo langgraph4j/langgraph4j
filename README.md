@@ -10,20 +10,16 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Apr 19, 2026 | `1.8.13` | last release
+| Aug 06, 2026 | `1.9-beta2` | last release
 
 
 | Release line | Java baseline | Notes |
 |---|---|---|
-| `1.8.x` stable releases | Java 17+ | Recommended baseline for core, integrations, and saver modules |
-| `1.8-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| 1.9.x | Java 17+ | Release with new (experimental) features and improvements for preparing move to `2.0` |
+| `1.9-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| `1.8.x` stable releases | Java 17+ | Baseline for core, integrations, and saver modules. After official release of `1.9`, `1.8.x` will be maintained for LTS support |
 | Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
 
-| Release line | Java baseline | Notes |
-|---|---|---|
-| `1.8.x` stable releases | Java 17+ | Recommended baseline for core, integrations, and saver modules |
-| `1.8-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
-| Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
 
 ## Star History
 
