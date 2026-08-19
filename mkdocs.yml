@@ -52,7 +52,8 @@ nav:
     #   - Examples: https://github.com/langgraph4j/langgraph4j-examples
     #   - JavaDoc: apidocs/index.html
     - Getting Started: getting-started.md
-    - How to(s): 
+    - How to(s):
+      - Agentic RAG: how-tos/agentic-rag.ipynb
       - Adaptive RAG: how-tos/adaptiverag.ipynb
       - Agent Executor: how-tos/agentexecutor.ipynb
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
