@@ -11,11 +11,15 @@ import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.agent.Agent;
+import org.bsc.langgraph4j.hook.EdgeHook;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.langchain4j.serializer.jackson.LC4jJacksonStateSerializer;
 import org.bsc.langgraph4j.langchain4j.serializer.std.LC4jStateSerializer;
 import org.bsc.langgraph4j.langchain4j.tool.LC4jToolService;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.state.Channel;
+import org.bsc.langgraph4j.state.Channels;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -35,6 +39,18 @@ public interface AgentExecutor {
     class State extends MessagesState<ChatMessage> {
 
         public static final String FINAL_RESPONSE = "agent_response";
+        public static final String ACTIVE_SKILLS = "active_skills";
+
+        /**
+         * Extends {@link MessagesState#SCHEMA} with a replacing {@code active_skills} channel
+         * (skill activation ids only — bodies stay out of state).
+         */
+        public static final Map<String, Channel<?>> SCHEMA;
+        static {
+            var schema = new java.util.HashMap<String, Channel<?>>(MessagesState.SCHEMA);
+            schema.put(ACTIVE_SKILLS, Channels.base(ArrayList::new));
+            SCHEMA = Map.copyOf(schema);
+        }
 
         /**
          * Constructs a new State with the given initialization data.
@@ -54,6 +70,13 @@ public interface AgentExecutor {
             return value(FINAL_RESPONSE);
         }
 
+        /**
+         * Currently activated skill ids (empty if none).
+         */
+        @SuppressWarnings("unchecked")
+        public List<String> activeSkills() {
+            return this.<List<String>>value(ACTIVE_SKILLS).orElseGet(List::of);
+        }
 
     }
 
@@ -124,6 +147,8 @@ public interface AgentExecutor {
      */
     class Builder extends AgentExecutorBuilder<State,Builder> {
 
+        private final Agent.Builder<ChatMessage, State> agentBuilder = Agent.builder();
+
         /**
          * Sets the tool specification for the graph builder.
          *
@@ -167,6 +192,34 @@ public interface AgentExecutor {
         }
 
         /**
+         * Registers a wrap hook around the {@code agent} (call-model) node.
+         * Aligns with {@link Agent.Builder#addCallModelHook} / Spring {@code ReactAgent}.
+         */
+        public Builder addCallModelHook(NodeHook.WrapCall<State> wrapCall) {
+            agentBuilder.addCallModelHook(wrapCall);
+            return this;
+        }
+
+        /**
+         * Registers a wrap hook around the {@code action} (execute-tools) conditional edge.
+         * Aligns with {@link Agent.Builder#addExecuteToolsHook} / Spring {@code ReactAgent}.
+         */
+        public Builder addExecuteToolsHook(EdgeHook.WrapCall<State> wrapCall) {
+            agentBuilder.addExecuteToolsHook(wrapCall);
+            return this;
+        }
+
+        /**
+         * Wires {@link SkillInjector}: execute-tools activation hook + conversation policy
+         * (composed with any previously set policy).
+         */
+        public Builder skillInjector(SkillInjector injector) {
+            addExecuteToolsHook(injector.executeToolsHook());
+            conversationContextPolicy(injector.asConversationContextPolicy(conversationContextPolicy));
+            return this;
+        }
+
+        /**
          * Builds the state graph.
          *
          * @return the constructed StateGraph
@@ -183,7 +236,7 @@ public interface AgentExecutor {
 
             final LC4jToolService toolService = new LC4jToolService(toolMap());
 
-            return Agent.<ChatMessage,State>builder()
+            return agentBuilder
                     .stateSerializer( ofNullable(stateSerializer).orElseGet(Serializers.JSON::object) )
                     .schema( State.SCHEMA )
                     .callModelAction( new CallModel<>( this ) )
