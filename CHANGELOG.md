@@ -2,6 +2,57 @@
 
 
 
+<!-- "name: v1.8.25" is a release tag -->
+
+## [v1.8.25](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.25) (2026-08-27)
+
+### Features
+
+ *  **langchain4j-agent**  add SkillInjector for tool-triggered dynamic skills ([deec3a204dd91e6](https://github.com/bsorrentino/langgraph4j/commit/deec3a204dd91e67a0672ce350486b4544100c01))
+   
+ *  **how-tos**  Agentic RAG tutorial (related to #8) ([1a96d5c28803876](https://github.com/bsorrentino/langgraph4j/commit/1a96d5c28803876704deea804326a84de2256aa8))
+     > Merge pull request #433
+   
+
+
+
+
+### Documentation
+
+ -  update integration links to point to README files ([1e0fd6e383595fc](https://github.com/bsorrentino/langgraph4j/commit/1e0fd6e383595fc7c2ad5a723c5449855a59c475))
+
+ -  fix Mermaid link ([224cc444d47cdb2](https://github.com/bsorrentino/langgraph4j/commit/224cc444d47cdb2ca376ccd740b9f7626ad7557d))
+
+ -  **mkdocs**  update how-to section to include Agentic RAG tutorial ([3a51a521fd76d92](https://github.com/bsorrentino/langgraph4j/commit/3a51a521fd76d9221188fdeda78069b454de98c0))
+
+ -  **README**  add new video and article references to enhance resources ([7630863edc787a6](https://github.com/bsorrentino/langgraph4j/commit/7630863edc787a69fc88c70e90ec24b57a91aeb5))
+
+ -  **README**  restore star history chart with working provider ([afad6c62652218b](https://github.com/bsorrentino/langgraph4j/commit/afad6c62652218b730e2961a0bafdcb751037ef8))
+     > The star history chart was commented out (commit 7932368) because the previous provider no longer renders due to GitHub stargazer API restrictions. Re-enable the chart pointing to a working provider so the badge displays correctly again.
+
+ -  **how-tos**  Agentic RAG tutorial (related to #8) ([3aaf736f03e5c4d](https://github.com/bsorrentino/langgraph4j/commit/3aaf736f03e5c4d8e329fc5e45ef525d6a359797))
+
+ -  add article on building a graph-based agentic workflow with LangGraph4j ([fd92e676aca5215](https://github.com/bsorrentino/langgraph4j/commit/fd92e676aca5215d103a32222346b90ab8db42c0))
+
+ -  add SECURITY.md ([4a56e1e4dc1c980](https://github.com/bsorrentino/langgraph4j/commit/4a56e1e4dc1c980cca7024f8c02c2849575371db))
+
+ -  add Agentic CI/CD Orchestrator to projects list ([83962f8b3c4fed1](https://github.com/bsorrentino/langgraph4j/commit/83962f8b3c4fed1377f034493ed9313a8f9b0a8f))
+
+ -  update changelog ([9f4b0b277f0ee8e](https://github.com/bsorrentino/langgraph4j/commit/9f4b0b277f0ee8e885077063e9fabc1c1ac0de7b))
+
+
+### ALM 
+
+ -  bump to next version 1.8.25 ([a87195987574a07](https://github.com/bsorrentino/langgraph4j/commit/a87195987574a0791f0739b7f12416250ddca362))
+   
+ -  update langchain4j dependencies ([24e35acc41d2bdd](https://github.com/bsorrentino/langgraph4j/commit/24e35acc41d2bdd6ea8b05e09071138c65f6ed4e))
+    > Bump LangChain4j from 1.18.1 to 1.19.0 and LangChain4j beta from 1.18.1-beta28 to 1.19.0-beta29.
+
+
+
+
+
+
 <!-- "name: v1.8.24" is a release tag -->
 
 ## [v1.8.24](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.24) (2026-08-08)
