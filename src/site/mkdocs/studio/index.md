@@ -43,7 +43,7 @@ This servlet is responsible for providing the frontend with the necessary inform
 -   **Endpoint**: It handles `GET` requests to `/init`.
 -   **Functionality**: It requires an `instance=<instance_id>` query parameter to identify the graph. It returns a JSON object containing:
     -   The graph's title.
-    -   A [Mermaid](https.mermaid.js.org/) diagram representing the graph's structure.
+    -   A [Mermaid](https://mermaid.js.org/) diagram representing the graph's structure.
     -   The input arguments the graph expects, which are used to build the input form in the UI.
     -   A list of existing execution threads.
 
@@ -81,7 +81,7 @@ where `<port>` is the port you specified in your configuration and `<instance_id
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-jetty</artifactId>
-    <version>1.8.24</version>
+    <version>1.8.25</version>
 </dependency>
 ```
 
@@ -123,7 +123,7 @@ public static void main(String[] args) throws Exception {
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-springboot</artifactId>
-    <version>1.8.24</version>
+    <version>1.8.25</version>
 </dependency>
 ```
 

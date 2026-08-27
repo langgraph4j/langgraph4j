@@ -71,8 +71,8 @@ nav:
       - PlantUML: how-tos/plantuml.ipynb
       - Hooks: how-tos/hooks.ipynb
     - Integrations: 
-      - integrations/spring-ai.md
-      - integrations/langchain4j.md      
+      - integrations/spring-ai/README.md
+      - integrations/langchain4j/README.md
     - Studio: studio/index.md
     - Builder: builder/index.md
     - Latest Release Notes: https://github.com/langgraph4j/langgraph4j/releases
