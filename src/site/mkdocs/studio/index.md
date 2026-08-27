@@ -43,7 +43,7 @@ This servlet is responsible for providing the frontend with the necessary inform
 -   **Endpoint**: It handles `GET` requests to `/init`.
 -   **Functionality**: It requires an `instance=<instance_id>` query parameter to identify the graph. It returns a JSON object containing:
     -   The graph's title.
-    -   A [Mermaid](https.mermaid.js.org/) diagram representing the graph's structure.
+    -   A [Mermaid](https://mermaid.js.org/) diagram representing the graph's structure.
     -   The input arguments the graph expects, which are used to build the input form in the UI.
     -   A list of existing execution threads.
 
