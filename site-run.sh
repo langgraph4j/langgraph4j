@@ -19,6 +19,13 @@ rsync -avm \
   --exclude='*' \
   spring-ai/ target/mkdocs/integrations/spring-ai/
 
+# Copy LangChain4j docs
+rsync -avm \
+  --include='*/' \
+  --include='README.md' \
+  --exclude='*' \
+  langchain4j/ target/mkdocs/integrations/langchain4j/
+
 source .docsenv/bin/activate
 
 mkdocs build
