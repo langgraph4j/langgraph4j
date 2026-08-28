@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS LG4JThreadTag (
     thread_id INTEGER PRIMARY KEY,
     thread_name TEXT,
     released_version INTEGER,
-    parent_thread_id TEXT,
+    parent_thread_id INTEGER,
     is_released INTEGER DEFAULT 0 NOT NULL CHECK (is_released IN (0, 1)),
     is_error INTEGER DEFAULT 0 NOT NULL CHECK (is_error IN (0, 1)),
     message TEXT,
