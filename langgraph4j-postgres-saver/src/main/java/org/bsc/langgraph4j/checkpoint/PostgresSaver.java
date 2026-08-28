@@ -1,7 +1,5 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import java.sql.SQLException;
-
 /**
  * Postgres checkpoint saver.
  */
