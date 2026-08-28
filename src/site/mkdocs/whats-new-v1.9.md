@@ -145,7 +145,13 @@ The **in-memory**, **file-system**, **Redis**, **Postgres**, **Oracle**, **MySQL
 
 ### SQLite saver upgrade (V2)
 
-The SQLite module now includes a `SQLiteSaverV2` implementation backed by versioned SQL resources. `SQLiteSaverV2` is aligned with the new checkpoint saver release/error/interruption contract, while the existing `SQLiteSaver` remains available for the V1 schema.
+The SQLite module now includes a `SQLiteSaverV2` implementation backed by versioned SQL resources.
+`SQLiteSaverV2` is aligned with the new checkpoint saver **release/error/interruption** contract, while the existing `SQLiteSaver` remains available for the V1 schema.
+
+### PostgreSQL saver upgrade (V2)
+
+The PostgreSQL module now includes a `PostgresSaverV2` implementation backed by versioned SQL resources.
+`PostgresSaverV2` is aligned with the new checkpoint saver **release/error/interruption** contract, while the existing `PostgresSaver` remains available for the V1 schema.
 
 ## Starting, resuming, and invoking graphs
 
