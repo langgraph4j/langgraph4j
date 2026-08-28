@@ -7,6 +7,8 @@ import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
+import org.bsc.langgraph4j.utils.TryFunction;
+import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
@@ -146,15 +148,23 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     protected final DataSource datasource;
     private final StateSerializer<? extends AgentState> stateSerializer;
     private final boolean plainTextStateSerializerLegacyMode;
-    private final SqlResource.Commands sqlCommands;
+    protected final SqlResource.Commands sqlCommands;
 
     protected AbstractPostgresSaver(AbstractBuilder<?> builder) throws Exception {
         this.datasource = builder.datasource;
         this.stateSerializer = builder.stateSerializer;
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
-        this.sqlCommands = SqlResource.Commands.load("db/v1.0__commands.sql");
+        this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
 
         initTable(builder.dropTablesFirst, builder.createTables);
+    }
+
+    protected String sqlCommandsResourcePath() {
+        return "db/v1.0__commands.sql";
+    }
+
+    protected String sqlInitResourcePath() {
+        return "db/migration/v1.0__init.sql";
     }
 
     private void rollback(Connection conn, Checkpoint checkpoint, String threadId) {
@@ -204,7 +214,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     }
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
-        final var sqlInitCommands = SqlResource.Commands.load("db/migration/v1.0__init.sql");
+        final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
@@ -275,20 +285,19 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
 
         var insertCheckpointSql = sqlCommands.get("sqlInsertCheckpoint");
-        UUID threadUUID = null;
+        Long id = null;
 
         // 1. Upsert thread information
         try (PreparedStatement ps = conn.prepareStatement(upsertThreadSql)) {
             var field = 0;
-            ps.setObject(++field, UUID.randomUUID(), Types.OTHER);
-            ps.setString(++field, threadId);
-            ps.setString(++field, threadId);
+            ps.setString(++field, threadId); // thread id
+            ps.setString(++field, threadId); // thread id
 
             log.trace("Executing upsert thread:\n---\n{}---", upsertThreadSql);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    threadUUID = rs.getObject("thread_id", UUID.class);
+                    id = rs.getLong("thread_id");
                 }
             }
         }
@@ -304,9 +313,8 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             // parent_checkpoint_id
             ps.setNull(++field, java.sql.Types.OTHER);
             // thread_id
-            ps.setObject(++field,
-                    requireNonNull(threadUUID, "threadUUID cannot be null"),
-                    Types.OTHER);
+            ps.setLong(++field,
+                    requireNonNull(id, "thread id cannot be null"));
             // node_id
             ps.setString(++field, checkpoint.getNodeId());
             // next_node_id
@@ -396,7 +404,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, String message) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final var threadId = threadId(config);
 
         var selectThreadSql = sqlCommands.get("sqlSelectThread");
@@ -458,6 +466,24 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
      */
     protected Connection getConnection() throws SQLException {
         return datasource.getConnection();
+    }
+
+    protected final <R> R execTransaction(TryFunction<Connection, R, Exception> execStatement) throws Exception {
+        try (Connection connection = getConnection()) {
+            final var previousAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                final var result = execStatement.tryApply(connection);
+                connection.commit();
+                return result;
+            } catch (Exception e) {
+                log.error("Error executing statement", e);
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(previousAutoCommit);
+            }
+        }
     }
 
     /**
