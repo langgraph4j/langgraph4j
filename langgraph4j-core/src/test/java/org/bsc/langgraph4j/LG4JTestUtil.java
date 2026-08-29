@@ -16,15 +16,23 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public interface LG4JTestUtil {
 
+
     class State extends MessagesState<String> {
+        final static String RESUME = "LG4J_RESUME";
 
         public State(Map<String, Object> initData) {
             super(initData);
+        }
+
+        boolean isResume() {
+            return this.<Boolean>value(RESUME).orElse(false);
         }
     }
 
@@ -54,19 +62,13 @@ public interface LG4JTestUtil {
 
             private Interruptable(Builder builder) {
                 super(builder);
-                interrupt = builder.interrupt;
-            }
-
-            private boolean isResume( RunnableConfig config ) {
-                return config.metadata( "lc4j_resume" )
-                        .map( Boolean.class::cast )
-                        .orElse(false);
+                interrupt = builder.interruptable;
             }
 
             @Override
             public Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state, RunnableConfig config) {
-                if( interrupt && !isResume(config) ) {
-                    assertEquals( nodeId, this.nodeId);
+                if( interrupt && !state.isResume() ) {
+                    assertEquals( nodeId, this.message);
                     return Optional.of(InterruptionMetadata.builder(nodeId,state).build());
                 }
                 return Optional.empty();
@@ -75,7 +77,8 @@ public interface LG4JTestUtil {
         }
 
         public static class Builder {
-            boolean interrupt;
+            boolean interruptable;
+            boolean interruptWithException;
             String message;
             boolean streaming;
             
@@ -85,8 +88,13 @@ public interface LG4JTestUtil {
                 return this;
             }
 
-            public Builder interrupt() {
-                interrupt = true;
+            public Builder interruptable() {
+                interruptable = true;
+                return this;
+            }
+
+            public Builder interruptWithException() {
+                interruptWithException = true;
                 return this;
             }
 
@@ -97,7 +105,7 @@ public interface LG4JTestUtil {
 
 
             public CustomNodeAction build() {
-                return ( interrupt ) ?
+                return (interruptable) ?
                         new CustomNodeAction.Interruptable(this) :
                         new CustomNodeAction(this);
             }
@@ -112,26 +120,30 @@ public interface LG4JTestUtil {
             return CustomNodeAction.builder().message(id).build();
         }
 
-        final String nodeId;
+        final String message;
         final boolean streaming;
-
+        final boolean interruptWithException;
         private CustomNodeAction(CustomNodeAction.Builder builder) {
-            this.nodeId = requireNonNull(builder.message, "nodeId cannot be null!");
+            this.message = requireNonNull(builder.message, "message cannot be null!");
             this.streaming = builder.streaming;
+            this.interruptWithException = builder.interruptWithException;
         }
 
         @Override
         public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
+            if( interruptWithException && !state.isResume() ) {
+                return failedFuture(new GraphInterruptException(config, ofNullable(message).orElse("Interrupting with exception!")));
+            }
             if (streaming) {
                 final var generator = AsyncGeneratorFlow.create( dispatcher -> {
-                    dispatcher.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>( "Test1", nodeId, state, null ) ) );
-                    dispatcher.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>( "Test2", nodeId, state, null ) ) );
+                    dispatcher.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>( "Test1", message, state, null ) ) );
+                    dispatcher.dispatchAsync(AsyncGenerator.Data.of(new StreamingOutput<>( "Test2", message, state, null ) ) );
                     dispatcher.dispatchAsync(AsyncGenerator.Data.done(Map.of("messages", "Test1Test2") ));
                 });
 
                 return completedFuture(Map.of("_streaming_messages", generator));
             }
-            return completedFuture(Map.of("messages", nodeId));
+            return completedFuture(Map.of(State.MESSAGES_STATE, message));
         }
 
 
