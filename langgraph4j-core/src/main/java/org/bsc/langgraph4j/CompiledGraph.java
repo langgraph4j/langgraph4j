@@ -970,11 +970,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                         break;
                     }
                     catch( Throwable ex ) {
-                        final var interruptExOpt = ExceptionUtils.findCauseByType( ex, GraphInterruptException.class );
+                        final var interruptExOpt = GraphInterruptException.of(ex);
                         if(interruptExOpt.isEmpty()) {
 
                             log.error( ex.getMessage(), ex );
-                            final var graphRunnerEx = ExceptionUtils.findCauseByType( ex, GraphRunnerException.class )
+                            final var graphRunnerEx = GraphRunnerException.of(ex)
                                     .orElseGet(() -> new GraphRunnerException(config, ex));
                             $1.dispatchAsync( AsyncGenerator.Data.error( graphRunnerEx ) );
 
@@ -1000,7 +1000,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
-                final var graphRunnerEx = ExceptionUtils.findCauseByType( e, GraphRunnerException.class )
+                final var graphRunnerEx = GraphRunnerException.of(e)
                         .orElseGet(() -> new GraphRunnerException(config, e));
                 $1.dispatchAsync( AsyncGenerator.Data.error( graphRunnerEx ) );
             }
