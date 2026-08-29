@@ -287,6 +287,7 @@ export class LG4JWorkbenchElement extends LitElement {
       
     }
     this.#routeEvent( e , 'result')
+    this.#routeEvent( e , 'graph')
   }
 
   connectedCallback() {
