@@ -11,8 +11,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class GraphRunnerException extends Exception {
 
-    public static Optional<? extends GraphRunnerException> of(Throwable throwable) {
-        return ExceptionUtils.findCauseByType(throwable, GraphRunnerException.class);
+    @SuppressWarnings("unchecked")
+    public static <T extends GraphRunnerException> Optional<T> of(Throwable throwable) {
+        return (Optional<T>) ExceptionUtils.findCauseByType(throwable, GraphRunnerException.class);
     }
 
     private final RunnableConfig config;
