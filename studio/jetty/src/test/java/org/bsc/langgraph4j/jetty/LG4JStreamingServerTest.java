@@ -20,7 +20,7 @@ import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-public class LangGraphStreamingServerTest {
+public class LG4JStreamingServerTest {
 
     static class State extends AgentState {
 

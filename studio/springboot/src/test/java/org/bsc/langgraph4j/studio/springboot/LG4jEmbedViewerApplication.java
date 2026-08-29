@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.studio.springboot;
 
 import org.bsc.langgraph4j.*;
-import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.studio.LG4JEmbedViewerService;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.boot.CommandLineRunner;
@@ -13,11 +12,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 @SpringBootApplication
-public class LG4jEmbedViewerApplication {
+public class LG4JEmbedViewerApplication {
 
     public static void main(String[] args) {
 
-        SpringApplication.run(LG4jEmbedViewerApplication.class, args);
+        SpringApplication.run(LG4JEmbedViewerApplication.class, args);
     }
 
     @Controller
