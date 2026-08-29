@@ -1280,8 +1280,12 @@ export class LG4JDSLViewElement extends HTMLElement {
     /** @type {string | undefined} Interrupted node id highlighted in the graph. */
     this.interruptedNodeId = undefined;
 
-    this.render = this.render.bind(this);
-    this.onActive = this.onActive.bind(this);
+  }
+
+  #renderInterruption() {
+      this.activeNodeId = undefined;
+      this.interruptedNodeId = this.lastActiveNodeId;
+      this.update();
   }
 
   /**
@@ -1307,6 +1311,7 @@ export class LG4JDSLViewElement extends HTMLElement {
 
     this.addEventListener('graph', /** @type {EventListener} */ (this.render));
     this.addEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
+    this.addEventListener('state-updated', /** @type {EventListener} */ (this.onStateUpdated));
 
   }
 
@@ -1319,7 +1324,7 @@ export class LG4JDSLViewElement extends HTMLElement {
 
     this.removeEventListener('graph', /** @type {EventListener} */ (this.render));
     this.removeEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
-
+    this.removeEventListener( 'node-updated', /** @type {EventListener} */ (this.onStateUpdated));
     // unmount root
     this.root?.unmount();
     this.root = null;
@@ -1346,9 +1351,7 @@ export class LG4JDSLViewElement extends HTMLElement {
     _DBG('Active node changed:', event.detail);
     const { detail: { node, subgraphNode } } = event;
     if (node === INTERRUPTED_NODE) {
-      this.activeNodeId = undefined;
-      this.interruptedNodeId = this.lastActiveNodeId;
-      this.update();
+      this.#renderInterruption()
       return;
     }
 
@@ -1356,6 +1359,19 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.lastActiveNodeId = this.activeNodeId;
     this.interruptedNodeId = undefined;
     this.update();
+  }
+
+  /**
+   * 
+   * @param {CustomEvent<import('./types.js').GraphState>} event 
+   */
+  onStateUpdated(event) {
+    _DBG('On State Update', event.detail);
+
+    if( event.detail === 'interrupted') {
+      this.#renderInterruption()
+    }
+
   }
 
   /**
