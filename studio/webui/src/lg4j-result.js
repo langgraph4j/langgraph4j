@@ -321,11 +321,11 @@ export class LG4JResultElement extends LitElement {
 
   /**
    * 
-   * @param {CustomEvent<'start'|'stop'|'interrupted'|'error'>} e 
+   * @param {CustomEvent<import('./types.js').GraphState>} event 
    */
-  #onStateUpdated( e ) {
-    _LOG( 'onStateUpdated', e )
-    if( e.detail === 'stop' && this.selectedTab ) { 
+  #onStateUpdated( event ) {
+    _LOG( 'onStateUpdated', event )
+    if( event.detail === 'stop' && this.selectedTab ) { 
 
       // add new elemnt into history stack
       const stack = this.threadMap.get( this.selectedTab )?.push( [] )
