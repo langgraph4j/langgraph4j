@@ -62,6 +62,12 @@
  */
 
 /**
+ * Graph execution lifecycle state.
+ *
+ * @typedef {'start'|'stop'|'interrupted'|'error'} GraphState
+ */
+
+/**
  * Two-dimensional coordinate used by graph nodes.
  *
  * @typedef {Object} Point
