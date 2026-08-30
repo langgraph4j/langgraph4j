@@ -146,7 +146,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
      * Datasource used to create the store
      */
     protected final DataSource datasource;
-    private final StateSerializer<? extends AgentState> stateSerializer;
+    protected final StateSerializer<? extends AgentState> stateSerializer;
     private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
@@ -183,7 +183,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         }
     }
 
-    private String encodeState(Map<String, Object> data) throws IOException {
+    protected String encodeState(Map<String, Object> data) throws IOException {
         final byte[] binaryData;
 
         if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
@@ -197,7 +197,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                 """.formatted(base64Data);
     }
 
-    private Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+    protected Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
         if (!Objects.equals(contentType, stateSerializer.contentType())) {
             throw new IllegalStateException(
                     format("Content Type used for store state '%s' is different from one '%s' used for deserialize it",
@@ -279,61 +279,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         return checkpoints;
     }
 
-    private void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
-        var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
-
-        var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
-
-        var insertCheckpointSql = sqlCommands.get("sqlInsertCheckpoint");
-        Long id = null;
-
-        // 1. Upsert thread information
-        try (PreparedStatement ps = conn.prepareStatement(upsertThreadSql)) {
-            var field = 0;
-            ps.setString(++field, threadId); // thread id
-            ps.setString(++field, threadId); // thread id
-
-            log.trace("Executing upsert thread:\n---\n{}---", upsertThreadSql);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    id = rs.getLong("thread_id");
-                }
-            }
-        }
-
-
-        // 2. Insert checkpoint data
-        try (PreparedStatement ps = conn.prepareStatement(insertCheckpointSql)) {
-            var field = 0;
-            // checkpoint_id
-            ps.setObject(++field,
-                    UUID.fromString(checkpoint.getId()),
-                    Types.OTHER);
-            // parent_checkpoint_id
-            ps.setNull(++field, java.sql.Types.OTHER);
-            // thread_id
-            ps.setLong(++field,
-                    requireNonNull(id, "thread id cannot be null"));
-            // node_id
-            ps.setString(++field, checkpoint.getNodeId());
-            // next_node_id
-            ps.setString(++field, checkpoint.getNextNodeId());
-            // state_data
-            ps.setString(++field, encodeState(checkpoint.getState()));
-            // state_content_type
-            ps.setString(++field, stateSerializer.contentType());
-
-            // DB schema has DEFAULT CURRENT_TIMESTAMP for saved_at.
-            // If checkpoint provides a specific time, use it. Otherwise, use current time from Java.
-            // To use DB default, one would typically omit the column or pass NULL if the column definition allows it to trigger default.
-            // OffsetDateTime savedAt = checkpoint.getSavedAt().orElse(OffsetDateTime.now());
-            // psCheckpoint.setObject(8, savedAt);
-            log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
-            ps.executeUpdate();
-        }
-
-    }
+    protected abstract void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception;
 
     @Override
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {

@@ -7,12 +7,12 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.jspecify.annotations.Nullable;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.LinkedList;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 
@@ -127,4 +127,60 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
             return failedFuture(e);
         }
     }
-}
+
+    @Override
+    protected void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
+
+        var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
+
+        var insertCheckpointSql = sqlCommands.get("sqlInsertCheckpoint");
+        Long id = null;
+
+        // 1. Upsert thread information
+        try (PreparedStatement ps = conn.prepareStatement(upsertThreadSql)) {
+            var field = 0;
+            ps.setString(++field, threadId); // thread id
+            ps.setString(++field, threadId); // thread id
+
+            log.trace("Executing upsert thread:\n---\n{}---", upsertThreadSql);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    id = rs.getLong("thread_id");
+                }
+            }
+        }
+
+
+        // 2. Insert checkpoint data
+        try (PreparedStatement ps = conn.prepareStatement(insertCheckpointSql)) {
+            var field = 0;
+            // checkpoint_id
+            ps.setObject(++field,
+                    UUID.fromString(checkpoint.getId()),
+                    Types.OTHER);
+            // parent_checkpoint_id
+            ps.setNull(++field, java.sql.Types.OTHER);
+            // thread_id
+            ps.setLong(++field,
+                    requireNonNull(id, "thread id cannot be null"));
+            // node_id
+            ps.setString(++field, checkpoint.getNodeId());
+            // next_node_id
+            ps.setString(++field, checkpoint.getNextNodeId());
+            // state_data
+            ps.setString(++field, encodeState(checkpoint.getState()));
+            // state_content_type
+            ps.setString(++field, stateSerializer.contentType());
+
+            // DB schema has DEFAULT CURRENT_TIMESTAMP for saved_at.
+            // If checkpoint provides a specific time, use it. Otherwise, use current time from Java.
+            // To use DB default, one would typically omit the column or pass NULL if the column definition allows it to trigger default.
+            // OffsetDateTime savedAt = checkpoint.getSavedAt().orElse(OffsetDateTime.now());
+            // psCheckpoint.setObject(8, savedAt);
+            log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
+            ps.executeUpdate();
+        }
+    }
+    }
