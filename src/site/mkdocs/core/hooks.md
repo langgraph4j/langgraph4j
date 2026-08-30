@@ -104,7 +104,13 @@ When multiple hooks are registered for the same node or edge, they are executed 
 `RetryPolicy` is a node-specific `WrapCall` hook for retrying transient failures. Failed attempts do not reach state merging or checkpointing; the graph continues only when the node action succeeds.
 
 ```java
-var retry = RetryPolicy.of(3, IOException.class);
+var retry = RetryPolicy.builder()
+        .maxAttempts(3)
+        .retryDelay(Duration.ofMillis(500))
+        .backoffFactor(2.0)
+        .retryOn(IOException.class, TimeoutException.class)
+        .retryOn(error -> error instanceof RemoteServiceException)
+        .build();
 
 var graph = new StateGraph<>(State.SCHEMA, State::new)
         .addNode("call_api", callApi)
@@ -112,6 +118,14 @@ var graph = new StateGraph<>(State.SCHEMA, State::new)
         .addEdge("call_api", END)
         .addWrapCallNodeHook("call_api", retry.asHook());
 ```
+
+`retryOn(...)` is required. It accepts one or more exception classes or a predicate; multiple calls are combined with OR.
+
+The other builder options are optional:
+
+* `maxAttempts(int)` defaults to `3` and includes the initial invocation.
+* `retryDelay(Duration)` defaults to `500 ms` and is the delay before the first retry.
+* `backoffFactor(double)` defaults to `2.0`; each following retry delay is multiplied by this factor.
 
 Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.
 

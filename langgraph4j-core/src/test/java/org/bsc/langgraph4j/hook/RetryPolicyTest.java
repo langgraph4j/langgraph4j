@@ -38,7 +38,10 @@ class RetryPolicyTest {
             return completedFuture(Map.of("result", "done"));
         };
 
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(3, IOException.class).asHook();
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .retryOn(IOException.class)
+                .build()
+                .asHook();
 
         var future = hook.applyWrap(
                 "call_api",
@@ -46,10 +49,8 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
-        var result = future.join();
-
         assertEquals(3, attempts.get());
-        assertEquals("done", result.get("result"));
+        assertEquals("done", future.join().get("result"));
     }
 
     @Test
@@ -64,7 +65,10 @@ class RetryPolicyTest {
             return completedFuture(Map.of("result", "done"));
         };
 
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(3, IllegalStateException.class).asHook();
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .retryOn(IllegalStateException.class)
+                .build()
+                .asHook();
 
         var result = hook.applyWrap(
                 "call_api",
@@ -72,19 +76,23 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
-        var output = result.join();
-
         assertEquals(3, attempts.get());
-        assertEquals("done", output.get("result"));
+        assertEquals("done", result.join().get("result"));
     }
 
     @Test
     void delaysRetry() {
         var attempts = new AtomicInteger();
+
         AsyncNodeActionWithConfig<State> action = (state, config) -> attempts.incrementAndGet() == 1
                 ? failedFuture(new IOException("temporary failure"))
                 : completedFuture(Map.of("result", "done"));
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(2, IOException.class).asHook();
+
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .maxAttempts(2)
+                .retryOn(IOException.class)
+                .build()
+                .asHook();
 
         var start = System.nanoTime();
         var result = hook.applyWrap("call_api", new State(Map.of()), RunnableConfig.empty(), action).join();
@@ -101,8 +109,13 @@ class RetryPolicyTest {
         AsyncNodeActionWithConfig<State> action = (state, config) -> attempts.incrementAndGet() < 3
                 ? failedFuture(new IOException("temporary failure"))
                 : completedFuture(Map.of("result", "done"));
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(
-                3, Duration.ofMillis(50), 2.0, IOException.class).asHook();
+
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .retryDelay(Duration.ofMillis(50))
+                .backoffFactor(2.0)
+                .retryOn(IOException.class)
+                .build()
+                .asHook();
 
         var start = System.nanoTime();
         var result = hook.applyWrap("call_api", new State(Map.of()), RunnableConfig.empty(), action).join();
@@ -122,7 +135,10 @@ class RetryPolicyTest {
             return failedFuture(new IOException("temporary failure"));
         };
 
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(3, IllegalStateException.class).asHook();
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .retryOn(IllegalStateException.class)
+                .build()
+                .asHook();
 
         var future = hook.applyWrap(
                 "call_api",
@@ -145,7 +161,10 @@ class RetryPolicyTest {
             return failedFuture(new IOException("temporary failure"));
         };
 
-        NodeHook.WrapCall<State> hook = RetryPolicy.of(3, IOException.class).asHook();
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .retryOn(IOException.class)
+                .build()
+                .asHook();
 
         var future = hook.applyWrap(
                 "call_api",

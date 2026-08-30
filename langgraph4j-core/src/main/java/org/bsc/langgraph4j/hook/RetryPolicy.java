@@ -33,79 +33,15 @@ public final class RetryPolicy {
     private final double backoffFactor;
     private final Predicate<Throwable> retryOn;
 
-    private RetryPolicy(
-            int maxAttempts,
-            Duration retryDelay,
-            double backoffFactor,
-            Predicate<Throwable> retryOn) {
-        this.maxAttempts = maxAttempts;
-        this.retryDelay = retryDelay;
-        this.backoffFactor = backoffFactor;
-        this.retryOn = retryOn;
+    private RetryPolicy(Builder builder) {
+        this.maxAttempts = builder.maxAttempts;
+        this.retryDelay = builder.retryDelay;
+        this.backoffFactor = builder.backoffFactor;
+        this.retryOn = builder.retryOn;
     }
 
-    @SafeVarargs
-    public static RetryPolicy of(int maxAttempts, Class<? extends Throwable>... exceptionTypes) {
-        return of(maxAttempts, DEFAULT_RETRY_DELAY, exceptionTypes);
-    }
-
-    @SafeVarargs
-    public static RetryPolicy of(
-            int maxAttempts,
-            Duration retryDelay,
-            Class<? extends Throwable>... exceptionTypes) {
-        return of(maxAttempts, retryDelay, DEFAULT_BACKOFF_FACTOR, exceptionTypes);
-    }
-
-    @SafeVarargs
-    public static RetryPolicy of(
-            int maxAttempts,
-            Duration retryDelay,
-            double backoffFactor,
-            Class<? extends Throwable>... exceptionTypes) {
-        Objects.requireNonNull(exceptionTypes, "exceptionTypes cannot be null");
-        if (exceptionTypes.length == 0) {
-            throw new IllegalArgumentException("exceptionTypes cannot be empty");
-        }
-
-        var types = Arrays.copyOf(exceptionTypes, exceptionTypes.length);
-        for (var type : types) {
-            Objects.requireNonNull(type, "exceptionTypes cannot contain null");
-        }
-
-        return of(maxAttempts, retryDelay, backoffFactor,
-                error -> Arrays.stream(types).anyMatch(type -> type.isInstance(error)));
-    }
-
-    public static RetryPolicy of(int maxAttempts, Predicate<? super Throwable> retryOn) {
-        return of(maxAttempts, DEFAULT_RETRY_DELAY, retryOn);
-    }
-
-    public static RetryPolicy of(
-            int maxAttempts,
-            Duration retryDelay,
-            Predicate<? super Throwable> retryOn) {
-        return of(maxAttempts, retryDelay, DEFAULT_BACKOFF_FACTOR, retryOn);
-    }
-
-    public static RetryPolicy of(
-            int maxAttempts,
-            Duration retryDelay,
-            double backoffFactor,
-            Predicate<? super Throwable> retryOn) {
-        if (maxAttempts < 1) {
-            throw new IllegalArgumentException("maxAttempts must be greater than zero");
-        }
-        Objects.requireNonNull(retryDelay, "retryDelay cannot be null");
-        if (retryDelay.isNegative()) {
-            throw new IllegalArgumentException("retryDelay cannot be negative");
-        }
-        if (!Double.isFinite(backoffFactor) || backoffFactor < 1) {
-            throw new IllegalArgumentException("backoffFactor must be finite and at least one");
-        }
-        Objects.requireNonNull(retryOn, "retryOn cannot be null");
-
-        return new RetryPolicy(maxAttempts, retryDelay, backoffFactor, retryOn::test);
+    public static Builder builder() {
+        return new Builder();
     }
 
     public <S extends AgentState> NodeHook.WrapCall<S> asHook() {
@@ -154,5 +90,67 @@ public final class RetryPolicy {
                 Long.MAX_VALUE);
         return runAsync(() -> {
         }, delayedExecutor((long) delayNanos, NANOSECONDS));
+    }
+
+    public static final class Builder {
+
+        private int maxAttempts = 3;
+        private Duration retryDelay = DEFAULT_RETRY_DELAY;
+        private double backoffFactor = DEFAULT_BACKOFF_FACTOR;
+        private Predicate<Throwable> retryOn;
+
+        public Builder maxAttempts(int maxAttempts) {
+            if (maxAttempts < 1) {
+                throw new IllegalArgumentException("maxAttempts must be greater than zero");
+            }
+            this.maxAttempts = maxAttempts;
+            return this;
+        }
+
+        public Builder retryDelay(Duration retryDelay) {
+            Objects.requireNonNull(retryDelay, "retryDelay cannot be null");
+            if (retryDelay.isNegative()) {
+                throw new IllegalArgumentException("retryDelay cannot be negative");
+            }
+            this.retryDelay = retryDelay;
+            return this;
+        }
+
+        public Builder backoffFactor(double backoffFactor) {
+            if (!Double.isFinite(backoffFactor) || backoffFactor < 1) {
+                throw new IllegalArgumentException("backoffFactor must be finite and at least one");
+            }
+            this.backoffFactor = backoffFactor;
+            return this;
+        }
+
+        @SafeVarargs
+        public final Builder retryOn(Class<? extends Throwable>... exceptionTypes) {
+            Objects.requireNonNull(exceptionTypes, "exceptionTypes cannot be null");
+            if (exceptionTypes.length == 0) {
+                throw new IllegalArgumentException("exceptionTypes cannot be empty");
+            }
+
+            var types = Arrays.copyOf(exceptionTypes, exceptionTypes.length);
+            for (var type : types) {
+                Objects.requireNonNull(type, "exceptionTypes cannot contain null");
+            }
+
+            return retryOn(error -> Arrays.stream(types).anyMatch(type -> type.isInstance(error)));
+        }
+
+        public Builder retryOn(Predicate<? super Throwable> condition) {
+            Objects.requireNonNull(condition, "condition cannot be null");
+            Predicate<Throwable> predicate = condition::test;
+            retryOn = retryOn == null ? predicate : retryOn.or(predicate);
+            return this;
+        }
+
+        public RetryPolicy build() {
+            if (retryOn == null) {
+                throw new IllegalStateException("retryOn must be configured");
+            }
+            return new RetryPolicy(this);
+        }
     }
 }
