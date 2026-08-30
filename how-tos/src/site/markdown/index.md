@@ -9,6 +9,7 @@ They are a collection of how-to(_s_) for LangGraph4j implemented using the [Java
 * [SkillInjector (dynamic skills)](skill-injector.md)
 * [Plan-and-Execute](plan-and-execute.md)
 * [Basic Reflection](basic-reflection.md)
+* [Prompt chaining](prompt-chaining.md)
 * [How to add persistence to your graph](persistence.md)
 * [How to view and update past graph state](time-travel.md)
 * [Wait for user input](wait-user-input.md)
