@@ -306,7 +306,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../how-tos/adaptiverag/" class="md-tabs__link">
+        <a href="../how-tos/agentic-rag/" class="md-tabs__link">
           
   
   
@@ -1801,6 +1801,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../how-tos/agentic-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a custom RAG agent with LangGraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../how-tos/adaptiverag/" class="md-nav__link">
         
   
@@ -2357,7 +2385,7 @@
 <li><strong>Endpoint</strong>: It handles <code>GET</code> requests to <code>/init</code>.</li>
 <li><strong>Functionality</strong>: It requires an <code>instance=&lt;instance_id&gt;</code> query parameter to identify the graph. It returns a JSON object containing:<ul>
 <li>The graph's title.</li>
-<li>A <a href="https.mermaid.js.org/">Mermaid</a> diagram representing the graph's structure.</li>
+<li>A <a href="https://mermaid.js.org/">Mermaid</a> diagram representing the graph's structure.</li>
 <li>The input arguments the graph expects, which are used to build the input form in the UI.</li>
 <li>A list of existing execution threads.</li>
 </ul>
@@ -2388,7 +2416,7 @@
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
 <span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-studio-jetty<span class="nt">&lt;/artifactId&gt;</span>
-<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta3<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta4<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre></div>
 <p><strong>Create a workflow and connect it to the playground webapp</strong></p>
@@ -2423,7 +2451,7 @@
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
 <span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-studio-springboot<span class="nt">&lt;/artifactId&gt;</span>
-<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta3<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta4<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre></div>
 <p><strong>Create a Custom Configuration Bean</strong></p>

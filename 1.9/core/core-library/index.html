@@ -306,7 +306,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../how-tos/adaptiverag/" class="md-tabs__link">
+        <a href="../../how-tos/agentic-rag/" class="md-tabs__link">
           
   
   
@@ -1928,15 +1928,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#breakpoints-aka-interruptions" class="md-nav__link">
+  <a href="#interruptions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breakpoints (AKA interruptions )
+        Interruptions
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Breakpoints (AKA interruptions )">
+    <nav class="md-nav" aria-label="Interruptions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1955,6 +1955,17 @@
     <span class="md-ellipsis">
       
         Dynamic definition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-graphinterruptexception" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use the GraphInterruptException
       
     </span>
   </a>
@@ -2277,6 +2288,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-tos/agentic-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a custom RAG agent with LangGraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2844,7 +2883,7 @@ The `MessageGraph` class is a special type of graph. The `State` of a `MessageGr
 <p><a id="compiling-your-graph"></a></p>
 <h3 id="compile-your-graph">Compile your graph</h3>
 <p>To build your graph, you first define the <a href="#state">state</a>, you then add <a href="#nodes">nodes</a> and <a href="#edges">edges</a>, and then you compile it. What exactly is compiling your graph and why is it needed?</p>
-<p>Compiling is a pretty simple step. It provides a few basic checks on the structure of your graph (no orphaned nodes, etc). It is also where you can specify runtime args like <a href="#checkpointer">checkpointers</a> and <a href="#breakpoints">breakpoints</a>. You compile your graph by just calling the <code>.compile</code> method:</p>
+<p>Compiling is a pretty simple step. It provides a few basic checks on the structure of your graph (no orphaned nodes, etc). It is also where you can specify runtime args like <a href="#checkpointer">checkpointers</a> and <a href="#interruptions">Interruptions</a>. You compile your graph by just calling the <code>.compile</code> method:</p>
 <div class="highlight"><pre><span></span><code><span class="n">CompileConfig</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">....</span>
 <span class="c1">// compile your graph</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graphBuilder</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="w"> </span><span class="n">CompileConfig</span><span class="w"> </span><span class="p">);</span>
@@ -2943,7 +2982,7 @@ The `MessageGraph` class is a special type of graph. The `State` of a `MessageGr
 <li><strong>Streaming updates</strong>: Monitor intermediate states as the workflow progresses</li>
 <li><strong>Real-time feedback</strong>: Display each step to users as it executes</li>
 <li><strong>Debugging</strong>: Inspect how the state evolves throughout execution</li>
-<li><strong>Interruption handling</strong>: Access interruption metadata when breakpoints are triggered</li>
+<li><strong>Interruption handling</strong>: Access interruption metadata when interruption are triggered</li>
 </ul>
 <p>You can also retrieve the final result value from the generator, for details take a look to <a href="#graphresult">GraphResult</a> section:</p>
 <h4 id="runnableconfig">RunnableConfig</h4>
@@ -3122,7 +3161,7 @@ The `MessageGraph` class is a special type of graph. The `State` of a `MessageGr
 </tr>
 <tr>
 <td><strong>INTERRUPTION_METADATA</strong></td>
-<td>An <code>InterruptionMetadata</code> object indicating that the graph execution was interrupted (e.g., at a breakpoint). This contains information about why the graph was interrupted and the state at the interruption point.</td>
+<td>An <code>InterruptionMetadata</code> object indicating that the graph execution was interrupted. This contains information about why the graph was interrupted and the state at the interruption point.</td>
 </tr>
 <tr>
 <td><strong>CHECKPOINT_SAVER_TAG</strong></td>
@@ -3471,12 +3510,12 @@ You can then access and use this configuration inside a node:
 See [this guide](/langgraph4j/how-tos/langgraph4j-howtos/configuration.html) for a full breakdown on configuration 
 -->
 
-<h2 id="breakpoints-aka-interruptions">Breakpoints (AKA interruptions )</h2>
+<h2 id="interruptions">Interruptions</h2>
 <p>In langgraph4j, a graph's execution can be paused at any node. This is particularly useful for implementing features like human-in-the-loop approvals, where the graph needs to
 wait for external input before proceeding.</p>
-<p>To set breakpoints before or after certain nodes execute. This can be used to wait for human approval before continuing. These can be set when you <a href="#compiling-your-graph">"compile" a graph</a>. </p>
+<p>To set interruptions before or after certain nodes execute. This can be used to wait for human approval before continuing. These can be set when you <a href="#compiling-your-graph">"compile" a graph</a>. </p>
 <h3 id="static-definition">Static definition</h3>
-<p>You can set breakpoints either <em>before</em> a node executes (using <code>interruptBefore</code>) or <em>after</em> a node executes (using <code>interruptAfter</code>) adding them on <code>CompileConfig</code>.</p>
+<p>You can set Interruptions either <em>before</em> a node executes (using <code>interruptBefore</code>) or <em>after</em> a node executes (using <code>interruptAfter</code>) adding them on <code>CompileConfig</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
 <span class="w">                    </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="n">saver</span><span class="p">)</span>
 <span class="w">                    </span><span class="p">.</span><span class="na">interruptBefore</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;tools&quot;</span><span class="p">)</span>
@@ -3501,20 +3540,42 @@ wait for external input before proceeding.</p>
 <ul>
 <li>When the graph is about to execute a node, it first checks if the node's action implements InterruptableAction.</li>
 <li>If it does, the interrupt(String nodeId, State state) method is called.</li>
-<li>If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the
-  interruption, which can be sent to an external system or user for review.</li>
+<li>If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the interruption, which can be sent to an external system or user for review.</li>
 <li>If the method returns an empty Optional, the node executes normally, and the graph continues its execution without interruption.</li>
 </ul>
+<h3 id="use-the-graphinterruptexception">Use the GraphInterruptException</h3>
+<p><code>GraphInterruptException</code> is a built-in exception that a node action can raise when it needs to stop graph execution intentionally. The runtime does not treat this exception as a graph error. Instead, it converts the exception into an <code>InterruptionMetadata</code> result so the execution can be inspected and resumed later.</p>
+<p>This is useful when the decision to interrupt happens inside the node body, for example after validating external input, detecting that user approval is required, or receiving a response that must be reviewed before the graph continues.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// From a sync NodeAction</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">State</span><span class="w"> </span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">GraphInterruptException</span><span class="p">(</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Interrupting with exception!&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// From an async NodeAction</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">CompletableFuture</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">State</span><span class="w"> </span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">failedFuture</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">GraphInterruptException</span><span class="p">(</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Interrupting with exception!&quot;</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Here’s how it works</strong>:</p>
+<ul>
+<li>The graph engine executes the current node action.</li>
+<li>If the action throws an exception, or returns a failed <code>CompletableFuture</code>, the engine checks the cause.</li>
+<li>If no <code>GraphInterruptException</code> is found, the exception is handled as a normal execution error and the stream completes with an error.</li>
+<li>If a <code>GraphInterruptException</code> is found, the engine resolves the interrupted node id.</li>
+<li>The engine builds an <code>InterruptionMetadata</code> object with the node id, the state, and the exception message as the interruption reason.</li>
+<li>The stream is completed, so the interruption is available as the final graph result instead of an error.</li>
+<li>The graph execution loop stops. You can then read the <code>Interruption Metadata</code> from the stream result and resume the graph using <code>Graph Input.resume()</code> or <code>GraphInput.resume(Map)</code> as usual.</li>
+</ul>
 <hr />
-<p>You <strong>MUST</strong> use a <a href="#checkpointer">checkpoiner</a> when using breakpoints. This is because your graph needs to be able to resume execution.</p>
+<p>You <strong>MUST</strong> use a <a href="#checkpointer">checkpoiner</a> when using interruption. This is because your graph needs to be able to resume execution.</p>
 <p>In order to resume execution, you can just invoke your graph with <code>GraphInput.resume()</code> or <code>GraphInput.resume(Map)</code> as the input.</p>
 <div class="highlight"><pre><span></span><code><span class="c1">// Initial run of graph</span>
 <span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
 
-<span class="c1">// Let&#39;s assume it hit a breakpoint somewhere, you can then resume it no passing new state data</span>
+<span class="c1">// Let&#39;s assume it hit an interruption somewhere, you can then resume it no passing new state data</span>
 <span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
 
-<span class="c1">// Let&#39;s assume it hit a breakpoint somewhere, you can then resume it passing new state data</span>
+<span class="c1">// Let&#39;s assume it hit an interruption somewhere, you can then resume it passing new state data</span>
 <span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">resume</span><span class="p">(</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="w"> </span><span class="s">&quot;key&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;value&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
 </code></pre></div>
 <h3 id="achieve-interruptionmetadata-object-after-interruption">Achieve InterruptionMetadata object after interruption</h3>
@@ -3535,7 +3596,7 @@ wait for external input before proceeding.</p>
 <blockquote>
 <p><code>resultValue</code> is a generic <code>Object</code> that in case of interruptions is an instance of InterruptionMetadata</p>
 </blockquote>
-<p>See <a href="../../how-tos/wait-user-input/">Wait for user Input (HITL)</a> for a full walkthrough of how to add breakpoints.</p>
+<p>See <a href="../../how-tos/wait-user-input/">Wait for user Input (HITL)</a> for a full walkthrough of how to add interruptions.</p>
 <h2 id="visualization">Visualization</h2>
 <p>It's often nice to be able to visualize graphs, especially as they get more complex. LangGraph4j comes with several built-in ways to visualize graphs using diagram-as-code tools such as [PlantUML] and <a href="https://mermaid.js.org">Mermaid</a> through the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph(org.bsc.langgraph4j.GraphRepresentation.Type(java.lang.String)">graph.getGraph</a> method. </p>
 <div class="highlight"><pre><span></span><code><span class="c1">// for PlantUML</span>

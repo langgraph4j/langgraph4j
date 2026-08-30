@@ -304,7 +304,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../how-tos/adaptiverag/" class="md-tabs__link">
+        <a href="../how-tos/agentic-rag/" class="md-tabs__link">
           
   
   
@@ -629,6 +629,17 @@
     <span class="md-ellipsis">
       
         SQLite saver upgrade (V2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-saver-upgrade-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL saver upgrade (V2)
       
     </span>
   </a>
@@ -2066,6 +2077,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../how-tos/agentic-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a custom RAG agent with LangGraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../how-tos/adaptiverag/" class="md-nav__link">
         
   
@@ -2695,7 +2734,11 @@ observable result is unchanged.</p>
 the possibility to preserve the reason for an interruption and distinguish normal completion from an error release. <code>InterruptionMetadata</code> now exposes also the interruption reason.</p>
 <p>The <strong>in-memory</strong>, <strong>file-system</strong>, <strong>Redis</strong>, <strong>Postgres</strong>, <strong>Oracle</strong>, <strong>MySQL</strong>, <strong>CockroachDB</strong>, <strong>DynamoDB</strong>, and <strong>Hazelcast</strong> savers have been aligned with this contract providing a default implementation.</p>
 <h3 id="sqlite-saver-upgrade-v2">SQLite saver upgrade (V2)</h3>
-<p>The SQLite module now includes a <code>SQLiteSaverV2</code> implementation backed by versioned SQL resources. <code>SQLiteSaverV2</code> is aligned with the new checkpoint saver release/error/interruption contract, while the existing <code>SQLiteSaver</code> remains available for the V1 schema.</p>
+<p>The SQLite module now includes a <code>SQLiteSaverV2</code> implementation backed by versioned SQL resources.
+<code>SQLiteSaverV2</code> is aligned with the new checkpoint saver <strong>release/error/interruption</strong> contract, while the existing <code>SQLiteSaver</code> remains available for the V1 schema.</p>
+<h3 id="postgresql-saver-upgrade-v2">PostgreSQL saver upgrade (V2)</h3>
+<p>The PostgreSQL module now includes a <code>PostgresSaverV2</code> implementation backed by versioned SQL resources.
+<code>PostgresSaverV2</code> is aligned with the new checkpoint saver <strong>release/error/interruption</strong> contract, while the existing <code>PostgresSaver</code> remains available for the V1 schema.</p>
 <h2 id="starting-resuming-and-invoking-graphs">Starting, resuming, and invoking graphs</h2>
 <p><code>GraphInput</code> is now the preferred and explicit execution API.</p>
 <p>Before:
@@ -2850,7 +2893,7 @@ that is a <code>GraphDefinition.Reducer</code> that exports a graph, including p
 <span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
 <span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">      </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-bom<span class="nt">&lt;/artifactId&gt;</span>
-<span class="w">      </span><span class="nt">&lt;version&gt;</span>1.9.0-beta3<span class="nt">&lt;/version&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>1.9.0-beta4<span class="nt">&lt;/version&gt;</span>
 <span class="w">      </span><span class="nt">&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;</span>
 <span class="w">      </span><span class="nt">&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
 <span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
