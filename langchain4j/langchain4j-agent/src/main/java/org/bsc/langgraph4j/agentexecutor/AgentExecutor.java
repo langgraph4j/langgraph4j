@@ -210,11 +210,15 @@ public interface AgentExecutor {
         }
 
         /**
-         * Wires {@link SkillInjector}: execute-tools activation hook + conversation policy
+         * Wires {@link SkillInjector}: execute-tools activation hook +
+         * (optionally) callModel unload hook + conversation policy
          * (composed with any previously set policy).
          */
         public Builder skillInjector(SkillInjector injector) {
             addExecuteToolsHook(injector.executeToolsHook());
+            if (injector.hasUnloadAfterCallModel()) {
+                addCallModelHook(injector.callModelUnloadHook());
+            }
             conversationContextPolicy(injector.asConversationContextPolicy(conversationContextPolicy));
             return this;
         }
