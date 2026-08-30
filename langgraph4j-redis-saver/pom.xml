@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.9-SNAPSHOT</version>
+        <version>1.9.0-beta4</version>
     </parent>
 
     <artifactId>langgraph4j-redis-saver</artifactId>

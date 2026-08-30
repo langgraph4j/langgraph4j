@@ -69,7 +69,7 @@ public interface BaseCheckpointSaver {
      * @param message custom message to include in the Tag object (can be null)
      * @return a Tag object containing the threadId, version, and list of checkpoints
      * @throws Exception if an error occurs while releasing the checkpoints
-     * @since 1.9.0-beta3
+     * @since 1.9.0-beta4
      */
     Tag release(RunnableConfig config, @Nullable String message) throws Exception;
 
@@ -80,7 +80,7 @@ public interface BaseCheckpointSaver {
      * @param exception the exception that caused the release (cannot be null)
      * @return a Tag object containing the threadId, version, and list of checkpoints
      * @throws Exception if an error occurs while releasing the checkpoints
-     * @since 1.9.0-beta3
+     * @since 1.9.0-beta4
      */
     Tag releaseOnError(RunnableConfig config, Exception exception) throws Exception;
 
@@ -90,7 +90,7 @@ public interface BaseCheckpointSaver {
      *
      * @param config the RunnableConfig for which to register the interruption
      * @param interruptionMetadata the metadata associated with the interruption
-     * @since 1.9.0-beta3
+     * @since 1.9.0-beta4
      */
     <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config,
                                                                                                    InterruptionMetadata<State> interruptionMetadata);
