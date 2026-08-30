@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +16,7 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RetryPolicyTest {
 
@@ -44,8 +46,10 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
+        var result = future.join();
+
         assertEquals(3, attempts.get());
-        assertEquals("done", future.join().get("result"));
+        assertEquals("done", result.get("result"));
     }
 
     @Test
@@ -68,8 +72,27 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
+        var output = result.join();
+
         assertEquals(3, attempts.get());
-        assertEquals("done", result.join().get("result"));
+        assertEquals("done", output.get("result"));
+    }
+
+    @Test
+    void delaysRetry() {
+        var attempts = new AtomicInteger();
+        AsyncNodeActionWithConfig<State> action = (state, config) -> attempts.incrementAndGet() == 1
+                ? failedFuture(new IOException("temporary failure"))
+                : completedFuture(Map.of("result", "done"));
+        NodeHook.WrapCall<State> hook = RetryPolicy.of(2, IOException.class).asHook();
+
+        var start = System.nanoTime();
+        var result = hook.applyWrap("call_api", new State(Map.of()), RunnableConfig.empty(), action).join();
+        var elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        assertEquals(2, attempts.get());
+        assertEquals("done", result.get("result"));
+        assertTrue(elapsed.compareTo(Duration.ofMillis(450)) >= 0);
     }
 
     @Test
