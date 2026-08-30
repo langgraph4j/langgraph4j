@@ -54,22 +54,24 @@ nav:
       #   - JavaDoc: apidocs/index.html
       - Getting Started: getting-started.md
       - How to(s):
-          - Adaptive RAG: how-tos/adaptiverag.ipynb
-          - Agent Executor: how-tos/agentexecutor.ipynb
-          - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
-          - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
-          - Plan-and-Execute: how-tos/plan-and-execute.ipynb
-          - Basic Reflection: how-tos/basic-reflection.ipynb
-          - Add persistence (“memory”) to your graph: how-tos/persistence.ipynb
-          - View and Update past graph state: how-tos/time-travel.ipynb
-          - Wait for User input: how-tos/wait-user-input.ipynb
-          - Subgraph as state graph: how-tos/subgraph-as-stategraph.ipynb
-          - Subgraph as compiled graph: how-tos/subgraph-as-compiledgraph.ipynb
-          - Subgraph as node action: how-tos/subgraph-as-nodeaction.ipynb
-          - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
-          - Parallel Branch: how-tos/parallel-branch.ipynb
-          - PlantUML: how-tos/plantuml.ipynb
-          - Hooks: how-tos/hooks.ipynb
+        - Add persistence (“memory”) to your graph: how-tos/persistence.ipynb
+        - Adaptive RAG: how-tos/adaptiverag.ipynb
+        - Agent Executor: how-tos/agentexecutor.ipynb
+        - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
+        - Agentic RAG: how-tos/agentic-rag.ipynb
+        - Basic Reflection: how-tos/basic-reflection.ipynb
+        - Hooks: how-tos/hooks.ipynb
+        - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
+        - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
+        - Parallel Branch: how-tos/parallel-branch.ipynb
+        - PlantUML: how-tos/plantuml.ipynb
+        - Plan-and-Execute: how-tos/plan-and-execute.ipynb
+        - Prompt Chaining: how-tos/prompt-chaining.ipynb
+        - Subgraph as compiled graph: how-tos/subgraph-as-compiledgraph.ipynb
+        - Subgraph as node action: how-tos/subgraph-as-nodeaction.ipynb
+        - Subgraph as state graph: how-tos/subgraph-as-stategraph.ipynb
+        - View and Update past graph state: how-tos/time-travel.ipynb
+        - Wait for User input: how-tos/wait-user-input.ipynb
       - Integrations:
           - integrations/spring-ai.md
           - integrations/langchain4j.md
