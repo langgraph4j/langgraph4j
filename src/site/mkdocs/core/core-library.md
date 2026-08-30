@@ -38,7 +38,7 @@ The `MessageGraph` class is a special type of graph. The `State` of a `MessageGr
 
 To build your graph, you first define the [state](#state), you then add [nodes](#nodes) and [edges](#edges), and then you compile it. What exactly is compiling your graph and why is it needed?
 
-Compiling is a pretty simple step. It provides a few basic checks on the structure of your graph (no orphaned nodes, etc). It is also where you can specify runtime args like [checkpointers](#checkpointer) and [breakpoints](#breakpoints). You compile your graph by just calling the `.compile` method:
+Compiling is a pretty simple step. It provides a few basic checks on the structure of your graph (no orphaned nodes, etc). It is also where you can specify runtime args like [checkpointers](#checkpointer) and [Interruptions](#interruptions). You compile your graph by just calling the `.compile` method:
 
 ```java
 CompileConfig compileConfig = ....
@@ -115,7 +115,7 @@ The `stream()` method returns an `AsyncGenerator` that yields the state updates 
 - **Streaming updates**: Monitor intermediate states as the workflow progresses
 - **Real-time feedback**: Display each step to users as it executes
 - **Debugging**: Inspect how the state evolves throughout execution
-- **Interruption handling**: Access interruption metadata when breakpoints are triggered
+- **Interruption handling**: Access interruption metadata when interruption are triggered
 
 You can also retrieve the final result value from the generator, for details take a look to [GraphResult](#graphresult) section:
 
@@ -244,7 +244,7 @@ The [GraphResult] class can wrap the following result types:
 | ---- | ----------- |
 | **STATE_DATA** | A `Map<String, Object>` representing the state snapshot after a node execution. This is the most common result during graph streaming. |
 | **NODE_OUTPUT** | A `NodeOutput` object containing detailed information about a node's execution, including the node ID, the resulting state, and execution metadata. |
-| **INTERRUPTION_METADATA** | An `InterruptionMetadata` object indicating that the graph execution was interrupted (e.g., at a breakpoint). This contains information about why the graph was interrupted and the state at the interruption point. |
+| **INTERRUPTION_METADATA** | An `InterruptionMetadata` object indicating that the graph execution was interrupted. This contains information about why the graph was interrupted and the state at the interruption point. |
 | **CHECKPOINT_SAVER_TAG** | A [BaseCheckpointSaver.Tag] object representing a checkpoint identifier and metadata. Useful for tracking persisted states. |
 | **EMPTY** | Indicates no result was produced (typically when the stream yields null). |
 
@@ -649,16 +649,16 @@ const nodeA = (state, config) => {
 See [this guide](/langgraph4j/how-tos/langgraph4j-howtos/configuration.html) for a full breakdown on configuration 
 -->
 
-## Breakpoints (AKA interruptions )
+## Interruptions
 
 In langgraph4j, a graph's execution can be paused at any node. This is particularly useful for implementing features like human-in-the-loop approvals, where the graph needs to
 wait for external input before proceeding.
 
-To set breakpoints before or after certain nodes execute. This can be used to wait for human approval before continuing. These can be set when you ["compile" a graph](#compiling-your-graph). 
+To set interruptions before or after certain nodes execute. This can be used to wait for human approval before continuing. These can be set when you ["compile" a graph](#compiling-your-graph). 
 
 ### Static definition 
 
-You can set breakpoints either _before_ a node executes (using `interruptBefore`) or _after_ a node executes (using `interruptAfter`) adding them on `CompileConfig`.
+You can set Interruptions either _before_ a node executes (using `interruptBefore`) or _after_ a node executes (using `interruptAfter`) adding them on `CompileConfig`.
 
 ```java
 var compileConfig = CompileConfig.builder()
@@ -691,13 +691,40 @@ public interface InterruptableAction<State extends AgentState> {
 
  * When the graph is about to execute a node, it first checks if the node's action implements InterruptableAction.
  * If it does, the interrupt(String nodeId, State state) method is called.
- * If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the
-  interruption, which can be sent to an external system or user for review.
+ * If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the interruption, which can be sent to an external system or user for review.
  * If the method returns an empty Optional, the node executes normally, and the graph continues its execution without interruption.
+
+### Use the GraphInterruptException
+
+`GraphInterruptException` is a built-in exception that a node action can raise when it needs to stop graph execution intentionally. The runtime does not treat this exception as a graph error. Instead, it converts the exception into an `InterruptionMetadata` result so the execution can be inspected and resumed later.
+
+This is useful when the decision to interrupt happens inside the node body, for example after validating external input, detecting that user approval is required, or receiving a response that must be reviewed before the graph continues.
+
+```java
+// From a sync NodeAction
+public Map<String, Object> apply(State state, RunnableConfig config) throws Exception {
+    throw new GraphInterruptException(config, "Interrupting with exception!");
+}
+
+// From an async NodeAction
+public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
+    return failedFuture(new GraphInterruptException(config, "Interrupting with exception!"));
+}
+```
+
+**Here’s how it works**:
+
+ * The graph engine executes the current node action.
+ * If the action throws an exception, or returns a failed `CompletableFuture`, the engine checks the cause.
+ * If no `GraphInterruptException` is found, the exception is handled as a normal execution error and the stream completes with an error.
+ * If a `GraphInterruptException` is found, the engine resolves the interrupted node id.
+ * The engine builds an `InterruptionMetadata` object with the node id, the state, and the exception message as the interruption reason.
+ * The stream is completed, so the interruption is available as the final graph result instead of an error.
+ * The graph execution loop stops. You can then read the `Interruption Metadata` from the stream result and resume the graph using `Graph Input.resume()` or `GraphInput.resume(Map)` as usual.
 
 ---- 
 
-You **MUST** use a [checkpoiner](#checkpointer) when using breakpoints. This is because your graph needs to be able to resume execution.
+You **MUST** use a [checkpoiner](#checkpointer) when using interruption. This is because your graph needs to be able to resume execution.
 
 In order to resume execution, you can just invoke your graph with `GraphInput.resume()` or `GraphInput.resume(Map)` as the input.
 
@@ -705,10 +732,10 @@ In order to resume execution, you can just invoke your graph with `GraphInput.re
 // Initial run of graph
 graph.stream(inputs, config);
 
-// Let's assume it hit a breakpoint somewhere, you can then resume it no passing new state data
+// Let's assume it hit an interruption somewhere, you can then resume it no passing new state data
 graph.stream(GraphInput.resume(), config);
 
-// Let's assume it hit a breakpoint somewhere, you can then resume it passing new state data
+// Let's assume it hit an interruption somewhere, you can then resume it passing new state data
 graph.stream(GraphInput.resume( Map.of( "key", "value")), config);
 
 ```
@@ -736,7 +763,7 @@ if( finalResult.isInterruptionMetadata()) {
 
 
 
-See [Wait for user Input (HITL)](../how-tos/wait-user-input.ipynb) for a full walkthrough of how to add breakpoints.
+See [Wait for user Input (HITL)](../how-tos/wait-user-input.ipynb) for a full walkthrough of how to add interruptions.
 
 ## Visualization
 
