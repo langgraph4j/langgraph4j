@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PostgresSaverTest extends AbstractCheckpointSaverTest {
 
 
-    private static final String DATABASE_NAME = "lg4j-store";
+    private static final String DATABASE_NAME = "lg4j-store_v1";
 
     private static final String[] IMAGES = {
             "postgres:16-alpine",
@@ -29,14 +29,14 @@ public class PostgresSaverTest extends AbstractCheckpointSaverTest {
 
     static PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>(IMAGES[1])
-                            .withDatabaseName(DATABASE_NAME)
-                .waitingFor(new CustomPostgreSQLWaitStrategy());
+                    .withDatabaseName(DATABASE_NAME)
+                    .waitingFor(new CustomPostgreSQLWaitStrategy());
 
     @BeforeAll
     public static void init() throws IOException {
         // initialize log
-        try( var is = PostgresSaverTest.class.getResourceAsStream("/logging.properties") ) {
-            if( is!=null ) LogManager.getLogManager().readConfiguration(is);
+        try (var is = PostgresSaverTest.class.getResourceAsStream("/logging.properties")) {
+            if (is != null) LogManager.getLogManager().readConfiguration(is);
         }
 
         // start postgres container
@@ -70,8 +70,8 @@ public class PostgresSaverTest extends AbstractCheckpointSaverTest {
         ds.setDatabaseName(DATABASE_NAME);
         ds.setUser(postgres.getUsername());
         ds.setPassword(postgres.getPassword());
-        ds.setPortNumbers( new int[]{postgres.getFirstMappedPort()} );
-        ds.setServerNames( new String[] { postgres.getHost() } );
+        ds.setPortNumbers(new int[]{postgres.getFirstMappedPort()});
+        ds.setServerNames(new String[]{postgres.getHost()});
 
         return PostgresSaver.builder()
                 .datasource(ds);
@@ -84,7 +84,6 @@ public class PostgresSaverTest extends AbstractCheckpointSaverTest {
                 .stateSerializer(stateSerializer)
                 .build();
     }
-
 
 
     @Test

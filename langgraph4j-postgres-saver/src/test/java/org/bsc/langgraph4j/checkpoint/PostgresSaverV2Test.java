@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class PostgresSaverV2Test extends AbstractCheckpointSaverTest {
 
-    private static final String DATABASE_NAME = "lg4j-store";
+    private static final String DATABASE_NAME = "lg4j-store_v2";
 
     static PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>("pgvector/pgvector:pg16")
@@ -49,7 +49,7 @@ public class PostgresSaverV2Test extends AbstractCheckpointSaverTest {
         ds.setPassword(postgres.getPassword());
         ds.setPortNumbers(new int[]{postgres.getFirstMappedPort()});
         ds.setServerNames(new String[]{postgres.getHost()});
-        log.info("ds.url: '{}'",ds.getUrl());
+        log.info("ds.url: '{}'", ds.getUrl());
         return PostgresSaverV2.builder()
                 .datasource(ds);
     }
