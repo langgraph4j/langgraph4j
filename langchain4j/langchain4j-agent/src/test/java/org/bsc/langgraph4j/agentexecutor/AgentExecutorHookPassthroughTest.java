@@ -8,6 +8,8 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.FinishReason;
+import org.bsc.langgraph4j.GraphInput;
+import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.agent.Agent;
 import org.junit.jupiter.api.Test;
 
@@ -79,7 +81,10 @@ class AgentExecutorHookPassthroughTest {
                 .build()
                 .compile();
 
-        var result = app.invoke(Map.of("messages", UserMessage.from("go"))).orElseThrow();
+        var result = app.invoke(
+                GraphInput.args(Map.of("messages", UserMessage.from("go"))),
+                RunnableConfig.empty())
+                .orElseThrow();
 
         assertTrue(result.finalResponse().isPresent());
         assertEquals("done", result.finalResponse().get());

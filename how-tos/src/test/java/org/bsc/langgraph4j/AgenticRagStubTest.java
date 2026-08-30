@@ -114,10 +114,9 @@ public class AgenticRagStubTest {
                 .toolExecutionRequests(List.of(toolRequest))
                 .build();
 
-        var result = graph.invoke(Map.of("messages", List.of(
+        var result = graph.invoke(GraphInput.args(Map.of("messages", List.of(
                 UserMessage.from("What does Lilian Weng say about types of reward hacking?"),
-                toolCall
-        )));
+                toolCall))), RunnableConfig.empty());
 
         assertTrue(result.isPresent());
         var messages = result.get().messages();

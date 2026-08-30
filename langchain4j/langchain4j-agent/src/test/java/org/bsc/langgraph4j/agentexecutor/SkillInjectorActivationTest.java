@@ -9,6 +9,8 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.FinishReason;
+import org.bsc.langgraph4j.GraphInput;
+import org.bsc.langgraph4j.RunnableConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -75,7 +77,7 @@ class SkillInjectorActivationTest {
                 .build()
                 .compile();
 
-        var result = app.invoke(Map.of("messages", UserMessage.from("查物流"))).orElseThrow();
+        var result = app.invoke(GraphInput.args(Map.of("messages", UserMessage.from("查物流"))), RunnableConfig.empty()).orElseThrow();
 
         assertEquals(List.of("order-reply"), result.activeSkills());
         assertEquals(2, chatModel.requests.size());
@@ -112,7 +114,7 @@ class SkillInjectorActivationTest {
                 .build()
                 .compile();
 
-        var result = app.invoke(Map.of("messages", UserMessage.from("查物流"))).orElseThrow();
+        var result = app.invoke(GraphInput.args(Map.of("messages", UserMessage.from("查物流"))), RunnableConfig.empty()).orElseThrow();
 
         assertEquals(List.of("agent-commit"), result.activeSkills());
         assertTrue(chatModel.requests.get(1).messages().stream().anyMatch(m ->
