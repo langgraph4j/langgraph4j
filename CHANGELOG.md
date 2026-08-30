@@ -16,6 +16,121 @@
 
 
 
+<!-- "name: v1.9.0-beta4" is a release tag -->
+
+## [v1.9.0-beta4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta4) (2026-08-30)
+
+### Features
+
+ *  add static method to retrieve GraphInterruptException from throwable ([4e3ae199eb620ef](https://github.com/bsorrentino/langgraph4j/commit/4e3ae199eb620ef9d3d18597035ff74c5292061f))
+   
+ *  update GraphRunnerException.of() method to use generics for improved type safety ([a9d189708d41d56](https://github.com/bsorrentino/langgraph4j/commit/a9d189708d41d56c5ad4d9dcb6834f113d196b74))
+   
+ *  **core**  enhance error handling for interrupted graph execution and improve exception logging ([23c1c29dda13bef](https://github.com/bsorrentino/langgraph4j/commit/23c1c29dda13bef2f969364375772915c5a47a31))
+     > resolve #432
+   
+ *  **core**  introduce GraphInterruptException for interrupted graph execution ([85474b0f11ad096](https://github.com/bsorrentino/langgraph4j/commit/85474b0f11ad0965f056cb4e6576d6d91209db1f))
+     > work on #432
+   
+ *  **studio/webui**  add GraphState typedef for graph execution lifecycle ([9e4d770c9718bc9](https://github.com/bsorrentino/langgraph4j/commit/9e4d770c9718bc9931e470a6416f1944b9f37d97))
+   
+ *  **studio/webui**  implement state update handling for interrupted nodes ([6f56950dc71a5a8](https://github.com/bsorrentino/langgraph4j/commit/6f56950dc71a5a8535c5154586b916110cfaa3ba))
+   
+ *  **studio/webui**  add graph event routing in result handler ([4e94349a5dcad00](https://github.com/bsorrentino/langgraph4j/commit/4e94349a5dcad00ed589f267f29e36bc2c8ea00d))
+   
+ *  **postgres-saver**  add PostgresSaverV2 implementation aligned with SQLiteSaverV2 ([937aa26663261a4](https://github.com/bsorrentino/langgraph4j/commit/937aa26663261a4f3db71d5d1e40473455296e3c))
+   
+ *  **langchain4j-agent**  add skill injector ([e9bb0a205e83969](https://github.com/bsorrentino/langgraph4j/commit/e9bb0a205e83969caa15a28eeedb234d0236e415))
+     > refer to PR #438
+   
+ *  **studio/webui**  add interrupted property to node for execution step tracking ([10ffbc5398dc7b5](https://github.com/bsorrentino/langgraph4j/commit/10ffbc5398dc7b57b15fb62a7cbb8c3bec4b6ec2))
+   
+ *  **studio/webui**  add support for interrupted node highlighting in graph flow ([df75c14a2935988](https://github.com/bsorrentino/langgraph4j/commit/df75c14a29359889f5e76e21b4ce2da07a5e82a4))
+   
+ *  **studio/webui**  integrate debug logging for DSL parsing and interactive status changes ([ebef0fd1d257400](https://github.com/bsorrentino/langgraph4j/commit/ebef0fd1d25740089a8658e6d6e790847273c0d4))
+   
+
+### Bug Fixes
+
+ -  **postgres-saver**  keep backward compatibility with PostgresSaver v1 ([6706f863346d5ee](https://github.com/bsorrentino/langgraph4j/commit/6706f863346d5eee4c086338097ffcd73f0ed919))
+
+ -  **studio/webui**  update parameter type for #onStateUpdated method ([cfa0ccc1b222462](https://github.com/bsorrentino/langgraph4j/commit/cfa0ccc1b222462b8a89f6f2614d47792e72b19a))
+
+ -  **sqlite-saver**  change parent_thread_id type from TEXT to INTEGER ([72dda808c78b098](https://github.com/bsorrentino/langgraph4j/commit/72dda808c78b0988140b825832b1937919aa5528))
+
+
+### Refactor
+
+ -  **core**  simplify exception handling by using static methods for GraphInterruptException and GraphRunnerException ([8fe5ef595cae7f2](https://github.com/bsorrentino/langgraph4j/commit/8fe5ef595cae7f2db0b6ecd4a633fc56cee4f824))
+   
+ -  **studio**  improve Studio integration test and examples ([e0d9171e1fea068](https://github.com/bsorrentino/langgraph4j/commit/e0d9171e1fea06865291664479d02a03e87c0d57))
+   
+
+### Test 
+
+ -  **core**  enhance test for evaluate grapoh interruption using GraphInterruptException ([f678db59fe9a0c3](https://github.com/bsorrentino/langgraph4j/commit/f678db59fe9a0c32997ea112e3f6b31f63ed6043))
+    > - Remove SubGraphInterruptionException
+ > - Reuse the LG4JTestUtil interface
+
+ -  **exception**  add unit tests for GraphInterruptException and GraphRunnerException handling ([f5c2b80d56feb83](https://github.com/bsorrentino/langgraph4j/commit/f5c2b80d56feb830d334204fef674e2f2524796f))
+    > work on #432
+
+ -  **core**  enhance CustomNodeAction with interrupt exception handling and state management ([21ef8ea3f0d6d34](https://github.com/bsorrentino/langgraph4j/commit/21ef8ea3f0d6d34583f14f43ba8d608d389c9137))
+    > work on #432
+
+ -  **studio**  update SampleGraph to return LangGraphStudioServer.Instance instead of StateGraph ([8013a4f6f523781](https://github.com/bsorrentino/langgraph4j/commit/8013a4f6f5237813883d2db4901fa162b973b6f1))
+   
+
+### Documentation
+
+ -  enhance the explanation of GraphInterruptException usage ([e9fbc69fe48a1c4](https://github.com/bsorrentino/langgraph4j/commit/e9fbc69fe48a1c4aed215ffb6cd47c6cb6a2b9f3))
+
+ -  update references with new videos and articles for LangGraph4j ([51f16abf6e6c06b](https://github.com/bsorrentino/langgraph4j/commit/51f16abf6e6c06bdbfa01f6f64ec9e52781f22a3))
+
+ -  **ai**  update content for Hooks usage in LangGraph4j ([5999ab3f54cbccf](https://github.com/bsorrentino/langgraph4j/commit/5999ab3f54cbccf90705c228d00bb81719e921ee))
+
+ -  **ai**  add guide for LangGraph4j cancellation feature ([d968807fa32e4dd](https://github.com/bsorrentino/langgraph4j/commit/d968807fa32e4dd492b457380db2f36e0ba2ee18))
+
+ -  **whats-new**  add PostgresSaverV2 implementations ([04821737162a480](https://github.com/bsorrentino/langgraph4j/commit/04821737162a4803b4d9cabcd33a8ba4f5888a42))
+
+ -  **ai**  add PostgresSaverV2 implementation aligned with SQLiteSaverV2 ([5cd502837c7392f](https://github.com/bsorrentino/langgraph4j/commit/5cd502837c7392f3258e2c603da059c0133c3de3))
+
+ -  update langchain4j and SpringAI documentation structure ([2c64bceb8d398c6](https://github.com/bsorrentino/langgraph4j/commit/2c64bceb8d398c6d773248ff16ce796dcb0189a3))
+
+ -  fix Mermaid link format in endpoint documentation ([82b0dc7b3a579f6](https://github.com/bsorrentino/langgraph4j/commit/82b0dc7b3a579f609fb8395109c21c564bad68ae))
+
+ -  **mkdocs**  update how-to section to include Agentic RAG tutorial ([e99f0893aa8deef](https://github.com/bsorrentino/langgraph4j/commit/e99f0893aa8deefdd5eb6202dd9aef6888b9e0cb))
+
+ -  **README**  add new video and article references to enhance resources ([3d9398188c7c8f1](https://github.com/bsorrentino/langgraph4j/commit/3d9398188c7c8f1aae4bc54de259385156b2cdef))
+
+ -  **ai**  implement node highlighting on graph interruption event ([ceddebd3c1e9851](https://github.com/bsorrentino/langgraph4j/commit/ceddebd3c1e9851aea12e84f4744c03b556f8683))
+
+ -  **mkdocs**  reorganize navigation structure and add "What's new in 1.9" section ([bd251b59b0ca4ee](https://github.com/bsorrentino/langgraph4j/commit/bd251b59b0ca4ee6b7308078cb8a8f2201480737))
+
+ -  update changelog ([1b8c42dbe5b4337](https://github.com/bsorrentino/langgraph4j/commit/1b8c42dbe5b4337074c5f52a34df089abc5fd48e))
+
+
+### ALM 
+
+ -  bump to next version 1.9.0-beta4 ([12de1f716728bd7](https://github.com/bsorrentino/langgraph4j/commit/12de1f716728bd79b6c758ac24350e31a1b06adf))
+   
+ -  **studio/webui**  update distribution ([1d34857ddeb3731](https://github.com/bsorrentino/langgraph4j/commit/1d34857ddeb3731f7166d09a8aa90bb1e741fc17))
+   
+ -  **studio/webui**  update dist ([f0ed7ae3f333e79](https://github.com/bsorrentino/langgraph4j/commit/f0ed7ae3f333e794a4342088f292550827812192))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([c376efd8af57f8c](https://github.com/bsorrentino/langgraph4j/commit/c376efd8af57f8c8cd0e2e81bd15bbd5bdd74c24))
+   
+
+### Continuous Integration
+
+ -  **deploy**  add LangChain4j documentation to deployment script ([918a8ef3c4f79b0](https://github.com/bsorrentino/langgraph4j/commit/918a8ef3c4f79b010322cadd77c63d1f39af9adb))
+   
+ -  **deploy**  add LangChain4j documentation to deployment script ([5ad8684c9206ecf](https://github.com/bsorrentino/langgraph4j/commit/5ad8684c9206ecff180a986120a88e325579cde8))
+   
+
+
+
+
 <!-- "name: v1.9.0-beta3" is a release tag -->
 
 ## [v1.9.0-beta3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta3) (2026-08-18)
@@ -24,82 +139,82 @@
 
  *  **how-tos**  Agentic RAG tutorial (related to #8 ([a5bf5bd22ac8c4f](https://github.com/bsorrentino/langgraph4j/commit/a5bf5bd22ac8c4f0bcba054e3e90f66c1eb485f3))
      > Merge pull request #433
-
+   
  *  **MysqlServer**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([1c4f510adb4460a](https://github.com/bsorrentino/langgraph4j/commit/1c4f510adb4460ac51d9a3fb9aeb168a7bf3d28f))
      > work on #428
-
+   
  *  **DynamoDBSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([0c853301ffb11e6](https://github.com/bsorrentino/langgraph4j/commit/0c853301ffb11e65df9c68c8dd73caf4916efa29))
      > work on #428
-
+   
  *  **CockroachDBSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([30396c1a7b1ee5e](https://github.com/bsorrentino/langgraph4j/commit/30396c1a7b1ee5eccf8d0f6e63034dd43f02deac))
      > work on #428
-
+   
  *  **SQLiteSaverV2**  implementing  a new version (v2)  compliant with new BaseCheckpointSaver that full manage releaseCheckpointsOnError and registerInterruption methods ([18b006a94070570](https://github.com/bsorrentino/langgraph4j/commit/18b006a94070570a6f52c932417834f1f4f9ceae))
      > The previous implementation is still available and backward compatible by code but not on the db schema
      > work on #428
-
+   
  *  **RedisSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([ad34b44b1dbaaf9](https://github.com/bsorrentino/langgraph4j/commit/ad34b44b1dbaaf9495c63e041e5c9d4bcee6138b))
      > work on #428
-
+   
  *  **PostgresSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([846a7cecbe1dadd](https://github.com/bsorrentino/langgraph4j/commit/846a7cecbe1dadd84512d08ae953cd605e08031a))
      > work on #428
-
+   
  *  **OracleSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([1398b0b31aca0cb](https://github.com/bsorrentino/langgraph4j/commit/1398b0b31aca0cbfb451b212c5a0062c28178b2d))
      > work on #428
-
+   
  *  **HazelcastSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([667cb5f7a6c1e87](https://github.com/bsorrentino/langgraph4j/commit/667cb5f7a6c1e8719c0f2fac398e9c75279c4005))
      > work on #428
-
+   
  *  **FileSystemSaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([85146b5749efc72](https://github.com/bsorrentino/langgraph4j/commit/85146b5749efc72bd2eb10dfa469911a606058c1))
      > work on #428
-
+   
  *  **MemorySaver**  make compliant with new BaseCheckpointSaver adding default implementation of releaseCheckpointsOnError and registerInterruption methods ([48df1befe1e3510](https://github.com/bsorrentino/langgraph4j/commit/48df1befe1e351063eb01407357706387a64de9f))
      > work on #428
-
+   
  *  **core**  add SqlResource utilities for managing SQL commands from resources ([ea7567379a27a64](https://github.com/bsorrentino/langgraph4j/commit/ea7567379a27a64e2afa0361548f79ec172046d4))
-
+   
  *  **checkpoint**  enhance release methods to support error handling and optional messages ([cbd27477f17e8a9](https://github.com/bsorrentino/langgraph4j/commit/cbd27477f17e8a9bfb7a238537c86792efc52bf8))
      > work on #428
-
+   
  *  **core**  add support for register interruptions in checkpoint saver ([791dd0f62ef99d6](https://github.com/bsorrentino/langgraph4j/commit/791dd0f62ef99d6af5f42a8b68bcad0a32724ea8))
      > work on #428
-
+   
  *  **interruption**  add reason retrieval for interruptions in metadata ([085120c4aed1832](https://github.com/bsorrentino/langgraph4j/commit/085120c4aed1832f477e50ab6e67ac61465a0dce))
      > work on #428
-
+   
  *  **checkpoint**  add methods for releasing checkpoints and handling interruptions ([f2959beff6c2bbc](https://github.com/bsorrentino/langgraph4j/commit/f2959beff6c2bbccbe881c4d1f9ea72606972cba))
      > work on #428
-
+   
  *  **studio/webui**  add custom edge rendering with target-biased labels ([fe81451e1137722](https://github.com/bsorrentino/langgraph4j/commit/fe81451e11377220129992c8b011b5167beb78ae))
-
+   
  *  **langchain4j/serializer**  enhance ToolExecutionResultMessageSerializer to support attributes ([b8a3ed15c0ab4b8](https://github.com/bsorrentino/langgraph4j/commit/b8a3ed15c0ab4b8040274d395c614db67a6cf9e2))
-
+   
  *  **langchain4j/serializer**  enhance UserMessageSerializer to support attributes ([f4e9ad8f7a2dd7f](https://github.com/bsorrentino/langgraph4j/commit/f4e9ad8f7a2dd7f34e7536e21e81552321429bc1))
-
+   
 
 
 ### Refactor
 
  -  **OracleSaver**  add `AbstractOracleSaver` allowing multiple implementation and remove  coded command in favour of Resource based ones ([9cc1942dd6a3656](https://github.com/bsorrentino/langgraph4j/commit/9cc1942dd6a36564986daa86a4559ad35106b271))
-
+   
  -  **PostgresSaver**  add Abstract PostgresSaver allowing multiple implementation and remove  coded command in favour of Resource based ones ([c502849946d45c5](https://github.com/bsorrentino/langgraph4j/commit/c502849946d45c5dcd780f2d37533762786969fe))
-
+   
  -  **SqlResource**  streamline SQL command loading and simplify command retrieval methods ([444f6a2d710a9eb](https://github.com/bsorrentino/langgraph4j/commit/444f6a2d710a9ebaf59dbabf5d276e695b33afee))
     > - update all module affected
 
  -  **MysqlServer**  remove coded sql commands in favour of resource files ([9e3770150a2fb2b](https://github.com/bsorrentino/langgraph4j/commit/9e3770150a2fb2b46684d1de16f924a6f89be51f))
+   
 
-
-### Test
+### Test 
 
  -  **saver**  share a single unit test module between every saver to enforce consistency an control ([c5ac98118206f32](https://github.com/bsorrentino/langgraph4j/commit/c5ac98118206f328a3f0ccefab3f056b357ecd99))
-
+   
  -  **SQLiteSaver**  add test utilities interface and custom action classes for asynchronous node actions ([92a55d4c8d5260e](https://github.com/bsorrentino/langgraph4j/commit/92a55d4c8d5260e3d90541bf29ca4070ee1d1c5b))
-
+   
  -  **studio**  fix agent executor use case ([c37ca95321f7538](https://github.com/bsorrentino/langgraph4j/commit/c37ca95321f7538aeb7c351ab5e013c8af38a670))
-
+   
  -  **langchain4j**  add tests for UserMessage and ToolExecutionResultMessage attribute serialization ([4e708c8c261fb00](https://github.com/bsorrentino/langgraph4j/commit/4e708c8c261fb0074e07464cac6ae691a2bef333))
-
+   
 
 ### Documentation
 
@@ -125,15 +240,15 @@
  -  update changelog ([80834859a6f0a50](https://github.com/bsorrentino/langgraph4j/commit/80834859a6f0a5018c30b2700d47b3cb70e781e0))
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.0-beta3 ([28a5a43425f4a3c](https://github.com/bsorrentino/langgraph4j/commit/28a5a43425f4a3c2d57168c4d2f2215b540f78d8))
-
+   
  -  update langchain4j dependencies ([8fe0b6c14aba69e](https://github.com/bsorrentino/langgraph4j/commit/8fe0b6c14aba69e50b5940d7413009ac0e38f5d5))
     > Bump LangChain4j from 1.18.1 to 1.19.0 and LangChain4j beta from 1.18.1-beta28 to 1.19.0-beta29.
 
  -  bump to next dev version 1.9-SNAPSHOT ([10eb184b03e507a](https://github.com/bsorrentino/langgraph4j/commit/10eb184b03e507ab018410037fb24d37ec6310bd))
-
+   
 
 
 
