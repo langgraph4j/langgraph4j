@@ -99,8 +99,22 @@ When multiple hooks are registered for the same node or edge, they are executed 
 *   **`AfterCall` Hooks**: Also executed in a **LIFO** order.
 *   **`WrapCall` Hooks**: Executed in a **FIFO** (First-In, First-Out) order. The first hook added is the first one to wrap the action, meaning its "before" logic runs first, and its "after" logic runs last.
 
+## Retrying Nodes
+
+`RetryPolicy` is a node-specific `WrapCall` hook for retrying transient failures. Failed attempts do not reach state merging or checkpointing; the graph continues only when the node action succeeds.
+
+```java
+var retry = RetryPolicy.of(3, IOException.class);
+
+var graph = new StateGraph<>(State.SCHEMA, State::new)
+        .addNode("call_api", callApi)
+        .addEdge(START, "call_api")
+        .addEdge("call_api", END)
+        .addWrapCallNodeHook("call_api", retry.asHook());
+```
+
+Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.
+
 ## Code Examples
 
 See [Hooks samples notebook](how-tos/hooks.ipynb)
-
-
