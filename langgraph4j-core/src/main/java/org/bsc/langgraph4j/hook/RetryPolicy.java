@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -27,16 +28,21 @@ public final class RetryPolicy {
 
     private static final Duration DEFAULT_RETRY_DELAY = Duration.ofMillis(500);
     private static final double DEFAULT_BACKOFF_FACTOR = 2.0;
+    private static final Duration DEFAULT_MAX_INTERVAL = Duration.ofSeconds(128);
 
     private final int maxAttempts;
     private final Duration retryDelay;
     private final double backoffFactor;
+    private final Duration maxInterval;
+    private final boolean jitter;
     private final Predicate<Throwable> retryOn;
 
     private RetryPolicy(Builder builder) {
         this.maxAttempts = builder.maxAttempts;
         this.retryDelay = builder.retryDelay;
         this.backoffFactor = builder.backoffFactor;
+        this.maxInterval = builder.maxInterval;
+        this.jitter = builder.jitter;
         this.retryOn = builder.retryOn;
     }
 
@@ -85,11 +91,21 @@ public final class RetryPolicy {
     }
 
     private CompletableFuture<Void> delay(int attempt) {
-        var delayNanos = Math.min(
-                retryDelay.toNanos() * Math.pow(backoffFactor, attempt - 1.0),
-                Long.MAX_VALUE);
         return runAsync(() -> {
-        }, delayedExecutor((long) delayNanos, NANOSECONDS));
+        }, delayedExecutor(delayNanos(attempt), NANOSECONDS));
+    }
+
+    long delayNanos(int attempt) {
+        var baseDelayNanos = Math.min(
+                retryDelay.toNanos() * Math.pow(backoffFactor, attempt - 1.0),
+                maxInterval.toNanos());
+
+        var jitterDelay = 0.0;
+        if (jitter && baseDelayNanos > 0) {
+            jitterDelay = ThreadLocalRandom.current().nextDouble(baseDelayNanos);
+        }
+
+        return (long) (baseDelayNanos + jitterDelay);
     }
 
     public static final class Builder {
@@ -97,6 +113,8 @@ public final class RetryPolicy {
         private int maxAttempts = 3;
         private Duration retryDelay = DEFAULT_RETRY_DELAY;
         private double backoffFactor = DEFAULT_BACKOFF_FACTOR;
+        private Duration maxInterval = DEFAULT_MAX_INTERVAL;
+        private boolean jitter = true;
         private Predicate<Throwable> retryOn;
 
         public Builder maxAttempts(int maxAttempts) {
@@ -121,6 +139,20 @@ public final class RetryPolicy {
                 throw new IllegalArgumentException("backoffFactor must be finite and at least one");
             }
             this.backoffFactor = backoffFactor;
+            return this;
+        }
+
+        public Builder maxInterval(Duration maxInterval) {
+            Objects.requireNonNull(maxInterval, "maxInterval cannot be null");
+            if (maxInterval.isNegative()) {
+                throw new IllegalArgumentException("maxInterval cannot be negative");
+            }
+            this.maxInterval = maxInterval;
+            return this;
+        }
+
+        public Builder jitter(boolean jitter) {
+            this.jitter = jitter;
             return this;
         }
 

@@ -108,6 +108,8 @@ var retry = RetryPolicy.builder()
         .maxAttempts(3)
         .retryDelay(Duration.ofMillis(500))
         .backoffFactor(2.0)
+        .maxInterval(Duration.ofSeconds(128))
+        .jitter(true)
         .retryOn(IOException.class, TimeoutException.class)
         .retryOn(error -> error instanceof RemoteServiceException)
         .build();
@@ -126,6 +128,8 @@ The other builder options are optional:
 * `maxAttempts(int)` defaults to `3` and includes the initial invocation.
 * `retryDelay(Duration)` defaults to `500 ms` and is the delay before the first retry.
 * `backoffFactor(double)` defaults to `2.0`; each following retry delay is multiplied by this factor.
+* `maxInterval(Duration)` defaults to `128 s` and caps the backoff delay before jitter is added.
+* `jitter(boolean)` defaults to `true` and adds a random delay from zero up to the capped delay. With jitter enabled, the actual delay can be nearly twice `maxInterval`.
 
 Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.
 

@@ -49,8 +49,10 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
+        var result = future.join();
+
         assertEquals(3, attempts.get());
-        assertEquals("done", future.join().get("result"));
+        assertEquals("done", result.get("result"));
     }
 
     @Test
@@ -76,8 +78,10 @@ class RetryPolicyTest {
                 RunnableConfig.empty(),
                 action);
 
+        var output = result.join();
+
         assertEquals(3, attempts.get());
-        assertEquals("done", result.join().get("result"));
+        assertEquals("done", output.get("result"));
     }
 
     @Test
@@ -124,6 +128,35 @@ class RetryPolicyTest {
         assertEquals(3, attempts.get());
         assertEquals("done", result.get("result"));
         assertTrue(elapsed.compareTo(Duration.ofMillis(125)) >= 0);
+    }
+
+    @Test
+    void capsBackoffDelayAtMaxInterval() {
+        var retry = RetryPolicy.builder()
+                .retryDelay(Duration.ofMillis(50))
+                .backoffFactor(2.0)
+                .maxInterval(Duration.ofMillis(75))
+                .jitter(false)
+                .retryOn(IOException.class)
+                .build();
+
+        assertEquals(Duration.ofMillis(50).toNanos(), retry.delayNanos(1));
+        assertEquals(Duration.ofMillis(75).toNanos(), retry.delayNanos(2));
+        assertEquals(Duration.ofMillis(75).toNanos(), retry.delayNanos(3));
+    }
+
+    @Test
+    void addsJitterAfterCappingDelay() {
+        var retry = RetryPolicy.builder()
+                .retryDelay(Duration.ofMillis(50))
+                .maxInterval(Duration.ofMillis(75))
+                .retryOn(IOException.class)
+                .build();
+
+        var delay = retry.delayNanos(2);
+
+        assertTrue(delay >= Duration.ofMillis(75).toNanos());
+        assertTrue(delay < Duration.ofMillis(150).toNanos());
     }
 
     @Test
