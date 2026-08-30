@@ -96,6 +96,24 @@ class RetryPolicyTest {
     }
 
     @Test
+    void increasesDelayForEachRetry() {
+        var attempts = new AtomicInteger();
+        AsyncNodeActionWithConfig<State> action = (state, config) -> attempts.incrementAndGet() < 3
+                ? failedFuture(new IOException("temporary failure"))
+                : completedFuture(Map.of("result", "done"));
+        NodeHook.WrapCall<State> hook = RetryPolicy.of(
+                3, Duration.ofMillis(50), 2.0, IOException.class).asHook();
+
+        var start = System.nanoTime();
+        var result = hook.applyWrap("call_api", new State(Map.of()), RunnableConfig.empty(), action).join();
+        var elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        assertEquals(3, attempts.get());
+        assertEquals("done", result.get("result"));
+        assertTrue(elapsed.compareTo(Duration.ofMillis(125)) >= 0);
+    }
+
+    @Test
     void doesNotRetryNonRetryableFailure() {
         var attempts = new AtomicInteger();
 

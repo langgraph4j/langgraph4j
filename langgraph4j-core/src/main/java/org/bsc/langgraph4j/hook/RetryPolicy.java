@@ -18,7 +18,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -27,14 +26,21 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class RetryPolicy {
 
     private static final Duration DEFAULT_RETRY_DELAY = Duration.ofMillis(500);
+    private static final double DEFAULT_BACKOFF_FACTOR = 2.0;
 
     private final int maxAttempts;
     private final Duration retryDelay;
+    private final double backoffFactor;
     private final Predicate<Throwable> retryOn;
 
-    private RetryPolicy(int maxAttempts, Duration retryDelay, Predicate<Throwable> retryOn) {
+    private RetryPolicy(
+            int maxAttempts,
+            Duration retryDelay,
+            double backoffFactor,
+            Predicate<Throwable> retryOn) {
         this.maxAttempts = maxAttempts;
         this.retryDelay = retryDelay;
+        this.backoffFactor = backoffFactor;
         this.retryOn = retryOn;
     }
 
@@ -48,6 +54,15 @@ public final class RetryPolicy {
             int maxAttempts,
             Duration retryDelay,
             Class<? extends Throwable>... exceptionTypes) {
+        return of(maxAttempts, retryDelay, DEFAULT_BACKOFF_FACTOR, exceptionTypes);
+    }
+
+    @SafeVarargs
+    public static RetryPolicy of(
+            int maxAttempts,
+            Duration retryDelay,
+            double backoffFactor,
+            Class<? extends Throwable>... exceptionTypes) {
         Objects.requireNonNull(exceptionTypes, "exceptionTypes cannot be null");
         if (exceptionTypes.length == 0) {
             throw new IllegalArgumentException("exceptionTypes cannot be empty");
@@ -58,7 +73,8 @@ public final class RetryPolicy {
             Objects.requireNonNull(type, "exceptionTypes cannot contain null");
         }
 
-        return of(maxAttempts, retryDelay, error -> Arrays.stream(types).anyMatch(type -> type.isInstance(error)));
+        return of(maxAttempts, retryDelay, backoffFactor,
+                error -> Arrays.stream(types).anyMatch(type -> type.isInstance(error)));
     }
 
     public static RetryPolicy of(int maxAttempts, Predicate<? super Throwable> retryOn) {
@@ -69,6 +85,14 @@ public final class RetryPolicy {
             int maxAttempts,
             Duration retryDelay,
             Predicate<? super Throwable> retryOn) {
+        return of(maxAttempts, retryDelay, DEFAULT_BACKOFF_FACTOR, retryOn);
+    }
+
+    public static RetryPolicy of(
+            int maxAttempts,
+            Duration retryDelay,
+            double backoffFactor,
+            Predicate<? super Throwable> retryOn) {
         if (maxAttempts < 1) {
             throw new IllegalArgumentException("maxAttempts must be greater than zero");
         }
@@ -76,9 +100,12 @@ public final class RetryPolicy {
         if (retryDelay.isNegative()) {
             throw new IllegalArgumentException("retryDelay cannot be negative");
         }
+        if (!Double.isFinite(backoffFactor) || backoffFactor < 1) {
+            throw new IllegalArgumentException("backoffFactor must be finite and at least one");
+        }
         Objects.requireNonNull(retryOn, "retryOn cannot be null");
 
-        return new RetryPolicy(maxAttempts, retryDelay, retryOn::test);
+        return new RetryPolicy(maxAttempts, retryDelay, backoffFactor, retryOn::test);
     }
 
     public <S extends AgentState> NodeHook.WrapCall<S> asHook() {
@@ -109,7 +136,7 @@ public final class RetryPolicy {
                 return CompletableFuture.<Map<String, Object>>failedFuture(cause);
             }
 
-            return delay().thenCompose(ignored -> apply(action, state, config, attempt + 1));
+            return delay(attempt).thenCompose(ignored -> apply(action, state, config, attempt + 1));
         })
                 .thenCompose(Function.identity());
     }
@@ -121,8 +148,11 @@ public final class RetryPolicy {
                         : error;
     }
 
-    private CompletableFuture<Void> delay() {
+    private CompletableFuture<Void> delay(int attempt) {
+        var delayNanos = Math.min(
+                retryDelay.toNanos() * Math.pow(backoffFactor, attempt - 1.0),
+                Long.MAX_VALUE);
         return runAsync(() -> {
-        }, delayedExecutor(retryDelay.toNanos(), NANOSECONDS));
+        }, delayedExecutor((long) delayNanos, NANOSECONDS));
     }
 }
