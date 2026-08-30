@@ -5,12 +5,14 @@ import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.InterruptableAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -20,8 +22,9 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public interface LG4JTestUtil {
+public interface LG4JTestUtil extends LG4JLoggable {
 
 
     class State extends MessagesState<String> {
@@ -34,6 +37,8 @@ public interface LG4JTestUtil {
         boolean isResume() {
             return this.<Boolean>value(RESUME).orElse(false);
         }
+
+
     }
 
     class JsonStateSerializer extends JacksonStateSerializer<State> {
@@ -81,15 +86,21 @@ public interface LG4JTestUtil {
             boolean interruptWithException;
             String message;
             boolean streaming;
-            
+            @Nullable String attributeKey;
+            boolean enableLog = true;
+            @Nullable CompileConfig compileConfig;
 
-            public Builder message(String message ) {
+            public Builder message(String message) {
                 this.message = message;
                 return this;
             }
 
             public Builder interruptable() {
                 interruptable = true;
+                return this;
+            }
+            public Builder interruptable( boolean interruptable ) {
+                this.interruptable = interruptable;
                 return this;
             }
 
@@ -103,6 +114,15 @@ public interface LG4JTestUtil {
                 return this;
             }
 
+            public Builder attributeKey(String attributeKey) {
+                this.attributeKey = attributeKey;
+                return this;
+            }
+
+            public Builder enableLog(boolean enableLog) {
+                this.enableLog = enableLog;
+                return this;
+            }
 
             public CustomNodeAction build() {
                 return (interruptable) ?
@@ -110,6 +130,16 @@ public interface LG4JTestUtil {
                         new CustomNodeAction(this);
             }
 
+            private CustomNodeAction build( @Nullable CompileConfig compileConfig ) {
+                this.compileConfig = compileConfig;
+                return (interruptable) ?
+                        new CustomNodeAction.Interruptable(this) :
+                        new CustomNodeAction(this);
+            }
+
+            public Node.ActionFactory<State> buildAsFactory() {
+                return this::build;
+            }
         }
 
         public static Builder builder() {
@@ -123,14 +153,29 @@ public interface LG4JTestUtil {
         final String message;
         final boolean streaming;
         final boolean interruptWithException;
+        @Nullable final String attributeKey;
+        final boolean enableLog;
+        @Nullable final CompileConfig compileConfig;
+
         private CustomNodeAction(CustomNodeAction.Builder builder) {
             this.message = requireNonNull(builder.message, "message cannot be null!");
             this.streaming = builder.streaming;
             this.interruptWithException = builder.interruptWithException;
+            this.attributeKey = builder.attributeKey;
+            this.enableLog = builder.enableLog;
+            this.compileConfig = builder.compileConfig;
         }
 
         @Override
         public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config) {
+
+            // Validate that the graphId in the compileConfig matches the graphId in the config, if present
+            if(  compileConfig!=null && compileConfig.graphId().isPresent() ) {
+                if( enableLog ) log.info("graphId: {} config.graphId: {}", compileConfig.graphId().get(), config.graphId().orElse("<NONE>>"));
+                assertTrue( config.graphId().isPresent() );
+                assertEquals(compileConfig.graphId().get(), config.graphId().get() );
+            }
+
             if( interruptWithException && !state.isResume() ) {
                 return failedFuture(new GraphInterruptException(config, ofNullable(message).orElse("Interrupting with exception!")));
             }
@@ -143,7 +188,12 @@ public interface LG4JTestUtil {
 
                 return completedFuture(Map.of("_streaming_messages", generator));
             }
-            return completedFuture(Map.of(State.MESSAGES_STATE, message));
+
+            final var partialResult = ofNullable(attributeKey)
+                    .map( key -> Map.<String,Object>of(State.MESSAGES_STATE, message.concat(Objects.toString(state.value(key).orElse("")))) )
+                    .orElseGet(() -> Map.of(State.MESSAGES_STATE, message));
+
+            return completedFuture(partialResult);
         }
 
 
