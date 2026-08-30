@@ -1533,6 +1533,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#retrying-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrying Nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#code-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2449,6 +2460,34 @@
 <li><strong><code>AfterCall</code> Hooks</strong>: Also executed in a <strong>LIFO</strong> order.</li>
 <li><strong><code>WrapCall</code> Hooks</strong>: Executed in a <strong>FIFO</strong> (First-In, First-Out) order. The first hook added is the first one to wrap the action, meaning its "before" logic runs first, and its "after" logic runs last.</li>
 </ul>
+<h2 id="retrying-nodes">Retrying Nodes</h2>
+<p><code>RetryPolicy</code> is a node-specific <code>WrapCall</code> hook for retrying transient failures. Failed attempts do not reach state merging or checkpointing; the graph continues only when the node action succeeds.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">retry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RetryPolicy</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">maxAttempts</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">retryDelay</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofMillis</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">backoffFactor</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">maxInterval</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofSeconds</span><span class="p">(</span><span class="mi">128</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">jitter</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">retryOn</span><span class="p">(</span><span class="n">IOException</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">TimeoutException</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">retryOn</span><span class="p">(</span><span class="n">error</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="k">instanceof</span><span class="w"> </span><span class="n">RemoteServiceException</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">State</span><span class="p">.</span><span class="na">SCHEMA</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;call_api&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">callApi</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;call_api&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;call_api&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addWrapCallNodeHook</span><span class="p">(</span><span class="s">&quot;call_api&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">retry</span><span class="p">.</span><span class="na">asHook</span><span class="p">());</span>
+</code></pre></div>
+<p><code>retryOn(...)</code> is required. It accepts one or more exception classes or a predicate; multiple calls are combined with OR.</p>
+<p>The other builder options are optional:</p>
+<ul>
+<li><code>maxAttempts(int)</code> defaults to <code>3</code> and includes the initial invocation.</li>
+<li><code>retryDelay(Duration)</code> defaults to <code>500 ms</code> and is the delay before the first retry.</li>
+<li><code>backoffFactor(double)</code> defaults to <code>2.0</code>; each following retry delay is multiplied by this factor.</li>
+<li><code>maxInterval(Duration)</code> defaults to <code>128 s</code> and caps the backoff delay before jitter is added.</li>
+<li><code>jitter(boolean)</code> defaults to <code>true</code> and adds a random delay from zero up to the capped delay. With jitter enabled, the actual delay can be nearly twice <code>maxInterval</code>.</li>
+</ul>
+<p>Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.</p>
 <h2 id="code-examples">Code Examples</h2>
 <p>See <a href="how-tos/hooks.ipynb">Hooks samples notebook</a></p>
 
