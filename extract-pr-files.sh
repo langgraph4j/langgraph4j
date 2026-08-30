@@ -21,8 +21,8 @@ Examples:
 EOF
 }
 
-branch="${1}"
-target_dir="${2}"
+branch="${1:-}"
+target_dir="${2:-}"
 base_ref="${3:-main}"
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
