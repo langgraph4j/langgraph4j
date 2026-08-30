@@ -195,6 +195,12 @@ do not need a thread ID, checkpoint ID, metadata, or custom stream mode.
 
 `RunnableConfig` also tracks the current graph node path through `nodePath()`. This replaces the older partial `graphPath()` usage and is available for regular nodes as well as subgraph execution.
 
+## GraphInterruptException
+
+The new `GraphInterruptException` is a built-in exception that a node action can raise when it needs to stop graph execution intentionally.
+
+This is useful when the decision to interrupt happens inside the node body, for example after validating external input, detecting that user approval is required, or receiving a response that must be reviewed before the graph continues.
+
 
 ## State cloning and transient attributes
 
