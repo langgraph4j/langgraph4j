@@ -1,5 +1,5 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.8.25
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.25
+//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.8.26
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.26
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
 //DEPS org.springframework.ai:spring-ai-bom:1.1.0@pom
 //DEPS org.springframework.ai:spring-ai-client-chat

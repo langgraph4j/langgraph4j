@@ -99,8 +99,40 @@ When multiple hooks are registered for the same node or edge, they are executed 
 *   **`AfterCall` Hooks**: Also executed in a **LIFO** order.
 *   **`WrapCall` Hooks**: Executed in a **FIFO** (First-In, First-Out) order. The first hook added is the first one to wrap the action, meaning its "before" logic runs first, and its "after" logic runs last.
 
+## Retrying Nodes
+
+`RetryPolicy` is a node-specific `WrapCall` hook for retrying transient failures. Failed attempts do not reach state merging or checkpointing; the graph continues only when the node action succeeds.
+
+```java
+var retry = RetryPolicy.builder()
+        .maxAttempts(3)
+        .retryDelay(Duration.ofMillis(500))
+        .backoffFactor(2.0)
+        .maxInterval(Duration.ofSeconds(128))
+        .jitter(true)
+        .retryOn(IOException.class, TimeoutException.class)
+        .retryOn(error -> error instanceof RemoteServiceException)
+        .build();
+
+var graph = new StateGraph<>(State.SCHEMA, State::new)
+        .addNode("call_api", callApi)
+        .addEdge(START, "call_api")
+        .addEdge("call_api", END)
+        .addWrapCallNodeHook("call_api", retry.asHook());
+```
+
+`retryOn(...)` is required. It accepts one or more exception classes or a predicate; multiple calls are combined with OR.
+
+The other builder options are optional:
+
+* `maxAttempts(int)` defaults to `3` and includes the initial invocation.
+* `retryDelay(Duration)` defaults to `500 ms` and is the delay before the first retry.
+* `backoffFactor(double)` defaults to `2.0`; each following retry delay is multiplied by this factor.
+* `maxInterval(Duration)` defaults to `128 s` and caps the backoff delay before jitter is added.
+* `jitter(boolean)` defaults to `true` and adds a random delay from zero up to the capped delay. With jitter enabled, the actual delay can be nearly twice `maxInterval`.
+
+Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.
+
 ## Code Examples
 
 See [Hooks samples notebook](how-tos/hooks.ipynb)
-
-
