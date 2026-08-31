@@ -182,12 +182,17 @@ export class LG4JWorkbenchElement extends LitElement {
 
   static properties = {
     title: {},
-    resultPanelVisible: { state: true },
+    resultPanelVisible: {
+      type: Boolean,
+      converter: {
+        fromAttribute: ( /** @type string */ value) => value !== 'false',
+      },
+    },
   }
 
   constructor() {
     super();
-    this.resultPanelVisible = true;
+    this.resultPanelVisible = false;
   }
 
   #toggleResultPanel() {
