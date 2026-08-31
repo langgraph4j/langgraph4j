@@ -1,0 +1,44 @@
+<script type="module">
+import {LitElement, html, css, unsafeHTML} from '{{ LIT_DEPENDENCY }}';
+
+class JtIFrame extends LitElement {
+
+    static properties = {
+        height: { type: String, reflect: true },
+        uri: { type: String },
+        componentKey: { type: String, attribute: 'component-key' }
+    };
+
+    updated(changedProps) {
+        if (changedProps.has('height')) {
+            this.style.setProperty('--height', `${this.height}`);
+        }
+    }
+    static styles = css`
+        :host {
+            display: block;
+            width: 100%;
+            height: var(--height, 100%);
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    `;
+
+    constructor() {
+        super();
+        this.uri = '';
+        this.componentKey = '';
+    }
+
+    render() {
+        return html`
+            <iframe src="${this.uri}" title="${this.componentKey}"></iframe>
+        `;
+    }
+}
+
+customElements.define("jt-iframe", JtIFrame);
+</script>
