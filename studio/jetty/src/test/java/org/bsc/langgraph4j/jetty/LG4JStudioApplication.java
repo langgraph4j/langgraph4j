@@ -5,7 +5,6 @@ import dev.langchain4j.model.ollama.OllamaChatModel;
 import jakarta.servlet.DispatcherType;
 import org.bsc.langgraph4j.SampleGraph;
 import org.bsc.langgraph4j.TestTool;
-import org.bsc.langgraph4j.agentexecutor.AgentExecutor;
 import org.bsc.langgraph4j.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.bsc.langgraph4j.studio.jetty.LangGraphStudioServer4Jetty;
@@ -35,7 +34,7 @@ public interface LG4JStudioApplication {
                 .build();
 
         return Map.entry( "agent_executor", LangGraphStudioServer.Instance.builder()
-                .title("AGENT EXECUTOR")
+                .title("AGENT EXECUTOR (qwen2.5:7b)")
                 .addInputStringArg("messages", true, v -> SystemMessage.from(Objects.toString(v)))
                 .graph(app)
                 .build());

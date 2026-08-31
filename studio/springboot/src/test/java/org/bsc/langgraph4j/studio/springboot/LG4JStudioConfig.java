@@ -1,10 +1,8 @@
 package org.bsc.langgraph4j.studio.springboot;
 
-import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.SampleGraph;
-import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,7 +12,7 @@ import static org.bsc.langgraph4j.SampleGraph.issue216;
 import static org.bsc.langgraph4j.SampleGraph.issue241;
 
 @Configuration
-public class LangGraphStudioSampleConfig extends LangGraphStudioConfig implements LG4JLoggable {
+public class LG4JStudioConfig extends LangGraphStudioConfig implements LG4JLoggable {
 
     @Override
     public Map<String, LangGraphStudioServer.Instance> instanceMap() {
