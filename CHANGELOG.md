@@ -2,6 +2,54 @@
 
 
 
+<!-- "name: v1.8.26" is a release tag -->
+
+## [v1.8.26](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.26) (2026-08-31)
+
+### Features
+
+ *  **core**  add retry interval cap and jitter ([02754ee8dd13007](https://github.com/bsorrentino/langgraph4j/commit/02754ee8dd1300741c9f938b3e5e363407a1d9dc))
+   
+ *  **core**  policy builder ([8f2dbf05b7c5924](https://github.com/bsorrentino/langgraph4j/commit/8f2dbf05b7c59240d6939ad2fa4b7a6a55a26aec))
+   
+ *  **core**  add exponential retry backoff ([c7847e2f69e16b1](https://github.com/bsorrentino/langgraph4j/commit/c7847e2f69e16b1f5908727b4a26c0fdc01b8f9e))
+   
+ *  **core**  add delayed retry policy ([a3b2236292566dc](https://github.com/bsorrentino/langgraph4j/commit/a3b2236292566dc2ff7f8f0d8b935da1b133ea34))
+   
+ *  **core**  add retry backoff policy ([9bf65da88ece3e2](https://github.com/bsorrentino/langgraph4j/commit/9bf65da88ece3e2565636960d33eeac5eb1411e3))
+   
+ *  **langchain4j-agent**  add singleTurn / selective unload to SkillInjector ([2056df8dd6ca966](https://github.com/bsorrentino/langgraph4j/commit/2056df8dd6ca966b7ade43bcef4d94a869f80023))
+   
+
+
+
+
+### Documentation
+
+ -  update how-to sections in mkdocs.yml ([91ad422a68bb390](https://github.com/bsorrentino/langgraph4j/commit/91ad422a68bb390233fad29d4d85aa49fbbe8dcb))
+
+ -  **how-tos**  add prompt chaining tutorial ([22c7ecc0e7cb196](https://github.com/bsorrentino/langgraph4j/commit/22c7ecc0e7cb1967925a1d1145daf9c462a3a356))
+
+ -  update changelog ([8178d820a3f75f1](https://github.com/bsorrentino/langgraph4j/commit/8178d820a3f75f1185f5559fe6487619ee07676a))
+
+
+### ALM 
+
+ -  bump to next version 1.8.26 ([7645ca0c20827a4](https://github.com/bsorrentino/langgraph4j/commit/7645ca0c20827a4b2d6e5acefe5433ce7932a55b))
+   
+ -  run 'prompt chaining' notebook ([434df813ab01c84](https://github.com/bsorrentino/langgraph4j/commit/434df813ab01c8425343f83760d917fc5fbb6c4e))
+   
+
+### Continuous Integration
+
+ -  **extract-pr-files**  add default values for branch and target_dir in extract-pr-files.sh ([76f428dee7ae945](https://github.com/bsorrentino/langgraph4j/commit/76f428dee7ae945d5cb68ffd95857cee0073d671))
+   
+ -  add script to extract files changed by a PR branch ([9a5ca9a045efd8b](https://github.com/bsorrentino/langgraph4j/commit/9a5ca9a045efd8b041b2319075bd4d36eaa915cc))
+   
+
+
+
+
 <!-- "name: v1.8.25" is a release tag -->
 
 ## [v1.8.25](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.25) (2026-08-27)
