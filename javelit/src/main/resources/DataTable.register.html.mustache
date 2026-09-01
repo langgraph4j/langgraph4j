@@ -1,0 +1,146 @@
+<script type="module">
+    import {LitElement, html, css} from '{{ LIT_DEPENDENCY }}';
+
+    class JtDataTable extends LitElement {
+        static styles = css`
+        :host {
+            display: block;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--jt-border-color);
+            border-radius: 0.375rem;
+            background-color: var(--jt-bg-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--jt-bg-primary);
+        }
+
+        th {
+            background-color: var(--jt-bg-secondary);
+            color: var(--jt-text-primary);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--jt-border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--jt-light-border-color);
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background-color: var(--jt-bg-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .empty-cell {
+            color: var(--jt-text-secondary);
+            font-style: italic;
+        }
+
+        .null-value {
+            opacity: 0.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--jt-text-secondary);
+            font-style: italic;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+    `;
+
+        static properties = {
+            columns: {type: Array},
+            data: {type: Array}
+        };
+
+        constructor() {
+            super();
+            this.columns = [];
+            this.data = [];
+        }
+
+        render() {
+            if (!this.columns || this.columns.length === 0) {
+                return html`
+                <div class="empty-state">
+                    No columns defined
+                </div>
+            `;
+            }
+
+            return html`
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            ${this.columns.map(column => html`
+                                <th>${column}</th>
+                            `)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.data && this.data.length > 0 ?
+                    this.data.map(row => html`
+                                <tr>
+                                    ${this.columns.map( name => row[name]).map( value => html`
+                                        <td class="${this.getCellClass(value)}">
+                                            ${this.renderCell(value)}
+                                        </td>
+                                    `)}
+                                </tr>
+                            `) :
+                    html`
+                                <tr>
+                                    <td colspan="${this.columns.length}" class="empty-state">
+                                        No data available
+                                    </td>
+                                </tr>
+                            `
+            }
+                    </tbody>
+                </table>
+            </div>
+        `;
+        }
+
+        getCellClass(value) {
+            return value === null || value === undefined ? 'null-value' : '';
+        }
+
+        renderCell(value) {
+            if (value === null || value === undefined) {
+                return html`<span class="empty-cell">null</span>`;
+            }
+
+            return value;
+        }
+    }
+
+    customElements.define('jt-data-table', JtDataTable);
+</script>
