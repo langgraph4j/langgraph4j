@@ -34,12 +34,21 @@ public class JtDataTableApp {
                 new DataItem("five", 50, "address5"));
 
         var result = JtDataTable.builder(data)
+                .singleSelection()
                 .column("Name", DataItem::name)
                 .column("Age", ( v ) -> Objects.toString(v.age()))
                 .column("Address", DataItem::address)
                 .use();
 
         Jt.markdown( Objects.toString(result) ).use();
+
+        var result2 = JtDataTable.builder(data)
+                .column("Name", DataItem::name)
+                .column("Age", ( v ) -> Objects.toString(v.age()))
+                .column("Address", DataItem::address)
+                .use();
+
+        Jt.markdown( Objects.toString(result2) ).use();
 
     }
 }

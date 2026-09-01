@@ -23,11 +23,20 @@ public class JtMultiSelectApp {
 
 
         var result = JtMultiSelect.builder()
+                .key("multiSelect1")
                 .disabled( disabled )
                 .items( Set.of( "one", "two", "three", "four", "five") )
                 .use();
 
         Jt.markdown( Objects.toString(result) ).use();
+
+        var result2 = JtMultiSelect.builder()
+                .key("multiSelect2")
+                .disabled( disabled )
+                .items( Set.of( "one", "two", "three", "four", "five") )
+                .use();
+
+        Jt.markdown( Objects.toString(result2) ).use();
 
     }
 }

@@ -35,18 +35,51 @@
             white-space: nowrap;
         }
 
+        .selection-header,
+        .selection-cell {
+            width: 1%;
+            text-align: center;
+            vertical-align: middle;
+        }
+
         td {
             padding: 0.75rem;
             border-bottom: 1px solid var(--jt-light-border-color);
             vertical-align: top;
         }
 
+        tbody tr {
+            cursor: pointer;
+        }
+
         tr:hover {
             background-color: var(--jt-bg-secondary);
         }
 
+        tbody tr.selected {
+            background-color: color-mix(in srgb, var(--jt-bg-secondary) 70%, #1f6feb 30%);
+        }
+
+        tbody tr.selected:hover {
+            background-color: color-mix(in srgb, var(--jt-bg-secondary) 60%, #1f6feb 40%);
+        }
+
+        tbody tr:focus-visible {
+            outline: 2px solid #1f6feb;
+            outline-offset: -2px;
+        }
+
         tr:last-child td {
             border-bottom: none;
+        }
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 1rem;
+            height: 1rem;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #1f6feb;
         }
 
         .empty-cell {
@@ -76,13 +109,19 @@
 
         static properties = {
             columns: {type: Array},
-            data: {type: Array}
+            data: {type: Array},
+            componentKey: {type: String, attribute: 'component-key'},
+            selectionMode: {type: String, attribute: 'selection-mode'},
+            _selectedRows: {state: true}
         };
 
         constructor() {
             super();
             this.columns = [];
             this.data = [];
+            this.componentKey = undefined;
+            this.selectionMode = 'multiple';
+            this._selectedRows = [];
         }
 
         render() {
@@ -96,9 +135,21 @@
 
             return html`
             <div class="table-container">
-                <table>
+                <table aria-multiselectable="${this.isMultipleSelection()}">
                     <thead>
                         <tr>
+                            <th class="selection-header">
+                                ${this.isMultipleSelection()
+                                    ? html`
+                                        <input
+                                            type="checkbox"
+                                            aria-label="Select all rows"
+                                            .checked=${this.isAllSelected()}
+                                            .indeterminate=${this.isPartiallySelected()}
+                                            @click=${this.onSelectAllClick}>
+                                    `
+                                    : ''}
+                            </th>
                             ${this.columns.map(column => html`
                                 <th>${column}</th>
                             `)}
@@ -106,8 +157,21 @@
                     </thead>
                     <tbody>
                         ${this.data && this.data.length > 0 ?
-                    this.data.map(row => html`
-                                <tr>
+                            this.data.map((row, index) => html`
+                                <tr
+                                    class="${this.isSelected(index) ? 'selected' : ''}"
+                                    aria-selected="${this.isSelected(index)}"
+                                    tabindex="0"
+                                    @click=${() => this.toggleRow(index)}
+                                    @keydown=${(event) => this.onRowKeyDown(event, index)}>
+                                    <td class="selection-cell">
+                                        <input
+                                            type="${this.isMultipleSelection() ? 'checkbox' : 'radio'}"
+                                            name="${this.componentKey}-selection"
+                                            aria-label="Select row ${index + 1}"
+                                            .checked=${this.isSelected(index)}
+                                            @click=${(event) => this.onRowCheckboxClick(event, index)}>
+                                    </td>
                                     ${this.columns.map( name => row[name]).map( value => html`
                                         <td class="${this.getCellClass(value)}">
                                             ${this.renderCell(value)}
@@ -117,7 +181,7 @@
                             `) :
                     html`
                                 <tr>
-                                    <td colspan="${this.columns.length}" class="empty-state">
+                                    <td colspan="${this.columns.length + 1}" class="empty-state">
                                         No data available
                                     </td>
                                 </tr>
@@ -127,6 +191,87 @@
                 </table>
             </div>
         `;
+        }
+
+        updated(changedProperties) {
+            if (changedProperties.has('data')) {
+                this.removeOutOfRangeSelections();
+            }
+        }
+
+        get rowCount() {
+            return Array.isArray(this.data) ? this.data.length : 0;
+        }
+
+        isMultipleSelection() {
+            return this.selectionMode !== 'single';
+        }
+
+        isSelected(index) {
+            return this._selectedRows.includes(index);
+        }
+
+        isAllSelected() {
+            return this.rowCount > 0 && this._selectedRows.length === this.rowCount;
+        }
+
+        isPartiallySelected() {
+            return this._selectedRows.length > 0 && !this.isAllSelected();
+        }
+
+        onSelectAllClick(event) {
+            event.stopPropagation();
+            this._selectedRows = this.isAllSelected()
+                ? []
+                : Array.from({length: this.rowCount}, (_, index) => index);
+            this.notifySelectionChanged();
+        }
+
+        onRowCheckboxClick(event, index) {
+            event.stopPropagation();
+            this.toggleRow(index);
+        }
+
+        onRowKeyDown(event, index) {
+            if (event.key === ' ' || event.key === 'Enter') {
+                event.preventDefault();
+                this.toggleRow(index);
+            }
+        }
+
+        toggleRow(index) {
+            if (!this.isMultipleSelection()) {
+                this._selectedRows = this.isSelected(index) ? [] : [index];
+                this.notifySelectionChanged();
+                return;
+            }
+
+            this._selectedRows = this.isSelected(index)
+                ? this._selectedRows.filter(selectedIndex => selectedIndex !== index)
+                : [...this._selectedRows, index].sort((left, right) => left - right);
+            this.notifySelectionChanged();
+        }
+
+        notifySelectionChanged() {
+            this.dispatchEvent(
+                new CustomEvent('onUpdated', {
+                    detail: {selected: this._selectedRows},
+                    bubbles: true,
+                    composed: true
+                })
+            );
+
+            if (window.javelit) {
+                window.javelit.sendComponentUpdate(this.componentKey, this._selectedRows);
+            }
+        }
+
+        removeOutOfRangeSelections() {
+            const nextSelectedRows = this._selectedRows.filter(index => index < this.rowCount);
+            if (nextSelectedRows.length !== this._selectedRows.length) {
+                this._selectedRows = nextSelectedRows;
+                this.notifySelectionChanged();
+            }
         }
 
         getCellClass(value) {

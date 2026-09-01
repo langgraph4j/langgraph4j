@@ -17,6 +17,11 @@ import static java.util.Objects.requireNonNull;
 
 public class JtDataTable<T> extends JtComponent<Set<Integer>> {
 
+    public enum SelectionMode {
+        SINGLE,
+        MULTIPLE
+    }
+
     private static final Mustache registerTemplate;
     private static final Mustache renderTemplate;
 
@@ -30,6 +35,7 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
 
         List<T> data;
         Map<String, Function<T,String>> columns = new LinkedHashMap<>();
+        SelectionMode selectionMode = SelectionMode.MULTIPLE;
 
 
         private Builder(final List<T> data) {
@@ -41,6 +47,18 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
             return this;
         }
 
+        public Builder<T> selectionMode(SelectionMode selectionMode) {
+            this.selectionMode = requireNonNull(selectionMode, "selectionMode cannot be null");
+            return this;
+        }
+
+        public Builder<T> singleSelection() {
+            return selectionMode(SelectionMode.SINGLE);
+        }
+
+        public Builder<T> multipleSelection() {
+            return selectionMode(SelectionMode.MULTIPLE);
+        }
 
         @Override
         public JtDataTable<T> build() {
@@ -58,11 +76,13 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
 
     final @Nonnull List<T> data;
     final @Nonnull Map<String, Function<T,String>> columns;
+    final @Nonnull SelectionMode selectionMode;
 
     private JtDataTable(final @Nonnull Builder<T> builder) {
-        super(builder, Set.of(), null);
+        super(builder, null, null);
         this.data = builder.data;
         this.columns = builder.columns;
+        this.selectionMode = builder.selectionMode;
     }
 
     @Override
@@ -107,6 +127,12 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
 
         return toJson(result);
 
+    }
+
+    @SuppressWarnings("unused")
+        // used in templates
+    String getSelectionMode() {
+        return selectionMode.name().toLowerCase(Locale.ROOT);
     }
 
 }
