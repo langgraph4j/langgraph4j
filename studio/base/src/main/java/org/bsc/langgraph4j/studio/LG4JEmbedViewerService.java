@@ -17,6 +17,7 @@ import org.bsc.langgraph4j.subgraph.SubGraphOutput;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -175,6 +176,16 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
 
         public Builder asyncContextTimeout(long asyncContextTimeout) {
             this.asyncContextTimeout = asyncContextTimeout;
+            return this;
+        }
+
+        public Builder asyncContextTimeout(long asyncContextTimeout, TimeUnit unit) {
+            this.asyncContextTimeout = unit.toMillis(asyncContextTimeout);
+            return this;
+        }
+
+        public Builder asyncContextTimeout(Duration asyncContextTimeout) {
+            this.asyncContextTimeout = asyncContextTimeout.toMillis();
             return this;
         }
 
