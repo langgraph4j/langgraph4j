@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j.internal.node;
 
 import org.bsc.async.AsyncGenerator;
+import org.bsc.langgraph4j.GraphResult;
 import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
@@ -30,7 +31,9 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
             Map<String, Channel<?>> channels) implements AsyncNodeActionWithConfig<State> {
 
         private CompletableFuture<Map<String, Object>> evalGenerator(AsyncGenerator<NodeOutput<State>> generator, Map<String, Object> initPartialState) {
-            return generator.reduce(new ArrayList<NodeOutput<State>>(), (result, value) -> {
+
+            final var embedGenerator = new AsyncGenerator.WithEmbed<>(generator);
+            return embedGenerator.reduce(new ArrayList<NodeOutput<State>>(), (result, value) -> {
                         result.add(value);
                         return result;
                     })
@@ -39,8 +42,26 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
                         for (var output : list) {
                             result = AgentState.updateState(result, output.state().data(), channels);
                         }
-                        return result;
-                    });
+                        return mergeGeneratorResultValue(embedGenerator, result);
+                    })
+                    .whenComplete((result, error) -> embedGenerator.close());
+        }
+
+        // merges the generator result value into the branch partial state, like embedGenerator() on the serial path
+        private Map<String, Object> mergeGeneratorResultValue(AsyncGenerator.WithEmbed<NodeOutput<State>> generator, Map<String, Object> partialState) {
+
+            final var result = GraphResult.from(generator);
+
+            if (result.isEmpty() || result.isCancelled()) {
+                return partialState;
+            }
+            if (result.isStateDataOrCheckpointSaverTag()) {
+                return AgentState.updateState(partialState, result.asStateDataOrLastCheckpointStateData(), channels);
+            }
+            if (result.isInterruptionMetadata()) {
+                throw new UnsupportedOperationException("Interruption metadata cannot be returned from a parallel branch streaming generator");
+            }
+            throw new IllegalArgumentException("Unsupported parallel branch streaming result type: %s".formatted(result.type()));
         }
 
         @SuppressWarnings("unchecked")
