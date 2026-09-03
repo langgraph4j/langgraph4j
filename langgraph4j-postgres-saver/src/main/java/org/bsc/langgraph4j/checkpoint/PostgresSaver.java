@@ -20,7 +20,6 @@ public class PostgresSaver extends AbstractPostgresSaver {
     public static class Builder extends AbstractBuilder<Builder> {
 
         public PostgresSaver build() throws Exception {
-            validate();
             return new PostgresSaver(this);
         }
     }
@@ -81,7 +80,7 @@ public class PostgresSaver extends AbstractPostgresSaver {
             // state_data
             ps.setString(++field, encodeState(checkpoint.getState()));
             // state_content_type
-            ps.setString(++field, stateSerializer.contentType());
+            ps.setString(++field, encoderStateSerializer().contentType());
 
             // DB schema has DEFAULT CURRENT_TIMESTAMP for saved_at.
             // If checkpoint provides a specific time, use it. Otherwise, use current time from Java.
