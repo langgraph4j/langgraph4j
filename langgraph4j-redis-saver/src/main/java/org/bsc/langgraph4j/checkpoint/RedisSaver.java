@@ -561,6 +561,11 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
         return completedFuture(interruptionMetadata);
     }
 
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
+    }
+
 
     /**
      * Cleanup all data for a specific thread.

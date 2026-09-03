@@ -18,13 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
@@ -528,6 +522,12 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
     public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
         return completedFuture(interruptionMetadata);
     }
+
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
+    }
+
 
     /**
      * Obtain a connection from the configured {@link DataSource}.

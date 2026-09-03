@@ -268,6 +268,12 @@ public abstract class AbstractMysqlServer extends AbstractCheckpointSaver implem
         return completedFuture(interruptionMetadata);
     }
 
+
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
+    }
+
     /**
      * If the checkpoint exists, updates the checkpoint, otherwise it inserts it.
      *

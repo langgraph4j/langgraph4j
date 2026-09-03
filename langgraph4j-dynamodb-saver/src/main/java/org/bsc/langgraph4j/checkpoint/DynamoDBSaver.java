@@ -385,6 +385,12 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
         return completedFuture(interruptionMetadata);
     }
 
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
+    }
+
+
     /**
      * Deletes all checkpoints and associated data for the given thread.
      *

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -164,6 +165,11 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
     @Override
     public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
         return completedFuture(interruptionMetadata);
+    }
+
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
     }
 
 
