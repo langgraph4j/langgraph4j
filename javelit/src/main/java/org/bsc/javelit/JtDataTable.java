@@ -36,6 +36,7 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
         List<T> data;
         Map<String, Function<T,String>> columns = new LinkedHashMap<>();
         SelectionMode selectionMode = SelectionMode.MULTIPLE;
+        String height;
 
 
         private Builder(final List<T> data) {
@@ -50,6 +51,15 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
         public Builder<T> selectionMode(SelectionMode selectionMode) {
             this.selectionMode = requireNonNull(selectionMode, "selectionMode cannot be null");
             return this;
+        }
+
+        public Builder<T> height(String height) {
+            this.height = requireNonNull(height, "height cannot be null");
+            return this;
+        }
+
+        public Builder<T> height(int height) {
+            return height("%dpx".formatted(height));
         }
 
         public Builder<T> singleSelection() {
@@ -77,12 +87,14 @@ public class JtDataTable<T> extends JtComponent<Set<Integer>> {
     final @Nonnull List<T> data;
     final @Nonnull Map<String, Function<T,String>> columns;
     final @Nonnull SelectionMode selectionMode;
+    final String height;
 
     private JtDataTable(final @Nonnull Builder<T> builder) {
         super(builder, null, null);
         this.data = builder.data;
         this.columns = builder.columns;
         this.selectionMode = builder.selectionMode;
+        this.height = builder.height;
     }
 
     @Override

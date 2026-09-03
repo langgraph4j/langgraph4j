@@ -35,6 +35,7 @@ public class JtDataTableApp {
 
         var result = JtDataTable.builder(data)
                 .singleSelection()
+                .height("20vh")
                 .column("Name", DataItem::name)
                 .column("Age", ( v ) -> Objects.toString(v.age()))
                 .column("Address", DataItem::address)
