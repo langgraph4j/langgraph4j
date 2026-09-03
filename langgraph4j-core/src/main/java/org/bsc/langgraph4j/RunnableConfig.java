@@ -44,6 +44,7 @@ public final class RunnableConfig implements HasMetadata {
     private final String checkPointId;
     private final String nextNode;
     private final CompiledGraph.StreamMode streamMode;
+    private final Integer recursionLimit;
     private final Map<String,Object> metadata;
 
     private RunnableConfig() {
@@ -51,6 +52,7 @@ public final class RunnableConfig implements HasMetadata {
         this.checkPointId = null;
         this.nextNode = null;
         this.streamMode = CompiledGraph.StreamMode.VALUES;
+        this.recursionLimit = null;
         this.metadata = null;
     }
 
@@ -64,16 +66,18 @@ public final class RunnableConfig implements HasMetadata {
         this.checkPointId   = builder.checkPointId;
         this.nextNode       = builder.nextNode;
         this.streamMode     = builder.streamMode;
+        this.recursionLimit = builder.recursionLimit;
         this.metadata       = builder.metadata();
     }
 
     @Override
     public String toString() {
-        return  "RunnableConfig{ threadId=%s, checkPointId=%s, nextNode=%s, streamMode=%s } metadata: %s".formatted(
+        return  "RunnableConfig{ threadId=%s, checkPointId=%s, nextNode=%s, streamMode=%s, recursionLimit=%s } metadata: %s".formatted(
                 threadId,
                 checkPointId,
                 nextNode,
                 streamMode,
+                recursionLimit,
                 CollectionsUtils.toString(metadata)
         );
     }
@@ -86,6 +90,16 @@ public final class RunnableConfig implements HasMetadata {
     public CompiledGraph.StreamMode streamMode() {
         return streamMode;
     }
+
+    /**
+     * Returns the maximum number of iterations allowed for this invocation.
+     *
+     * @return an optional recursion limit, or empty when the graph default should be used
+     */
+    public Optional<Integer> recursionLimit() {
+        return ofNullable(recursionLimit);
+    }
+
     /**
      * Returns the thread ID as an {@link Optional}.
      *
@@ -242,6 +256,7 @@ public final class RunnableConfig implements HasMetadata {
         private String checkPointId;
         private String nextNode;
         private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
+        private Integer recursionLimit;
 
         /**
          * Constructs a new instance of the {@link Builder} with default configuration settings.
@@ -259,6 +274,7 @@ public final class RunnableConfig implements HasMetadata {
             this.checkPointId   = config.checkPointId;
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
+            this.recursionLimit = config.recursionLimit;
 
         }
 
@@ -304,6 +320,20 @@ public final class RunnableConfig implements HasMetadata {
          */
         public Builder streamMode(CompiledGraph.StreamMode streamMode) {
             this.streamMode = streamMode;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of iterations allowed for this invocation.
+         *
+         * @param recursionLimit the maximum number of iterations, greater than zero
+         * @return this builder
+         */
+        public Builder recursionLimit(int recursionLimit) {
+            if (recursionLimit <= 0) {
+                throw new IllegalArgumentException("recursionLimit must be > 0!");
+            }
+            this.recursionLimit = recursionLimit;
             return this;
         }
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RunnableConfigTest {
@@ -27,5 +28,26 @@ public class RunnableConfigTest {
         assertEquals( "test2", config.metadata("nodeId").get() );
         assertTrue( config.metadata("graphPath").isPresent() );
         assertEquals( "test1/test2", config.metadata("graphPath").get() );
+    }
+
+    @Test
+    public void recursionLimitIsPreservedByConfigCopies() {
+        var config = RunnableConfig.builder()
+                .recursionLimit(10)
+                .build();
+
+        assertEquals(10, config.recursionLimit().orElseThrow());
+        assertEquals(10, RunnableConfig.builder(config).build().recursionLimit().orElseThrow());
+        assertEquals(10, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).recursionLimit().orElseThrow());
+        assertEquals(10, config.withCheckPointId("checkpoint-1").recursionLimit().orElseThrow());
+        assertEquals(10, config.updateMetadata(Map.of("key", "value")).recursionLimit().orElseThrow());
+    }
+
+    @Test
+    public void recursionLimitMustBePositive() {
+        assertThrows(IllegalArgumentException.class,
+                () -> RunnableConfig.builder().recursionLimit(0));
+        assertThrows(IllegalArgumentException.class,
+                () -> RunnableConfig.builder().recursionLimit(-1));
     }
 }
