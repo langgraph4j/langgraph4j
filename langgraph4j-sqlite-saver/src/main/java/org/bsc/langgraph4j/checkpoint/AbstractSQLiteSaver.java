@@ -7,6 +7,7 @@ import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.bsc.langgraph4j.utils.TryFunction;
+import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
@@ -22,21 +23,21 @@ import static java.util.Optional.ofNullable;
 public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
-        public StateSerializer<? extends AgentState> stateSerializer;
+        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
         String url;
         String databasePath;
         boolean createTables;
         boolean dropTablesFirst;
         DataSource datasource;
         boolean plainTextStateSerializerLegacyMode = false;
-
+        SQLiteConfig config;
         @SuppressWarnings("unchecked")
         private B this$() {
             return (B) this;
         }
 
         public <State extends AgentState> B stateSerializer(StateSerializer<State> stateSerializer) {
-            this.stateSerializer = stateSerializer;
+            this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
 
@@ -55,6 +56,11 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
         public B url(String url) {
             this.url = url;
+            return this$();
+        }
+
+        public B config(SQLiteConfig config) {
+            this.config = config;
             return this$();
         }
 
@@ -78,19 +84,26 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
             return this$();
         }
 
-
     }
 
     protected final DataSource datasource;
-    private final StateSerializer<? extends AgentState> stateSerializer;
+    private final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
     private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
+
+    public final DataSource datasource() {
+        return datasource;
+    }
+
+    public final SqlResource.Commands sqlCommands() {
+        return sqlCommands;
+    }
 
     protected AbstractSQLiteSaver(AbstractBuilder<?> builder) throws Exception {
         if (builder.datasource != null) {
             this.datasource = builder.datasource;
         } else {
-            final var ds = new SQLiteDataSource();
+            final var ds = new SQLiteDataSource( ofNullable(builder.config).orElseGet(SQLiteConfig::new));
             ofNullable(builder.url)
                     .ifPresentOrElse(
                             $1 -> ds.setUrl(requireNotBlank($1, "url")),
@@ -98,8 +111,10 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
             this.datasource = ds;
         }
-
-        this.stateSerializer = requireNonNull(builder.stateSerializer, "stateSerializer cannot be null");
+        if( builder.stateSerializerMap.isEmpty() ) {
+            throw new IllegalArgumentException("no stateSerializer provided");
+        }
+        this.stateSerializerMap = builder.stateSerializerMap;
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
         sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
@@ -107,10 +122,13 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         initTable(builder.dropTablesFirst, builder.createTables || builder.dropTablesFirst);
     }
 
+    private StateSerializer<? extends AgentState> encoderStateSerializer() {
+        return stateSerializerMap.values().iterator().next(); // get first added state serializer;
+    }
+
     protected abstract String sqlCommandsResourcePath();
 
     protected abstract String sqlInitResourcePath();
-
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
 
@@ -143,7 +161,8 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         return value;
     }
 
-    private String encodeState(Map<String, Object> data) throws IOException {
+    protected final  String encodeState(Map<String, Object> data) throws IOException {
+        final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
         final byte[] binaryData;
 
         if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
@@ -154,12 +173,11 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         return Base64.getEncoder().encodeToString(binaryData);
     }
 
-    private Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
-        if (!Objects.equals(contentType, stateSerializer.contentType())) {
+    protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+        final var stateSerializer = stateSerializerMap.get(contentType);
+        if (stateSerializer==null) {
             throw new IllegalStateException(
-                    format("Content Type used for store state '%s' is different from one '%s' used for deserialize it",
-                            contentType,
-                            stateSerializer.contentType()));
+                    "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
         final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
@@ -231,7 +249,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
             ps.setString(++field, checkpoint.getNodeId());
             ps.setString(++field, checkpoint.getNextNodeId());
             ps.setString(++field, encodeState(checkpoint.getState()));
-            ps.setString(++field, stateSerializer.contentType());
+            ps.setString(++field, encoderStateSerializer().contentType());
 
             log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
             ps.executeUpdate();
