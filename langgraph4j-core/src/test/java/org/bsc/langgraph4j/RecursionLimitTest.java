@@ -1,14 +1,17 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecursionLimitTest {
 
@@ -59,5 +62,27 @@ class RecursionLimitTest {
         var overrideException = assertThrows(Exception.class,
                 () -> graph.invoke(Map.of(), RunnableConfig.builder().recursionLimit(4).build()));
         assertRecursionLimit(overrideException, 4);
+    }
+
+    @Test
+    void recursionLimitIsPropagatedToCompiledSubgraphs() throws Exception {
+        var subgraph = new StateGraph<>(AgentState::new)
+                .addNode("node", AsyncNodeActionWithConfig.node_async((state, config) -> {
+                    assertEquals(Optional.of(7), config.recursionLimit());
+                    return Map.of();
+                }))
+                .addEdge(START, "node")
+                .addEdge("node", StateGraph.END)
+                .compile();
+
+        var graph = new StateGraph<>(AgentState::new)
+                .addNode("subgraph", subgraph)
+                .addEdge(START, "subgraph")
+                .addEdge("subgraph", StateGraph.END)
+                .compile();
+
+        var result = graph.invoke(Map.of(), RunnableConfig.builder().recursionLimit(7).build());
+
+        assertTrue(result.isPresent());
     }
 }
