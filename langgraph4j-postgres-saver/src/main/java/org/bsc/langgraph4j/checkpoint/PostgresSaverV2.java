@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.sql.*;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -126,6 +127,12 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
         } catch (Exception e) {
             return failedFuture(e);
         }
+    }
+
+
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
@@ -16,9 +17,27 @@ import static java.util.Objects.requireNonNull;
  */
 public class PostgresSaver extends AbstractPostgresSaver {
 
+    public static class Builder extends AbstractBuilder<Builder> {
+
+        public PostgresSaver build() throws Exception {
+            validate();
+            return new PostgresSaver(this);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    protected PostgresSaver(Builder builder) throws Exception {
+        super(builder);
+    }
+
     @Override
     protected void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
-        var threadId = config.threadId().orElse( THREAD_ID_DEFAULT );
+
+        var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
 
         var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
 
@@ -33,7 +52,7 @@ public class PostgresSaver extends AbstractPostgresSaver {
             ps.setString(++field, threadId);
             ps.setString(++field, threadId);
 
-            log.trace( "Executing upsert thread:\n---\n{}---", upsertThreadSql);
+            log.trace("Executing upsert thread:\n---\n{}---", upsertThreadSql);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -69,24 +88,14 @@ public class PostgresSaver extends AbstractPostgresSaver {
             // To use DB default, one would typically omit the column or pass NULL if the column definition allows it to trigger default.
             // OffsetDateTime savedAt = checkpoint.getSavedAt().orElse(OffsetDateTime.now());
             // psCheckpoint.setObject(8, savedAt);
-            log.trace( "Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
+            log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
             ps.executeUpdate();
         }
     }
 
-    public static class Builder extends AbstractBuilder<Builder> {
-
-        public PostgresSaver build() throws Exception {
-            validate();
-            return new PostgresSaver(this);
-        }
+    @Override
+    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
+        return Optional.empty();
     }
 
-    protected PostgresSaver(Builder builder) throws Exception {
-        super(builder);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
 }
