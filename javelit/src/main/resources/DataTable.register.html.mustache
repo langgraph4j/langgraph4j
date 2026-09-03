@@ -11,6 +11,8 @@
 
         .table-container {
             overflow-x: auto;
+            overflow-y: auto;
+            height: var(--jt-data-table-height, auto);
             border: 1px solid var(--jt-border-color);
             border-radius: 0.375rem;
             background-color: var(--jt-bg-primary);
@@ -110,6 +112,7 @@
         static properties = {
             columns: {type: Array},
             data: {type: Array},
+            height: {type: String, reflect: true},
             componentKey: {type: String, attribute: 'component-key'},
             selectionMode: {type: String, attribute: 'selection-mode'},
             _selectedRows: {state: true}
@@ -119,9 +122,24 @@
             super();
             this.columns = [];
             this.data = [];
+            this.height = undefined;
             this.componentKey = undefined;
             this.selectionMode = 'multiple';
             this._selectedRows = [];
+        }
+
+        updated(changedProperties) {
+            if (changedProperties.has('height')) {
+                if (this.height) {
+                    this.style.setProperty('--jt-data-table-height', this.height);
+                } else {
+                    this.style.removeProperty('--jt-data-table-height');
+                }
+            }
+
+            if (changedProperties.has('data')) {
+                this.removeOutOfRangeSelections();
+            }
         }
 
         render() {
@@ -191,12 +209,6 @@
                 </table>
             </div>
         `;
-        }
-
-        updated(changedProperties) {
-            if (changedProperties.has('data')) {
-                this.removeOutOfRangeSelections();
-            }
         }
 
         get rowCount() {
