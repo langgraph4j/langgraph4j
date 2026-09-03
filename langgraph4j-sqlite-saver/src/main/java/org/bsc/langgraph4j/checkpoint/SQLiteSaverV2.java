@@ -11,12 +11,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 
-public class SQLiteSaverV2 extends AbstractSQLiteSaver {
+public class SQLiteSaverV2 extends AbstractSQLiteSaverV2 {
 
     public static class Builder extends AbstractBuilder<Builder> {
 
@@ -128,5 +129,6 @@ public class SQLiteSaverV2 extends AbstractSQLiteSaver {
         }
 
     }
+
 
 }
