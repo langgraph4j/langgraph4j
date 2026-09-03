@@ -25,7 +25,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
-        public StateSerializer<? extends AgentState> stateSerializer;
+        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
         private String host;
         private Integer port;
         private String user;
@@ -43,7 +43,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         }
 
         public <State extends AgentState> B stateSerializer(StateSerializer<State> stateSerializer) {
-            this.stateSerializer = stateSerializer;
+            this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
 
@@ -117,8 +117,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             return value;
         }
 
-        protected void validate() throws SQLException {
-            requireNonNull(stateSerializer, "stateSerializer cannot be null");
+        private void validate() throws SQLException {
+            if( stateSerializerMap.isEmpty() ) {
+                throw new IllegalArgumentException("no stateSerializer provided");
+            }
 
             // Create datasource individually
             if (datasource == null) {
@@ -146,15 +148,17 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
      * Datasource used to create the store
      */
     protected final DataSource datasource;
-    protected final StateSerializer<? extends AgentState> stateSerializer;
+    private final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
     private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
     protected AbstractPostgresSaver(AbstractBuilder<?> builder) throws Exception {
+        builder.validate();
+
         this.datasource = builder.datasource;
-        this.stateSerializer = builder.stateSerializer;
         this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
         this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
+        this.stateSerializerMap = builder.stateSerializerMap;
 
         initTable(builder.dropTablesFirst, builder.createTables);
     }
@@ -165,6 +169,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
     protected String sqlInitResourcePath() {
         return "db/migration/v1.0__init.sql";
+    }
+
+    protected final  StateSerializer<? extends AgentState> encoderStateSerializer() {
+        return stateSerializerMap.values().iterator().next(); // get first added state serializer;
     }
 
     private void rollback(Connection conn, Checkpoint checkpoint, String threadId) {
@@ -184,6 +192,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     }
 
     protected String encodeState(Map<String, Object> data) throws IOException {
+        final var stateSerializer = encoderStateSerializer();
         final byte[] binaryData;
 
         if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
@@ -198,11 +207,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     }
 
     protected Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
-        if (!Objects.equals(contentType, stateSerializer.contentType())) {
+        final var stateSerializer = stateSerializerMap.get(contentType);
+        if (stateSerializer==null) {
             throw new IllegalStateException(
-                    format("Content Type used for store state '%s' is different from one '%s' used for deserialize it",
-                            contentType,
-                            stateSerializer.contentType()));
+                    "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
         final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
