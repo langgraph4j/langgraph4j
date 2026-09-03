@@ -79,3 +79,48 @@ UPDATE LG4JThread SET is_interrupted = 1, message = ? WHERE thread_name = ? AND 
 
 -- sqlEnableForeignKeys
 PRAGMA foreign_keys = ON
+
+-- sqlSelectTag
+SELECT
+    t.thread_id,
+    t.thread_name,
+    t.released_version,
+    t.parent_thread_id,
+    t.is_released,
+    t.is_error,
+    t.message,
+    t.created_at,
+    c.checkpoint_id,
+    c.node_id,
+    c.next_node_id,
+    c.state_data,
+    c.state_content_type,
+    c.parent_checkpoint_id
+FROM LG4JThreadTag t
+JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
+WHERE %s thread_name = ? AND t.released_version = ?
+ORDER BY c.saved_at DESC;
+
+-- sqlSelectAllThreads
+SELECT
+    thread_id,
+    thread_name,
+    parent_thread_id,
+    is_interrupted,
+    message,
+    created_at
+FROM LG4JThread
+ORDER BY created_at DESC;
+
+-- sqlSelectAllTags
+SELECT
+    thread_id,
+    thread_name,
+    released_version,
+    parent_thread_id,
+    is_released,
+    is_error,
+    message,
+    created_at
+    FROM LG4JThreadTag
+ORDER BY created_at DESC;
