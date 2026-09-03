@@ -9,7 +9,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.sql.*;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,12 +19,11 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 /**
  * Postgres checkpoint saver with thread release tags and interruption state.
  */
-public class PostgresSaverV2 extends AbstractPostgresSaver {
+public class PostgresSaverV2 extends AbstractPostgresSaverV2 {
 
     public static class Builder extends AbstractBuilder<Builder> {
 
         public PostgresSaverV2 build() throws Exception {
-            validate();
             return new PostgresSaverV2(this);
         }
     }
@@ -57,7 +55,7 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
         final var sqlDeleteThread = sqlCommands.get("sqlReleaseThread_deleteThread");
 
         execTransaction(conn -> {
-                Long id = null;
+            Long id = null;
             try (PreparedStatement ps = conn.prepareStatement(sqlInsertTag)) {
                 var index = 0;
 
@@ -129,12 +127,6 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
         }
     }
 
-
-    @Override
-    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
-        return Optional.empty();
-    }
-
     @Override
     protected void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
         var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
@@ -159,7 +151,6 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
             }
         }
 
-
         // 2. Insert checkpoint data
         try (PreparedStatement ps = conn.prepareStatement(insertCheckpointSql)) {
             var field = 0;
@@ -179,7 +170,7 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
             // state_data
             ps.setString(++field, encodeState(checkpoint.getState()));
             // state_content_type
-            ps.setString(++field, stateSerializer.contentType());
+            ps.setString(++field, encoderStateSerializer().contentType());
 
             // DB schema has DEFAULT CURRENT_TIMESTAMP for saved_at.
             // If checkpoint provides a specific time, use it. Otherwise, use current time from Java.
@@ -190,4 +181,4 @@ public class PostgresSaverV2 extends AbstractPostgresSaver {
             ps.executeUpdate();
         }
     }
-    }
+}
