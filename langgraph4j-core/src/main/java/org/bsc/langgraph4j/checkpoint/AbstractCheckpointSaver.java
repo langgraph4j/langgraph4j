@@ -152,12 +152,6 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
         return release( config, null );
     }
 
-
-    @Override
-    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
-        return Optional.empty();
-    }
-
     @Override
     public void putSubGraphSaver(RunnableConfig parentConfig, RunnableConfig subGraphConfig, BaseCheckpointSaver subGraphSaver) {
         requireNonNull( subGraphSaver, "subGraphSaver cannot be null" );
