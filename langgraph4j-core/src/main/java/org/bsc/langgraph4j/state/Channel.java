@@ -9,7 +9,7 @@ import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_RESET;
 
 /**
  *
- * @param <T>
+ * @param <T> the type of the state property managed by this channel.
  */
 class BaseChannel<T> implements Channel<T> {
     final Supplier<T> defaultProvider;
@@ -69,7 +69,7 @@ class BaseChannel<T> implements Channel<T> {
  * default value is used. If the channel is initialized, the reducer is used
  * to compute the new value.
  *
- * @param <T> the type of the state property
+ * @param <T> the type of the state property managed by this channel. the type of the state property
  */
 public interface Channel<T> {
 
