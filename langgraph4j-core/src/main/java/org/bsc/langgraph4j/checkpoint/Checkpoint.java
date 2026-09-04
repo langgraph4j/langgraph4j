@@ -98,11 +98,31 @@ public class Checkpoint {
         }
     }
 
+    /**
+     * Returns a new Checkpoint with updated state, keeping the current nextNodeId.
+     *
+     * @param values   the partial state updates to merge into this checkpoint's state
+     * @param channels the registered channels used to resolve and update values;
+     *                 may be null if values are already resolved
+     * @return a new immutable Checkpoint; the original is unchanged
+     * @see AgentState#updateState
+     */
     public Checkpoint updateState(Map<String,Object> values, Map<String, Channel<?>> channels ) {
         return updateState( values, channels, this.nextNodeId );
     }
 
 
+    /**
+     * Returns a new Checkpoint with updated state and a new nextNodeId.
+     *
+     * @param values     the partial state updates to merge into this checkpoint's state
+     * @param channels   the registered channels used to resolve and update values;
+     *                   may be null if values are already resolved
+     * @param nextNodeId the identifier of the next node to execute; must not be null
+     * @return a new immutable Checkpoint; the original is unchanged
+     * @throws NullPointerException if nextNodeId is null
+     * @see AgentState#updateState
+     */
     public Checkpoint updateState(Map<String,Object> values, Map<String, Channel<?>> channels, String nextNodeId ) {
 
         return new Checkpoint( this.id,
