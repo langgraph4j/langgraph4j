@@ -37,7 +37,9 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
                     .thenApply(list -> {
                         Map<String, Object> result = initPartialState;
                         for (var output : list) {
-                            result = AgentState.updateState(result, output.state().data(), channels);
+                            if (output.data().isPresent()) {
+                                result = AgentState.updateState(result, output.data().get(), channels);
+                            }
                         }
                         return result;
                     });
