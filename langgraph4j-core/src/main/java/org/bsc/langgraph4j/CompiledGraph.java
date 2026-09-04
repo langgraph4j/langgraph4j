@@ -861,7 +861,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             try {
 
-                final var maxIterations = compileConfig.recursionLimit();
+                final var maxIterations = config.recursionLimit().orElse(compileConfig.recursionLimit());
                 var iteration = 0;
                 for(;;) {
                     // GUARD: CHECK MAX ITERATION REACHED
