@@ -853,9 +853,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             try {
                 // GUARD: CHECK MAX ITERATION REACHED
-                if( ++iteration > maxIterations ) {
-                    // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
-                    return Data.error( new IllegalStateException( format("Maximum number of iterations (%d) reached!", maxIterations)) );
+                final int recursionLimit = config.recursionLimit().orElse(maxIterations);
+                if( ++iteration > recursionLimit ) {
+                    // log.warn( "Maximum number of iterations ({}) reached!", recursionLimit);
+                    return Data.error( new IllegalStateException( format("Maximum number of iterations (%d) reached!", recursionLimit)) );
                 }
 
                 // GUARD: CHECK IF IT IS END
