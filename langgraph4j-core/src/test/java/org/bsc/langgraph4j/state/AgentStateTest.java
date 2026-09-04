@@ -136,4 +136,21 @@ public class AgentStateTest {
         assertIterableEquals( List.of( "x1", "v1", "v2", "v3"), state.messages() );
     }
 
+    @Test
+    public void appenderKeepsDistinctValuesWithCollidingHashCodes() {
+        var schema = Map.<String, Channel<?>>of("messages", Channels.appender(ArrayList::new));
+        var state = new State(Map.of("messages", new ArrayList<>(List.of("FB"))));
+
+        // "FB" and "Ea" are unequal strings with the same hash code in Java.
+        assertNotEquals("FB", "Ea");
+        assertEquals("FB".hashCode(), "Ea".hashCode());
+
+        var newStateData = AgentState.updateState(
+                state,
+                Map.of("messages", "Ea"),
+                schema);
+
+        assertIterableEquals(List.of("FB", "Ea"), (List<?>) newStateData.get("messages"));
+    }
+
 }

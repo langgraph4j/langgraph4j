@@ -56,8 +56,8 @@ public class AppenderChannel<T> implements Channel<List<T>>, LG4JLoggable {
                 return right;
             }
             for (T rValue : right) {
-                // remove duplicate
-                if (left.stream().noneMatch(lValue -> Objects.hash(lValue) == Objects.hash(rValue))) {
+                // Keep distinct values even when their hash codes collide.
+                if (left.stream().noneMatch(lValue -> Objects.equals(lValue, rValue))) {
                     left.add(rValue);
                 }
             }
