@@ -11,7 +11,7 @@ import java.util.Optional;
  *
  * @param <State> The type of the agent state, which must extend {@link AgentState}.
  */
-public interface InterruptableAction<State extends AgentState> {
+public interface InterruptibleAction<State extends AgentState> {
 
     /**
      * Determines whether the graph execution should be interrupted at the current node.
