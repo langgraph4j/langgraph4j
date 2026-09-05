@@ -16,10 +16,34 @@ import static org.bsc.langgraph4j.utils.CollectionsUtils.entryOf;
  * Represents the state of an agent with a map of data.
  */
 public class AgentState {
+    /**
+     * Marker value that resets a state entry through its configured {@link Channel}.
+     * <p>
+     * When used as a value in a partial state update, the current value is replaced
+     * with the channel's default value. If the channel has no default value, or no
+     * channel is configured for the key, the key is removed from the resulting state.
+     * The marker is handled before any configured {@link Reducer} is invoked.
+     * <p>
+     * This marker is recognized by identity; use this constant directly.
+     *
+     * @see Channel#update(String, Object, Object)
+     */
     public static final Object MARK_FOR_RESET = new Object() {
         @Override
         public String toString() { return "MARK_FOR_RESET"; }
     };
+
+    /**
+     * Marker value that removes a state entry.
+     * <p>
+     * When used as a value in a partial state update, the corresponding key is
+     * excluded from the resulting state. The marker is handled before any configured
+     * {@link Reducer} is invoked.
+     * <p>
+     * This marker is recognized by identity; use this constant directly.
+     *
+     * @see Channel#update(String, Object, Object)
+     */
     public static final Object MARK_FOR_REMOVAL = new Object() {
         @Override
         public String toString() { return "MARK_FOR_REMOVAL"; }
