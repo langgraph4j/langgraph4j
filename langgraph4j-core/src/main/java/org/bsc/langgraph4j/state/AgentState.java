@@ -133,10 +133,14 @@ public class AgentState {
     /**
      * Updates a state with the provided partial state.
      * The merge function is used to merge the current state value with the new value.
+     * If {@code channels} is {@code null} or empty, channel resolution is skipped;
+     * the partial state is still merged into the current state, including the standard
+     * handling for reset and removal markers.
      *
      * @param state the current state
      * @param partialState the partial state to update from
-     * @param channels the channels used to update the partial state if necessary
+     * @param channels the channels used to update matching partial-state values; may be
+     *                 {@code null} or empty
      * @return the updated state
      * @throws NullPointerException if state is null
      */
@@ -155,10 +159,14 @@ public class AgentState {
     /**
      * Updates a state with the provided partial state.
      * The merge function is used to merge the current state value with the new value.
+     * If {@code channels} is {@code null} or empty, channel resolution is skipped;
+     * the partial state is still merged into the current state, including the standard
+     * handling for reset and removal markers.
      *
      * @param state the current state
      * @param partialState the partial state to update from
-     * @param channels the channels used to update the partial state if necessary
+     * @param channels the channels used to update matching partial-state values; may be
+     *                 {@code null} or empty
      * @return the updated state
      * @throws NullPointerException if state is null
      */
