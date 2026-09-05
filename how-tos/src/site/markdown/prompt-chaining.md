@@ -12,7 +12,7 @@ Set `OPENAI_API_KEY` before running the model calls.
 var userHomeDir = System.getProperty("user.home");
 var localRepoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.19.0";
-var langgraph4jVersion = "1.8.26";
+var langgraph4jVersion = "1.8.27";
 ```
 
 ```java

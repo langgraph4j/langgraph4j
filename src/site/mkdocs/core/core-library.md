@@ -70,7 +70,7 @@ var graph = graphBuilder.compile(compileConfig);
 | **interruptBefore** | `Set<String>` | empty | Node names where the graph should pause **before** executing the node. Useful for inspecting state before a node runs or for getting human approval before proceeding. |
 | **interruptsAfter** | `Set<String>` | empty | Node names where the graph should pause **after** executing the node. Useful for inspecting results after a node completes or for user feedback. |
 | **interruptBeforeEdge** | `boolean` | `false` | If `true`, interruptions at a node occur **after** it executes but **before** any conditional edges are evaluated. This allows inspecting the state before the graph branches to the next node. |
-| **recursionLimit** | `int` | `25` | Maximum recursion depth allowed during graph execution. Prevents infinite loops by raising an error if the graph exceeds this limit. Increase if your graph needs deep execution paths. |
+| **recursionLimit** | `int` | `25` | Default maximum number of execution steps allowed for each graph invocation. Prevents infinite loops by raising an error if the limit is exceeded. A `RunnableConfig` recursion limit overrides this default for one invocation. |
 | **releaseThread** | `boolean` | `false` | If `true`, the checkpointer will release all data associated to the current thread acquired during graph execution. |
 | **graphId** | `String` | `null` | Optional identifier for the graph. Useful for logging, monitoring, or distinguishing between multiple graph instances. It will available through `RunnableConfig.graphId()`|
 
@@ -129,6 +129,7 @@ You provide a `RunnableConfig` when invoking the graph:
 var config = RunnableConfig.builder()
                           .threadId("user-123")
                           .streamMode(CompiledGraph.StreamMode.UPDATES)
+                          .recursionLimit(50)
                           .putMetadata("userId", "user-123")
                           .putMetadata("model", "gpt-4")
                           .build();
@@ -144,6 +145,7 @@ graph.stream(inputs, config);
 | **checkPointId** | `String` | Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. |
 | **nextNode** | `String` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
 | **streamMode** | `CompiledGraph.StreamMode` | Controls how results are streamed during execution. Options are `VALUES` (full state after each step) or `UPDATES` (only state changes). Defaults to `VALUES`. |
+| **recursionLimit** | `int` | Maximum number of execution steps for this invocation. Overrides the `CompileConfig` default and must be greater than zero. |
 | **metadata** | `Map<String, Object>` | Custom key-value pairs available throughout execution. Useful for passing runtime context like user IDs, API keys, feature flags, or model selection that nodes and edges need access to. |
 
 ##### Reserved attributes' metadata
@@ -669,12 +671,12 @@ var compileConfig = CompileConfig.builder()
 
 ### Dynamic definition
 
-The `org.bsc.langgraph4j.action.InterruptableAction<State>` interface is the core component that enables this functionality. Any node action that implements this interface can conditionally interrupt the graph's execution.
+The `org.bsc.langgraph4j.action.InterruptibleAction<State>` interface is the core component that enables this functionality. Any node action that implements this interface can conditionally interrupt the graph's execution.
 
 The heart of the interface is the interrupt method:
 
 ```java
-public interface InterruptableAction<State extends AgentState> {
+public interface InterruptibleAction<State extends AgentState> {
    /**
     * Determines whether the graph execution should be interrupted at the current node.
     *
@@ -687,9 +689,11 @@ public interface InterruptableAction<State extends AgentState> {
 }
 ```
 
+The legacy name `InterruptableAction` is still available as a deprecated alias of `InterruptibleAction` for backward compatibility.
+
 **Here’s how it works**:
 
- * When the graph is about to execute a node, it first checks if the node's action implements InterruptableAction.
+ * When the graph is about to execute a node, it first checks if the node's action implements InterruptibleAction.
  * If it does, the interrupt(String nodeId, State state) method is called.
  * If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the
   interruption, which can be sent to an external system or user for review.

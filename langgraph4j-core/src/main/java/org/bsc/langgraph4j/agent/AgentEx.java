@@ -60,7 +60,7 @@ public interface AgentEx {
         REJECTED
     }
 
-    final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptableAction<State> {
+    final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptibleAction<State> {
 
         private final BiFunction<String, State, InterruptionMetadata<State>> interruptionMetadataProvider;
 

@@ -59,6 +59,7 @@ nav:
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
       - Agentic RAG: how-tos/agentic-rag.ipynb
       - Basic Reflection: how-tos/basic-reflection.ipynb
+      - Corrective RAG: how-tos/corrective-rag.ipynb
       - Hooks: how-tos/hooks.ipynb
       - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
       - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
@@ -93,6 +94,7 @@ nav:
       - Agent Executor: how-tos/agentexecutor.ipynb
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
       - Basic Reflection: how-tos/basic-reflection.ipynb
+      - Corrective RAG: how-tos/corrective-rag.ipynb
       - Hooks: how-tos/hooks.ipynb
       - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
       - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb

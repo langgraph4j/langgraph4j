@@ -18,7 +18,7 @@ In this tutorial you will:
 var userHomeDir = System.getProperty("user.home");
 var localRespoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.18.1";
-var langgraph4jVersion = "1.8.26";
+var langgraph4jVersion = "1.8.27";
 ```
 
 ```java

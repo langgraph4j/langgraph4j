@@ -6,7 +6,7 @@ import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
-import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptibleAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.state.AgentState;
@@ -163,9 +163,9 @@ public class NodeHooks<State extends AgentState> {
                                                                  RunnableConfig config,
                                                                  AsyncNodeActionWithConfig<State> action)
     {
-        if( action instanceof InterruptableAction<?>) {
+        if( action instanceof InterruptibleAction<?>) {
             @SuppressWarnings("unchecked")
-            final var interruption = (InterruptableAction<State>) action;
+            final var interruption = (InterruptibleAction<State>) action;
             final var interruptMetadata = interruption.interrupt( config.nodeId(), newState, config );
             if( interruptMetadata.isPresent() ) {
                 return new Result<>( interruptMetadata.get() );

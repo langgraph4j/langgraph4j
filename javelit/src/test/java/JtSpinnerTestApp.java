@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.26
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.27
 
 import io.javelit.core.Jt;
 import org.bsc.javelit.JtSpinner;

@@ -53,9 +53,9 @@ public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunct
             }
         };
 
-        if( syncAction instanceof InterruptableAction<?> ) {
+        if( syncAction instanceof InterruptibleAction<?> ) {
             final var proxyInstance = Proxy.newProxyInstance( syncAction.getClass().getClassLoader(),
-                    new Class[] { AsyncNodeActionWithConfig.class, InterruptableAction.class},
+                    new Class[] { AsyncNodeActionWithConfig.class, InterruptibleAction.class},
                     (proxy, method, methodArgs) -> {
                         if( method.getName().equals("interrupt") ) {
                             return method.invoke(syncAction, methodArgs);
@@ -81,9 +81,9 @@ public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunct
         final AsyncNodeActionWithConfig<S> actionWithConfig = (t, config ) ->
                 action.apply(t);
 
-        if( action instanceof InterruptableAction<?> ) {
+        if( action instanceof InterruptibleAction<?> ) {
             final var proxyInstance = Proxy.newProxyInstance( action.getClass().getClassLoader(),
-                    new Class[] { AsyncNodeActionWithConfig.class, InterruptableAction.class},
+                    new Class[] { AsyncNodeActionWithConfig.class, InterruptibleAction.class},
                     (proxy, method, methodArgs) -> {
                         if( method.getName().equals("interrupt") ) {
                             return method.invoke(action, methodArgs);
