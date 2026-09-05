@@ -2,6 +2,64 @@
 
 
 
+<!-- "name: v1.8.27" is a release tag -->
+
+## [v1.8.27](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.27) (2026-09-05)
+
+### Features
+
+ *  **core**  add runtime recursion limit configuration ([38dc23120c7694a](https://github.com/bsorrentino/langgraph4j/commit/38dc23120c7694aefa617b92242a39869405a820))
+   
+ *  **core**  apply runnable recursion limit ([e80eb4754fd26c4](https://github.com/bsorrentino/langgraph4j/commit/e80eb4754fd26c48803d428359b8191ad9e14fd3))
+   
+ *  **core**  add recursion limit to runnable config ([18b5804dc4e9a84](https://github.com/bsorrentino/langgraph4j/commit/18b5804dc4e9a8462683edfc334c802d25628bbb))
+   
+
+### Bug Fixes
+
+ -  preserve final state from parallel streaming nodes ([06addbfb4462423](https://github.com/bsorrentino/langgraph4j/commit/06addbfb4462423bc3ee232efcb1839b12ff5119))
+     > Parallel branches now retrieve the Data.done(...) result from streaming
+     > generators via AsyncGenerator.WithEmbed and merge supported state values
+     > through the configured channel reducers, matching the serial streaming path.
+     > - merge Map final results with AgentState.updateState(...)
+     > - support checkpoint-tag final results
+     > - preserve empty and cancelled final results unchanged
+     > - reject interruption metadata and node output with explicit errors
+     > Adds coverage for sync/async streaming branches, empty map, cancellation,
+     > checkpoint tags, invalid result values, NODE_OUTPUT, interruption metadata,
+     > configured parallel executor, and end-to-end graph execution.
+
+ -  **core**  compare appender values by equality ([914334d0f1860cf](https://github.com/bsorrentino/langgraph4j/commit/914334d0f1860cffd4e1906ce78432632d138f33))
+
+
+### Refactor
+
+ -  rename InterruptableAction to InterruptibleAction keeping legacy alias ([3e8b5b8994b5962](https://github.com/bsorrentino/langgraph4j/commit/3e8b5b8994b596296de15e50bcc5d26fd95c7786))
+    > Rename the action interface to the correct English spelling and update all internal references. The old &#x60;InterruptableAction&#x60; name is kept as a deprecated alias extending the new interface for backward compatibility. Base the change on develop branch.
+
+
+
+### Documentation
+
+ -  update javadocs ([18b893402d4c8eb](https://github.com/bsorrentino/langgraph4j/commit/18b893402d4c8ebbb213b99c77bf55e1d1ebadb5))
+     > merge #461 #465 #466 #469 #473 #474
+
+ -  **how-tos**  add Corrective RAG tutorial (related to #8) ([77d993bdadd0824](https://github.com/bsorrentino/langgraph4j/commit/77d993bdadd08240bef0def4c4f7611c861040fc))
+
+ -  **core**  document runtime recursion limit override ([1c841a2270e361f](https://github.com/bsorrentino/langgraph4j/commit/1c841a2270e361f32ebaf07c8168fa58377eac9c))
+
+ -  update changelog ([1739cec5b5f69bd](https://github.com/bsorrentino/langgraph4j/commit/1739cec5b5f69bdc528a344211c9041da9ccee3b))
+
+
+### ALM 
+
+ -  bump to next version 1.8.27 ([f4b9d5310d8c765](https://github.com/bsorrentino/langgraph4j/commit/f4b9d5310d8c76504138975d4be8b1227b900264))
+   
+
+
+
+
+
 <!-- "name: v1.8.26" is a release tag -->
 
 ## [v1.8.26](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.26) (2026-08-31)
