@@ -5,7 +5,7 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
-import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptibleAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
@@ -76,7 +76,7 @@ public interface AgentEx {
     }
 
 
-    final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptableAction<State> {
+    final class ApprovalNodeAction<M, State extends MessagesState<M>> implements AsyncNodeActionWithConfig<State>, InterruptibleAction<State> {
 
         private final BiFunction<String, State, InterruptionMetadata<State>> interruptionMetadataProvider;
 

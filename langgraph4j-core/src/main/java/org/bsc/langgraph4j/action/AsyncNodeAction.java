@@ -44,9 +44,9 @@ public interface AsyncNodeAction<S extends AgentState> extends Function<S, Compl
             }
         };
 
-        if( syncAction instanceof InterruptableAction<?> ) {
+        if( syncAction instanceof InterruptibleAction<?> ) {
             final var proxyInstance = Proxy.newProxyInstance( syncAction.getClass().getClassLoader(),
-                    new Class[] { AsyncNodeAction.class, InterruptableAction.class},
+                    new Class[] { AsyncNodeAction.class, InterruptibleAction.class},
                     (proxy, method, methodArgs) -> {
                         if( method.getName().equals("interrupt") ) {
                             return method.invoke(syncAction, methodArgs);

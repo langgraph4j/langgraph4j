@@ -3,7 +3,7 @@ package org.bsc.langgraph4j.internal.hook;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
-import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptibleAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.state.AgentState;
@@ -164,8 +164,8 @@ public class NodeHooks<State extends AgentState> {
             CompileConfig compileConfig,
             RunnableConfig config,
             AsyncNodeActionWithConfig<State> action) {
-        if (action instanceof InterruptableAction<?>) {
-            @SuppressWarnings("unchecked") final var interruption = (InterruptableAction<State>) action;
+        if (action instanceof InterruptibleAction<?>) {
+            @SuppressWarnings("unchecked") final var interruption = (InterruptibleAction<State>) action;
             final var interruptMetadata = interruption.interrupt(config.nodeId(), newState, config);
             if (interruptMetadata.isPresent()) {
                 final var future = compileConfig.checkpointSaver()

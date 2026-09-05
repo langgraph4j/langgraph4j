@@ -3,7 +3,7 @@ package org.bsc.langgraph4j;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
-import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptibleAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -62,7 +62,7 @@ public interface LG4JTestUtil extends LG4JLoggable {
 
     class CustomNodeAction implements AsyncNodeActionWithConfig<State> {
 
-        public static class Interruptable extends CustomNodeAction implements InterruptableAction<State> {
+        public static class Interruptable extends CustomNodeAction implements InterruptibleAction<State> {
             private final boolean interrupt;
 
             private Interruptable(Builder builder) {
