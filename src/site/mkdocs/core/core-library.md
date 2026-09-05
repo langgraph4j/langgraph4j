@@ -671,12 +671,12 @@ var compileConfig = CompileConfig.builder()
 
 ### Dynamic definition
 
-The `org.bsc.langgraph4j.action.InterruptableAction<State>` interface is the core component that enables this functionality. Any node action that implements this interface can conditionally interrupt the graph's execution.
+The `org.bsc.langgraph4j.action.InterruptibleAction<State>` interface is the core component that enables this functionality. Any node action that implements this interface can conditionally interrupt the graph's execution.
 
 The heart of the interface is the interrupt method:
 
 ```java
-public interface InterruptableAction<State extends AgentState> {
+public interface InterruptibleAction<State extends AgentState> {
    /**
     * Determines whether the graph execution should be interrupted at the current node.
     *
@@ -689,9 +689,11 @@ public interface InterruptableAction<State extends AgentState> {
 }
 ```
 
+The legacy name `InterruptableAction` is still available as a deprecated alias of `InterruptibleAction` for backward compatibility.
+
 **Here’s how it works**:
 
- * When the graph is about to execute a node, it first checks if the node's action implements InterruptableAction.
+ * When the graph is about to execute a node, it first checks if the node's action implements InterruptibleAction.
  * If it does, the interrupt(String nodeId, State state) method is called.
  * If the method returns a non-empty Optional<InterruptionMetadata>, the graph's execution is paused. The InterruptionMetadata object contains information about the
   interruption, which can be sent to an external system or user for review.

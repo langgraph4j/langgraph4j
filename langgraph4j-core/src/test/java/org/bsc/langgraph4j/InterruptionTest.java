@@ -3,7 +3,7 @@ package org.bsc.langgraph4j;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.AsyncGeneratorQueue;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
-import org.bsc.langgraph4j.action.InterruptableAction;
+import org.bsc.langgraph4j.action.InterruptibleAction;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -46,7 +46,7 @@ public class InterruptionTest {
 
     static class CustomAction implements AsyncNodeActionWithConfig<MessagesState<String>> {
 
-        static class Interruptable extends CustomAction implements InterruptableAction<MessagesState<String>> {
+        static class Interruptable extends CustomAction implements InterruptibleAction<MessagesState<String>> {
             private final boolean interrupt;
 
             private Interruptable(Builder builder) {
