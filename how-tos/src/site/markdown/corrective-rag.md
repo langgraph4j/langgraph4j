@@ -38,7 +38,7 @@ If Model Studio displays a workspace-specific endpoint for your region, use that
 ```java
 var userHomeDir = System.getProperty("user.home");
 var localRepoUrl = "file://" + userHomeDir + "/.m2/repository/";
-var langgraph4jVersion = "1.8.26";
+var langgraph4jVersion = "1.8.27";
 var langchain4jVersion = "1.19.0";
 var langchain4jBetaVersion = "1.19.0-beta29";
 ```
