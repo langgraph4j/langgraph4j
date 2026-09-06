@@ -12,6 +12,23 @@ cp -r src/site/mkdocs target/mkdocs
 cp how-tos/*.ipynb target/mkdocs/how-tos
 cp -r target/staging/apidocs target/mkdocs/apidocs
 
+# Copy PostgresQL Checkpoint Saver docs
+rsync -avm \
+--include='*/' \
+--include='README.md' \
+--include='SAVER*.md' \
+--exclude='*' \
+langgraph4j-postgres-saver/ target/mkdocs/core/postgres-saver/
+
+# Copy SQLite Checkpoint Saver docs
+rsync -avm \
+--include='*/' \
+--include='README.md' \
+--include='SAVER*.md' \
+--exclude='*' \
+langgraph4j-sqlite-saver/ target/mkdocs/core/sqlite-saver/
+
+
 # Copy Spring AI docs
 rsync -avm \
   --include='*/' \
@@ -33,4 +50,4 @@ mkdocs build
 mkdocs serve 
 
 # Site deploy with version
-# mike deploy --push --update-aliases 1.9 dev
+# mike deploy --push --update-aliases 1.9 main
