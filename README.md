@@ -13,10 +13,11 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 ‼️ **the repo has been updated to `1.9`, the version `1.8` has been moved to the branch `support/1.8.x`.**.
 Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgraph4j/1.9/whats-new-v1.9/)
 
+
 | Date         | Release        | info
 |--------------|----------------| ---
 | Sep 06, 2026 | `1.9-beta6` | last release
-| 
+
 
 | Release line | Java baseline | Notes |
 |---|---|---|
