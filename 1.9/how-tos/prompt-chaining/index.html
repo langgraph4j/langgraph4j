@@ -228,7 +228,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../whats-new-v1.9/" class="md-tabs__link">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -466,14 +466,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../whats-new-v1.9/" class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    What's new in 1.9
+    Overview
   
 
     
@@ -494,14 +494,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../whats-new-v1.9/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Overview
+    What's new in 1.9
   
 
     
@@ -755,6 +755,34 @@
     
   
     Basic Reflection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../corrective-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrective RAG (CRAG) with LangGraph4j
   
 
     
@@ -1265,14 +1293,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/spring-ai/" class="md-nav__link">
+      <a href="../../integrations/spring-ai.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Spring AI Integrations
+    None
   
 
     
@@ -1293,14 +1321,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/langchain4j/" class="md-nav__link">
+      <a href="../../integrations/langchain4j.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LangChain4j Integrations
+    None
   
 
     
@@ -1639,15 +1667,67 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint saver
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Checkpoint saver
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../../core/checkpoint-postgres/" class="md-nav__link">
+      <a href="../../core/sqlite-saver/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Checkpoint (Postgres)
+    SQLite
   
 
     
@@ -1656,6 +1736,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/postgres-saver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postgres
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -3096,12 +3212,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="highlight-ipynb hl-java"><pre><span></span><span class="kd">var</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"user.home"</span><span class="p">);</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">localRepoUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"file://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/.m2/repository/"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.19.0"</span><span class="p">;</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.0-beta4"</span><span class="p">;</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.0-beta6"</span><span class="p">;</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">var userHomeDir = System.getProperty("user.home");
 var localRepoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.19.0";
-var langgraph4jVersion = "1.9.0-beta4";</div>
+var langgraph4jVersion = "1.9.0-beta6";</div>
 </div>
 </div>
 </div>
@@ -3147,11 +3263,11 @@ var langgraph4jVersion = "1.9.0-beta4";</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Repository <span class="ansi-green-intense-fg ansi-bold">local</span> url: <span class="ansi-green-intense-fg ansi-bold">file:///Users/bsorrentino/.m2/repository/</span> added.
-Adding dependency <span class="ansi-green-intense-fg ansi-bold">org.bsc.langgraph4j:langgraph4j-core:1.9.0-beta4
+Adding dependency <span class="ansi-green-intense-fg ansi-bold">org.bsc.langgraph4j:langgraph4j-core:1.9.0-beta6
 </span>Adding dependency <span class="ansi-green-intense-fg ansi-bold">dev.langchain4j:langchain4j-open-ai:1.19.0
 </span>Solving dependencies
 Resolved artifacts count: 12
-Add to classpath: <span class="ansi-green-fg">/Users/bsorrentino/Library/Jupyter/kernels/rapaio-jupyter-kernel/mima_cache/org/bsc/langgraph4j/langgraph4j-core/1.9.0-beta4/langgraph4j-core-1.9.0-beta4.jar</span>
+Add to classpath: <span class="ansi-green-fg">/Users/bsorrentino/Library/Jupyter/kernels/rapaio-jupyter-kernel/mima_cache/org/bsc/langgraph4j/langgraph4j-core/1.9.0-beta6/langgraph4j-core-1.9.0-beta6.jar</span>
 Add to classpath: <span class="ansi-green-fg">/Users/bsorrentino/Library/Jupyter/kernels/rapaio-jupyter-kernel/mima_cache/org/bsc/async/async-generator/5.0.0/async-generator-5.0.0.jar</span>
 Add to classpath: <span class="ansi-green-fg">/Users/bsorrentino/Library/Jupyter/kernels/rapaio-jupyter-kernel/mima_cache/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar</span>
 Add to classpath: <span class="ansi-green-fg">/Users/bsorrentino/Library/Jupyter/kernels/rapaio-jupyter-kernel/mima_cache/dev/langchain4j/langchain4j-open-ai/1.19.0/langchain4j-open-ai-1.19.0.jar</span>

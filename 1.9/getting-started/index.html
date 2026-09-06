@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../whats-new-v1.9/">
       
       
         <link rel="next" href="../how-tos/persistence/">
@@ -228,7 +228,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../whats-new-v1.9/" class="md-tabs__link">
+        <a href=".." class="md-tabs__link">
           
   
   
@@ -466,14 +466,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../whats-new-v1.9/" class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    What's new in 1.9
+    Overview
   
 
     
@@ -494,14 +494,14 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../whats-new-v1.9/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Overview
+    What's new in 1.9
   
 
     
@@ -1086,6 +1086,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../how-tos/corrective-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrective RAG (CRAG) with LangGraph4j
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../how-tos/hooks/" class="md-nav__link">
         
   
@@ -1485,14 +1513,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../integrations/spring-ai/" class="md-nav__link">
+      <a href="../integrations/spring-ai.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Spring AI Integrations
+    None
   
 
     
@@ -1513,14 +1541,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../integrations/langchain4j/" class="md-nav__link">
+      <a href="../integrations/langchain4j.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LangChain4j Integrations
+    None
   
 
     
@@ -1859,15 +1887,67 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint saver
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Checkpoint saver
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../core/checkpoint-postgres/" class="md-nav__link">
+      <a href="../core/sqlite-saver/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Checkpoint (Postgres)
+    SQLite
   
 
     
@@ -1876,6 +1956,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/postgres-saver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postgres
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2613,7 +2729,7 @@
 <p>Make sure you are using Java 17 or later.</p>
 <p><strong>Latest Stable Version (Recommended):</strong>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;properties&gt;</span>
-<span class="w">    </span><span class="nt">&lt;langgraph4j.version&gt;</span>1.9.0-beta4<span class="nt">&lt;/langgraph4j.version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Check for the actual latest version --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;langgraph4j.version&gt;</span>1.9.0-beta6<span class="nt">&lt;/langgraph4j.version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Check for the actual latest version --&gt;</span>
 <span class="nt">&lt;/properties&gt;</span>
 
 <span class="cm">&lt;!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions --&gt;</span>
@@ -2643,7 +2759,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
 <span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-core<span class="nt">&lt;/artifactId&gt;</span>
-<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta4<span class="nt">&lt;/version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Or the current snapshot version --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.9.0-beta6<span class="nt">&lt;/version&gt;</span><span class="w"> </span><span class="cm">&lt;!-- Or the current snapshot version --&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre></div>
 You might need to configure your <code>settings.xml</code> or <code>pom.xml</code> to include the Sonatype OSS snapshots repository:

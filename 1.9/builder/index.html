@@ -228,7 +228,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../whats-new-v1.9/" class="md-tabs__link">
+        <a href=".." class="md-tabs__link">
           
   
   
@@ -466,14 +466,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../whats-new-v1.9/" class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    What's new in 1.9
+    Overview
   
 
     
@@ -494,14 +494,14 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../whats-new-v1.9/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Overview
+    What's new in 1.9
   
 
     
@@ -753,6 +753,34 @@
     
   
     Basic Reflection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-tos/corrective-rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corrective RAG (CRAG) with LangGraph4j
   
 
     
@@ -1172,14 +1200,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../integrations/spring-ai/" class="md-nav__link">
+      <a href="../integrations/spring-ai.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Spring AI Integrations
+    None
   
 
     
@@ -1200,14 +1228,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../integrations/langchain4j/" class="md-nav__link">
+      <a href="../integrations/langchain4j.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LangChain4j Integrations
+    None
   
 
     
@@ -1626,15 +1654,67 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint saver
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Checkpoint saver
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../core/checkpoint-postgres/" class="md-nav__link">
+      <a href="../core/sqlite-saver/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Checkpoint (Postgres)
+    SQLite
   
 
     
@@ -1643,6 +1723,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/postgres-saver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postgres
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2344,7 +2460,7 @@
 </code></pre></div>
 <h3 id="setup-with-docker">Setup (with Docker)</h3>
 <p><strong>Pull image</strong></p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>bsorrentino/langgraph4j-builder:1.9.0-beta4
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>bsorrentino/langgraph4j-builder:1.9.0-beta6
 </code></pre></div>
 <p><strong>Run container</strong></p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
@@ -2352,9 +2468,9 @@
 <span class="w">  </span>-p<span class="w"> </span><span class="m">3000</span>:3000<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span>.:/app/workspace<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">NODE_ENV</span><span class="o">=</span>production<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-e<span class="w"> </span><span class="nv">LANGRAPH4J_GEN</span><span class="o">=</span>generator-1.9.0-beta4-jar-with-dependencies.jar<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">LANGRAPH4J_GEN</span><span class="o">=</span>generator-1.9.0-beta6-jar-with-dependencies.jar<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">RUNNING_IN_DOCKER</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>bsorrentino/langgraph4j-builder:1.9.0-beta4
+<span class="w">  </span>bsorrentino/langgraph4j-builder:1.9.0-beta6
 </code></pre></div>
 <p>open browser on address <a href="http://localhost:3000">http://localhost:3000</a></p>
 <hr />
