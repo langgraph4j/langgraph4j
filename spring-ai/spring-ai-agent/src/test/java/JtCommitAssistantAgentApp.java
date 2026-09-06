@@ -1,5 +1,5 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9.0-beta5
-//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.0-beta5@pom
+//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9.0-beta6
+//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.0-beta6@pom
 //DEPS org.bsc.langgraph4j:langgraph4j-core
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit
 //DEPS org.springframework.ai:spring-ai-bom:1.1.4@pom
