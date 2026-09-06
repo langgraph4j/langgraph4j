@@ -1,24 +1,25 @@
 
-# 🦜🕸️ Welcome to LangGraph4j ( <i>AI Agentic workflow in Java</i> )
+# 🦜🕸️ Welcome to LangGraph4j<br><i>Enabling Graph Engineering to develop AI Agentic workflow in Java</i>
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) [![docs](https://img.shields.io/badge/Site-Documentation-blue)][documentation] [![DeepWiki](https://img.shields.io/badge/DeepWiki-docs-0b6?style=flat)](https://deepwiki.com/langgraph4j/langgraph4j) [![Static Badge](https://img.shields.io/badge/maven--snapshots-1.8--SNAPSHOT-blue)][snapshots] [![Maven Central](https://img.shields.io/maven-central/v/org.bsc.langgraph4j/langgraph4j-core.svg)][releases][![discord](https://img.shields.io/discord/1364514593765986365?logo=discord&style=flat)](https://discord.gg/szVVztSYKh)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) [![docs](https://img.shields.io/badge/Site-Documentation-blue)][documentation] [![DeepWiki](https://img.shields.io/badge/DeepWiki-docs-0b6?style=flat)](https://deepwiki.com/langgraph4j/langgraph4j) [![Static Badge](https://img.shields.io/badge/maven--snapshots-1.9--SNAPSHOT-blue)][snapshots] [![Maven Central](https://img.shields.io/maven-central/v/org.bsc.langgraph4j/langgraph4j-core.svg)][releases][![discord](https://img.shields.io/discord/1364514593765986365?logo=discord&style=flat)](https://discord.gg/szVVztSYKh)
 
 LangGraph for Java. A library for building stateful, multi-agents applications with LLMs, built for work with [langchain4j] and [Spring AI]
 > It is inspired by [LangGraph] solution, part of [LangChain AI project].
 
 ## Releases
 
+‼️ **Il repository è stato aggiornato alla versione `1.9`, pertanto la versione `1.8` è stata spostata nel ramo `support/1.8.x`.**. Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgraph4j/1.9/whats-new-v1.9/)
+
 | Date         | Release        | info
 |--------------|----------------| ---
-| Aug 18, 2026 | `1.9-beta3` | last release
-
+| Sep 06, 2026 | `1.9-beta5` | last release
+| 
 
 | Release line | Java baseline | Notes |
 |---|---|---|
 | 1.9.x | Java 17+ | Release with new (experimental) features and improvements for preparing move to `2.0` |
 | `1.9-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
-| `1.8.x` stable releases | Java 17+ | Baseline for core, integrations, and saver modules. After official release of `1.9`, `1.8.x` will be maintained for LTS support |
-| Notebook-oriented tooling in `how-tos/` | Java 22 (tool-dependent) | The current notebook tooling choice referenced in `how-tos/README.md` requires Java 22 |
+| `1.8.x` LTS release | Java 17+ | This relase will be maintained for LTS support in branch `support/1.8.x`. Only bugfix and/or minor improvement |
 
 
 ## Star History
