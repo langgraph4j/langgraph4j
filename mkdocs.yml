@@ -47,8 +47,8 @@ markdown_extensions:
           class: mermaid
 nav:
   - Home:
-      - What's new in 1.9: whats-new-v1.9.md
       - Overview: index.md
+      - What's new in 1.9: whats-new-v1.9.md
       # - Core Library:
       #   - Examples: https://github.com/langgraph4j/langgraph4j-examples
       #   - JavaDoc: apidocs/index.html
@@ -86,7 +86,9 @@ nav:
       - Streaming: core/streaming.md
       - Subgraphs: core/subgraph.md
       - Cancellation: core/cancellation.md
-      - Checkpoint (Postgres): core/checkpoint-postgres.md
+      - Checkpoint saver:
+        - SQLite: core/sqlite-saver/README.md
+        - Postgres: core/postgres-saver/README.md
   - Features: features.md
   - Examples: https://github.com/langgraph4j/langgraph4j-examples
   - How to(s):
