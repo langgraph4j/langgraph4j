@@ -16,6 +16,140 @@
 
 
 
+<!-- "name: v1.9.0-beta5" is a release tag -->
+
+## [v1.9.0-beta5](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta5) (2026-09-06)
+
+### Features
+
+ *  add per-invocation recursion limit ([6d02d63acfe2e7c](https://github.com/bsorrentino/langgraph4j/commit/6d02d63acfe2e7cfc719bf4a948a9ece7a7e0700))
+     > merge PR #449
+   
+ *  **postgres-saver**  add PostgresSaverV2Dashboard for managing thread and tag records ([09f5fc7b841e9e7](https://github.com/bsorrentino/langgraph4j/commit/09f5fc7b841e9e74a676d6451e5c17778edc4a27))
+   
+ *  **postgres-saver**  implement AbstractPostgresSaverV2 for retrieve tags implementation ([1726c936f004c4a](https://github.com/bsorrentino/langgraph4j/commit/1726c936f004c4a57ae795e93e37a1cc285cccb9))
+   
+ *  **postgres-saver**  refactor state serializer handling to support multiple serializers ([087cb9c88af2ee3](https://github.com/bsorrentino/langgraph4j/commit/087cb9c88af2ee3a3de88da51ff267a2e4a43858))
+   
+ *  **postgres-saver**  add SQL queries for selecting tags and threads ([44843cdc813546a](https://github.com/bsorrentino/langgraph4j/commit/44843cdc813546a0cf50cbfe8fbd3a770f1e6c76))
+   
+ *  **checkpoint**  add SQL queries for selecting tags and threads ([22a8f81c4a99356](https://github.com/bsorrentino/langgraph4j/commit/22a8f81c4a9935610b9c3751fd6cec7438f558e9))
+   
+ *  **checkpoint**  add SQLiteSaverV2Dashboard with thread and tag record handling ([f33266b74c6aa7c](https://github.com/bsorrentino/langgraph4j/commit/f33266b74c6aa7c3721a7781102ab43ca5868b00))
+   
+ *  **checkpoint**  enhance AbstractSQLiteSaver with state serializer map and SQLiteConfig support ([ca9ff5f78b98626](https://github.com/bsorrentino/langgraph4j/commit/ca9ff5f78b9862642cbfc5165bba9ef956846918))
+   
+ *  **checkpoint**  implement AbstractSQLiteSaverV2 with thread row ID handling and tag() method ([5dfd8e28f8f0f6b](https://github.com/bsorrentino/langgraph4j/commit/5dfd8e28f8f0f6b00381f3edb771f87432710864))
+   
+ *  **javelit**  make JtDataTable component scrollable with configurable height ([027ca3f38173c80](https://github.com/bsorrentino/langgraph4j/commit/027ca3f38173c8051c019a669d4093afb654ad83))
+   
+ *  **javelit**  make JtDataTable component scrollable with configurable height ([3a9af3799bcabbe](https://github.com/bsorrentino/langgraph4j/commit/3a9af3799bcabbe537a3e5a651dd3e2acfe202d0))
+   
+ *  **javelit**  allow multi/single selection on JtDataTable ([f047c094fe92341](https://github.com/bsorrentino/langgraph4j/commit/f047c094fe9234113705db204db991bfbe211f8a))
+   
+ *  **javelit**  first implementation of interactive JtDataTable ([f0e64f7d71e2d06](https://github.com/bsorrentino/langgraph4j/commit/f0e64f7d71e2d0641dfeb272dcad1572a5b62112))
+   
+ *  **studio**  add asyncContextTimeout builder methods with Duration support ([4e874a715ec3023](https://github.com/bsorrentino/langgraph4j/commit/4e874a715ec3023740676d44477ea98fd8e7194f))
+   
+ *  **studio/webui**  publish `resultPanelVisible` property allowing configure result panel visibility at configuration time ([e6e573c8ea24d1f](https://github.com/bsorrentino/langgraph4j/commit/e6e573c8ea24d1f6f5a7ca039a6ba955ced81973))
+   
+ *  **javelit**  add javelit component that show an IFrame ([b7469d577d40e13](https://github.com/bsorrentino/langgraph4j/commit/b7469d577d40e13ead01c17023f2835d033aee11))
+   
+ *  **core**  add configurable node retry policy ([ff4bfd0f415a807](https://github.com/bsorrentino/langgraph4j/commit/ff4bfd0f415a807c1b1b26c373aa07e30b26a30f))
+     > merge PR #444
+   
+ *  **how-tos**  merge PR #441 - add prompt chaining tutorial ([676efc6233d2633](https://github.com/bsorrentino/langgraph4j/commit/676efc6233d263345ff63431817edf4a679c6459))
+     > merge PR #441
+   
+ *  **langchain4j-agent**  merge PR #439 - add singleTurn / selective unload to SkillInjector ([918d46a1d0378d9](https://github.com/bsorrentino/langgraph4j/commit/918d46a1d0378d90b7d526d76fa2745e4bc4245b))
+     > merge PR #439
+   
+
+### Bug Fixes
+
+ -  preserve final state from parallel streaming nodes ([68169144eeac710](https://github.com/bsorrentino/langgraph4j/commit/68169144eeac710d786aebae08427378b4c85570))
+     > merge pr #450
+     > merge PR #471
+
+ -  preserve distinct appender values with colliding hashes ([4644db353792bb7](https://github.com/bsorrentino/langgraph4j/commit/4644db353792bb79f4fec94da0298dbeae9afa12))
+     > merge PR #448
+
+ -  **langgraph4j-sqlite**  rename DDL resources ([4d0c24d96a92c09](https://github.com/bsorrentino/langgraph4j/commit/4d0c24d96a92c097421ca1450dbe1cc3f456d2e3))
+
+
+### Refactor
+
+ -  rename InterruptableAction to InterruptibleAction ([608f76683403698](https://github.com/bsorrentino/langgraph4j/commit/608f766834036983f956847db41c8e3703d8c987))
+    > merge PR #471
+
+ -  **postgres-saver**  extend PostgresSaverV2 to inherit from AbstractPostgresSaverV2 ([9c858f0c2a81d33](https://github.com/bsorrentino/langgraph4j/commit/9c858f0c2a81d333c74eab0b8095c1b6d7253214))
+   
+ -  **postgres-saver**  update state content type retrieval ([e6897955f9b1ce0](https://github.com/bsorrentino/langgraph4j/commit/e6897955f9b1ce03a2bd34cec63864bead2f8c5a))
+   
+ -  **checkpoint**  extend AbstractSQLiteSaverV2 ([0faba96b8c43d8d](https://github.com/bsorrentino/langgraph4j/commit/0faba96b8c43d8de503a03aac0cc1a1200340f75))
+   
+ -  **checkpoint**  add default implementation of tag() method from AbstractCheckpointSaver ([a40c87733671552](https://github.com/bsorrentino/langgraph4j/commit/a40c877336715527a4518d2b536e984982553647))
+   
+ -  **checkpoint**  add default implementation of tag() method from AbstractCheckpointSaver ([9be4e12cf98df3d](https://github.com/bsorrentino/langgraph4j/commit/9be4e12cf98df3d14b2da159f88ea88106fde5d8))
+   
+ -  **checkpoint**  remove default implementation of tag() method from AbstractCheckpointSaver ([0bbd3e68c27c406](https://github.com/bsorrentino/langgraph4j/commit/0bbd3e68c27c406f31bff2d62e0cae0fa7688c50))
+   
+
+### Test 
+
+ -  **postgres-saver**  implement JtPostgresSaverDashboardApp (javelit) for managing threads and tags ([22a72d31a0b751d](https://github.com/bsorrentino/langgraph4j/commit/22a72d31a0b751db7bb39f358bf5cdaa39018b60))
+   
+ -  **sqlite-saver**  implement JtSQLiteSaverDashboardApp for visualizing threads and tags ([23a48bf4c4a3b6b](https://github.com/bsorrentino/langgraph4j/commit/23a48bf4c4a3b6b8dc593e9e942dea5e7215e012))
+   
+
+### Documentation
+
+ -  **how-tos**  add Corrective RAG tutorial ([a737f10562ff68d](https://github.com/bsorrentino/langgraph4j/commit/a737f10562ff68d3906d52627c5aab4b6382a66e))
+     > merge #472
+     > merge PR #471
+
+ -  update javadocs ([866a7959b937f63](https://github.com/bsorrentino/langgraph4j/commit/866a7959b937f6325aff095204660792f0d6ab3d))
+     > merge #461 #465 #466 #469 #473 #474
+     > merge PR #471
+
+ -  **ai**  align Postgres Saver implementation with SQLite Saver ([bcc3feb552d02ad](https://github.com/bsorrentino/langgraph4j/commit/bcc3feb552d02ad1dc39a83992f8502b3316ccc1))
+
+ -  **ai**  instruction for create JtFilePicker component for file selection ([dc09815591688f2](https://github.com/bsorrentino/langgraph4j/commit/dc09815591688f2dd422cd6aa1bfdedf696e10b2))
+
+ -  **ai**  add selectable rows feature to JtDataTable ([d82d5932dada807](https://github.com/bsorrentino/langgraph4j/commit/d82d5932dada807dd3372917c025cb1ab3b549dc))
+
+ -  **whats-new**  add GraphInterruptException section to v1.9 release notes ([c41e6a48efe345c](https://github.com/bsorrentino/langgraph4j/commit/c41e6a48efe345c82e83e44daf1f59bfa7fe4b9f))
+
+ -  **how-tos**  reorder and add new tutorial for Prompt Chaining ([6f961306c39e254](https://github.com/bsorrentino/langgraph4j/commit/6f961306c39e25412e5c5951beb6c273553094b6))
+
+ -  update changelog ([9f0b8f54e050800](https://github.com/bsorrentino/langgraph4j/commit/9f0b8f54e050800a20fb71cb5583acdbb92351f2))
+
+
+### ALM 
+
+ -  bump to next version 1.9.0-beta5 ([afbb5d603e77239](https://github.com/bsorrentino/langgraph4j/commit/afbb5d603e77239c9cd8071a577832369f8e7c28))
+   
+ -  **postgres-saver**  add jackson-databind and langgraph4j-javelit dependencies for testing ([bc43cde3e986253](https://github.com/bsorrentino/langgraph4j/commit/bc43cde3e986253d6cc2667d1b6f1c2cbe5ea211))
+   
+ -  update spring-ai version to 2.0.1 ([d4a7538ddc7b119](https://github.com/bsorrentino/langgraph4j/commit/d4a7538ddc7b1198d38a541a6fa6a3684e9e5f88))
+   
+ -  **studio**  upgrade studio demo animated gif ([9775c8b734ab9da](https://github.com/bsorrentino/langgraph4j/commit/9775c8b734ab9da31e95eea59604ffda4333c7d5))
+   
+ -  **studio**  upgrade studio demo animated gif ([eafe39f5337679f](https://github.com/bsorrentino/langgraph4j/commit/eafe39f5337679f9350f739cc9f1a604c648ad9e))
+   
+ -  **studio/webui**  update distribution ([eae7fc83d9dcfb3](https://github.com/bsorrentino/langgraph4j/commit/eae7fc83d9dcfb3420facb623a5a0ebe3ef5e632))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([684c6d9944217e1](https://github.com/bsorrentino/langgraph4j/commit/684c6d9944217e14bbc7139642457be6b12d9588))
+   
+
+### Continuous Integration
+
+ -  add script to extract files changed by a PR branch ([87c7c246e507f35](https://github.com/bsorrentino/langgraph4j/commit/87c7c246e507f3517582c270198c46c9ea201878))
+   
+
+
+
+
 <!-- "name: v1.9.0-beta4" is a release tag -->
 
 ## [v1.9.0-beta4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta4) (2026-08-30)
