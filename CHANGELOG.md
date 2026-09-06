@@ -2,16 +2,38 @@
 
 
 
-<!-- "name: Unreleased" is a release tag -->
+<!-- "name: v1.9.0-beta6" is a release tag -->
 
-## [Unreleased](https://github.com/bsorrentino/langgraph4j/releases/tag/Unreleased) ()
-
-
+## [v1.9.0-beta6](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta6) (2026-09-06)
 
 
 
 
 
+### Documentation
+
+ -  improve project documentation ([e65f46add15bf0c](https://github.com/bsorrentino/langgraph4j/commit/e65f46add15bf0c1fe9e91ac14c6546d14716109))
+
+ -  update mkdocs navigation for checkpoint saver documentation ([5eeac1ba73f5176](https://github.com/bsorrentino/langgraph4j/commit/5eeac1ba73f5176154b348571a6c92c6eeae788b))
+
+ -  update README for version 1.9 and adjust badge links ([43e445b7c9cf5f5](https://github.com/bsorrentino/langgraph4j/commit/43e445b7c9cf5f58b4c06a178f8166b35ce86c31))
+
+ -  update changelog ([eec28da9c5b6c26](https://github.com/bsorrentino/langgraph4j/commit/eec28da9c5b6c26a93178320198de944551d6a56))
+
+
+### ALM 
+
+ -  bump to next version 1.9.0-beta6 ([fbce57915a322fa](https://github.com/bsorrentino/langgraph4j/commit/fbce57915a322fad172d25038bc8118d9f92088a))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([508d38e9a62e6f7](https://github.com/bsorrentino/langgraph4j/commit/508d38e9a62e6f7f7de64c7e2281e38fb7617b6c))
+   
+
+### Continuous Integration
+
+ -  add PostgresQL and SQLite Checkpoint Saver documentation to mkdocs ([7440ba38a4148f0](https://github.com/bsorrentino/langgraph4j/commit/7440ba38a4148f0b6c701242d1b0c526f82aa8e9))
+   
+ -  add PostgresQL and SQLite Checkpoint Saver documentation to mkdocs ([946eb3cfb721ec9](https://github.com/bsorrentino/langgraph4j/commit/946eb3cfb721ec979f2c2874cd687b940ee9bf65))
+   
 
 
 
