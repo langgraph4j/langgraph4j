@@ -1,5 +1,7 @@
 
-# 🦜🕸️ Welcome to LangGraph4j<br><i>Enabling Graph Engineering to develop AI Agentic workflow in Java</i>
+# 🦜🕸️ Welcome to LangGraph4j
+
+### *Enabling Graph Engineering for Agentic AI Workflows in Java*
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) [![docs](https://img.shields.io/badge/Site-Documentation-blue)][documentation] [![DeepWiki](https://img.shields.io/badge/DeepWiki-docs-0b6?style=flat)](https://deepwiki.com/langgraph4j/langgraph4j) [![Static Badge](https://img.shields.io/badge/maven--snapshots-1.9--SNAPSHOT-blue)][snapshots] [![Maven Central](https://img.shields.io/maven-central/v/org.bsc.langgraph4j/langgraph4j-core.svg)][releases][![discord](https://img.shields.io/discord/1364514593765986365?logo=discord&style=flat)](https://discord.gg/szVVztSYKh)
 
