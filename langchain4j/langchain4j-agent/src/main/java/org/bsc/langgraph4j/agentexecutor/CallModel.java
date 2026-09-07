@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Optional.ofNullable;
+import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
 
 public class CallModel<State extends MessagesState<ChatMessage>> implements AsyncNodeActionWithConfig<State> {
 
@@ -84,7 +85,11 @@ public class CallModel<State extends MessagesState<ChatMessage>> implements Asyn
         var content = response.aiMessage();
 
         if (response.finishReason() == FinishReason.TOOL_EXECUTION || content.hasToolExecutionRequests() ) {
-            return Map.of("messages", content);
+            // a new tool request invalidates any final response left from a previous turn
+            return Map.of(
+                    "messages", content,
+                    AgentExecutor.State.FINAL_RESPONSE, MARK_FOR_REMOVAL
+            );
         }
         if( response.finishReason() == FinishReason.STOP || response.finishReason() == null  ) {
             String responseText = content.text();

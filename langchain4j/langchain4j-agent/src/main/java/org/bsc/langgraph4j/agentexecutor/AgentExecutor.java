@@ -136,9 +136,7 @@ public interface AgentExecutor {
 
             return toolService.execute( toolExecutionRequests.get(), context, "messages")
                     .thenApply( command ->
-                        state.finalResponse()
-                                .map(res -> new Command(Agent.END_LABEL, command.update()) )
-                                .orElseGet( () -> new Command(Agent.AGENT_LABEL, command.update()) ));
+                            new Command(Agent.AGENT_LABEL, command.update()) );
         };
     }
 
