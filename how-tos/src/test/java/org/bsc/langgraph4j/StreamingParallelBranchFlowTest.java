@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Deterministic coverage for the streaming parallel branch how-to.
  */
-public class StreamingParallelBranchStubTest {
+public class StreamingParallelBranchFlowTest {
 
     static class ResearchState extends AgentState {
         static final String RESULTS = "results";
