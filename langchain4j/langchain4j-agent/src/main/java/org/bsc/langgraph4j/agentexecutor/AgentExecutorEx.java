@@ -275,9 +275,12 @@ public interface AgentExecutorEx extends LG4JLoggable {
 
     private static AsyncCommandAction<AgentExecutorEx.State> shouldContinue() {
         return AsyncCommandAction.command_async( (state, config ) ->
-                state.finalResponse()
-                        .map(res -> new Command(AgentEx.END_LABEL))
-                        .orElse(new Command(AgentEx.CONTINUE_LABEL)) );
+                state.lastMessage()
+                        .filter( m -> ChatMessageType.AI == m.type() )
+                        .map( AiMessage.class::cast )
+                        .filter( AiMessage::hasToolExecutionRequests )
+                        .map( res -> new Command(AgentEx.CONTINUE_LABEL) )
+                        .orElseGet( () -> new Command(AgentEx.END_LABEL) ) );
     }
 
     private static AsyncCommandAction<State> dispatchAction() {
