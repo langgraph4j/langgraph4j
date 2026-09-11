@@ -5,8 +5,6 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.FinishReason;
 import org.bsc.langgraph4j.CompiledGraph;
@@ -17,13 +15,7 @@ import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,27 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class AgentExecutorMultiTurnCheckpointTest {
 
-    private static class ScriptedChatModel implements ChatModel {
-
-        final ArrayDeque<ChatResponse> responses = new ArrayDeque<>();
-        final AtomicInteger calls = new AtomicInteger();
-
-        ScriptedChatModel(ChatResponse... responses) {
-            for (ChatResponse response : responses) {
-                this.responses.add(response);
-            }
-        }
-
-        @Override
-        public ChatResponse doChat(ChatRequest chatRequest) {
-            calls.incrementAndGet();
-            final var next = responses.poll();
-            if (next == null) {
-                throw new IllegalStateException("no scripted response left, calls=" + calls.get());
-            }
-            return next;
-        }
-    }
 
     private static ChatResponse toolCallResponse(String id, String message) {
         return ChatResponse.builder()
@@ -81,15 +52,6 @@ public class AgentExecutorMultiTurnCheckpointTest {
                 .build();
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<ChatMessage> messages(AgentExecutor.State state) {
-        return state.<List<ChatMessage>>value("messages").orElseThrow();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<ChatMessage> messages(AgentExecutorEx.State state) {
-        return state.<List<ChatMessage>>value("messages").orElseThrow();
-    }
 
     /**
      * Every tool request left in the message history must have been answered by
@@ -113,11 +75,12 @@ public class AgentExecutorMultiTurnCheckpointTest {
     @Test
     void secondTurnOnSameThreadRunsToolLoopToCompletion() throws Exception {
 
-        final var model = new ScriptedChatModel(
-                toolCallResponse("call-1", "turn-one"),
-                textResponse("first answer"),
-                toolCallResponse("call-2", "turn-two"),
-                textResponse("second answer"));
+        final var model = ScriptedChatModel.builder()
+                .addResponse(toolCallResponse("call-1", "turn-one"))
+                .addResponse(textResponse("first answer"))
+                .addResponse(toolCallResponse("call-2", "turn-two"))
+                .addResponse(textResponse("second answer"))
+                .build();
 
         final var saver = new MemorySaver();
 
@@ -149,7 +112,7 @@ public class AgentExecutorMultiTurnCheckpointTest {
                 "the model must be called again after the second turn's tool execution");
         assertEquals("second answer", secondTurn.get().finalResponse().orElse(null));
 
-        final var messages = messages(secondTurn.get());
+        final var messages = secondTurn.get().messages();
         final var lastMessage = messages.get(messages.size() - 1);
         assertTrue(lastMessage instanceof AiMessage aiMessage && "second answer".equals(aiMessage.text()),
                 "the last message must be the second turn's final answer, got: " + lastMessage);
@@ -159,11 +122,12 @@ public class AgentExecutorMultiTurnCheckpointTest {
     @Test
     void exSecondTurnOnSameThreadRunsToolLoopToCompletion() throws Exception {
 
-        final var model = new ScriptedChatModel(
-                toolCallResponse("call-1", "turn-one"),
-                textResponse("first answer"),
-                toolCallResponse("call-2", "turn-two"),
-                textResponse("second answer"));
+        final var model = ScriptedChatModel.builder()
+                .addResponse(toolCallResponse("call-1", "turn-one"))
+                .addResponse(textResponse("first answer"))
+                .addResponse(toolCallResponse("call-2", "turn-two"))
+                .addResponse(textResponse("second answer"))
+                .build();
 
         final var saver = new MemorySaver();
 
@@ -195,7 +159,7 @@ public class AgentExecutorMultiTurnCheckpointTest {
                 "the model must be called again after the second turn's tool execution");
         assertEquals("second answer", secondTurn.get().finalResponse().orElse(null));
 
-        final var messages = messages(secondTurn.get());
+        final var messages = secondTurn.get().messages();
         assertNoDanglingToolRequests(messages);
 
         final var lastMessage = messages.get(messages.size() - 1);
@@ -206,12 +170,13 @@ public class AgentExecutorMultiTurnCheckpointTest {
     @Test
     void directAnswerTurnOverwritesPreviousFinalResponseAndNextToolTurnStillWorks() throws Exception {
 
-        final var model = new ScriptedChatModel(
-                toolCallResponse("call-1", "turn-one"),
-                textResponse("first answer"),
-                textResponse("second direct answer"),
-                toolCallResponse("call-2", "turn-three"),
-                textResponse("third answer"));
+        final var model = ScriptedChatModel.builder()
+                .addResponse(toolCallResponse("call-1", "turn-one"))
+                .addResponse(textResponse("first answer"))
+                .addResponse(textResponse("second direct answer"))
+                .addResponse(toolCallResponse("call-2", "turn-three"))
+                .addResponse(textResponse("third answer"))
+                .build();
 
         final var saver = new MemorySaver();
 
@@ -245,6 +210,6 @@ public class AgentExecutorMultiTurnCheckpointTest {
         assertEquals(5, model.calls.get(),
                 "the model must be called again after the third turn's tool execution");
         assertEquals("third answer", thirdTurn.get().finalResponse().orElse(null));
-        assertNoDanglingToolRequests(messages(thirdTurn.get()));
+        assertNoDanglingToolRequests(thirdTurn.get().messages());
     }
 }
