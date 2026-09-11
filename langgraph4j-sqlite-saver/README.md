@@ -90,5 +90,5 @@ Use `V1` when you need compatibility with an existing V1 schema or application c
 
 See the implementation-specific documentation for details:
 
-- [SAVER_V1.md](./SAVER_V1.md)
-- [SAVER_V2.md](./SAVER_V2.md)
+- [Version 1](./SAVER_V1.md)
+- [Version 2](./SAVER_V2.md)
