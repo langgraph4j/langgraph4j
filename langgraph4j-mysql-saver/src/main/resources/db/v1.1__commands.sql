@@ -23,7 +23,7 @@ JOIN LANGRAPH4J_CHECKPOINT c
 ORDER BY c.saved_at DESC;
 
 
--- sqlUpsertThread_insert
+-- sqlUpsertThread
 INSERT INTO LANGRAPH4J_THREAD (thread_name)
 VALUES (?)
 ON DUPLICATE KEY UPDATE
@@ -49,15 +49,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 UPDATE LANGRAPH4J_CHECKPOINT
 SET
     checkpoint_id = ?,
+    parent_checkpoint_id = NULL,
     node_id = ?,
     next_node_id = ?,
     state_data = ?
-WHERE checkpoint_id = ?
-
--- sqlDeletePreviousCheckpoint
-DELETE FROM LANGRAPH4J_CHECKPOINT
 WHERE checkpoint_id = ?;
-
 
 -- sqlReleaseThread
 UPDATE LANGRAPH4J_THREAD

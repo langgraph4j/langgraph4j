@@ -9,18 +9,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
+public class MySQLSaverV2Dashboard extends AbstractMySQLSaverV2 {
 
-    public static class Builder extends AbstractBuilder<SQLiteSaverV2Dashboard.Builder> {
+    public static class Builder extends AbstractBuilder<Builder> {
 
-        public SQLiteSaverV2Dashboard build() throws Exception {
-            return new SQLiteSaverV2Dashboard(this);
+        public MySQLSaverV2Dashboard build() throws Exception {
+            return new MySQLSaverV2Dashboard(this);
         }
 
     }
 
-    public static SQLiteSaverV2Dashboard.Builder builder() {
-        return new SQLiteSaverV2Dashboard.Builder();
+    public static Builder builder() {
+        return new Builder();
     }
 
     public record ThreadRecord(
@@ -43,13 +43,8 @@ public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
             ) {
     }
 
-    public SQLiteSaverV2Dashboard(SQLiteSaverV2Dashboard.Builder builder) throws Exception {
+    public MySQLSaverV2Dashboard(Builder builder) throws Exception {
         super(builder);
-    }
-
-    @Override
-    protected String sqlCommandsResourcePath() {
-        return "db/v2.0__commands.sql";
     }
 
     public List<ThreadRecord> selectAllThreads() throws Exception {
@@ -106,12 +101,12 @@ public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         return null;
     }
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return null;
     }
 
@@ -121,7 +116,7 @@ public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
     }
 
     @Override
-    protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
+    protected void initTables(CreateOption createOption) throws Exception {
     }
 
 }

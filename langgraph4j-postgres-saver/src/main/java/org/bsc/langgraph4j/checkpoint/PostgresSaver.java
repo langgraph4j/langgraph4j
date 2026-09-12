@@ -1,16 +1,22 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * Postgres checkpoint saver.
@@ -97,4 +103,55 @@ public class PostgresSaver extends AbstractPostgresSaver {
         return Optional.empty();
     }
 
+    @Override
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
+        final var threadId = threadId(config);
+
+        var selectThreadSql = sqlCommands.get("sqlSelectThread");
+        var releaseThreadSql = sqlCommands.get("sqlReleaseThread");
+        return execTransaction(conn -> {
+
+            UUID threadUUID = null;
+            try (PreparedStatement ps = conn.prepareStatement(selectThreadSql)) {
+                var field = 0;
+                ps.setString(++field, threadId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    var rows = 0;
+                    while (rs.next()) {
+                        threadUUID = rs.getObject("thread_id", UUID.class);
+                        ++rows;
+                    }
+                    if (rows == 0) {
+                        throw new IllegalStateException("active Thread '%s' not found".formatted(threadId));
+                    }
+                    if (rows > 1) {
+                        throw new IllegalStateException("duplicate active Thread '%s' found".formatted(threadId));
+                    }
+                }
+            }
+
+            log.trace("Executing release Thread:\n---\n{}---", releaseThreadSql);
+            try (PreparedStatement ps = conn.prepareStatement(releaseThreadSql)) {
+                var field = 0;
+                ps.setObject(++field,
+                        requireNonNull(threadUUID, "threadUUID cannot be null"),
+                        Types.OTHER); // nullable
+                ps.executeUpdate();
+
+            }
+
+            return new Tag(threadId, checkpoints);
+        });
+    }
+
+    @Override
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
+        return releaseCheckpoints(config, checkpoints, null);
+    }
+
+    @Override
+    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
+        return completedFuture(interruptionMetadata);
+    }
 }

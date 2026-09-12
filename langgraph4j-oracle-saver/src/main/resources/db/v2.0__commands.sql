@@ -1,9 +1,9 @@
 -- sqlDropTables
-DROP TABLE IF EXISTS LG4JCheckpoint;
-DROP TABLE IF EXISTS LG4JThread;
-DROP TABLE IF EXISTS LG4JThreadTag;
+DROP TABLE LG4JCheckpoint CASCADE CONSTRAINTS;
+DROP TABLE LG4JThreadTag CASCADE CONSTRAINTS;
+DROP TABLE LG4JThread CASCADE CONSTRAINTS;
 
--- sqlQueryCheckpoints
+-- sqlSelectCheckpoints
 WITH matched_thread AS (
     SELECT thread_id
     FROM LG4JThread
@@ -20,11 +20,12 @@ JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
 ORDER BY c.saved_at DESC
 
 -- sqlUpsertThread
-INSERT INTO LG4JThread (thread_name)
-VALUES (?)
-ON CONFLICT(thread_name) DO UPDATE
-    SET thread_name = excluded.thread_name
-RETURNING thread_id;
+MERGE INTO LG4JThread target
+USING (SELECT ? AS ignored_thread_id, ? AS thread_name FROM DUAL) source
+ON (target.thread_name = source.thread_name)
+WHEN NOT MATCHED THEN
+    INSERT (thread_name)
+    VALUES (source.thread_name)
 
 -- sqlInsertCheckpoint
 INSERT INTO LG4JCheckpoint(
@@ -35,7 +36,9 @@ INSERT INTO LG4JCheckpoint(
     next_node_id,
     state_data,
     state_content_type)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+SELECT ?, NULL, thread_id, ?, ?, ?, ?
+FROM LG4JThread
+WHERE thread_name = ?
 
 -- sqlUpdateCheckpoint
 UPDATE LG4JCheckpoint
@@ -44,8 +47,9 @@ SET
     parent_checkpoint_id = NULL,
     node_id = ?,
     next_node_id = ?,
-    state_data = ?
-WHERE checkpoint_id = ?;
+    state_data = ?,
+    state_content_type = ?
+WHERE checkpoint_id = ?
 
 -- sqlReleaseThread_insertTag
 INSERT INTO LG4JThreadTag (
@@ -64,7 +68,7 @@ SELECT
     COALESCE(
         (
             SELECT MAX(tag.released_version)
-            FROM LG4JThreadTag AS tag
+            FROM LG4JThreadTag tag
             WHERE tag.thread_name = t.thread_name
         ),
         0
@@ -74,18 +78,17 @@ SELECT
     ?,
     ?,
     t.created_at
-FROM LG4JThread AS t
+FROM LG4JThread t
 WHERE t.thread_name = ?
-RETURNING thread_id;
 
 -- sqlReleaseThread_deleteThread
 DELETE FROM LG4JThread WHERE thread_id = ?
 
 -- sqlInterruptThread
-UPDATE LG4JThread SET is_interrupted = 1, message = ? WHERE thread_name = ? AND is_interrupted = 0;
+UPDATE LG4JThread SET is_interrupted = 1, message = ? WHERE thread_name = ? AND is_interrupted = 0
 
 -- sqlEnableForeignKeys
-PRAGMA foreign_keys = ON
+SELECT 1 FROM DUAL
 
 -- sqlSelectTag
 SELECT
@@ -105,8 +108,8 @@ SELECT
     c.parent_checkpoint_id
 FROM LG4JThreadTag t
 JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
-WHERE %s thread_name = ? AND t.released_version = ?
-ORDER BY c.saved_at DESC;
+WHERE %s t.thread_name = ? AND t.released_version = ?
+ORDER BY c.saved_at DESC
 
 -- sqlSelectAllThreads
 SELECT
@@ -117,7 +120,7 @@ SELECT
     message,
     created_at
 FROM LG4JThread
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
 
 -- sqlSelectAllTags
 SELECT
@@ -130,4 +133,4 @@ SELECT
     message,
     created_at
     FROM LG4JThreadTag
-ORDER BY created_at DESC;
+ORDER BY created_at DESC

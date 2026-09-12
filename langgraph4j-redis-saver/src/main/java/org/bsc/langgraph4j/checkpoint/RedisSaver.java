@@ -551,7 +551,7 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
 
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return releaseCheckpoints(config, checkpoints, exception.getMessage());
     }
 

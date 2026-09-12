@@ -90,6 +90,8 @@ nav:
       - Checkpoint saver:
         - SQLite: core/sqlite-saver/README.md
         - Postgres: core/postgres-saver/README.md
+        - MySQL: core/mysql-saver/README.md
+        - Oracle: core/oracle-saver/README.md
   - Features: features.md
   - Examples: https://github.com/langgraph4j/langgraph4j-examples
   - How to(s):

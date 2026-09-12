@@ -1,37 +1,26 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import oracle.jdbc.OracleStatement;
-import oracle.jdbc.OracleTypes;
-import oracle.jdbc.provider.oson.OsonFactory;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.bsc.langgraph4j.utils.TryFunction;
-import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
-public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implements LG4JLoggable {
-
+    /**
+     * A builder for MysqlSaver.
+     */
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         protected DataSource dataSource;
         protected CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
-        public Map<String, StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
 
 
         @SuppressWarnings("unchecked")
@@ -61,21 +50,36 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
             return this$();
         }
 
+        /**
+         * Sets the state serializer
+         *
+         * @param stateSerializer the state serializer
+         * @return this builder
+         */
         public B stateSerializer(StateSerializer<? extends AgentState> stateSerializer) {
             this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
     }
 
+    // Configuration
     protected final DataSource dataSource;
-    protected final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
+    protected final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
     protected final SqlResource.Commands sqlCommands;
 
-    protected AbstractOracleSaver(AbstractBuilder<?> builder) throws Exception {
+    /**
+     * protected constructor used by the builder to create a new instance of
+     * MysqlSaver.
+     *
+     * @param builder Builder instance
+     */
+    protected AbstractMySQLSaver(AbstractBuilder<?> builder) throws Exception {
         this.dataSource = builder.dataSource;
-        this.stateSerializerMap = builder.stateSerializerMap;
         this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
-
+        if( builder.stateSerializerMap.isEmpty() ) {
+            throw new IllegalArgumentException("no stateSerializer provided");
+        }
+        this.stateSerializerMap = builder.stateSerializerMap;
         initTables(builder.createOption);
     }
 
@@ -86,12 +90,13 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
     /**
      * Initializes the database according the create options.
      */
-    protected void initTables(CreateOption createOption) throws Exception {
+    protected void initTables( CreateOption createOption) throws Exception {
+
         final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
 
         execTransaction(connection -> {
-
             try (var statement = connection.createStatement()) {
+
                 if (createOption == CreateOption.CREATE_OR_REPLACE) {
                     for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
                         log.trace("Executing drop table:\n---\n{}---", sql);
@@ -110,11 +115,12 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         });
     }
 
+
     private StateSerializer<? extends AgentState> encoderStateSerializer() {
         return stateSerializerMap.values().iterator().next(); // get first added state serializer;
     }
 
-    protected final String encodeState(Map<String, Object> data) throws IOException {
+    protected final  String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
         final byte[] binaryData = stateSerializer.dataToBytes(data);
         return Base64.getEncoder().encodeToString(binaryData);
@@ -122,7 +128,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
 
     protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
         final var stateSerializer = stateSerializerMap.get(contentType);
-        if (stateSerializer == null) {
+        if (stateSerializer==null) {
             throw new IllegalStateException(
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
@@ -142,30 +148,23 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
      */
     @Override
     protected LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception {
+
         final var checkpoints = new LinkedList<Checkpoint>();
-        final String threadName = threadId(config);
+        final var threadName = threadId(config);
+
         final var sqlSelectCheckpoints = sqlCommands.get("sqlSelectCheckpoints");
 
         return exec(connection -> {
             try (var preparedStatement = connection.prepareStatement(sqlSelectCheckpoints)) {
 
-                // Calls to defineColumnType reduce the number of network requests.
-                OracleStatement oracleStatement = preparedStatement.unwrap(OracleStatement.class);
-                oracleStatement.defineColumnType(1, OracleTypes.VARCHAR); // checkpoint_id
-                oracleStatement.defineColumnType(2, OracleTypes.VARCHAR); // node_id
-                oracleStatement.defineColumnType(3, OracleTypes.VARCHAR); // next_node_id
-                oracleStatement.defineColumnType(4, OracleTypes.CLOB); // state_data
-                oracleStatement.defineColumnType(5, OracleTypes.VARCHAR); // state_data_type
-                oracleStatement.setLobPrefetchSize(Integer.MAX_VALUE); // Workaround for Oracle JDBC bug 37030121
-
                 preparedStatement.setString(1, threadName);
-                try (var rs = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
                         Checkpoint checkpoint = Checkpoint.builder()
-                                .id(rs.getString(1))
-                                .nodeId(rs.getString(2))
-                                .nextNodeId(rs.getString(3))
-                                .state(decodeState(rs.getString(4), rs.getString(5)))
+                                .id(resultSet.getString(1))
+                                .nodeId(resultSet.getString(2))
+                                .nextNodeId(resultSet.getString(3))
+                                .state(decodeState(resultSet.getString(4), resultSet.getString(5)))
                                 .build();
                         checkpoints.add(checkpoint);
                     }
@@ -175,29 +174,39 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         });
     }
 
-    protected void insertCheckpoint(Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
-            throws Exception {
+    protected void insertCheckpoint( Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        final String threadName = threadId(config);
 
-        final String threadName = config.threadId().orElse(THREAD_ID_DEFAULT);
         final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread");
+        final var sqlLastInsertId = sqlCommands.get("sqlUpsertThread_last_insert_id");
         final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
 
         try (var upsertStatement = connection.prepareStatement(sqlUpsertThread);
+             var lastInsertId = connection.prepareStatement(sqlLastInsertId);
              var insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
 
-            upsertStatement.setString(1, UUID.randomUUID().toString());
-            upsertStatement.setString(2, threadName);
+            upsertStatement.setString(1, threadName);
             upsertStatement.execute();
 
-            insertCheckpointStatement.setString(1, checkpoint.getId());
-            insertCheckpointStatement.setString(2, checkpoint.getNodeId());
-            insertCheckpointStatement.setString(3, checkpoint.getNextNodeId());
-            insertCheckpointStatement.setString(4, encodeState(checkpoint.getState()));
-            insertCheckpointStatement.setString(5, encoderStateSerializer().contentType());
-            insertCheckpointStatement.setString(6, threadName);
+            long threadKey = -1;
+            try (ResultSet rs = lastInsertId.executeQuery()) {
+                if (rs.next()) {
+                    threadKey = rs.getLong(1);
+                    log.trace("threadId {} for thread {}", threadKey, threadName);
+                }
+            }
 
+            var index = 0;
+            insertCheckpointStatement.setString(++index, checkpoint.getId());
+            insertCheckpointStatement.setNull(++index, Types.VARCHAR);
+            insertCheckpointStatement.setLong(++index, threadKey);
+            insertCheckpointStatement.setString(++index, checkpoint.getNodeId());
+            insertCheckpointStatement.setString(++index, checkpoint.getNextNodeId());
+            insertCheckpointStatement.setString(++index, encodeState(checkpoint.getState()));
+            insertCheckpointStatement.setString(++index, encoderStateSerializer().contentType());
             insertCheckpointStatement.execute();
         }
+
     }
 
     /**
@@ -212,6 +221,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
     @Override
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
+
         execTransaction(connection -> {
             insertCheckpoint(connection, config, checkpoints, checkpoint);
             return null;
@@ -221,26 +231,26 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
     /**
      * Marks the checkpoints as released
      *
-     * @param config      the configuraiton
+     * @param config      the configuration
      * @param checkpoints the checkpoints
      * @throws Exception if an error occurs while marking the checkpoints as
      *                   released
      */
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
+    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, String message) throws Exception {
         final String threadName = threadId(config);
         final var sqlReleaseThread = sqlCommands.get("sqlReleaseThread");
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlReleaseThread)) {
-            preparedStatement.setString(1, threadName);
-            preparedStatement.execute();
-        } catch (SQLException sqlException) {
-            throw new Exception("Unable to release checkpoint", sqlException);
-        }
+        return exec(connection -> {
 
-        return new Tag(threadName, checkpoints);
+            try (var preparedStatement = connection.prepareStatement(sqlReleaseThread)) {
+                preparedStatement.setString(1, threadName);
+                preparedStatement.execute();
+            }
+            return new Tag(threadName, checkpoints);
+        });
     }
+
 
     /**
      * If the checkpoint exists, updates the checkpoint, otherwise it inserts it.
@@ -251,6 +261,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
      * @throws Exception if an error occurs while inserting or updating the
      *                   checkpoint.
      */
+    @Override
     protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
 
         execTransaction(connection -> {
@@ -262,8 +273,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                     preparedStatement.setString(2, checkpoint.getNodeId());
                     preparedStatement.setString(3, checkpoint.getNextNodeId());
                     preparedStatement.setString(4, encodeState(checkpoint.getState()));
-                    preparedStatement.setString(5, encoderStateSerializer().contentType());
-                    preparedStatement.setString(6, config.checkPointId().get());
+                    preparedStatement.setString(5, config.checkPointId().get());
                     preparedStatement.execute();
                 }
             } else {
@@ -298,5 +308,6 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
             connection.setAutoCommit(previousAutoCommit);
         }
     }
+
 
 }

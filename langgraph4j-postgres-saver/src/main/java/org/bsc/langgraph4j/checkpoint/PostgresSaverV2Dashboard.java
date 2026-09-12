@@ -108,7 +108,7 @@ public class PostgresSaverV2Dashboard extends AbstractPostgresSaverV2 {
     }
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return null;
     }
 

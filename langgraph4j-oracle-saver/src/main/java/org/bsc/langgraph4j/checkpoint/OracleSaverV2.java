@@ -11,18 +11,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 
-public class SQLiteSaverV2 extends AbstractSQLiteSaverV2 {
+public class OracleSaverV2 extends AbstractOracleSaverV2 {
 
     public static class Builder extends AbstractBuilder<Builder> {
 
-        public SQLiteSaverV2 build() throws Exception {
-            return new SQLiteSaverV2(this);
+        public OracleSaverV2 build() throws Exception {
+            return new OracleSaverV2(this);
         }
     }
 
@@ -30,41 +29,50 @@ public class SQLiteSaverV2 extends AbstractSQLiteSaverV2 {
         return new Builder();
     }
 
-    protected SQLiteSaverV2(Builder builder) throws Exception {
+    protected OracleSaverV2(Builder builder) throws Exception {
         super(builder);
     }
 
-    @Override
-    protected final String sqlCommandsResourcePath() {
-        return "db/v2.0__commands.sql";
-    }
 
     @Override
     protected final String sqlInitResourcePath() {
         return "db/migration/v2.0__init.sql";
     }
 
-    private Tag internalReleaseCheckpoints(String threadId,
-                                           LinkedList<Checkpoint> checkpoints,
-                                           @Nullable String message,
-                                           @Nullable Throwable exception) throws Exception {
+    private BaseCheckpointSaver.Tag internalReleaseCheckpoints(String threadName,
+                                                               LinkedList<Checkpoint> checkpoints,
+                                                               @Nullable String message,
+                                                               @Nullable Throwable exception) throws Exception {
 
         final var sqlInsertTag = sqlCommands.get("sqlReleaseThread_insertTag");
         final var sqlDeleteThread = sqlCommands.get("sqlReleaseThread_deleteThread");
+        final var sqlSelectThread = "SELECT thread_id FROM LG4JThread WHERE thread_name = ?";
 
-        execTransaction( conn-> {
+        return execTransaction(conn -> {
             long id = 0;
+
+            try (PreparedStatement ps = conn.prepareStatement(sqlSelectThread)) {
+                ps.setString(1, threadName);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        id = rs.getLong("thread_id");
+                    } else {
+                        throw new SQLException(
+                                "No LG4JThread found for thread_name: %s".formatted(threadName));
+                    }
+                }
+            }
+
             try (PreparedStatement ps = conn.prepareStatement(sqlInsertTag)) {
                 var index = 0;
 
-                if( exception != null ) {
+                if (exception != null) {
                     ps.setInt(++index, 1); // is error
-                    final var msg = ExceptionUtils.findCauseByType( exception, GraphRunnerException.class )
+                    final var msg = ExceptionUtils.findCauseByType(exception, GraphRunnerException.class)
                             .map(GraphRunnerException::getMessage)
                             .orElseGet(exception::getMessage);
                     ps.setString(++index, msg); // message
-                }
-                else {
+                } else {
                     ps.setInt(++index, 0); // is not error
                     if (message != null) {
                         ps.setString(++index, message); // message
@@ -72,38 +80,35 @@ public class SQLiteSaverV2 extends AbstractSQLiteSaverV2 {
                         ps.setNull(++index, java.sql.Types.VARCHAR); // message
                     }
                 }
-                ps.setString(++index, threadId);
+                ps.setString(++index, threadName);
 
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        id = rs.getLong("thread_id");
-                    }
-                    else {
-                        throw new SQLException(
-                                "No LG4JThread found for thread_id: %s".formatted(threadId) );
-                    }
+                int updatedRows = ps.executeUpdate();
+                if (updatedRows == 0) {
+                    throw new SQLException(
+                            "No LG4JThread found for thread_name: %s".formatted(threadName));
                 }
             }
 
             try (PreparedStatement ps = conn.prepareStatement(sqlDeleteThread)) {
                 ps.setLong(1, id);
-                ps.executeUpdate();
+                int updatedRows = ps.executeUpdate();
+                if (updatedRows == 0) {
+                    throw new SQLException(
+                            "No LG4JThread found for thread id: %d".formatted(id));
+                }
             }
-
-            return null;
+            return new BaseCheckpointSaver.Tag(threadName, checkpoints);
         });
-
-        return new Tag(threadId, checkpoints);
     }
 
     @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         return internalReleaseCheckpoints(threadId(config), checkpoints, message, null);
     }
 
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return internalReleaseCheckpoints(threadId(config), checkpoints, null, exception);
     }
 
