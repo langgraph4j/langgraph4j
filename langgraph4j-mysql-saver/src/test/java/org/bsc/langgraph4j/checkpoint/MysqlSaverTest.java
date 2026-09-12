@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import org.bsc.langgraph4j.LG4JTestUtil;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
