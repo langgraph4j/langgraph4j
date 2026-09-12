@@ -24,7 +24,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
 
     protected abstract Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message ) throws Exception;
 
-    protected abstract Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception ) throws Exception;
+    protected abstract Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception ) throws Exception;
 
     private <T> T loadOrInitCheckpoints(RunnableConfig config,
                                                 TryFunction<LinkedList<Checkpoint>, T, Exception> transformer) throws Exception {
@@ -120,7 +120,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
     }
 
     @Override
-    public Tag releaseOnError(RunnableConfig config, Exception exception) throws Exception {
+    public Tag releaseOnError(RunnableConfig config, Throwable exception) throws Exception {
         return loadOrInitCheckpoints( config, checkpoints -> {
 
             final var subGraphSaversByThread = _subGraphSaversByThread.remove( threadId(config) );

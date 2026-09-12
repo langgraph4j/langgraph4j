@@ -111,7 +111,7 @@ public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
     }
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return null;
     }
 

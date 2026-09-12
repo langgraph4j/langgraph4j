@@ -42,7 +42,7 @@ public class MySQLSaverV2 extends AbstractMySQLSaverV2 {
     private BaseCheckpointSaver.Tag internalReleaseCheckpoints(String threadName,
                                                                LinkedList<Checkpoint> checkpoints,
                                                                @Nullable String message,
-                                                               @Nullable Exception exception) throws Exception {
+                                                               @Nullable Throwable exception) throws Exception {
 
         final var sqlInsertTag = sqlCommands.get("sqlReleaseThread_insertTag");
         final var sqlDeleteThread = sqlCommands.get("sqlReleaseThread_deleteThread");
@@ -108,7 +108,7 @@ public class MySQLSaverV2 extends AbstractMySQLSaverV2 {
 
 
     @Override
-    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return internalReleaseCheckpoints(threadId(config), checkpoints, null, exception);
     }
 

@@ -106,7 +106,7 @@ public class MySQLSaverV2Dashboard extends AbstractMySQLSaverV2 {
     }
 
     @Override
-    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected BaseCheckpointSaver.Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return null;
     }
 
