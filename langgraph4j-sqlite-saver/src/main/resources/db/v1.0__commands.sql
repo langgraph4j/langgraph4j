@@ -36,8 +36,15 @@ INSERT INTO LG4JCheckpoint(
     state_content_type)
 VALUES (?, ?, ?, ?, ?, ?, ?)
 
--- sqlDeletePreviousCheckpoint
-DELETE FROM LG4JCheckpoint WHERE checkpoint_id = ?;
+-- sqlUpdateCheckpoint
+UPDATE LG4JCheckpoint
+SET
+    checkpoint_id = ?,
+    parent_checkpoint_id = NULL,
+    node_id = ?,
+    next_node_id = ?,
+    state_data = ?
+WHERE checkpoint_id = ?;
 
 -- sqlReleaseThread
 UPDATE LG4JThread

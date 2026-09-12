@@ -217,7 +217,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         });
     }
 
-    private void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+    protected void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
         final var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
 
         final var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
@@ -265,39 +265,23 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
     }
 
     @Override
-    protected void updatedCheckpoint(RunnableConfig config,
-                                     LinkedList<Checkpoint> checkpoints,
-                                     Checkpoint checkpoint) throws Exception {
-        final var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
+    protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
 
-        final var sqlDeletePreviousCheckpoint = sqlCommands.get("sqlDeletePreviousCheckpoint");
-
-        execTransaction(conn -> {
+        execTransaction(connection -> {
             if (config.checkPointId().isPresent()) {
-                try (PreparedStatement ps = conn.prepareStatement(sqlDeletePreviousCheckpoint)) {
-                    ps.setString(1, config.checkPointId().get());
-                    log.trace("Executing deleting previous checkpoint with id {} in thread {}:\n---\n{}---",
-                            config.checkPointId().get(),
-                            threadId,
-                            sqlDeletePreviousCheckpoint);
-                    int result = ps.executeUpdate();
-                    if (result == 0) {
-                        throw new SQLException(
-                                "No LG4JCheckpoint found for checkpoint_id: %s in thread_id: %s".formatted(config.checkPointId().get(), threadId));
-                    }
-                    if (result > 1) {
-                        throw new SQLException(
-                                "Multiple LG4JCheckpoint found for checkpoint_id: %s in thread_id: %s".formatted(config.checkPointId().get(), threadId));
-                    }
+                final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
+
+                try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
+                    preparedStatement.setString(1, checkpoint.getId());
+                    preparedStatement.setString(2, checkpoint.getNodeId());
+                    preparedStatement.setString(3, checkpoint.getNextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setString(5, config.checkPointId().get());
+                    preparedStatement.execute();
                 }
+            } else {
+                insertCheckpoint(connection, config, checkpoints, checkpoint);
             }
-
-            insertCheckpoint(conn, config, checkpoints, checkpoint);
-
-            log.debug("Checkpoint with id {} for thread {} inserted successfully.",
-                    checkpoint.getId(),
-                    threadId);
-
             return null;
         });
     }
