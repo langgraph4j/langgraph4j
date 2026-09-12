@@ -11,6 +11,7 @@ import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
+import org.bsc.langgraph4j.utils.TryFunction;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
@@ -186,26 +187,15 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         return checkpoints;
     }
 
-    /**
-     * Inserts a checkpoint to the database
-     *
-     * @param config      the configuration
-     * @param checkpoints the list of checkpoints
-     * @param checkpoint  the checkpoint to insert
-     * @throws Exception if an error occurs while inserting the checkpoint in the
-     *                   database.
-     */
-    @Override
-    protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
+    protected void insertCheckpoint( Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
 
         final String threadName = config.threadId().orElse(THREAD_ID_DEFAULT);
         final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread");
         final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement upsertStatement = connection.prepareStatement(sqlUpsertThread);
-             PreparedStatement insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
+        try (var upsertStatement = connection.prepareStatement(sqlUpsertThread);
+             var insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
 
             upsertStatement.setString(1, UUID.randomUUID().toString());
             upsertStatement.setString(2, threadName);
@@ -218,9 +208,25 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
             insertCheckpointStatement.setString(5, threadName);
 
             insertCheckpointStatement.execute();
-        } catch (SQLException sqlException) {
-            throw new RuntimeException("Unable to insert checkpoint", sqlException);
         }
+    }
+
+    /**
+     * Inserts a checkpoint to the database
+     *
+     * @param config      the configuration
+     * @param checkpoints the list of checkpoints
+     * @param checkpoint  the checkpoint to insert
+     * @throws Exception if an error occurs while inserting the checkpoint in the
+     *                   database.
+     */
+    @Override
+    protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
+            throws Exception {
+        execTransaction(connection -> {
+            insertCheckpoint(connection, config, checkpoints, checkpoint);
+            return null;
+        });
     }
 
     /**
@@ -272,36 +278,51 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
      * @throws Exception if an error occurs while inserting or updating the
      *                   checkpoint.
      */
-    @Override
-    protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
-            throws Exception {
-        if (config.checkPointId().isPresent()) {
-            final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
-                preparedStatement.setString(1, checkpoint.getId());
-                preparedStatement.setString(2, checkpoint.getNodeId());
-                preparedStatement.setString(3, checkpoint.getNextNodeId());
-                preparedStatement.setString(4, encodeState(checkpoint.getState()));
-                preparedStatement.setString(5, config.checkPointId().get());
-                preparedStatement.execute();
-            } catch (SQLException sqlException) {
-                throw new Exception("Unable to update checkpoint", sqlException);
+    protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+
+        execTransaction(connection -> {
+            if (config.checkPointId().isPresent()) {
+                final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
+
+                try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
+                    preparedStatement.setString(1, checkpoint.getId());
+                    preparedStatement.setString(2, checkpoint.getNodeId());
+                    preparedStatement.setString(3, checkpoint.getNextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setString(5, config.checkPointId().get());
+                    preparedStatement.execute();
+                }
+            } else {
+                insertCheckpoint(connection, config, checkpoints, checkpoint);
             }
-        } else {
-            insertedCheckpoint(config, checkpoints, checkpoint);
+            return null;
+        });
+    }
+
+    protected final <R> R exec(TryFunction<Connection, R, Exception> execStatement) throws Exception {
+        final var connection = dataSource.getConnection();
+
+        connection.setAutoCommit(true);
+
+        return execStatement.tryApply(connection);
+    }
+
+    protected final <R> R execTransaction(TryFunction<Connection, R, Exception> execStatement) throws Exception {
+        final var connection = dataSource.getConnection();
+
+        final var previousAutoCommit = connection.getAutoCommit();
+
+        connection.setAutoCommit(false);
+        try {
+            return execStatement.tryApply(connection);
+        } catch (Exception e) {
+            log.error("Error executing statement", e);
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.commit();
+            connection.setAutoCommit(previousAutoCommit);
         }
     }
 
-    /**
-     * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
-     *
-     * @param threadId the thread identifier whose cached checkpoints must be cleared
-     * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
-     * @deprecated this method do nothing because currently this saver don't use cache anymore
-     */
-    @Deprecated(forRemoval = true)
-    public Collection<Checkpoint> clearCheckpointsCache(String threadId) {
-        return List.of();
-    }
 }
