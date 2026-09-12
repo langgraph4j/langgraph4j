@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import org.bsc.langgraph4j.LG4JTestUtil;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
@@ -9,7 +8,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.MySQLContainer;
 
-public class MysqlSaverTest extends AbstractCheckpointSaverTest  {
+public class MySQLSaverV2Test extends AbstractCheckpointSaverTest {
 
     protected static final String MYSQL_IMAGE_NAME = "mysql:8.0";
     protected static MysqlDataSource DATA_SOURCE;
@@ -25,7 +24,7 @@ public class MysqlSaverTest extends AbstractCheckpointSaverTest  {
             if (urlFromEnv == null) {
                 @SuppressWarnings("resource")
                 MySQLContainer<?> container = new MySQLContainer<>(MYSQL_IMAGE_NAME)
-                        .withDatabaseName("MysqlSaverTest")
+                        .withDatabaseName("MySQLSaverV2Test")
                         .withUsername("testuser")
                         .withPassword("testpwd");
                 container.start();
@@ -57,11 +56,12 @@ public class MysqlSaverTest extends AbstractCheckpointSaverTest  {
 
     @Override
     protected BaseCheckpointSaver buildCheckpointSaver(StateSerializer<? extends AgentState> stateSerializer, @Nullable String threadId) throws Exception {
-        return MysqlSaver.builder()
+        return MySQLSaverV2.builder()
                 .dataSource(DATA_SOURCE)
                 .stateSerializer(stateSerializer)
                 .createOption(CreateOption.CREATE_IF_NOT_EXISTS)
                 .build();
     }
+
 
 }

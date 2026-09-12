@@ -63,7 +63,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * </pre>
  * </p>
  */
-public class MysqlSaver extends AbstractMySQLServer {
+public class MysqlSaver extends AbstractMySQLSaver {
 
     /**
      * A builder for MysqlSaver.

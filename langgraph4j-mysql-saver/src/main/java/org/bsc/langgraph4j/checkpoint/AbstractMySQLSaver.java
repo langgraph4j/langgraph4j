@@ -1,20 +1,18 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.bsc.langgraph4j.utils.TryFunction;
-import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implements LG4JLoggable {
+public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     /**
      * A builder for MysqlSaver.
@@ -22,7 +20,8 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         protected DataSource dataSource;
         protected CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
-        public StateSerializer<? extends AgentState> stateSerializer;
+        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+
 
         @SuppressWarnings("unchecked")
         private B this$() {
@@ -58,16 +57,14 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
          * @return this builder
          */
         public B stateSerializer(StateSerializer<? extends AgentState> stateSerializer) {
-            this.stateSerializer = stateSerializer;
+            this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
     }
 
     // Configuration
     protected final DataSource dataSource;
-    protected final CreateOption createOption;
-    protected final ObjectMapper objectMapper;
-    protected final StateSerializer<? extends AgentState> stateSerializer;
+    protected final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
     protected final SqlResource.Commands sqlCommands;
 
     /**
@@ -76,13 +73,14 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
      *
      * @param builder Builder instance
      */
-    protected AbstractMySQLServer(AbstractBuilder<?> builder) throws Exception {
+    protected AbstractMySQLSaver(AbstractBuilder<?> builder) throws Exception {
         this.dataSource = builder.dataSource;
-        this.createOption = builder.createOption;
-        this.stateSerializer = builder.stateSerializer;
-        this.objectMapper = (builder.stateSerializer == null) ? new ObjectMapper() : null;
         this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
-        initTables();
+        if( builder.stateSerializerMap.isEmpty() ) {
+            throw new IllegalArgumentException("no stateSerializer provided");
+        }
+        this.stateSerializerMap = builder.stateSerializerMap;
+        initTables(builder.createOption);
     }
 
     protected abstract String sqlCommandsResourcePath();
@@ -92,7 +90,7 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
     /**
      * Initializes the database according the create options.
      */
-    protected void initTables() throws Exception {
+    protected void initTables( CreateOption createOption) throws Exception {
 
         final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
 
@@ -117,35 +115,25 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
         });
     }
 
-    private String encodeState(Map<String, Object> data) throws IOException {
-        Objects.requireNonNull(data, "data cannot be null");
 
-        if (stateSerializer == null) {
-            return objectMapper.writeValueAsString(data);
-        }
-
-        var bytes = stateSerializer.dataToBytes(data);
-        return Base64.getEncoder().encodeToString(bytes);
-
-
+    private StateSerializer<? extends AgentState> encoderStateSerializer() {
+        return stateSerializerMap.values().iterator().next(); // get first added state serializer;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> decodeState(String statePayload,
-                                            @Nullable String stateContentType) throws IOException, ClassNotFoundException {
+    protected final  String encodeState(Map<String, Object> data) throws IOException {
+        final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
+        final byte[] binaryData = stateSerializer.dataToBytes(data);
+        return Base64.getEncoder().encodeToString(binaryData);
+    }
 
-        if (stateSerializer == null) {
-            return objectMapper.readValue(statePayload, Map.class);
-        }
-
-        if (stateContentType != null && !Objects.equals(stateContentType, stateSerializer.contentType())) {
+    protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+        final var stateSerializer = stateSerializerMap.get(contentType);
+        if (stateSerializer==null) {
             throw new IllegalStateException(
-                    "Content Type used for stored state '%s' is different from one '%s' used to deserialize it".formatted(
-                            stateContentType,
-                            stateSerializer.contentType()));
+                    "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
-        var bytes = Base64.getDecoder().decode(statePayload);
+        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
 
         return stateSerializer.dataFromBytes(bytes);
     }
@@ -176,7 +164,7 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
                                 .id(resultSet.getString(1))
                                 .nodeId(resultSet.getString(2))
                                 .nextNodeId(resultSet.getString(3))
-                                .state(decodeState(resultSet.getString(4), null))
+                                .state(decodeState(resultSet.getString(4), resultSet.getString(5)))
                                 .build();
                         checkpoints.add(checkpoint);
                     }
@@ -201,7 +189,7 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
 
         final String threadName = threadId(config);
 
-        final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread_insert");
+        final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread");
         final var sqlLastInsertId = sqlCommands.get("sqlUpsertThread_last_insert_id");
         final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
 
@@ -228,7 +216,7 @@ public abstract class AbstractMySQLServer extends AbstractCheckpointSaver implem
                 insertCheckpointStatement.setString(++index, checkpoint.getNodeId());
                 insertCheckpointStatement.setString(++index, checkpoint.getNextNodeId());
                 insertCheckpointStatement.setString(++index, encodeState(checkpoint.getState()));
-                insertCheckpointStatement.setNull(++index, Types.VARCHAR);
+                insertCheckpointStatement.setString(++index, encoderStateSerializer().contentType());
                 insertCheckpointStatement.execute();
             }
             return null;
