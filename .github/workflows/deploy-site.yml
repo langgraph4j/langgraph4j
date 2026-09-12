@@ -45,6 +45,8 @@ jobs:
           cp how-tos/*.ipynb target/mkdocs/how-tos
           cp -r target/staging/apidocs target/mkdocs/apidocs
 
+          # Copy MySQL Checkpoint Saver docs
+          rsync -avm --include='*/' --include='README.md' --include='SAVER*.md' --exclude='*' langgraph4j-mysql-saver/ target/mkdocs/core/mysql-saver/
           # Copy PostgresQL Checkpoint Saver docs
           rsync -avm --include='*/' --include='README.md' --include='SAVER*.md' --exclude='*' langgraph4j-postgres-saver/ target/mkdocs/core/postgres-saver/
           # Copy SQLite Checkpoint Saver docs

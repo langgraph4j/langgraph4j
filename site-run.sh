@@ -28,6 +28,14 @@ rsync -avm \
 --exclude='*' \
 langgraph4j-sqlite-saver/ target/mkdocs/core/sqlite-saver/
 
+# Copy MySQL Checkpoint Saver docs
+rsync -avm \
+--include='*/' \
+--include='README.md' \
+--include='SAVER*.md' \
+--exclude='*' \
+langgraph4j-mysql-saver/ target/mkdocs/core/mysql-saver/
+
 
 # Copy Spring AI docs
 rsync -avm \
