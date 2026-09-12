@@ -174,6 +174,41 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
         });
     }
 
+    protected void insertCheckpoint( Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        final String threadName = threadId(config);
+
+        final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread");
+        final var sqlLastInsertId = sqlCommands.get("sqlUpsertThread_last_insert_id");
+        final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
+
+        try (var upsertStatement = connection.prepareStatement(sqlUpsertThread);
+             var lastInsertId = connection.prepareStatement(sqlLastInsertId);
+             var insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
+
+            upsertStatement.setString(1, threadName);
+            upsertStatement.execute();
+
+            long threadKey = -1;
+            try (ResultSet rs = lastInsertId.executeQuery()) {
+                if (rs.next()) {
+                    threadKey = rs.getLong(1);
+                    log.trace("threadId {} for thread {}", threadKey, threadName);
+                }
+            }
+
+            var index = 0;
+            insertCheckpointStatement.setString(++index, checkpoint.getId());
+            insertCheckpointStatement.setNull(++index, Types.VARCHAR);
+            insertCheckpointStatement.setLong(++index, threadKey);
+            insertCheckpointStatement.setString(++index, checkpoint.getNodeId());
+            insertCheckpointStatement.setString(++index, checkpoint.getNextNodeId());
+            insertCheckpointStatement.setString(++index, encodeState(checkpoint.getState()));
+            insertCheckpointStatement.setString(++index, encoderStateSerializer().contentType());
+            insertCheckpointStatement.execute();
+        }
+
+    }
+
     /**
      * Inserts a checkpoint to the database
      *
@@ -187,38 +222,8 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
 
-        final String threadName = threadId(config);
-
-        final var sqlUpsertThread = sqlCommands.get("sqlUpsertThread");
-        final var sqlLastInsertId = sqlCommands.get("sqlUpsertThread_last_insert_id");
-        final var sqlInsertCheckpoint = sqlCommands.get("sqlInsertCheckpoint");
-
         execTransaction(connection -> {
-            try (var upsertStatement = connection.prepareStatement(sqlUpsertThread);
-                 var lastInsertId = connection.prepareStatement(sqlLastInsertId);
-                 var insertCheckpointStatement = connection.prepareStatement(sqlInsertCheckpoint)) {
-
-                upsertStatement.setString(1, threadName);
-                upsertStatement.execute();
-
-                long threadKey = -1;
-                try (ResultSet rs = lastInsertId.executeQuery()) {
-                    if (rs.next()) {
-                        threadKey = rs.getLong(1);
-                        log.trace("threadId {} for thread {}", threadKey, threadName);
-                    }
-                }
-
-                var index = 0;
-                insertCheckpointStatement.setString(++index, checkpoint.getId());
-                insertCheckpointStatement.setNull(++index, Types.VARCHAR);
-                insertCheckpointStatement.setLong(++index, threadKey);
-                insertCheckpointStatement.setString(++index, checkpoint.getNodeId());
-                insertCheckpointStatement.setString(++index, checkpoint.getNextNodeId());
-                insertCheckpointStatement.setString(++index, encodeState(checkpoint.getState()));
-                insertCheckpointStatement.setString(++index, encoderStateSerializer().contentType());
-                insertCheckpointStatement.execute();
-            }
+            insertCheckpoint(connection, config, checkpoints, checkpoint);
             return null;
         });
     }
@@ -272,7 +277,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
                     preparedStatement.execute();
                 }
             } else {
-                insertedCheckpoint(config, checkpoints, checkpoint);
+                insertCheckpoint(connection, config, checkpoints, checkpoint);
             }
             return null;
         });
