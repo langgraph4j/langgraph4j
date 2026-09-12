@@ -65,6 +65,7 @@ nav:
         - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
         - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
         - Parallel Branch: how-tos/parallel-branch.ipynb
+        - Streaming nodes in parallel branches: how-tos/streaming-parallel-branch.ipynb
         - PlantUML: how-tos/plantuml.ipynb
         - Plan-and-Execute: how-tos/plan-and-execute.ipynb
         - Prompt Chaining: how-tos/prompt-chaining.ipynb
@@ -89,6 +90,8 @@ nav:
       - Checkpoint saver:
         - SQLite: core/sqlite-saver/README.md
         - Postgres: core/postgres-saver/README.md
+        - MySQL: core/mysql-saver/README.md
+        - Oracle: core/oracle-saver/README.md
   - Features: features.md
   - Examples: https://github.com/langgraph4j/langgraph4j-examples
   - How to(s):
@@ -107,6 +110,7 @@ nav:
       - Subgraph as node action: how-tos/subgraph-as-nodeaction.ipynb
       - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
       - Parallel Branch: how-tos/parallel-branch.ipynb
+      - Streaming nodes in parallel branches: how-tos/streaming-parallel-branch.ipynb
       - PlantUML: how-tos/plantuml.ipynb
       - Hooks: how-tos/hooks.ipynb
   - References: references.md

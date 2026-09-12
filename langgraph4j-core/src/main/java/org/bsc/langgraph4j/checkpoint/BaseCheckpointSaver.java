@@ -82,7 +82,7 @@ public interface BaseCheckpointSaver {
      * @throws Exception if an error occurs while releasing the checkpoints
      * @since 1.9.0-beta4
      */
-    Tag releaseOnError(RunnableConfig config, Exception exception) throws Exception;
+    Tag releaseOnError(RunnableConfig config, Throwable exception) throws Exception;
 
     /**
      * Register Interrupt of the execution for the given config and provide interruption metadata.

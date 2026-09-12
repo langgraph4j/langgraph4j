@@ -25,7 +25,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
-        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+        public Map<String, StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
         private String host;
         private Integer port;
         private String user;
@@ -118,7 +118,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         }
 
         private void validate() throws SQLException {
-            if( stateSerializerMap.isEmpty() ) {
+            if (stateSerializerMap.isEmpty()) {
                 throw new IllegalArgumentException("no stateSerializer provided");
             }
 
@@ -148,7 +148,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
      * Datasource used to create the store
      */
     protected final DataSource datasource;
-    private final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
+    private final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
     private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
@@ -171,7 +171,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         return "db/migration/v1.0__init.sql";
     }
 
-    protected final  StateSerializer<? extends AgentState> encoderStateSerializer() {
+    protected final StateSerializer<? extends AgentState> encoderStateSerializer() {
         return stateSerializerMap.values().iterator().next(); // get first added state serializer;
     }
 
@@ -208,7 +208,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
     protected Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
         final var stateSerializer = stateSerializerMap.get(contentType);
-        if (stateSerializer==null) {
+        if (stateSerializer == null) {
             throw new IllegalStateException(
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
@@ -224,21 +224,23 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
         final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
 
-        try (Connection connection = getConnection();
-             Statement statement = connection.createStatement()) {
-            if (dropTablesFirst) {
-                for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
-                    log.trace("Executing drop table:\n---\n{}---", sql);
-                    statement.execute(sql);
+        execTransaction(connection -> {
+            try (var statement = connection.createStatement()) {
+                if (dropTablesFirst) {
+                    for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
+                        log.trace("Executing drop table:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
+                }
+                if (createTables) {
+                    for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
+                        log.trace("Executing create tables:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
                 }
             }
-            if (createTables) {
-                for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
-                    log.trace("Executing create tables:\n---\n{}---", sql);
-                    statement.execute(sql);
-                }
-            }
-        }
+            return null;
+        });
     }
 
 
@@ -251,9 +253,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
         final var sqlCheckThread = sqlCommands.get("sqlCheckThread");
         final var sqlQueryCheckpoints = sqlCommands.get("sqlSelectCheckpoints");
-        try (Connection conn = getConnection()) {
 
-            try (PreparedStatement ps = conn.prepareStatement(sqlCheckThread)) {
+        return exec(conn -> {
+
+            try (var ps = conn.prepareStatement(sqlCheckThread)) {
                 ps.setString(1, threadId);
                 var resultSet = ps.executeQuery();
                 resultSet.next();
@@ -268,7 +271,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             }
 
             log.trace("Executing select checkpoints:\n---\n{}---", sqlQueryCheckpoints);
-            try (PreparedStatement ps = conn.prepareStatement(sqlQueryCheckpoints)) {
+            try (var ps = conn.prepareStatement(sqlQueryCheckpoints)) {
                 ps.setString(1, threadId);
                 var rs = ps.executeQuery();
                 while (rs.next()) {
@@ -281,37 +284,50 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                     checkpoints.add(checkpoint);
                 }
             }
+            return checkpoints;
 
-        }
+        });
 
-        return checkpoints;
     }
 
     protected abstract void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception;
 
     @Override
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
-        var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
 
-        Connection conn = null;
-        try (Connection ignored = conn = getConnection()) {
-            conn.setAutoCommit(false); // Start transaction
+        execTransaction(conn -> {
+            ;
 
             insertCheckpoint(conn, config, checkpoints, checkpoint);
+            return null;
 
-            conn.commit();
-            log.debug("Checkpoint {} for thread {} inserted successfully.", checkpoint.getId(), threadId);
-
-        } catch (SQLException | IOException e) { // IOException from convertStateToJson
-            log.error("Error inserting checkpoint with id {} in thread {}", checkpoint.getId(), threadId, e);
-            rollback(conn, checkpoint, threadId);
-            throw e;
-        }
+        });
 
     }
 
     @Override
-    protected void updatedCheckpoint(RunnableConfig config,
+    protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+
+        execTransaction(connection -> {
+            if (config.checkPointId().isPresent()) {
+                final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
+
+                try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
+                    preparedStatement.setObject(1, UUID.fromString(checkpoint.getId()), Types.OTHER);
+                    preparedStatement.setString(2, checkpoint.getNodeId());
+                    preparedStatement.setString(3, checkpoint.getNextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setObject(5, UUID.fromString(config.checkPointId().get()), Types.OTHER);
+                    preparedStatement.execute();
+                }
+            } else {
+                insertCheckpoint(connection, config, checkpoints, checkpoint);
+            }
+            return null;
+        });
+    }
+
+    protected void updatedCheckpoint2(RunnableConfig config,
                                      LinkedList<Checkpoint> checkpoints,
                                      Checkpoint checkpoint) throws Exception {
 
@@ -319,10 +335,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
         var deletePreviousCheckpointSql = sqlCommands.get("sqlDeletePreviousCheckpoint");
 
-        Connection conn = null;
-
-        try (Connection ignored = conn = getConnection()) {
-            conn.setAutoCommit(false); // Start transaction
+        execTransaction(conn -> {
 
             if (config.checkPointId().isPresent()) {
 
@@ -341,89 +354,27 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
             insertCheckpoint(conn, config, checkpoints, checkpoint);
 
-            conn.commit();
-
             log.debug("Checkpoint with id {} for thread {} inserted successfully.",
                     checkpoint.getId(),
                     threadId);
 
-        } catch (SQLException | IOException e) { // IOException from convertStateToJson
-            log.error("Error inserting checkpoint with id {} in thread {}",
-                    checkpoint.getId(),
-                    threadId,
-                    e);
-            rollback(conn, checkpoint, threadId);
-            throw e;
-        }
-    }
-
-    @Override
-    protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
-        final var threadId = threadId(config);
-
-        var selectThreadSql = sqlCommands.get("sqlSelectThread");
-        var releaseThreadSql = sqlCommands.get("sqlReleaseThread");
-        try (Connection conn = getConnection()) {
-
-            UUID threadUUID = null;
-            try (PreparedStatement ps = conn.prepareStatement(selectThreadSql)) {
-                var field = 0;
-                ps.setString(++field, threadId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    var rows = 0;
-                    while (rs.next()) {
-                        threadUUID = rs.getObject("thread_id", UUID.class);
-                        ++rows;
-                    }
-                    if (rows == 0) {
-                        throw new IllegalStateException(format("active Thread '%s' not found", threadId));
-                    }
-                    if (rows > 1) {
-                        throw new IllegalStateException(format("duplicate active Thread '%s' found", threadId));
-                    }
-                }
-            }
-
-            log.trace("Executing release Thread:\n---\n{}---", releaseThreadSql);
-            try (PreparedStatement ps = conn.prepareStatement(releaseThreadSql)) {
-                var field = 0;
-                ps.setObject(++field,
-                        Objects.requireNonNull(threadUUID, "threadUUID cannot be null"),
-                        Types.OTHER); // nullable
-                ps.executeUpdate();
-
-            }
-        }
-
-        return new Tag(threadId, checkpoints);
+            return null;
+        });
     }
 
 
-    @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
-        return releaseCheckpoints(config, checkpoints, exception.getMessage());
+
+    protected final <R> R exec(TryFunction<Connection, R, Exception> execStatement) throws Exception {
+        final var connection = datasource.getConnection();
+
+        connection.setAutoCommit(true);
+
+        return execStatement.tryApply(connection);
     }
 
-    @Override
-    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
-        return completedFuture(interruptionMetadata);
-    }
-
-    /**
-     * Datasource connection
-     * Creates the vector extension and add the vector type if it does not exist.
-     * Could be overridden in case extension creation and adding type is done at datasource initialization step.
-     *
-     * @return Datasource connection
-     * @throws SQLException exception
-     */
-    protected Connection getConnection() throws SQLException {
-        return datasource.getConnection();
-    }
 
     protected final <R> R execTransaction(TryFunction<Connection, R, Exception> execStatement) throws Exception {
-        try (Connection connection = getConnection()) {
+        try (Connection connection = datasource.getConnection()) {
             final var previousAutoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
             try {
@@ -440,16 +391,5 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         }
     }
 
-    /**
-     * Removes the cached checkpoints associated with the given thread identifier from the in-memory cache.
-     *
-     * @param threadId the thread identifier whose cached checkpoints must be cleared
-     * @return the checkpoints removed from the cache, or an empty collection if no cached checkpoints exist
-     * @deprecated this method do nothing because currently this saver don't use cache anymore
-     */
-    @Deprecated(forRemoval = true)
-    public Collection<Checkpoint> clearCheckpointsCache(String threadId) {
-        return List.of();
-    }
 
 }

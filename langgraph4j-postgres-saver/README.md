@@ -30,14 +30,14 @@ For Maven:
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-postgres-saver</artifactId>
-    <version>1.9.0-beta6</version>
+    <version>1.9.0-beta7</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```gradle
-implementation("org.bsc.langgraph4j:langgraph4j-postgres-saver:1.9.0-beta6")
+implementation("org.bsc.langgraph4j:langgraph4j-postgres-saver:1.9.0-beta7")
 ```
 
 ## Configuration
@@ -91,5 +91,5 @@ Use `V1` when you need compatibility with an existing V1 schema or application c
 
 See the implementation-specific documentation for details:
 
-- [SAVER_V1.md](./SAVER_V1.md)
-- [SAVER_V2.md](./SAVER_V2.md)
+- [Version 1](./SAVER_V1.md)
+- [Version 2](./SAVER_V2.md)

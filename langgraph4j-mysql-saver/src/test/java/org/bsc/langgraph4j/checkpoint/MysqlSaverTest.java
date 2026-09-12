@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import org.bsc.langgraph4j.LG4JTestUtil;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
@@ -25,7 +24,7 @@ public class MysqlSaverTest extends AbstractCheckpointSaverTest  {
             if (urlFromEnv == null) {
                 @SuppressWarnings("resource")
                 MySQLContainer<?> container = new MySQLContainer<>(MYSQL_IMAGE_NAME)
-                        .withDatabaseName("testdb")
+                        .withDatabaseName("MysqlSaverTest")
                         .withUsername("testuser")
                         .withPassword("testpwd");
                 container.start();

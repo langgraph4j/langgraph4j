@@ -49,8 +49,14 @@ state_data,
 state_content_type)
 VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
 
--- sqlDeletePreviousCheckpoint
-DELETE FROM LG4JCheckpoint
+-- sqlUpdateCheckpoint
+UPDATE LG4JCheckpoint
+SET
+    checkpoint_id = ?,
+    parent_checkpoint_id = NULL,
+    node_id = ?,
+    next_node_id = ?,
+    state_data = ?::jsonb
 WHERE checkpoint_id = ?;
 
 -- sqlSelectThread

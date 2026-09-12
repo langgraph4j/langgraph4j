@@ -16,22 +16,11 @@ To emphasize: `Nodes` and `Edges` are like functions - they can contain an LLM o
 
 In short: _nodes do the work. edges tell what to do next_.
 
-<!-- 
-LangGraph4j's underlying graph algorithm uses [message passing](https://en.wikipedia.org/wiki/Message_passing) to define a general program. When a Node completes its operation, it sends messages along one or more edges to other node(s). These recipient nodes then execute their functions, pass the resulting messages to the next set of nodes, and the process continues. Inspired by Google's [Pregel](https://research.google/pubs/pregel-a-system-for-large-scale-graph-processing/) system, the program proceeds in discrete "super-steps." 
--->
-<!-- 
-A super-step can be considered a single iteration over the graph nodes. Nodes that run in parallel are part of the same super-step, while nodes that run sequentially belong to separate super-steps. At the start of graph execution, all nodes begin in an `inactive` state. A node becomes `active` when it receives a new message (state) on any of its incoming edges (or "channels"). The active node then runs its function and responds with updates. At the end of each super-step, nodes with no incoming messages vote to `halt` by marking themselves as `inactive`. The graph execution terminates when all nodes are `inactive` and no messages are in transit.
- -->
 
 ### StateGraph
 
 The [StateGraph] class is the main graph class to uses. This is parameterized by a user defined `State` object. 
 
-<!-- 
-### MessageGraph
-
-The `MessageGraph` class is a special type of graph. The `State` of a `MessageGraph` is ONLY an array of messages. This class is rarely used except for chatbots, as most applications require the `State` to be more complex than an array of messages.
- -->
  <a id="compiling-your-graph"></a>
 
 ### Compile your graph
@@ -403,9 +392,6 @@ There are several provided Serializers out-of-the-box:
 
 ## Nodes
 
-<!--
-In LangGraph4j, nodes are typically a **Functional Interface** ([AsyncNodeAction])  where the argument is the [state](#tate), and (optionally), the **second** positional argument is a "config", containing optional [configurable parameters](#configuration) (such as a `thread_id`).
--->
 In LangGraph4j, nodes are typically a **Functional Interface** ([AsyncNodeAction])  where the argument is the [state](#state), you add these nodes to a graph using the [addNode] method:
 
 ```java
@@ -469,8 +455,6 @@ Edges define how the logic is routed and how the graph decides to stop. This is 
 - **Conditional Entry Point**: 
   > Call a function to determine which node(s) to call first when user input arrives.
 
-<!-- 👉 PARALLEL
- A node can have MULTIPLE outgoing edges. If a node has multiple out-going edges, **all** of those destination nodes will be executed in parallel as a part of the next superstep. -->
 
 <a id="normal-edges"></a>
 ### Normal Edges
@@ -496,8 +480,6 @@ graph.addConditionalEdges("nodeA", routingFunction,
 ```
 
 Similar to nodes, the `routingFunction` accept the current `state` of the graph and return a string value.
-
-<!-- By default, the return value `routingFunction` is used as the name of the node (or an array of nodes) to send the state to next. All those nodes will be run in parallel as a part of the next superstep. -->
 
 You must provide an object that maps the `routingFunction`'s output to the name of the next node.
 
@@ -529,53 +511,48 @@ graph.addConditionalEdges(START, routingFunction,
 
 You must provide an object that maps the `routingFunction`'s output to the name of the next node.
 
-<!-- 
-## `Send`
+## Graph execution context persistence
 
-By default, `Nodes` and `Edges` are defined ahead of time and operate on the same shared state. However, there can be cases where the exact edges are not known ahead of time and/or you may want different versions of `State` to exist at the same time. A common of example of this is with `map-reduce` design patterns. In this design pattern, a first node may generate an array of objects, and you may want to apply some other node to all those objects. The number of objects may be unknown ahead of time (meaning the number of edges may not be known) and the input `State` to the downstream `Node` should be different (one for each generated object).
+### Checkpoint Saver
 
-To support this design pattern, LangGraph4j supports returning [Send](/langgraphjs/reference/classes/langgraph.Send.html) objects from conditional edges. `Send` takes two arguments: first is the name of the node, and second is the state to pass to that node.
+LangGraph4j has a built-in persistence layer, implemented through [CheckpointSaver]. When you use a `CheckpointerSaver` with a graph, you can interact with the state of that graph. The `checkpointerSaver` saves a _checkpoint_ of the graph state at every step, enabling several powerful capabilities:
 
-```typescript
-const continueToJokes = (state: { subjects: string[] }) => {
-  return state.subjects.map((subject) => new Send("generate_joke", { subject }));
-}
+First, checkpoints facilitate **human-in-the-loop** workflows by allowing humans to inspect, interrupt, and approve steps. `CheckpointerSaver` is need for these workflows as the human has to be able to view the state of a graph at any point in time, and the graph has to be to resume execution after the human has made any updates to the state.
 
-graph.addConditionalEdges("nodeA", continueToJokes);
-``` 
--->
+Second, it allows for ["memory"](agentic_concepts.md#memory) between interactions. You can use `checkpointSaver` to create threads and save the state of a thread after a graph executes. In the case of repeated human interactions (like conversations) any follow up messages can be sent to that checkpoint, which will retain its memory of previous ones.
 
-## Checkpointer
+See [this guide](../how-tos/persistence.ipynb) for how to add a `CheckpointSaver` to your graph.
 
-LangGraph4j has a built-in persistence layer, implemented through [Checkpointers]. When you use a checkpointer with a graph, you can interact with the state of that graph. When you use a checkpointer with a graph, you can interact with and manage the graph's state. The checkpointer saves a _checkpoint_ of the graph state at every step, enabling several powerful capabilities:
+### Threads
 
-First, checkpointers facilitate **human-in-the-loop workflows**<!--[human-in-the-loop workflows](agentic_concepts.md#human-in-the-loop)--> workflows by allowing humans to inspect, interrupt, and approve steps. Checkpointers are needed for these workflows as the human has to be able to view the state of a graph at any point in time, and the graph has to be to resume execution after the human has made any updates to the state.
-
-Second, it allows for ["memory"](agentic_concepts.md#memory) between interactions. You can use checkpointers to create threads and save the state of a thread after a graph executes. In the case of repeated human interactions (like conversations) any follow up messages can be sent to that checkpoint, which will retain its memory of previous ones.
-
-See [this guide](../how-tos/persistence.ipynb) for how to add a checkpointer to your graph.
-
-## Threads
-
-Threads enable the checkpointing of multiple different runs, making them essential for multi-tenant chat applications and other scenarios where maintaining separate states is necessary. A thread is a unique ID assigned to a series of checkpoints saved by a checkpointer. When using a checkpointer, you must specify a `thread_id` when running the graph.
-
-`thread_id` is simply the ID of a thread. This is always required
+Threads enable the checkpointing of multiple different runs, making them essential for multi-tenant chat applications and other scenarios where maintaining separate states is necessary. A thread is a unique session ID assigned to a series of checkpoints saved by a `ChechpointSaver` so when using a checkpointer, you must specify a `thread_id` when running the graph.
 
 You must pass these when invoking the graph as part of the configurable part of the config.
 
 ```java
 
 var config = RunnableConfig.builder()
-                                  .threadId("a")
+                                  .threadId("<unique execute session id>")
                                   .build();
 graph.invoke(inputs, config);
 ```
 
 See [this guide](../how-tos/persistence.ipynb) for how to use threads.
 
+#### 👉 Thread ID Uniqueness & Checkpoint Persistence
+
+When a persistent CheckpointSaver is in use, the thread_id acts as the primary key of the checkpoint storage so keep the following in mind:
+
+A thread_id identifies one conversation timeline: reuse the same id to continue that conversation, and generate a fresh one to start a new conversation.
+Generate ids programmatically, e.g. UUID.randomUUID(), optionally prefixed with a tenant/session qualifier (<tenant>-<session>-<uuid>) when several clients share the same storage.
+Reusing a thread_id that already has checkpoints does not start a clean conversation: persistent savers will reject the conflicting insert (typically a primary-key violation).
+Note that UI tooling (such as LangGraph Studio) may reuse default thread names like default or thread_1 across restarts: when running against a persistent saver, always provide a freshly generated thread_id in your RunnableConfig.
+
+<!-- ===== MUST RIELABORATE =======
+
 <a id="checkpointer-state"></a>
 
-## Checkpointer state
+### Checkpointer state
 
 When interacting with the checkpointer state, you must specify a [thread identifier](#threads). Each checkpoint saved by the checkpointer has two properties:
 
@@ -616,40 +593,7 @@ These are the values that will be used to update the state. Note that this updat
 
 The final thing you specify when calling `updateState` is `asNode`. This update will be applied as if it came from node `asNode`. If `asNode` is null, it will be set to the last node that updated the state.
 
-<!-- 👉 AMBIGUITY  
-The final thing you specify when calling `updateState` is `asNode`. This update will be applied as if it came from node `asNode`. If `asNode` is null, it will be set to the last node that updated the state, if not ambiguous.
-
-The reason this matters is that the next steps in the graph to execute depend on the last node to have given an update, so this can be used to control which node executes next. -->
-
-<!-- 
-## Configuration
-
-When creating a graph, you can also mark that certain parts of the graph are configurable. This is commonly done to enable easily switching between models or system prompts. This allows you to create a single "cognitive architecture" (the graph) but have multiple different instance of it.
-
-You can then pass this configuration into the graph using the `configurable` config field.
-
-```typescript
-const config = { configurable: { llm: "anthropic" }};
-
-await graph.invoke(inputs, config);
-```
-
-You can then access and use this configuration inside a node:
-
-```typescript
-const nodeA = (state, config) => {
-  const llmType = config?.configurable?.llm;
-  let llm: BaseChatModel;
-  if (llmType) {
-    const llm = getLlm(llmType);
-  }
-  ...
-};
-    
-```
-
-See [this guide](/langgraph4j/how-tos/langgraph4j-howtos/configuration.html) for a full breakdown on configuration 
--->
+===== MUST RIELABORATE ======= -->
 
 ## Interruptions
 
@@ -783,14 +727,6 @@ System.out.println(result.getContent());
 
 ```
 
-<!-- 
-There are several different streaming modes that LangGraph4j supports:
-
-- ["values"](/langgraph4j/how-tos/langgraph4j-howtos/stream-values.html): This streams the full value of the state after each step of the graph.
-- ["updates](/langgraph4j/how-tos/langgraph4j-howtos/stream-updates.html): This streams the updates to the state after each step of the graph. If multiple updates are made in the same step (e.g. multiple nodes are run) then those updates are streamed separately.
-
-In addition, you can use the [streamEvents](https://v02.api.js.langchain.com/classes/langchain_core_runnables.Runnable.html#streamEvents) method to stream back events that happen _inside_ nodes. This is useful for [streaming tokens of LLM calls](/langgraph4j/how-tos/langgraph4j-howtos/streaming-tokens-without-langchain.html). -->
-
 [Mermaid]: https://mermaid.js.org
 [java-async-generator]: https://github.com/bsorrentino/java-async-generator
 
@@ -810,7 +746,7 @@ In addition, you can use the [streamEvents](https://v02.api.js.langchain.com/cla
 [addEdge]: /langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addEdge(java.lang.String,java.lang.String)
 [addConditionalEdges]: /langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#addConditionalEdges(java.lang.String,org.bsc.langgraph4j.action.AsyncCommandAction,java.util.Map)
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
-[Checkpointers]: /langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.html
+[CheckpointSaver]: /langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.html
 [graph.updateState(config,values,asNode)]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#updateState(org.bsc.langgraph4j.RunnableConfig,java.util.Map,java.lang.String)
 [graph.getStateHistory(config)]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getStateHistory(org.bsc.langgraph4j.RunnableConfig)
 [CompileConfig]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompileConfig.html

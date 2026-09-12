@@ -49,7 +49,7 @@ public class PostgresSaverV2 extends AbstractPostgresSaverV2 {
     private Tag internalReleaseCheckpoints(String threadId,
                                            LinkedList<Checkpoint> checkpoints,
                                            @Nullable String message,
-                                           @Nullable Exception exception) throws Exception {
+                                           @Nullable Throwable exception) throws Exception {
 
         final var sqlInsertTag = sqlCommands.get("sqlReleaseThread_insertTag");
         final var sqlDeleteThread = sqlCommands.get("sqlReleaseThread_deleteThread");
@@ -102,7 +102,7 @@ public class PostgresSaverV2 extends AbstractPostgresSaverV2 {
     }
 
     @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Exception exception) throws Exception {
+    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
         return internalReleaseCheckpoints(threadId(config), checkpoints, null, exception);
     }
 

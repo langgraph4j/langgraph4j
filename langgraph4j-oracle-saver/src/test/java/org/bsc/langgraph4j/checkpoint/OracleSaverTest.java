@@ -5,6 +5,7 @@ import oracle.jdbc.datasource.OracleDataSource;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.oracle.OracleContainer;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
                 oracleContainer = new OracleContainer(ORACLE_IMAGE_NAME)
                         .withStartupTimeout(Duration.ofSeconds(600))
                         .withConnectTimeoutSeconds(600)
-                        .withDatabaseName("pdb1")
+                        .withDatabaseName("OracleSaverTest")
                         .withUsername("testuser")
                         .withPassword("testpwd");
                 oracleContainer.start();
@@ -78,7 +79,7 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
 
     static void initDataSource(OracleDataSource dataSource, String url, String username, String password)
             throws SQLException {
-        dataSource.setURL(url + "?oracle.jdbc.provider.json=jackson-json-provider");
+        dataSource.setURL( "%s?oracle.jdbc.provider.json=jackson-json-provider".formatted(url));
         dataSource.setUser(username);
         dataSource.setPassword(password);
     }
@@ -93,4 +94,8 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
     }
 
 
+    @Test
+    public void dummy() {
+
+    }
 }
