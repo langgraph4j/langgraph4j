@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9-SNAPSHOT
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.0-beta7
 
 import io.javelit.core.Jt;
 import org.bsc.javelit.JtIFrame;
