@@ -5,6 +5,8 @@ import oracle.jdbc.datasource.OracleDataSource;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.oracle.OracleContainer;
 
@@ -12,10 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Duration;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-
-public class OracleSaverTest extends AbstractCheckpointSaverTest {
+public class OracleSaverV2Test extends AbstractCheckpointSaverTest {
 
     protected static final String ORACLE_IMAGE_NAME = "gvenzl/oracle-free:23.7-slim-faststart";
     protected static OracleDataSource DATA_SOURCE;
@@ -35,7 +34,7 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
                 oracleContainer = new OracleContainer(ORACLE_IMAGE_NAME)
                         .withStartupTimeout(Duration.ofSeconds(600))
                         .withConnectTimeoutSeconds(600)
-                        .withDatabaseName("OracleSaverTest")
+                        .withDatabaseName("OracleSaverV2Test")
                         .withUsername("testuser")
                         .withPassword("testpwd");
                 oracleContainer.start();
@@ -86,7 +85,7 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
 
     @Override
     protected BaseCheckpointSaver buildCheckpointSaver(StateSerializer<? extends AgentState> stateSerializer, @Nullable String threadId) throws Exception {
-        return OracleSaver.builder()
+        return OracleSaverV2.builder()
                 .dataSource(DATA_SOURCE)
                 .createOption(CreateOption.CREATE_IF_NOT_EXISTS)
                 .stateSerializer(stateSerializer)
