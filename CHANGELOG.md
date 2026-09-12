@@ -2,6 +2,100 @@
 
 
 
+<!-- "name: v1.9.0-beta7" is a release tag -->
+
+## [v1.9.0-beta7](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta7) (2026-09-12)
+
+### Features
+
+ *  **oracle-saver**  Align implementation of Oracle Saver to Version 2 ([9ced3310942316d](https://github.com/bsorrentino/langgraph4j/commit/9ced3310942316d442c5329b36d4a3098ca14f61))
+
+ *  Align implementation of MySQL Saver to Version 2 ([fe8d28a44cdbc43](https://github.com/bsorrentino/langgraph4j/commit/fe8d28a44cdbc436b86d23de68897ee69f08587d))
+
+
+### Bug Fixes
+
+ -  change (again) parameter type from Exception to Throwable in releaseOnError method ([7c1e39cc8cb729b](https://github.com/bsorrentino/langgraph4j/commit/7c1e39cc8cb729b9ca216e5a8372dd940afee51c))
+
+ -  make checkpoint_id unique in LANGRAPH4J_CHECKPOINT table ([02ee976830d5f44](https://github.com/bsorrentino/langgraph4j/commit/02ee976830d5f449cdb9f68c0c4074bf4a00cfe1))
+
+ -  **agentexecutor**  clear stale final response across checkpointed turns ([f1bda2c5c6946c5](https://github.com/bsorrentino/langgraph4j/commit/f1bda2c5c6946c5dabda55343c27189ae791474d))
+     > The agent_response key is written when the model stops and never cleared,
+     > so a previous turn&#x27;s answer persisted in checkpoints. On a later turn of
+     > the same thread a new tool request was shadowed by that stale answer: the
+     > ReACT loop terminated after tool execution without letting the model
+     > observe the result (AgentExecutor), or before the tool even ran
+     > (AgentExecutorEx).
+     > - CallModel removes the final response whenever the model requests a
+     > tool, so loop-termination only ever observes the current turn&#x27;s answer.
+     > - AgentExecutor.executeTool always routes back to the agent after tool
+     > execution, aligned with the spring-ai ExecuteToolsAction.
+     > - AgentExecutorEx.shouldContinue decides from the current model message
+     > instead of the persisted final response.
+     > Adds AgentExecutorMultiTurnCheckpointTest covering the two-turn tool loop
+     > for both executors and the direct-answer overwrite path.
+
+ -  skip javelit compilation ([3ecfebc00dc4cac](https://github.com/bsorrentino/langgraph4j/commit/3ecfebc00dc4cacb2d84d1b6b1c3692c2364d527))
+
+
+### Refactor
+
+ -  **oracle-saver**  update to data model version 1.1 ([ca465fa5813f6a8](https://github.com/bsorrentino/langgraph4j/commit/ca465fa5813f6a8658f218f37c5c56e7d288620f))
+
+ -  **oracle-saver**  improve checkpoint insertion and transaction handling ([91f4c76f0b6d682](https://github.com/bsorrentino/langgraph4j/commit/91f4c76f0b6d682bfecf253e3cd6ff42bb44659a))
+
+ -  **sqlite-saver**  change update checkpoint SQL data strategy ([f6c39b24937066b](https://github.com/bsorrentino/langgraph4j/commit/f6c39b24937066bd8c91de6d62ddbb2c43ad8142))
+
+ -  **mysql-saver**  streamline checkpoint insertion logic in AbstractMySQLSaver ([409e617a2d058d7](https://github.com/bsorrentino/langgraph4j/commit/409e617a2d058d742cd87ab65fbeff56b4ad9031))
+
+ -  **postgres-saver**  change update checkpoint SQL data strategy ([8f6d09939ca12d0](https://github.com/bsorrentino/langgraph4j/commit/8f6d09939ca12d04514e4c8f5214694b025d7a21))
+
+ -  rename MysqlSaver to extend AbstractMySQLServer and enhance SQL command handling ([c7245bcbf825364](https://github.com/bsorrentino/langgraph4j/commit/c7245bcbf82536491f4632e95aa3723be15af1db))
+
+ -  rename AbstractMysqlServer to AbstractMySQLServer and improve SQL command execution ([8c372a0bdae2d90](https://github.com/bsorrentino/langgraph4j/commit/8c372a0bdae2d90eec612a4a45e502b4e582e058))
+
+
+### Test
+
+ -  refactor to use the new ScriptedChatModel implementation ([34a35de28eead06](https://github.com/bsorrentino/langgraph4j/commit/34a35de28eead06021c19256ec61615b856b393e))
+
+ -  extract ScriptedChatModel from AgentExecutorMultiTurnCheckpointTest to future reuse ([bb201d8e736994d](https://github.com/bsorrentino/langgraph4j/commit/bb201d8e736994d3d185f212442a6d6bd193abf2))
+
+ -  disable LG4JCancellationTest due to timing issues in GitHub Actions ([2dafa924766b1b3](https://github.com/bsorrentino/langgraph4j/commit/2dafa924766b1b31bfa4346c2380c8f8d6c06f3f))
+
+
+### Documentation
+
+ -  **oracle-saver**  update Oracle checkpoint saver documentation ([59ee0db1cf49576](https://github.com/bsorrentino/langgraph4j/commit/59ee0db1cf49576c5d51d64b6a448a29dd39b40d))
+
+ -  update mySQL checkpoint saver documentation ([6f1bc6e4eb06110](https://github.com/bsorrentino/langgraph4j/commit/6f1bc6e4eb06110a554763c0c1eec60246c3e497))
+
+ -  address parallel streaming review feedback ([8b78f0c83bfa463](https://github.com/bsorrentino/langgraph4j/commit/8b78f0c83bfa46310fd46c64798597922df221e1))
+
+ -  add parallel streaming how-to ([c42e5e4dfb19384](https://github.com/bsorrentino/langgraph4j/commit/c42e5e4dfb193849692e4828bd5b7a81fb200189))
+
+ -  clean up core-library.md by removing commented-out sections and improving checkpoint section ([655b2f369c43cef](https://github.com/bsorrentino/langgraph4j/commit/655b2f369c43cef7b34e398999864df8f2bfbdf8))
+
+ -  update release notes for version 1.9 in README ([369b03823edbb5a](https://github.com/bsorrentino/langgraph4j/commit/369b03823edbb5ad6c175abd4aa6614c1716eaef))
+
+ -  update release version to 1.9-beta6 in README ([a676599afe2fcc4](https://github.com/bsorrentino/langgraph4j/commit/a676599afe2fcc443ae3111895352779b622bcf5))
+
+ -  update changelog ([33862bb1346cd29](https://github.com/bsorrentino/langgraph4j/commit/33862bb1346cd297c4c6b5a9a900a739b9a1358a))
+
+
+### ALM
+
+ -  bump to next version 1.9.0-beta7 ([1afaba1bb46aa85](https://github.com/bsorrentino/langgraph4j/commit/1afaba1bb46aa85fe53ed9bdab5c41fdacbfdbac))
+
+ -  update langchain4j version to 1.20.0 and beta to 1.20.0-beta30 in pom.xml ([a7d5f1e0972bea9](https://github.com/bsorrentino/langgraph4j/commit/a7d5f1e0972bea9a07a9906f789c37189b2ab07d))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([4d1d50945e81752](https://github.com/bsorrentino/langgraph4j/commit/4d1d50945e8175216e0674d7a37e210bf81c88fc))
+
+
+
+
+
+
 <!-- "name: v1.9.0-beta6" is a release tag -->
 
 ## [v1.9.0-beta6](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta6) (2026-09-06)
