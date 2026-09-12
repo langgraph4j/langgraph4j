@@ -5,6 +5,7 @@ import oracle.jdbc.datasource.OracleDataSource;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.oracle.OracleContainer;
 
 import java.io.IOException;
@@ -93,4 +94,8 @@ public class OracleSaverTest extends AbstractCheckpointSaverTest {
     }
 
 
+    @Test
+    public void dummy() {
+
+    }
 }

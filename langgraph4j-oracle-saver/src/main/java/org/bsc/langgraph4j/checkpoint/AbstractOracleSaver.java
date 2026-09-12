@@ -31,7 +31,8 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         protected DataSource dataSource;
         protected CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
-        public StateSerializer<? extends AgentState> stateSerializer;
+        public Map<String, StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+
 
         @SuppressWarnings("unchecked")
         private B this$() {
@@ -61,85 +62,72 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         }
 
         public B stateSerializer(StateSerializer<? extends AgentState> stateSerializer) {
-            this.stateSerializer = stateSerializer;
+            this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
     }
 
     protected final DataSource dataSource;
-    protected final CreateOption createOption;
-    protected final StateSerializer<? extends AgentState> stateSerializer;
-    protected final ObjectMapper objectMapper;
+    protected final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
     protected final SqlResource.Commands sqlCommands;
 
     protected AbstractOracleSaver(AbstractBuilder<?> builder) throws Exception {
         this.dataSource = builder.dataSource;
-        this.createOption = builder.createOption;
-        this.stateSerializer = builder.stateSerializer;
-        if (builder.stateSerializer != null) {
-            objectMapper = null;
-        } else {
-            JsonFactory osonFactory = new OsonFactory();
-            objectMapper = new ObjectMapper(osonFactory);
-        }
-        this.sqlCommands = SqlResource.Commands.load("db/v1.0__commands.sql");
+        this.stateSerializerMap = builder.stateSerializerMap;
+        this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
 
-        initTables();
+        initTables(builder.createOption);
     }
+
+    protected abstract String sqlCommandsResourcePath();
+
+    protected abstract String sqlInitResourcePath();
 
     /**
      * Initializes the database according the create options.
      */
-    protected void initTables() throws Exception {
-        final var sqlInitCommands = SqlResource.Commands.load("db/migration/v1.0__init.sql");
+    protected void initTables(CreateOption createOption) throws Exception {
+        final var sqlInitCommands = SqlResource.Commands.load(sqlInitResourcePath());
 
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
-            if (createOption == CreateOption.CREATE_OR_REPLACE) {
-                for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
-                    log.trace("Executing drop table:\n---\n{}---", sql);
-                    statement.execute(sql);
+        execTransaction(connection -> {
+
+            try (var statement = connection.createStatement()) {
+                if (createOption == CreateOption.CREATE_OR_REPLACE) {
+                    for (var sql : sqlCommands.getMultiple("sqlDropTables")) {
+                        log.trace("Executing drop table:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
+                }
+                if (createOption == CreateOption.CREATE_OR_REPLACE ||
+                        createOption == CreateOption.CREATE_IF_NOT_EXISTS) {
+                    for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
+                        log.trace("Executing create tables:\n---\n{}---", sql);
+                        statement.execute(sql);
+                    }
                 }
             }
-            if (createOption == CreateOption.CREATE_OR_REPLACE ||
-                    createOption == CreateOption.CREATE_IF_NOT_EXISTS) {
-                for (var sql : sqlInitCommands.getMultiple("sqlCreateTables")) {
-                    log.trace("Executing create tables:\n---\n{}---", sql);
-                    statement.execute(sql);
-                }
-            }
-        } catch (SQLException sqlException) {
-            throw new RuntimeException("Unable to create tables", sqlException);
-        }
+            return null;
+        });
     }
 
-    private String encodeState(Map<String, Object> data) throws IOException {
-        Objects.requireNonNull(data, "data cannot be null");
-
-        if (stateSerializer == null) {
-            return objectMapper.writeValueAsString(data);
-        }
-
-        var bytes = stateSerializer.dataToBytes(data);
-        return Base64.getEncoder().encodeToString(bytes);
+    private StateSerializer<? extends AgentState> encoderStateSerializer() {
+        return stateSerializerMap.values().iterator().next(); // get first added state serializer;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> decodeState(String statePayload,
-                                            @Nullable String stateContentType) throws IOException, ClassNotFoundException {
+    protected final String encodeState(Map<String, Object> data) throws IOException {
+        final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
+        final byte[] binaryData = stateSerializer.dataToBytes(data);
+        return Base64.getEncoder().encodeToString(binaryData);
+    }
 
+    protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+        final var stateSerializer = stateSerializerMap.get(contentType);
         if (stateSerializer == null) {
-            return objectMapper.readValue(statePayload, Map.class);
-        }
-
-        if (stateContentType != null && !Objects.equals(stateContentType, stateSerializer.contentType())) {
             throw new IllegalStateException(
-                    "Content Type used for stored state '%s' is different from one '%s' used to deserialize it".formatted(
-                            stateContentType,
-                            stateSerializer.contentType()));
+                    "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
-        var bytes = Base64.getDecoder().decode(statePayload);
+        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
 
         return stateSerializer.dataFromBytes(bytes);
     }
@@ -158,36 +146,36 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         final String threadName = threadId(config);
         final var sqlSelectCheckpoints = sqlCommands.get("sqlSelectCheckpoints");
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectCheckpoints)) {
+        return exec(connection -> {
+            try (var preparedStatement = connection.prepareStatement(sqlSelectCheckpoints)) {
 
-            // Calls to defineColumnType reduce the number of network requests.
-            OracleStatement oracleStatement = preparedStatement.unwrap(OracleStatement.class);
-            oracleStatement.defineColumnType(1, OracleTypes.VARCHAR); // checkpoint_id
-            oracleStatement.defineColumnType(2, OracleTypes.VARCHAR); // node_id
-            oracleStatement.defineColumnType(3, OracleTypes.VARCHAR); // next_node_id
-            oracleStatement.defineColumnType(4, OracleTypes.CLOB); // state_data
-            oracleStatement.setLobPrefetchSize(Integer.MAX_VALUE); // Workaround for Oracle JDBC bug 37030121
+                // Calls to defineColumnType reduce the number of network requests.
+                OracleStatement oracleStatement = preparedStatement.unwrap(OracleStatement.class);
+                oracleStatement.defineColumnType(1, OracleTypes.VARCHAR); // checkpoint_id
+                oracleStatement.defineColumnType(2, OracleTypes.VARCHAR); // node_id
+                oracleStatement.defineColumnType(3, OracleTypes.VARCHAR); // next_node_id
+                oracleStatement.defineColumnType(4, OracleTypes.CLOB); // state_data
+                oracleStatement.defineColumnType(5, OracleTypes.VARCHAR); // state_data_type
+                oracleStatement.setLobPrefetchSize(Integer.MAX_VALUE); // Workaround for Oracle JDBC bug 37030121
 
-            preparedStatement.setString(1, threadName);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    Checkpoint checkpoint = Checkpoint.builder()
-                            .id(resultSet.getString(1))
-                            .nodeId(resultSet.getString(2))
-                            .nextNodeId(resultSet.getString(3))
-                            .state(decodeState(resultSet.getString(4), null))
-                            .build();
-                    checkpoints.add(checkpoint);
+                preparedStatement.setString(1, threadName);
+                try (var rs = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        Checkpoint checkpoint = Checkpoint.builder()
+                                .id(rs.getString(1))
+                                .nodeId(rs.getString(2))
+                                .nextNodeId(rs.getString(3))
+                                .state(decodeState(rs.getString(4), rs.getString(5)))
+                                .build();
+                        checkpoints.add(checkpoint);
+                    }
                 }
             }
-        } catch (SQLException sqlException) {
-            throw new Exception("Unable to create tables", sqlException);
-        }
-        return checkpoints;
+            return checkpoints;
+        });
     }
 
-    protected void insertCheckpoint( Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
+    protected void insertCheckpoint(Connection connection, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint)
             throws Exception {
 
         final String threadName = config.threadId().orElse(THREAD_ID_DEFAULT);
@@ -205,7 +193,8 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
             insertCheckpointStatement.setString(2, checkpoint.getNodeId());
             insertCheckpointStatement.setString(3, checkpoint.getNextNodeId());
             insertCheckpointStatement.setString(4, encodeState(checkpoint.getState()));
-            insertCheckpointStatement.setString(5, threadName);
+            insertCheckpointStatement.setString(5, encoderStateSerializer().contentType());
+            insertCheckpointStatement.setString(6, threadName);
 
             insertCheckpointStatement.execute();
         }
@@ -253,22 +242,6 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
         return new Tag(threadName, checkpoints);
     }
 
-    @Override
-    protected Tag releaseCheckpointsOnError(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Throwable exception) throws Exception {
-        return releaseCheckpoints(config, checkpoints, exception.getMessage());
-    }
-
-    @Override
-    public <State extends AgentState> CompletableFuture<InterruptionMetadata<State>> registerInterruption(RunnableConfig config, InterruptionMetadata<State> interruptionMetadata) {
-        return completedFuture(interruptionMetadata);
-    }
-
-
-    @Override
-    public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
-        return Optional.empty();
-    }
-
     /**
      * If the checkpoint exists, updates the checkpoint, otherwise it inserts it.
      *
@@ -289,7 +262,8 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                     preparedStatement.setString(2, checkpoint.getNodeId());
                     preparedStatement.setString(3, checkpoint.getNextNodeId());
                     preparedStatement.setString(4, encodeState(checkpoint.getState()));
-                    preparedStatement.setString(5, config.checkPointId().get());
+                    preparedStatement.setString(5, encoderStateSerializer().contentType());
+                    preparedStatement.setString(6, config.checkPointId().get());
                     preparedStatement.execute();
                 }
             } else {
