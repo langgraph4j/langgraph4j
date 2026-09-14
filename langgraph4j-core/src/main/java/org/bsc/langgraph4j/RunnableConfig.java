@@ -2,6 +2,7 @@ package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
+import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.bsc.langgraph4j.utils.TypeRef;
 
@@ -184,6 +185,7 @@ public final class RunnableConfig implements HasMetadata {
     public static final String GRAPH_NODE_PATH = "LG4j_GRAPH_NODE_PATH";
     public static final String GRAPH_ID = "LG4j_GRAPH_ID";
     public static final String SUBGRAPH_RESUME_UPDATE_DATA = "LG4j_SUBGRAPH_UPDATE_DATA";
+    public static final String CUSTOM_DISPATCHER = "LG4J_CUSTOM_DISPATCHER";
 
     /**
      * Metadata key used to disable state cloning during graph execution.
@@ -394,6 +396,11 @@ public final class RunnableConfig implements HasMetadata {
         }
         final var subGraphId = nodePath().elementAt( nodeDepth - 2 );
         return metadata( SubCompiledGraphNodeAction.resumeSubGraphId( subGraphId )).isPresent();
+    }
+
+    public <State extends AgentState, Output extends NodeOutput<State>> GraphDefinition.Dispatcher<State,Output> customDispatcher() {
+        return metadata(CUSTOM_DISPATCHER, new TypeRef<GraphDefinition.Dispatcher<State, Output>>() {})
+                .orElseThrow(() -> new IllegalStateException("Custom dispatcher not set"));
     }
 
     @Override
