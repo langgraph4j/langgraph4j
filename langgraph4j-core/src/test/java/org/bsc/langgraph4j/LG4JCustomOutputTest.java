@@ -31,9 +31,8 @@ public class LG4JCustomOutputTest implements LG4JTestUtil {
 
         final AsyncNodeActionWithConfig<State> nodeWithCustomOutput = (state, config) -> {
 
-            final var $1 = config.<State,CustomOutput>customDispatcher();
-
-            $1.dispatchAsync(CustomOutput.of("A.START", state));
+            config.<State,CustomOutput>customDispatcher()
+                    .dispatchAsync(CustomOutput.of("A.START", state));
 
             try {
                 Thread.sleep(1000);
@@ -80,10 +79,9 @@ public class LG4JCustomOutputTest implements LG4JTestUtil {
     void testOneNodeWithDispatchSyncCustomOutput() throws Exception {
         final AsyncNodeActionWithConfig<State> nodeWithCustomOutput = (state, config) -> {
 
-            final var $1 = config.<State,CustomOutput>customDispatcher();
-
             try {
-                $1.dispatchSync(CustomOutput.of("A.START", state));
+                config.<State,CustomOutput>customDispatcher()
+                        .dispatchSync(CustomOutput.of("A.START", state));
 
                 Thread.sleep(1000);
             } catch (Exception e) {
