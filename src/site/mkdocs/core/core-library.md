@@ -78,11 +78,16 @@ var config = RunnableConfig.builder()
                           .threadId("thread-1")
                           .build();
 
-Map<String, Object> result = graph.execute(inputs, config);
-System.out.println(result);
+Optional<State> state = graph.invoke( GraphInput.noArgs(), config);
+System.out.println( state.orElse(null) );
+
+Optional<NodeOutput<State>> output = graph.invokeFinal(GraphInput.noArgs(), config);
+System.out.println( output.orElse(null) );
+
 ```
 
-The `execute()` method blocks until the graph completes and returns the final state of the graph.
+The `invoke()` method blocks until the graph completes and returns the final state of the graph.
+The `invokeFinal()` method blocks until the graph completes and returns the final node output of the graph.
 
 #### Asynchronous Execution
 
@@ -93,10 +98,17 @@ var config = RunnableConfig.builder()
                           .threadId("thread-1")
                           .build();
 
-var generator = graph.stream(inputs, config);
-for (var stepResult : generator) {
-    System.out.println("Step executed: " + stepResult);
-}
+compiledGraph.stream(inputs, config) // start streaming outputs from the graph execution
+        .forEachAsync( output -> // process each output as it is produced
+            System.out.println("Step executed: " + output))
+        .thenApply( GraphResult::from ) // holds final result in GraphResult
+        .thenAccept( result -> { // process the final result
+            if (result.isStateDataOrCheckpointSaverTag()) {
+                System.out.println("Final state: " + result.asStateDataOrLastCheckpointStateData());
+            } else if (result.isInterruptionMetadata()) {
+                System.out.println("Graph interrupted: " + result.asInterruptionMetadata());
+            }
+        });
 ```
 
 The `stream()` method returns an `AsyncGenerator` that yields the state updates after each node execution. This is particularly useful for:
@@ -219,8 +231,6 @@ var config = RunnableConfig.builder()
                           .putMetadata("isVip", true)
                           .build();
 
-// Modify existing configuration
-var updatedConfig = config.updateMetadata(Map.of("llmModel", "gpt-4"));
 ```
 
 #### GraphResult
@@ -247,22 +257,22 @@ Instead of manually checking types, use [GraphResult] to safely extract the resu
 // Get the final result direct from the generator
 GraphResult finalResult = GraphResult.from(generator);
 
-if ( finalResult.isEmpty ) {
+if ( finalResult.isEmpty() ) {
     System.out.println("result is empty");
 }
-else if (finalResult.isStateData()) {
-    Map<String, Object> state = result.asStateData();
+else if (finalResult.isStateDataOrCheckpointSaverTag()) {
+    Map<String, Object> state = finalResult.asStateDataOrLastCheckpointStateData();
     System.out.printf("Graph completed with state: %s%n", state);
 } else if (finalResult.isNodeOutput()) {
-    NodeOutput<?> output = result.asNodeOutput();
+    NodeOutput<?> output = finalResult.asNodeOutput();
     System.out.printf("Graph completed with node: %s%n", output.nodeId());
 } else if (finalResult.isInterruptionMetadata()) {
-    InterruptionMetadata<?> metadata = result.asInterruptionMetadata();
+    InterruptionMetadata<?> metadata = finalResult.asInterruptionMetadata();
     System.out.printf("Graph completed with interruption: %s%n", metadata);
 }
 ```
 
-The [GraphResult] class provides type-safe methods to check (`isStateData()`, `isNodeOutput()`, etc.) and retrieve (`asStateData()`, `asNodeOutput()`, etc.) each result type, preventing casting errors and making your code more maintainable.
+The [GraphResult] class provides type-safe methods to check (`isStateDataOrCheckpointSaverTag()`, `isNodeOutput()`, etc.) and retrieve (`asStateDataOrLastCheckpointStateData()`, `asNodeOutput()`, etc.) each result type, preventing casting errors and making your code more maintainable.
 
 ## State
 
