@@ -202,4 +202,42 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
      * @return the output produced by the reducer
      */
     <Output> Output reduce( Reducer<State,Output> reducer );
+
+    /**
+     * Generates a drawable graph representation of the state graph.
+     *
+     * @param type the type of graph representation to generate
+     * @param title the title of the graph
+     * @param printConditionalEdges whether to print conditional edges
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
+
+        final String content = reduce( type.generator.generate( title, printConditionalEdges) );
+
+        return new GraphRepresentation( type, content );
+    }
+
+    /**
+     * Generates a drawable graph representation of the state graph.
+     *
+     * @param type the type of graph representation to generate
+     * @param title the title of the graph
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
+        return getGraph( type, title, true );
+    }
+
+    /**
+     * Generates a drawable graph representation of the state graph with default title.
+     *
+     * @param type the type of graph representation to generate
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type ) {
+        return getGraph(type, "Graph Diagram", true);
+    }
+
+
 }

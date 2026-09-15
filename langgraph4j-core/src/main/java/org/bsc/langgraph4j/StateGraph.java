@@ -453,31 +453,6 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return compile(CompileConfig.builder().build());
     }
 
-    /**
-     * Generates a drawable graph representation of the state graph.
-     *
-     * @param type the type of graph representation to generate
-     * @param title the title of the graph
-     * @param printConditionalEdges whether to print conditional edges
-     * @return a diagram code of the state graph
-     */
-    public GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
-
-        final String content = reduce( type.generator.generate(title, printConditionalEdges) );
-
-        return new GraphRepresentation( type, content );
-    }
-
-    /**
-     * Generates a drawable graph representation of the state graph.
-     *
-     * @param type the type of graph representation to generate
-     * @param title the title of the graph
-     * @return a diagram code of the state graph
-     */
-    public GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
-        return getGraph( type, title, true );
-    }
 
     /**
      * Applies a reducer function to process the nodes and edges of this graph.
