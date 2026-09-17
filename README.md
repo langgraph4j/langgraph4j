@@ -234,14 +234,6 @@ Before you start, the shortest path is:
 Our state will hold a list of messages.
 
 ```java
-import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.state.Channels;
-import org.bsc.langgraph4j.state.Channel;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 // Define the state for our graph
 class SimpleState extends AgentState {
     public static final String MESSAGES_KEY = "messages";
@@ -266,10 +258,6 @@ class SimpleState extends AgentState {
 **2. Define the Nodes:**
 
 ```java
-import org.bsc.langgraph4j.action.NodeAction;
-import java.util.List;
-import java.util.Map;
-
 // Node that adds a greeting
 class GreeterNode implements NodeAction<SimpleState> {
     @Override
@@ -395,15 +383,15 @@ public class TestTool {
 
 ```java
 
-var model = OllamaChatModel.builder()
-            .modelName( "qwen2.5:7b" )
-            .baseUrl("http://localhost:11434")
-            .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
-            .logRequests(true)
-            .logResponses(true)
-            .maxRetries(2)
-            .temperature(0.0)
-            .build();
+var model OllamaChatModel.builder()
+                .modelName( <model name> )
+                .baseUrl("http://localhost:11434")
+                .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
+                .logRequests(true)
+                .logResponses(true)
+                .maxRetries(2)
+                .temperature(0.0)
+                .build();
 
 var agent = AgentExecutor.builder()
             .chatModel(model)
@@ -411,10 +399,8 @@ var agent = AgentExecutor.builder()
             .build()
             .compile();
 
-for (var item : agent.stream( Map.of( "messages", "perform test twice and return number of current active threads" ) ) ) {
-
-    System.out.println( item );
-}
+agent.stream( Map.of( "messages", "perform test twice and return number of current active threads" ) )
+                .forEachAsync( item -> System.out.println( item ));
 
 ```
 
@@ -446,12 +432,14 @@ public class TestTool {
 ```java
 
 var model = OllamaChatModel.builder()
-            .ollamaApi(OllamaApi.builder().baseUrl("http://localhost:11434").build())
-            .defaultOptions(OllamaOptions.builder()
-                    .model("qwen2.5:7b")
-                    .temperature(0.1)
-                    .build())
-            .build();
+                    .ollamaApi(OllamaApi.builder()
+                            .baseUrl("http://localhost:11434")
+                            .build())
+                    .options(OllamaChatOptions.builder()
+                            .model(model)
+                            .temperature(0.0)
+                            .build())
+                    .build();
 
 var agent = AgentExecutor.builder()
         .chatModel(model)
@@ -460,10 +448,8 @@ var agent = AgentExecutor.builder()
         .compile()
         ;
 
-for (var item : agent.stream( Map.of( "messages", "perform test twice and return number of current active threads" ) ) ) {
-
-    System.out.println( item );
-}
+agent.stream( Map.of( "messages", "perform test twice and return number of current active threads" ) )
+        .forEachAsync( item -> System.out.println( item ));
 ```
 
 ## Key Capabilities Overview
