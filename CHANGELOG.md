@@ -2,6 +2,70 @@
 
 
 
+<!-- "name: v1.9.0" is a release tag -->
+
+## [v1.9.0](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0) (2026-09-17)
+
+### Features
+
+ *  **core**  add support for custom dispatcher in RunnableConfig ([f8f59df203d5db9](https://github.com/bsorrentino/langgraph4j/commit/f8f59df203d5db9a46fe5e745ba2c95eddd76f51))
+   
+ *  **core**  add Dispatcher class for custom async data dispatching ([40880ff1c8bb41c](https://github.com/bsorrentino/langgraph4j/commit/40880ff1c8bb41c11b67cb3f944bcc47b364a9eb))
+     > work on #427
+   
+
+### Bug Fixes
+
+ -  **sqlite-saver**  move langgraph4j-javelit dependency to a profile for JDK 21+ ([3e464eb36be14a4](https://github.com/bsorrentino/langgraph4j/commit/3e464eb36be14a40cc60765cbace0be4f7f77220))
+
+ -  **tests**  enhance assertions in CompiledSubGraphTest for state validation ([843b610192a2337](https://github.com/bsorrentino/langgraph4j/commit/843b610192a2337456e26f3d1fbd6165034d56c0))
+
+ -  **postgres-saver**  remove langgraph4j-javelit dependency ([d1e7c79b491cc67](https://github.com/bsorrentino/langgraph4j/commit/d1e7c79b491cc67e02101e8b5d3f117149a18b9a))
+
+ -  **sqlite-saver**  mark langgraph4j-javelit dependency as optional ([8642a88d44dc01f](https://github.com/bsorrentino/langgraph4j/commit/8642a88d44dc01f2bbcf83b66703b4258ece3ddb))
+
+
+### Refactor
+
+ -  **core**  move getGraph methods to GraphDefinition interface ([fe81a1409dbc74c](https://github.com/bsorrentino/langgraph4j/commit/fe81a1409dbc74c0fcf4a729b3cd3a95c5343a32))
+   
+ -  **core**  enhance updateRunnableConfigMetadata to support custom dispatcher ([71c2f0609ceac87](https://github.com/bsorrentino/langgraph4j/commit/71c2f0609ceac877e2b56f2c5a310895700828cb))
+   
+
+### Test 
+
+ -  **core**  add custom output for elapsed time tracking in LG4JCustomOutputTest ([1fb0572c3d89dd5](https://github.com/bsorrentino/langgraph4j/commit/1fb0572c3d89dd5354194f095ff232ea46fed98f))
+   
+ -  simplify custom dispatcher usage in LG4JCustomOutputTest ([0bc5c56532f5b15](https://github.com/bsorrentino/langgraph4j/commit/0bc5c56532f5b150840eab35206f9f75afdb9b1e))
+   
+ -  **core**  add unit tests for custom output dispatching in LG4J ([e823fbb42d2bc44](https://github.com/bsorrentino/langgraph4j/commit/e823fbb42d2bc44bf3f3de90b5668658d410eabf))
+   
+
+### Documentation
+
+ -  add documentation for emitting custom output from a node in graph execution ([6646b48086f7ee6](https://github.com/bsorrentino/langgraph4j/commit/6646b48086f7ee634aae90263ada1eda6e3dc1c9))
+     > work on #427
+
+ -  **core**  update RunnableConfig attributes section for clarity and improved structure ([519fca448e6428e](https://github.com/bsorrentino/langgraph4j/commit/519fca448e6428e65172d7cdd44a1f96433ee84c))
+
+ -  **core**  update graph execution methods for clarity and improved output handling ([c71f987b896c482](https://github.com/bsorrentino/langgraph4j/commit/c71f987b896c4823dbc51ab780ab128d676b9ea8))
+
+ -  **README**  update streaming example in SimpleGraphApp for clarity and improved output handling ([cf8905686955e0f](https://github.com/bsorrentino/langgraph4j/commit/cf8905686955e0fb65df6946669a1f697362f1af))
+
+ -  update changelog ([bccba6b708450c1](https://github.com/bsorrentino/langgraph4j/commit/bccba6b708450c1261d9f7201c3bb02e6c1b5bd7))
+
+
+### ALM 
+
+ -  bump to next version 1.9.0 ([e11f80c8b33d97e](https://github.com/bsorrentino/langgraph4j/commit/e11f80c8b33d97eae566584e853bc8a42c0dfe94))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([f581a79a284e605](https://github.com/bsorrentino/langgraph4j/commit/f581a79a284e6058e3f3de21793f953044687282))
+   
+
+
+
+
+
 <!-- "name: v1.9.0-beta7" is a release tag -->
 
 ## [v1.9.0-beta7](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0-beta7) (2026-09-12)
@@ -9,9 +73,9 @@
 ### Features
 
  *  **oracle-saver**  Align implementation of Oracle Saver to Version 2 ([9ced3310942316d](https://github.com/bsorrentino/langgraph4j/commit/9ced3310942316d442c5329b36d4a3098ca14f61))
-
+   
  *  Align implementation of MySQL Saver to Version 2 ([fe8d28a44cdbc43](https://github.com/bsorrentino/langgraph4j/commit/fe8d28a44cdbc436b86d23de68897ee69f08587d))
-
+   
 
 ### Bug Fixes
 
@@ -41,28 +105,28 @@
 ### Refactor
 
  -  **oracle-saver**  update to data model version 1.1 ([ca465fa5813f6a8](https://github.com/bsorrentino/langgraph4j/commit/ca465fa5813f6a8658f218f37c5c56e7d288620f))
-
+   
  -  **oracle-saver**  improve checkpoint insertion and transaction handling ([91f4c76f0b6d682](https://github.com/bsorrentino/langgraph4j/commit/91f4c76f0b6d682bfecf253e3cd6ff42bb44659a))
-
+   
  -  **sqlite-saver**  change update checkpoint SQL data strategy ([f6c39b24937066b](https://github.com/bsorrentino/langgraph4j/commit/f6c39b24937066bd8c91de6d62ddbb2c43ad8142))
-
+   
  -  **mysql-saver**  streamline checkpoint insertion logic in AbstractMySQLSaver ([409e617a2d058d7](https://github.com/bsorrentino/langgraph4j/commit/409e617a2d058d742cd87ab65fbeff56b4ad9031))
-
+   
  -  **postgres-saver**  change update checkpoint SQL data strategy ([8f6d09939ca12d0](https://github.com/bsorrentino/langgraph4j/commit/8f6d09939ca12d04514e4c8f5214694b025d7a21))
-
+   
  -  rename MysqlSaver to extend AbstractMySQLServer and enhance SQL command handling ([c7245bcbf825364](https://github.com/bsorrentino/langgraph4j/commit/c7245bcbf82536491f4632e95aa3723be15af1db))
-
+   
  -  rename AbstractMysqlServer to AbstractMySQLServer and improve SQL command execution ([8c372a0bdae2d90](https://github.com/bsorrentino/langgraph4j/commit/8c372a0bdae2d90eec612a4a45e502b4e582e058))
+   
 
-
-### Test
+### Test 
 
  -  refactor to use the new ScriptedChatModel implementation ([34a35de28eead06](https://github.com/bsorrentino/langgraph4j/commit/34a35de28eead06021c19256ec61615b856b393e))
-
+   
  -  extract ScriptedChatModel from AgentExecutorMultiTurnCheckpointTest to future reuse ([bb201d8e736994d](https://github.com/bsorrentino/langgraph4j/commit/bb201d8e736994d3d185f212442a6d6bd193abf2))
-
+   
  -  disable LG4JCancellationTest due to timing issues in GitHub Actions ([2dafa924766b1b3](https://github.com/bsorrentino/langgraph4j/commit/2dafa924766b1b31bfa4346c2380c8f8d6c06f3f))
-
+   
 
 ### Documentation
 
@@ -83,14 +147,14 @@
  -  update changelog ([33862bb1346cd29](https://github.com/bsorrentino/langgraph4j/commit/33862bb1346cd297c4c6b5a9a900a739b9a1358a))
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.0-beta7 ([1afaba1bb46aa85](https://github.com/bsorrentino/langgraph4j/commit/1afaba1bb46aa85fe53ed9bdab5c41fdacbfdbac))
-
+   
  -  update langchain4j version to 1.20.0 and beta to 1.20.0-beta30 in pom.xml ([a7d5f1e0972bea9](https://github.com/bsorrentino/langgraph4j/commit/a7d5f1e0972bea9a07a9906f789c37189b2ab07d))
-
+   
  -  bump to next dev version 1.9-SNAPSHOT ([4d1d50945e81752](https://github.com/bsorrentino/langgraph4j/commit/4d1d50945e8175216e0674d7a37e210bf81c88fc))
-
+   
 
 
 
