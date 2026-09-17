@@ -562,7 +562,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Refactor internal streaming engine to support event emitting">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#emit-custom-output-from-a-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Emit custom output from a node
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Emit custom output from a node">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2005,6 +2016,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../core/emit-custom-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emit custom output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../core/subgraph/" class="md-nav__link">
         
   
@@ -2074,10 +2113,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
         
           
-          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
             
   
   
@@ -2095,8 +2134,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2930,6 +2969,13 @@
 <p>This new feature rely on the <code>AsyncGeneratorFlow</code> from <a href="https://github.com/bsorrentino/java-async-generator">async-generator 5.0</a>. This model is closer to Java Reactive Stream and will guarantee, 
 in the near future (2.0),  the support to <a href="https://projectreactor.io">Reactor Flow</a> and the possibility to emit custom event during graph execution as requinder in <a href="https://github.com/langgraph4j/langgraph4j/issues/402">#402</a></p>
 <p>Core graph execution and the Spring AI/LangChain4j streaming generators now use the new <code>AsyncGeneratorFlow</code>.</p>
+<h2 id="emit-custom-output-from-a-node">Emit custom output from a node</h2>
+<p>Nodes can now publish typed <code>NodeOutput</code> values directly to the active <code>graph.stream(...)</code>
+output while they execute. Obtain a dispatcher from <code>RunnableConfig.customDispatcher()</code> and
+call <code>dispatchSync(...)</code> or <code>dispatchAsync(...)</code> with a custom <code>NodeOutput</code> subclass. These
+events are interleaved with the graph's regular <code>START</code>, node, and <code>END</code> outputs without
+changing the graph state. See <a href="../core/emit-custom-output/">Emit custom output from a node</a>
+for a complete example.</p>
 <h3 id="compatibility">Compatibility</h3>
 <p>Normal iteration through <code>stream()</code> remains source-compatible, but code that subclasses streaming
 generators, supplies a <code>BlockingQueue</code>, or depends on <code>AsyncGenerator.WithResult</code> must migrate.</p>
@@ -3193,7 +3239,7 @@ that is a <code>GraphDefinition.Reducer</code> that exports a graph, including p
 <span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
 <span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">      </span><span class="nt">&lt;artifactId&gt;</span>langgraph4j-bom<span class="nt">&lt;/artifactId&gt;</span>
-<span class="w">      </span><span class="nt">&lt;version&gt;</span>1.9.0-beta7<span class="nt">&lt;/version&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>1.9.0<span class="nt">&lt;/version&gt;</span>
 <span class="w">      </span><span class="nt">&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;</span>
 <span class="w">      </span><span class="nt">&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
 <span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>

@@ -1603,10 +1603,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#configuration-attributes_1" class="md-nav__link">
+  <a href="#configuration-builder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration Attributes
+        Configuration Builder
       
     </span>
   </a>
@@ -2195,6 +2195,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../emit-custom-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emit custom output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../subgraph/" class="md-nav__link">
         
   
@@ -2267,10 +2295,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
         
           
-          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
             
   
   
@@ -2288,8 +2316,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3221,20 +3249,31 @@ To emphasize: <code>Nodes</code> and <code>Edges</code> are like functions - the
 <span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">)</span>
 <span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
-<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="w"> </span><span class="n">GraphInput</span><span class="p">.</span><span class="na">noArgs</span><span class="p">(),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="na">orElse</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">NodeOutput</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">invokeFinal</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">noArgs</span><span class="p">(),</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">output</span><span class="p">.</span><span class="na">orElse</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
 </code></pre></div>
-<p>The <code>execute()</code> method blocks until the graph completes and returns the final state of the graph.</p>
+<p>The <code>invoke()</code> method blocks until the graph completes and returns the final state of the graph.
+The <code>invokeFinal()</code> method blocks until the graph completes and returns the final node output of the graph.</p>
 <h4 id="asynchronous-execution">Asynchronous Execution</h4>
 <p>For more detailed visibility into the execution flow, use the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">stream</a> method which returns an [AsyncGenerator] that allows you to iterate over each step executed in the workflow:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
 <span class="w">                          </span><span class="p">.</span><span class="na">threadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">)</span>
 <span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-<span class="kd">var</span><span class="w"> </span><span class="n">generator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">var</span><span class="w"> </span><span class="n">stepResult</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">generator</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Step executed: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">stepResult</span><span class="p">);</span>
-<span class="p">}</span>
+<span class="n">compiledGraph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="c1">// start streaming outputs from the graph execution</span>
+<span class="w">        </span><span class="p">.</span><span class="na">forEachAsync</span><span class="p">(</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="c1">// process each output as it is produced</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Step executed: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">output</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">thenApply</span><span class="p">(</span><span class="w"> </span><span class="n">GraphResult</span><span class="p">::</span><span class="n">from</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="c1">// holds final result in GraphResult</span>
+<span class="w">        </span><span class="p">.</span><span class="na">thenAccept</span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// process the final result</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">isStateDataOrCheckpointSaverTag</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Final state: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asStateDataOrLastCheckpointStateData</span><span class="p">());</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Graph interrupted: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">());</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">});</span>
 </code></pre></div>
 <p>The <code>stream()</code> method returns an <code>AsyncGenerator</code> that yields the state updates after each node execution. This is particularly useful for:</p>
 <ul>
@@ -3257,93 +3296,115 @@ To emphasize: <code>Nodes</code> and <code>Edges</code> are like functions - the
 
 <span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">);</span>
 </code></pre></div>
-<h5 id="configuration-attributes_1">Configuration Attributes</h5>
+<h5 id="configuration-builder">Configuration Builder</h5>
 <table>
 <thead>
 <tr>
-<th>Attribute</th>
-<th>Type</th>
+<th>Method</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>threadId</strong></td>
-<td><code>String</code></td>
+<td><code>threadId( String )</code></td>
 <td>A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history.</td>
 </tr>
 <tr>
-<td><strong>checkPointId</strong></td>
-<td><code>String</code></td>
-<td>Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning.</td>
+<td><code>checkPointId( String )</code></td>
+<td>Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. It is managed by checkpoint saver</td>
 </tr>
 <tr>
-<td><strong>nextNode</strong></td>
-<td><code>String</code></td>
+<td><code>nextNode( String )</code></td>
 <td>Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions.</td>
 </tr>
 <tr>
-<td><strong>streamMode</strong></td>
-<td><code>CompiledGraph.StreamMode</code></td>
-<td>Controls how results are streamed during execution. Options are <code>VALUES</code> (full state after each step) or <code>UPDATES</code> (only state changes). Defaults to <code>VALUES</code>.</td>
+<td><code>streamMode( CompiledGraph.StreamMode )</code></td>
+<td>Controls how results are streamed during execution. The default is <code>VALUES</code>; <code>SNAPSHOTS</code> is also available when checkpoint snapshots are required.</td>
 </tr>
 <tr>
-<td><strong>recursionLimit</strong></td>
-<td><code>int</code></td>
-<td>Maximum number of execution steps for this invocation. Overrides the <code>CompileConfig</code> default and must be greater than zero.</td>
+<td><code>recursionLimit( Integer )</code></td>
+<td>Optional maximum number of execution steps for this invocation. When absent, the graph uses its configured default. The builder rejects values less than or equal to zero.</td>
 </tr>
 <tr>
-<td><strong>metadata</strong></td>
-<td><code>Map&lt;String, Object&gt;</code></td>
-<td>Custom key-value pairs available throughout execution. Useful for passing runtime context like user IDs, API keys, feature flags, or model selection that nodes and edges need access to.</td>
+<td><code>addParallelNodeExecutor( String nodeId, Executor)</code> stores an internal executor under a generated key in the form <code>__PARALLEL__(nodeId)</code>. Use that helper rather than writing the key directly.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disableCloneState()</code></td>
+<td>Disables state cloning during graph running</td>
+</tr>
+<tr>
+<td><code>putMetadata( String key, Object value )</code></td>
+<td>Add or replace a custom metadata entry to the configuration.</td>
+</tr>
+<tr>
+<td><code>addMetadata( String key, Object value )</code></td>
+<td>Adds a custom metadata entry to the configuration. Raise an error if key already exists.</td>
 </tr>
 </tbody>
 </table>
 <h5 id="reserved-attributes-metadata">Reserved attributes' metadata</h5>
-<p><code>RunnableConfig</code> provides several useful metadata that are reserved by the runtime and should not be overwritten:</p>
+<p><code>RunnableConfig</code> provides metadata entries that are reserved by the runtime and should not be overwritten:</p>
 <table>
 <thead>
 <tr>
-<th>Metadata Key</th>
-<th>Type</th>
-<th>Getter</th>
+<th>Metadata key</th>
+<th>Value type</th>
+<th>Accessor</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>"LG4j_STUDIO_MDK"</code></td>
+<td><code>LG4j_STUDIO_MDK</code></td>
 <td><code>Boolean</code></td>
 <td><code>config.isRunningInStudio()</code></td>
-<td>Internal flag used by Studio integrations.</td>
+<td>Internal flag indicating that the graph is running in Studio.</td>
 </tr>
 <tr>
-<td><code>"LG4j_NODE_ID"</code></td>
+<td><code>LG4j_NODE_ID</code></td>
 <td><code>String</code></td>
 <td><code>config.nodeId()</code></td>
-<td>Current executing node id, injected by the runtime.</td>
+<td>Current executing node ID, injected by the runtime.</td>
 </tr>
 <tr>
-<td><code>"LG4j_GRAPH_PATH"</code></td>
+<td><code>LG4j_GRAPH_PATH</code></td>
 <td><code>GraphPath</code></td>
-<td><code>config.graphPath()</code></td>
-<td>graph/subgraph path used to track nested executions.</td>
+<td><code>config.graphPath()</code> <em>(deprecated)</em></td>
+<td>Legacy graph/subgraph path for nested executions. Use <code>nodePath()</code> for the current node path.</td>
 </tr>
 <tr>
-<td><code>"LG4j_GRAPH_ID"</code></td>
-<td><code>Optional&lt;String&gt;</code></td>
+<td><code>LG4j_GRAPH_NODE_PATH</code></td>
+<td><code>GraphPath</code></td>
+<td><code>config.nodePath()</code></td>
+<td>Current node path within the graph hierarchy.</td>
+</tr>
+<tr>
+<td><code>LG4j_GRAPH_ID</code></td>
+<td><code>String</code></td>
 <td><code>config.graphId()</code></td>
-<td>Effective graph id propagated at runtime (for tracing/logging).</td>
+<td>Effective graph ID propagated at runtime for tracing and logging.</td>
 </tr>
 <tr>
-<td><code>"LG4j_SUBGRAPH_UPDATE_DATA"</code></td>
-<td><code>Map&lt;String,Object&gt;</code></td>
+<td><code>LG4j_SUBGRAPH_UPDATE_DATA</code></td>
+<td><code>Map&lt;String, Object&gt;</code></td>
 <td>Internal</td>
-<td>Reserved for subgraph resume/update handling. Do not use in application metadata.</td>
+<td>Subgraph resume/update data. Do not use in application metadata.</td>
+</tr>
+<tr>
+<td><code>LG4J_CUSTOM_DISPATCHER</code></td>
+<td><code>GraphDefinition.Dispatcher</code></td>
+<td><code>config.customDispatcher()</code></td>
+<td>Internal dispatcher used to dispatch custom node output by node action.</td>
+</tr>
+<tr>
+<td><code>LG4j_DISABLE_CLONE_STATE</code></td>
+<td><code>Boolean</code></td>
+<td><code>config.isCloneStateDisabled()</code></td>
+<td>Disables state cloning when set to <code>true</code>; exposed state may then reflect subsequent mutations.</td>
 </tr>
 </tbody>
 </table>
-<p>Additional internal keys can be generated at runtime (for example subgraph resume flags and per-parallel-node executor keys). Prefer <code>RunnableConfig</code> helper APIs such as <code>addParallelNodeExecutor(...)</code> instead of writing those keys manually.</p>
 <h5 id="accessing-runnableconfig-in-nodes-and-edges">Accessing RunnableConfig in Nodes and Edges</h5>
 <p>Since nodes and edges are functional interfaces, you can access the configuration through:</p>
 <p><strong>In AsyncNodeActionWithConfig:</strong></p>
@@ -3400,9 +3461,6 @@ To emphasize: <code>Nodes</code> and <code>Edges</code> are like functions - the
 <span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;llmModel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;gpt-4-turbo&quot;</span><span class="p">)</span>
 <span class="w">                          </span><span class="p">.</span><span class="na">putMetadata</span><span class="p">(</span><span class="s">&quot;isVip&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
 <span class="w">                          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
-
-<span class="c1">// Modify existing configuration</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">updatedConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">updateMetadata</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;llmModel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;gpt-4&quot;</span><span class="p">));</span>
 </code></pre></div>
 <h4 id="graphresult">GraphResult</h4>
 <p>The final result returned by <code>AsyncGenerator</code> from the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">stream</a> method is a generic <code>Object</code> that can contain different types of values depending on what was yielded during the graph execution. Rather than constantly checking the type with <code>instanceof</code>, LangGraph4j provides the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> utility class to safely identify and retrieve the correct result type.</p>
@@ -3443,21 +3501,21 @@ To emphasize: <code>Nodes</code> and <code>Edges</code> are like functions - the
 <div class="highlight"><pre><span></span><code><span class="c1">// Get the final result direct from the generator</span>
 <span class="n">GraphResult</span><span class="w"> </span><span class="n">finalResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GraphResult</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="n">generator</span><span class="p">);</span>
 
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">isEmpty</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;result is empty&quot;</span><span class="p">);</span>
 <span class="p">}</span>
-<span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isStateData</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asStateData</span><span class="p">();</span>
+<span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isStateDataOrCheckpointSaverTag</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asStateDataOrLastCheckpointStateData</span><span class="p">();</span>
 <span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with state: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
 <span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isNodeOutput</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">NodeOutput</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asNodeOutput</span><span class="p">();</span>
+<span class="w">    </span><span class="n">NodeOutput</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asNodeOutput</span><span class="p">();</span>
 <span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with node: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">output</span><span class="p">.</span><span class="na">nodeId</span><span class="p">());</span>
 <span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">InterruptionMetadata</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
+<span class="w">    </span><span class="n">InterruptionMetadata</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
 <span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with interruption: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class provides type-safe methods to check (<code>isStateData()</code>, <code>isNodeOutput()</code>, etc.) and retrieve (<code>asStateData()</code>, <code>asNodeOutput()</code>, etc.) each result type, preventing casting errors and making your code more maintainable.</p>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class provides type-safe methods to check (<code>isStateDataOrCheckpointSaverTag()</code>, <code>isNodeOutput()</code>, etc.) and retrieve (<code>asStateDataOrLastCheckpointStateData()</code>, <code>asNodeOutput()</code>, etc.) each result type, preventing casting errors and making your code more maintainable.</p>
 <h2 id="state">State</h2>
 <p>The first thing you do when you define a graph is define the <code>State</code> of the graph. The <code>State</code> consists of the <a href="#schema">schema of the graph</a> as well as <a href="#reducers">reducer</a> functions which specify how to apply updates to the state. The schema of the <code>State</code> will be the input schema to all <code>Nodes</code> and <code>Edges</code> in the graph, and should be defined using a map of  [<code>Channel</code>] object. All <code>Nodes</code> will emit updates to the <code>State</code> which are then applied using the specified <code>reducer</code> function.</p>
 <h3 id="schema">Schema</h3>
