@@ -85,6 +85,7 @@ nav:
       - Hooks: core/hooks.md
       - Parallel Branch: core/parallel-branch.md
       - Streaming: core/streaming.md
+      - Emit custom output: core/emit-custom-output.md
       - Subgraphs: core/subgraph.md
       - Cancellation: core/cancellation.md
       - Checkpoint saver:
