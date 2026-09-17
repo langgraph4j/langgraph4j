@@ -16,14 +16,14 @@ Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgra
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Sep 12, 2026 | `1.9.0` | last release
+| Sep 17, 2026 | `1.9.0` | last release
 
 
 | Release line | Java baseline | Notes |
 |---|---|---|
 | 1.9.x | Java 17+ | Release with new (experimental) features and improvements for preparing move to `2.0` |
 | `1.9-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
-| `1.8.x` LTS release | Java 17+ | This relase will be maintained for LTS support in branch `support/1.8.x`. Only bugfix and/or minor improvement |
+| `1.8.x` LTS release | Java 17+ | This release will be maintained for LTS support in branch `support/1.8.x`. Only bugfix and/or minor improvement |
 
 
 ## Star History
@@ -140,6 +140,7 @@ langgraph4j/
 ├── langgraph4j-redis-saver              # LangGraph4j persistent checkpoint saver based on Redis
 ├── langgraph4j-hazelcast-saver          # LangGraph4j persistent checkpoint saver based on Hazelcast
 ├── langgraph4j-sqlite-saver             # LangGraph4j persistent checkpoint saver based on SQLite
+├── langgraph4j-dsl                      # LangGraph4j domain-specific language (DSL) module
 ├── langchain4j/                         # LangChain4j integration
 │   ├── langchain4j-core/                # LangChain4j core components (integration required)
 │   └── langchain4j-agent/               # LangChain4j agent executor
