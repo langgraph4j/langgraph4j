@@ -138,31 +138,34 @@ var config = RunnableConfig.builder()
 graph.stream(inputs, config);
 ```
 
-##### Configuration Attributes
+##### Configuration Builder
 
-| Attribute | Type | Description |
-| --------- | ---- | ----------- |
-| **threadId** | `String` | A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history. |
-| **checkPointId** | `String` | Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. |
-| **nextNode** | `String` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
-| **streamMode** | `CompiledGraph.StreamMode` | Controls how results are streamed during execution. Options are `VALUES` (full state after each step) or `UPDATES` (only state changes). Defaults to `VALUES`. |
-| **recursionLimit** | `int` | Maximum number of execution steps for this invocation. Overrides the `CompileConfig` default and must be greater than zero. |
-| **metadata** | `Map<String, Object>` | Custom key-value pairs available throughout execution. Useful for passing runtime context like user IDs, API keys, feature flags, or model selection that nodes and edges need access to. |
+| Method |Description |
+| --------- | ----------- |
+| `threadId( String )` | A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history. |
+| `checkPointId( String ) ` | Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. It is managed by checkpoint saver|
+| `nextNode( String )` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
+| `streamMode( CompiledGraph.StreamMode )` | Controls how results are streamed during execution. The default is `VALUES`; `SNAPSHOTS` is also available when checkpoint snapshots are required. |
+| `recursionLimit( Integer )` | Optional maximum number of execution steps for this invocation. When absent, the graph uses its configured default. The builder rejects values less than or equal to zero. |
+| `addParallelNodeExecutor( String nodeId, Executor)` stores an internal executor under a generated key in the form `__PARALLEL__(nodeId)`. Use that helper rather than writing the key directly.|
+| `disableCloneState()` | Disables state cloning during graph running|
+| `putMetadata( String key, Object value )` | Add or replace a custom metadata entry to the configuration. |
+| `addMetadata( String key, Object value )` | Adds a custom metadata entry to the configuration. Raise an error if key already exists. |
 
 ##### Reserved attributes' metadata
 
-`RunnableConfig` provides several useful metadata that are reserved by the runtime and should not be overwritten:
+`RunnableConfig` provides metadata entries that are reserved by the runtime and should not be overwritten:
 
-| Metadata Key |Type | Getter | Purpose |
+| Metadata key | Value type | Accessor | Purpose |
 | ------------------ | ---- | ---- | ------- |
-| `"LG4j_STUDIO_MDK"` | `Boolean` | `config.isRunningInStudio()` | Internal flag used by Studio integrations.|
-| `"LG4j_NODE_ID"` | `String` | `config.nodeId()`| Current executing node id, injected by the runtime. |
-| `"LG4j_GRAPH_PATH"` | `GraphPath` | `config.graphPath()`| graph/subgraph path used to track nested executions. |
-| `"LG4j_GRAPH_ID"` | `Optional<String>` | `config.graphId()` | Effective graph id propagated at runtime (for tracing/logging). |
-| `"LG4j_SUBGRAPH_UPDATE_DATA"` | `Map<String,Object>` | Internal | Reserved for subgraph resume/update handling. Do not use in application metadata. |
-
-Additional internal keys can be generated at runtime (for example subgraph resume flags and per-parallel-node executor keys). Prefer `RunnableConfig` helper APIs such as `addParallelNodeExecutor(...)` instead of writing those keys manually.
-
+| `LG4j_STUDIO_MDK` | `Boolean` | `config.isRunningInStudio()` | Internal flag indicating that the graph is running in Studio. |
+| `LG4j_NODE_ID` | `String` | `config.nodeId()` | Current executing node ID, injected by the runtime. |
+| `LG4j_GRAPH_PATH` | `GraphPath` | `config.graphPath()` *(deprecated)* | Legacy graph/subgraph path for nested executions. Use `nodePath()` for the current node path. |
+| `LG4j_GRAPH_NODE_PATH` | `GraphPath` | `config.nodePath()` | Current node path within the graph hierarchy. |
+| `LG4j_GRAPH_ID` | `String` | `config.graphId()` | Effective graph ID propagated at runtime for tracing and logging. |
+| `LG4j_SUBGRAPH_UPDATE_DATA` | `Map<String, Object>` | Internal | Subgraph resume/update data. Do not use in application metadata. |
+| `LG4J_CUSTOM_DISPATCHER` | `GraphDefinition.Dispatcher` | `config.customDispatcher()` | Internal dispatcher used to dispatch custom node output by node action. |
+| `LG4j_DISABLE_CLONE_STATE` | `Boolean` | `config.isCloneStateDisabled()` | Disables state cloning when set to `true`; exposed state may then reflect subsequent mutations. |
 
 ##### Accessing RunnableConfig in Nodes and Edges
 
