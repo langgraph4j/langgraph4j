@@ -16,7 +16,7 @@ Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgra
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Sep 12, 2026 | `1.9.0-beta7` | last release
+| Sep 12, 2026 | `1.9.0` | last release
 
 
 | Release line | Java baseline | Notes |

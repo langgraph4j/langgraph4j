@@ -379,14 +379,13 @@ Change the LangGraph4j version in your BOM or individual dependencies:
     <dependency>
       <groupId>org.bsc.langgraph4j</groupId>
       <artifactId>langgraph4j-bom</artifactId>
-      <version>1.9.0-beta7</version>
+      <version>1.9.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
   </dependencies>
 </dependencyManagement>
 ```
-
 
 
 
