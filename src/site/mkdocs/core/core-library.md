@@ -78,11 +78,16 @@ var config = RunnableConfig.builder()
                           .threadId("thread-1")
                           .build();
 
-Map<String, Object> result = graph.execute(inputs, config);
-System.out.println(result);
+Optional<State> state = graph.invoke( GraphInput.noArgs(), config);
+System.out.println( state.orElse(null) );
+
+Optional<NodeOutput<State>> output = graph.invokeFinal(GraphInput.noArgs(), config);
+System.out.println( output.orElse(null) );
+
 ```
 
-The `execute()` method blocks until the graph completes and returns the final state of the graph.
+The `invoke()` method blocks until the graph completes and returns the final state of the graph.
+The `invokeFinal()` method blocks until the graph completes and returns the final node output of the graph.
 
 #### Asynchronous Execution
 
@@ -93,10 +98,17 @@ var config = RunnableConfig.builder()
                           .threadId("thread-1")
                           .build();
 
-var generator = graph.stream(inputs, config);
-for (var stepResult : generator) {
-    System.out.println("Step executed: " + stepResult);
-}
+compiledGraph.stream(inputs, config) // start streaming outputs from the graph execution
+        .forEachAsync( output -> // process each output as it is produced
+            System.out.println("Step executed: " + output))
+        .thenApply( GraphResult::from ) // holds final result in GraphResult
+        .thenAccept( result -> { // process the final result
+            if (result.isStateDataOrCheckpointSaverTag()) {
+                System.out.println("Final state: " + result.asStateDataOrLastCheckpointStateData());
+            } else if (result.isInterruptionMetadata()) {
+                System.out.println("Graph interrupted: " + result.asInterruptionMetadata());
+            }
+        });
 ```
 
 The `stream()` method returns an `AsyncGenerator` that yields the state updates after each node execution. This is particularly useful for:
@@ -126,31 +138,34 @@ var config = RunnableConfig.builder()
 graph.stream(inputs, config);
 ```
 
-##### Configuration Attributes
+##### Configuration Builder
 
-| Attribute | Type | Description |
-| --------- | ---- | ----------- |
-| **threadId** | `String` | A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history. |
-| **checkPointId** | `String` | Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. |
-| **nextNode** | `String` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
-| **streamMode** | `CompiledGraph.StreamMode` | Controls how results are streamed during execution. Options are `VALUES` (full state after each step) or `UPDATES` (only state changes). Defaults to `VALUES`. |
-| **recursionLimit** | `int` | Maximum number of execution steps for this invocation. Overrides the `CompileConfig` default and must be greater than zero. |
-| **metadata** | `Map<String, Object>` | Custom key-value pairs available throughout execution. Useful for passing runtime context like user IDs, API keys, feature flags, or model selection that nodes and edges need access to. |
+| Method |Description |
+| --------- | ----------- |
+| `threadId( String )` | A unique identifier for the execution thread/session. Essential for checkpoint-based persistence, as it groups related executions together. Allows resuming interrupted graphs or maintaining conversation history. |
+| `checkPointId( String ) ` | Specific checkpoint identifier within a thread. Useful for resuming execution from a specific point rather than from the beginning. It is managed by checkpoint saver|
+| `nextNode( String )` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
+| `streamMode( CompiledGraph.StreamMode )` | Controls how results are streamed during execution. The default is `VALUES`; `SNAPSHOTS` is also available when checkpoint snapshots are required. |
+| `recursionLimit( Integer )` | Optional maximum number of execution steps for this invocation. When absent, the graph uses its configured default. The builder rejects values less than or equal to zero. |
+| `addParallelNodeExecutor( String nodeId, Executor)` stores an internal executor under a generated key in the form `__PARALLEL__(nodeId)`. Use that helper rather than writing the key directly.|
+| `disableCloneState()` | Disables state cloning during graph running|
+| `putMetadata( String key, Object value )` | Add or replace a custom metadata entry to the configuration. |
+| `addMetadata( String key, Object value )` | Adds a custom metadata entry to the configuration. Raise an error if key already exists. |
 
 ##### Reserved attributes' metadata
 
-`RunnableConfig` provides several useful metadata that are reserved by the runtime and should not be overwritten:
+`RunnableConfig` provides metadata entries that are reserved by the runtime and should not be overwritten:
 
-| Metadata Key |Type | Getter | Purpose |
+| Metadata key | Value type | Accessor | Purpose |
 | ------------------ | ---- | ---- | ------- |
-| `"LG4j_STUDIO_MDK"` | `Boolean` | `config.isRunningInStudio()` | Internal flag used by Studio integrations.|
-| `"LG4j_NODE_ID"` | `String` | `config.nodeId()`| Current executing node id, injected by the runtime. |
-| `"LG4j_GRAPH_PATH"` | `GraphPath` | `config.graphPath()`| graph/subgraph path used to track nested executions. |
-| `"LG4j_GRAPH_ID"` | `Optional<String>` | `config.graphId()` | Effective graph id propagated at runtime (for tracing/logging). |
-| `"LG4j_SUBGRAPH_UPDATE_DATA"` | `Map<String,Object>` | Internal | Reserved for subgraph resume/update handling. Do not use in application metadata. |
-
-Additional internal keys can be generated at runtime (for example subgraph resume flags and per-parallel-node executor keys). Prefer `RunnableConfig` helper APIs such as `addParallelNodeExecutor(...)` instead of writing those keys manually.
-
+| `LG4j_STUDIO_MDK` | `Boolean` | `config.isRunningInStudio()` | Internal flag indicating that the graph is running in Studio. |
+| `LG4j_NODE_ID` | `String` | `config.nodeId()` | Current executing node ID, injected by the runtime. |
+| `LG4j_GRAPH_PATH` | `GraphPath` | `config.graphPath()` *(deprecated)* | Legacy graph/subgraph path for nested executions. Use `nodePath()` for the current node path. |
+| `LG4j_GRAPH_NODE_PATH` | `GraphPath` | `config.nodePath()` | Current node path within the graph hierarchy. |
+| `LG4j_GRAPH_ID` | `String` | `config.graphId()` | Effective graph ID propagated at runtime for tracing and logging. |
+| `LG4j_SUBGRAPH_UPDATE_DATA` | `Map<String, Object>` | Internal | Subgraph resume/update data. Do not use in application metadata. |
+| `LG4J_CUSTOM_DISPATCHER` | `GraphDefinition.Dispatcher` | `config.customDispatcher()` | Internal dispatcher used to dispatch custom node output by node action. |
+| `LG4j_DISABLE_CLONE_STATE` | `Boolean` | `config.isCloneStateDisabled()` | Disables state cloning when set to `true`; exposed state may then reflect subsequent mutations. |
 
 ##### Accessing RunnableConfig in Nodes and Edges
 
@@ -219,8 +234,6 @@ var config = RunnableConfig.builder()
                           .putMetadata("isVip", true)
                           .build();
 
-// Modify existing configuration
-var updatedConfig = config.updateMetadata(Map.of("llmModel", "gpt-4"));
 ```
 
 #### GraphResult
@@ -247,22 +260,22 @@ Instead of manually checking types, use [GraphResult] to safely extract the resu
 // Get the final result direct from the generator
 GraphResult finalResult = GraphResult.from(generator);
 
-if ( finalResult.isEmpty ) {
+if ( finalResult.isEmpty() ) {
     System.out.println("result is empty");
 }
-else if (finalResult.isStateData()) {
-    Map<String, Object> state = result.asStateData();
+else if (finalResult.isStateDataOrCheckpointSaverTag()) {
+    Map<String, Object> state = finalResult.asStateDataOrLastCheckpointStateData();
     System.out.printf("Graph completed with state: %s%n", state);
 } else if (finalResult.isNodeOutput()) {
-    NodeOutput<?> output = result.asNodeOutput();
+    NodeOutput<?> output = finalResult.asNodeOutput();
     System.out.printf("Graph completed with node: %s%n", output.nodeId());
 } else if (finalResult.isInterruptionMetadata()) {
-    InterruptionMetadata<?> metadata = result.asInterruptionMetadata();
+    InterruptionMetadata<?> metadata = finalResult.asInterruptionMetadata();
     System.out.printf("Graph completed with interruption: %s%n", metadata);
 }
 ```
 
-The [GraphResult] class provides type-safe methods to check (`isStateData()`, `isNodeOutput()`, etc.) and retrieve (`asStateData()`, `asNodeOutput()`, etc.) each result type, preventing casting errors and making your code more maintainable.
+The [GraphResult] class provides type-safe methods to check (`isStateDataOrCheckpointSaverTag()`, `isNodeOutput()`, etc.) and retrieve (`asStateDataOrLastCheckpointStateData()`, `asNodeOutput()`, etc.) each result type, preventing casting errors and making your code more maintainable.
 
 ## State
 

@@ -16,7 +16,7 @@ Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgra
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Sep 12, 2026 | `1.9.0-beta7` | last release
+| Sep 12, 2026 | `1.9.0` | last release
 
 
 | Release line | Java baseline | Notes |
@@ -295,14 +295,6 @@ class ResponderNode implements NodeAction<SimpleState> {
 **3. Define and Compile the Graph:**
 
 ```java
-import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.GraphStateException;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
-import static org.bsc.langgraph4j.StateGraph.START;
-import static org.bsc.langgraph4j.StateGraph.END;
-
-import java.util.Map;
-
 public class SimpleGraphApp {
     
     public static void main(String[] args) throws GraphStateException {
@@ -323,14 +315,18 @@ public class SimpleGraphApp {
         var compiledGraph = stateGraph.compile();
 
         // Run the graph
-        // The `stream` method returns an AsyncGenerator.
-        // For simplicity, we'll collect results. In a real app, you might process them as they arrive.
-        // Here, the final state after execution is the item of interest.
-        
-        for (var item : compiledGraph.stream( Map.of( SimpleState.MESSAGES_KEY, "Let's, begin!" ) ) ) {
 
-            System.out.println( item );
-        }
+        compiledGraph.stream(inputs, config) // start streaming outputs from the graph execution
+                .forEachAsync( output -> // process each output as it is produced
+                    System.out.println("Step executed: " + output))
+                .thenApply( GraphResult::from ) // holds final result in GraphResult
+                .thenAccept( result -> { // process the final result
+                    if (result.isStateDataOrCheckpointSaverTag()) {
+                        System.out.println("Final state: " + result.asStateDataOrLastCheckpointStateData());
+                    } else if (result.isInterruptionMetadata()) {
+                        System.out.println("Graph interrupted: " + result.asInterruptionMetadata());
+                    }
+                });
 
     }
 }

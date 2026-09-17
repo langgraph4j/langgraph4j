@@ -1,5 +1,7 @@
 package org.bsc.langgraph4j;
 
+import org.bsc.async.AsyncGenerator;
+import org.bsc.async.v5.AsyncGeneratorFlow;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
@@ -171,6 +173,24 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
         }
 
     }
+
+    final class Dispatcher<State extends AgentState, Output extends NodeOutput<State>> {
+
+        final AsyncGeneratorFlow.Dispatcher<Output> delegate;
+
+        Dispatcher(AsyncGeneratorFlow.Dispatcher<Output> delegate) {
+            this.delegate = requireNonNull(delegate, "delegate cannot be null");
+        }
+
+        public void dispatchSync( Output data ) throws InterruptedException {
+            delegate.dispatchSync( AsyncGenerator.Data.of( data));
+        }
+
+        public void dispatchAsync( Output data ) {
+            delegate.dispatchAsync( AsyncGenerator.Data.of(data));
+        }
+    }
+
     /**
      * Applies a reducer function to process the nodes and edges of this graph.
      *
@@ -182,4 +202,42 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
      * @return the output produced by the reducer
      */
     <Output> Output reduce( Reducer<State,Output> reducer );
+
+    /**
+     * Generates a drawable graph representation of the state graph.
+     *
+     * @param type the type of graph representation to generate
+     * @param title the title of the graph
+     * @param printConditionalEdges whether to print conditional edges
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
+
+        final String content = reduce( type.generator.generate( title, printConditionalEdges) );
+
+        return new GraphRepresentation( type, content );
+    }
+
+    /**
+     * Generates a drawable graph representation of the state graph.
+     *
+     * @param type the type of graph representation to generate
+     * @param title the title of the graph
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
+        return getGraph( type, title, true );
+    }
+
+    /**
+     * Generates a drawable graph representation of the state graph with default title.
+     *
+     * @param type the type of graph representation to generate
+     * @return a diagram code of the state graph
+     */
+    default GraphRepresentation getGraph( GraphRepresentation.Type type ) {
+        return getGraph(type, "Graph Diagram", true);
+    }
+
+
 }

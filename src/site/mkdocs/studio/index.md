@@ -81,7 +81,7 @@ where `<port>` is the port you specified in your configuration and `<instance_id
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-jetty</artifactId>
-    <version>1.9.0-beta7</version>
+    <version>1.9.0</version>
 </dependency>
 ```
 
@@ -123,7 +123,7 @@ public static void main(String[] args) throws Exception {
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-springboot</artifactId>
-    <version>1.9.0-beta7</version>
+    <version>1.9.0</version>
 </dependency>
 ```
 
@@ -164,4 +164,3 @@ public class LangGraphStudioApplication {
 
 }
 ```
-

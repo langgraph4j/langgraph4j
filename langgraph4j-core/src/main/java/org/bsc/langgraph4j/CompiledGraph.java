@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.databind.util.ExceptionUtil;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.v5.AsyncGeneratorFlow;
+import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
@@ -20,6 +21,7 @@ import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -283,24 +285,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         return updateState(config, values, null);
     }
 
-    /**
-     * UPDATE RUNNABLE CONFIG METADATA
-     */
-    private RunnableConfig updateRunnableConfigMetadata( RunnableConfig config, String currentNodeId ) {
-        final var newMetadata = new HashMap<String,Object>(2);
-        newMetadata.put(RunnableConfig.NODE_ID, currentNodeId);
-        compileConfig.graphId()
-                .ifPresent( graphId -> {
-                    newMetadata.put(RunnableConfig.GRAPH_ID, graphId);
-                    if( config.graphPath().isEmpty() ) { // to avoid add graphId in subgraph cases
-                        newMetadata.put(RunnableConfig.GRAPH_PATH, config.graphPath().append(graphId) );
-                    }
-                });
-        newMetadata.put(RunnableConfig.GRAPH_NODE_PATH, config.nodePath().replaceLast(currentNodeId));
-
-        return config.updateMetadata( newMetadata );
-
-    }
 
     private Command nextNodeId(EdgeValue<State> route , Map<String,Object> state, String nodeId, RunnableConfig config ) throws Exception {
 
@@ -312,7 +296,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
         if( route.value() != null ) {
 
-            final var newConfig = updateRunnableConfigMetadata( config, nodeId );
+            final var newConfig = updateRunnableConfigMetadata( config, nodeId, null );
 
             final State derefState = stateGraph.getStateFactory().apply(state);
 
@@ -339,6 +323,33 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
         throw RunErrors.executionError.exception( config, "invalid edge value for nodeId: [%s] !".formatted(nodeId) );
     }
+
+    /**
+     * UPDATE RUNNABLE CONFIG METADATA
+     */
+    private <Output extends NodeOutput<State>> RunnableConfig updateRunnableConfigMetadata(
+            RunnableConfig config,
+            String currentNodeId,
+            AsyncGeneratorFlow.@Nullable Dispatcher<Output> dispatcher )
+    {
+        final var newMetadata = new HashMap<String,Object>(2);
+        newMetadata.put(RunnableConfig.NODE_ID, currentNodeId);
+        compileConfig.graphId()
+                .ifPresent( graphId -> {
+                    newMetadata.put(RunnableConfig.GRAPH_ID, graphId);
+                    if( config.graphPath().isEmpty() ) { // to avoid add graphId in subgraph cases
+                        newMetadata.put(RunnableConfig.GRAPH_PATH, config.graphPath().append(graphId) );
+                    }
+                });
+        newMetadata.put(RunnableConfig.GRAPH_NODE_PATH, config.nodePath().replaceLast(currentNodeId));
+        if( dispatcher != null ) {
+            newMetadata.putIfAbsent(RunnableConfig.CUSTOM_DISPATCHER, new Dispatcher<>(dispatcher));
+        }
+
+        return config.updateMetadata( newMetadata );
+
+    }
+
 
     /**
      * Determines the next node ID based on the current node ID and state.
@@ -415,7 +426,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
-        return AsyncGeneratorFlow.create( new Emitter<>( input, config ));
+
+        return AsyncGeneratorFlow.create(  new Emitter<>( input, config ) );
     }
 
     /**
@@ -451,15 +463,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( GraphInput input, RunnableConfig config )  {
-/*
-        requireNonNull(config, "config cannot be null");
-        return new AsyncNodeGeneratorWithEmbed<>(
-                requireNonNull( input, "input cannot be null" ),
-                requireNonNull( config, "config cannot be null").withStreamMode(StreamMode.SNAPSHOTS));
 
- */
-        return AsyncGeneratorFlow.create(
-                new Emitter<>(
+        return AsyncGeneratorFlow.create( new Emitter<>(
                         requireNonNull( input, "input cannot be null" ),
                         requireNonNull( config, "config cannot be null")
                                 .withStreamMode(StreamMode.SNAPSHOTS) ));
@@ -532,42 +537,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     @Deprecated(forRemoval = true)
     public Optional<State> invoke( Map<String,Object> inputs )  {
         return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() ).map( NodeOutput::state);
-    }
-
-    /**
-     * Generates a drawable graph representation of the state graph.
-     *
-     * @param type the type of graph representation to generate
-     * @param title the title of the graph
-     * @param printConditionalEdges whether to print conditional edges
-     * @return a diagram code of the state graph
-     */
-    public GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
-
-        final String content = reduce( type.generator.generate( title, printConditionalEdges) );
-
-        return new GraphRepresentation( type, content );
-    }
-
-    /**
-     * Generates a drawable graph representation of the state graph.
-     *
-     * @param type the type of graph representation to generate
-     * @param title the title of the graph
-     * @return a diagram code of the state graph
-     */
-    public GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
-        return getGraph( type, title, true );
-    }
-
-    /**
-     * Generates a drawable graph representation of the state graph with default title.
-     *
-     * @param type the type of graph representation to generate
-     * @return a diagram code of the state graph
-     */
-    public GraphRepresentation getGraph( GraphRepresentation.Type type ) {
-        return getGraph(type, "Graph Diagram", true);
     }
 
 
@@ -940,7 +909,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     context.setCurrentNodeId( context.nextNodeId() );
 
-                    config = updateRunnableConfigMetadata( config, context.currentNodeId() );
+                    config = updateRunnableConfigMetadata( config, context.currentNodeId(), $1 );
 
                     //
                     // EVALUATE ACTION
@@ -949,6 +918,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             .orElseThrow( () -> RunErrors.missingNode.exception( config, context.currentNodeId()));
 
                     final var clonedState = cloneState(context.currentState(), config);
+
 
                     try {
 

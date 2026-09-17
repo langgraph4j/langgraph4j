@@ -507,23 +507,25 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
             parentGraph.stream(input, runnableConfig)
                     .reduce((a, b) -> b)
                     .thenAccept( reduceResult -> {
-                        assertTrue(reduceResult.result().isEND());
-                        assertIterableEquals(List.of(
-                                "NODE1",
-                                "NODE2",
-                                "NODE3.1",
-                                "NODE3.2",
-                                "NODE3.3",
-                                "NODE3.4<myNewValue>",
-                                "NODE4<myNewValue>",
-                                "NODE5"), reduceResult.result().state().messages());
-
+                        final var  result = GraphResult.from(reduceResult.resultValue());
+                        if( result.isStateDataOrCheckpointSaverTag() ) {
+                            assertTrue(reduceResult.result().isEND());
+                            assertIterableEquals(List.of(
+                                    "NODE1",
+                                    "NODE2",
+                                    "NODE3.1",
+                                    "NODE3.2",
+                                    "NODE3.3",
+                                    "NODE3.4<myNewValue>",
+                                    "NODE4<myNewValue>",
+                                    "NODE5"), reduceResult.result().state().messages());
+                        }
                     })
                     .join();
 
         } catch( Exception e ) {
             log.error("testCompiledSubGraphInterruptionWithDifferentSaver", e);
-            parentSaver.release(runnableConfig);
+            parentSaver.releaseOnError(runnableConfig, e);
         }
     }
 

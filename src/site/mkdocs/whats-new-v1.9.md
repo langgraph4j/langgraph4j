@@ -10,6 +10,15 @@ in the near future (2.0),  the support to [Reactor Flow](https://projectreactor.
 
 Core graph execution and the Spring AI/LangChain4j streaming generators now use the new `AsyncGeneratorFlow`.
 
+## Emit custom output from a node
+
+Nodes can now publish typed `NodeOutput` values directly to the active `graph.stream(...)`
+output while they execute. Obtain a dispatcher from `RunnableConfig.customDispatcher()` and
+call `dispatchSync(...)` or `dispatchAsync(...)` with a custom `NodeOutput` subclass. These
+events are interleaved with the graph's regular `START`, node, and `END` outputs without
+changing the graph state. See [Emit custom output from a node](core/emit-custom-output.md)
+for a complete example.
+
 ### Compatibility
 
 Normal iteration through `stream()` remains source-compatible, but code that subclasses streaming
@@ -370,15 +379,13 @@ Change the LangGraph4j version in your BOM or individual dependencies:
     <dependency>
       <groupId>org.bsc.langgraph4j</groupId>
       <artifactId>langgraph4j-bom</artifactId>
-      <version>1.9.0-beta7</version>
+      <version>1.9.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
   </dependencies>
 </dependencyManagement>
 ```
-
-
 
 
 
