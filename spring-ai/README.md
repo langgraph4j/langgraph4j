@@ -1,4 +1,4 @@
-# LangGraph4j Spring AI Integration
+# Spring AI Integration
 
 This directory contains the Spring AI integration modules for LangGraph4j.
 Use `spring-ai-core` when you need reusable Spring AI adapters inside your own graphs, and use `spring-ai-agent` when you want a ready-made ReAct-style agent executor built on top of LangGraph4j.
