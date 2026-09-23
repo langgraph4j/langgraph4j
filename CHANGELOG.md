@@ -2,6 +2,61 @@
 
 
 
+<!-- "name: v1.9.1" is a release tag -->
+
+## [v1.9.1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.1) (2026-09-23)
+
+### Features
+
+ *  update AG-UI JSON module metadata with name and description ([9cbbeb328aa75e4](https://github.com/bsorrentino/langgraph4j/commit/9cbbeb328aa75e4b7fbdfc1f4944e4de7c6400ca))
+   
+ *  add new AG-UI integration modules ([c6e39e68c5ff561](https://github.com/bsorrentino/langgraph4j/commit/c6e39e68c5ff561700b104911dbf60872141361f))
+     > resolve #480
+   
+
+
+### Refactor
+
+ -  implement stateFactory() method in CompiledGraph to utilize stateGraph's factory ([6d3e0d3cb1c10e9](https://github.com/bsorrentino/langgraph4j/commit/6d3e0d3cb1c10e9eb2cb198d988d94842d3a55d9))
+   
+ -  replace deprecated getStateFactory() method with stateFactory() in StateGraph ([59956265f0e5af5](https://github.com/bsorrentino/langgraph4j/commit/59956265f0e5af5488126ea6bf910715101be7d8))
+   
+ -  add stateFactory() method to GraphDefinition for state management ([d2b16a9f9bddd7c](https://github.com/bsorrentino/langgraph4j/commit/d2b16a9f9bddd7c27f4c0f2bba9a055a8726e62d))
+   
+
+
+### Documentation
+
+ -  **ag-ui**  update readme and javadoc ([592157eedf5ec98](https://github.com/bsorrentino/langgraph4j/commit/592157eedf5ec98288e389d493217f638cca4930))
+
+ -  **ag-ui**  update readmme ([ec4c93bd7a73884](https://github.com/bsorrentino/langgraph4j/commit/ec4c93bd7a7388475bdab15e41ce8beb26102751))
+
+ -  update integration paths in mkdocs.yml to point to README files ([4e1d79b5fd15d35](https://github.com/bsorrentino/langgraph4j/commit/4e1d79b5fd15d35a00096502a259de3e9a1fa7b5))
+
+ -  update README to reflect version 1.9.0 changes ([d6e966720feade8](https://github.com/bsorrentino/langgraph4j/commit/d6e966720feade8f01db979a057dfee6e8fd2845))
+
+ -  clean up README and improving code examples ([b7bceb6f8e9c1bc](https://github.com/bsorrentino/langgraph4j/commit/b7bceb6f8e9c1bc19e98d3b7822c98c55860b2a7))
+
+ -  update release date for version 1.9.0 and clarify LTS release notes ([0d231f0b52f3739](https://github.com/bsorrentino/langgraph4j/commit/0d231f0b52f3739350644ddd71417462b301c857))
+
+ -  update changelog ([4e1c26cdf4938d5](https://github.com/bsorrentino/langgraph4j/commit/4e1c26cdf4938d5b963bc4042bb7c0ddf1aaf868))
+
+
+### ALM 
+
+ -  bump to next version 1.9.1 ([aa2a963acd3cf93](https://github.com/bsorrentino/langgraph4j/commit/aa2a963acd3cf9388a0f06f2e0db912309ba1e82))
+   
+ -  update module name to use a consistent namespace format ([53e4758b92e25d2](https://github.com/bsorrentino/langgraph4j/commit/53e4758b92e25d217ab48eaa8a59345d7272c63a))
+   
+ -  update AG-UI module names to use a consistent namespace format ([e171a759f83444e](https://github.com/bsorrentino/langgraph4j/commit/e171a759f83444e9790777fb1413e4e85232dbb0))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([51a6f2648d6ce19](https://github.com/bsorrentino/langgraph4j/commit/51a6f2648d6ce19a6723372f9572c301a0546e77))
+   
+
+
+
+
+
 <!-- "name: v1.9.0" is a release tag -->
 
 ## [v1.9.0](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.0) (2026-09-17)
