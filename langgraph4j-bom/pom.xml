@@ -61,6 +61,25 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!-- AG UI Integration -->
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-ag-ui-json</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-ag-ui-sdk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-ag-ui-springboot</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!--Open Telemetry -->
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
