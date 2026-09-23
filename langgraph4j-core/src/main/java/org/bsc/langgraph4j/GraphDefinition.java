@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -238,6 +239,8 @@ public sealed interface GraphDefinition<State extends AgentState> permits StateG
     default GraphRepresentation getGraph( GraphRepresentation.Type type ) {
         return getGraph(type, "Graph Diagram", true);
     }
+
+    AgentStateFactory<State> stateFactory();
 
 
 }
