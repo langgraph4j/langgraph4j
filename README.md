@@ -141,6 +141,10 @@ langgraph4j/
 ├── langgraph4j-hazelcast-saver          # LangGraph4j persistent checkpoint saver based on Hazelcast
 ├── langgraph4j-sqlite-saver             # LangGraph4j persistent checkpoint saver based on SQLite
 ├── langgraph4j-dsl                      # LangGraph4j domain-specific language (DSL) module
+├── ag-ui                                # [AG UI protocol](https://docs.ag-ui.com/introduction) integration
+│   ├── langgraph4j-ag-ui-json           # LangGraph4j AG UI JSON module
+│   ├── langgraph4j-ag-ui-sdk            # LangGraph4j AG UI SDK module
+│   └── langgraph4j-ag-ui-springboot     # LangGraph4j AG UI Spring Boot module
 ├── langchain4j/                         # LangChain4j integration
 │   ├── langchain4j-core/                # LangChain4j core components (integration required)
 │   └── langchain4j-agent/               # LangChain4j agent executor
