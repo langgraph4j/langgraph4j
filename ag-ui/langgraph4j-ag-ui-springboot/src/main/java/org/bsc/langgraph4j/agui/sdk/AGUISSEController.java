@@ -13,17 +13,51 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.concurrent.Flow;
 
+/**
+ * Spring Boot controller exposing a Server-Sent Events (SSE) endpoint compliant with the
+ * AG-UI protocol, driving the lifecycle of a registered LangGraph4j {@link AGUIAgent}.
+ * <p>
+ * A single {@code POST /sse/{agentId}} endpoint deserializes the incoming request body into
+ * an {@link AGUIRunAgentInput}, looks up the target agent from the {@link AGUIAgentRegistry},
+ * starts its run, and streams each produced AG-UI {@link Event} back to the client as a
+ * {@code text/event-stream} response, using an {@link SseEmitter} bridged to the agent's
+ * reactive {@link Flow.Publisher}. The connection is kept open until the agent run completes
+ * or fails, at which point the emitter is completed (successfully or with the corresponding
+ * error).
+ */
 @Controller
 public class AGUISSEController {
 
     private final AGUIAgentRegistry agents;
     private final com.agui.community.core.serialization.Serializer aguiSerializer;
 
+    /**
+     * Creates a new controller.
+     *
+     * @param agents         the registry used to resolve an agent by id
+     * @param aguiSerializer the serializer used to (de)serialize AG-UI requests/events to/from JSON
+     */
     public AGUISSEController(AGUIAgentRegistry agents, com.agui.community.core.serialization.Serializer aguiSerializer) {
         this.agents = agents;
         this.aguiSerializer = aguiSerializer;
     }
 
+    /**
+     * Starts (or resumes) a run of the agent identified by {@code agentId} and streams back
+     * the AG-UI events it produces as a Server-Sent Events response.
+     * <p>
+     * The request body is expected to be the JSON representation of an {@link AGUIRunAgentInput}.
+     * Each event emitted by the agent's {@link Flow.Publisher} is serialized to JSON and sent to
+     * the client as a named {@code "event"} SSE event; the emitter is completed when the agent
+     * run finishes, or completed with the corresponding error if the run or the event
+     * serialization/delivery fails.
+     *
+     * @param agentId the identifier of the agent to run, as registered in the {@link AGUIAgentRegistry}
+     * @param params  the JSON body describing the run request (see {@link AGUIRunAgentInput})
+     * @return an SSE response entity carrying the {@link SseEmitter} that will stream the AG-UI events
+     * @throws JsonProcessingException if the request body cannot be parsed
+     * @throws IllegalArgumentException if no agent is registered with the given {@code agentId}
+     */
     @PostMapping(
             value = "/sse/{agentId}",
             produces = MediaType.TEXT_EVENT_STREAM_VALUE)

@@ -24,10 +24,23 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Jackson-based implementation of the AG-UI {@link Serializer} protocol.
+ * <p>
+ * Configures a Jackson {@link ObjectMapper} suited to (de)serialize AG-UI core model classes
+ * (events, messages, interrupt/resume outcomes, enums with a JSON value, ...) to/from JSON,
+ * registering the required mixins ({@link EventMixin}, {@link MessageMixin}, {@link OutcomeMixin},
+ * {@link ResumeMixin}, {@link EnumWithValueMixin}) only if not already present, and relaxing
+ * deserialization so unknown properties are ignored and only non-null properties are serialized.
+ */
 public class AGUIJacksonSerializer implements Serializer {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a new serializer, building and configuring the underlying Jackson
+     * {@link ObjectMapper} with the mixins required to handle AG-UI core model classes.
+     */
     public AGUIJacksonSerializer() {
 
         JsonFactory factory = JsonFactory.builder()
@@ -65,6 +78,13 @@ public class AGUIJacksonSerializer implements Serializer {
         }
     }
 
+    /**
+     * Serializes the given value to its JSON string representation.
+     *
+     * @param value the object to serialize
+     * @return the JSON representation of {@code value}
+     * @throws RuntimeException if serialization fails
+     */
     @Override
     public String serialize(Object value) {
         try {
@@ -74,6 +94,15 @@ public class AGUIJacksonSerializer implements Serializer {
         }
     }
 
+    /**
+     * Deserializes the given JSON string into an instance of the given type.
+     *
+     * @param json the JSON string to deserialize
+     * @param type the target type
+     * @param <T>  the target type
+     * @return the deserialized instance
+     * @throws RuntimeException if deserialization fails
+     */
     @Override
     public <T> T deserialize(String json, Class<T> type) {
         try {
@@ -83,6 +112,15 @@ public class AGUIJacksonSerializer implements Serializer {
         }
     }
 
+    /**
+     * Deserializes the given JSON string into a list of elements of the given type.
+     *
+     * @param json        the JSON string to deserialize
+     * @param elementType the type of the list elements
+     * @param <T>         the type of the list elements
+     * @return the deserialized list
+     * @throws RuntimeException if deserialization fails
+     */
     @Override
     public <T> List<T> deserializeList(String json, Class<T> elementType) {
         try {

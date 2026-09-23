@@ -2,6 +2,7 @@
 
 Make LangGraph4j compliant with [AG-UI protocol][AG-UI] with [CopilotKit] integration
 
+
 ## Architecture
 
 ```mermaid
@@ -45,6 +46,29 @@ flowchart LR
 * AG-UI community sdk for java version `0.1.1`
 * [CopilotKit `4`](https://www.copilotkit.ai)
 
+## Modules
+
+### [langgraph4j-ag-ui-sdk](./langgraph4j-ag-ui-sdk/README.md)
+ Core Java SDK implementing the AG-UI protocol on top of
+  LangGraph4j: the `AGUIAgent`/`AGUIAgentBase` abstractions that bridge a LangGraph4j `CompiledGraph`
+  execution to a stream of AG-UI events, the `AGUIAgentRegistry` used to look up agents by id, the
+  `AGUIHook` node hook that automatically emits step lifecycle events, and the `AGUINodeOutput`
+  bridge type together with the `AGUIRunAgentInput` request wrapper.
+
+### [langgraph4j-ag-ui-json](./langgraph4j-ag-ui-json/README.md)
+ Jackson-based implementation of the AG-UI serialization protocol
+  (`AGUIJacksonSerializer`), providing the Jackson mixins required to (de)serialize AG-UI core
+  model classes (events, messages, interrupt/resume outcomes, ...) to/from JSON.
+
+### [langgraph4j-ag-ui-springboot](./langgraph4j-ag-ui-springboot/README.md)
+ Spring Boot integration exposing the SDK's agents over HTTP:
+  the `AGUISSEController` publishes a Server-Sent Events endpoint compliant with the AG-UI protocol,
+  and the module's test sources provide a reference implementation showing both the CopilotKit HITL
+  (Human-In-The-Loop) approval flow and a custom AG-UI `Interrupt`/`Resume` based interruption flow.
+
+### [copilot-app](./copilot-app/README.md)
+ Next.js/CopilotKit starter application demonstrating how to build a
+  browser-based UI on top of a LangGraph4j agent exposed through this AG-UI integration.
 
 ## References
 
