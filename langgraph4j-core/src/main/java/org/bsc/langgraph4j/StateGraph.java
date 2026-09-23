@@ -123,9 +123,24 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
          return stateSerializer;
     }
 
+    /**
+     * @deprecated use {@link #stateFactory()} instead
+     */
+    @Deprecated( since = "1.9.1" )
     public final AgentStateFactory<State> getStateFactory() {
+        return stateFactory();
+    }
+
+    /**
+     * Returns the state factory associated with this graph.
+     *
+     * @return the state factory
+     */
+    @Override
+    public final AgentStateFactory<State> stateFactory() {
         return stateSerializer.stateFactory();
     }
+
 
     public Map<String, Channel<?>> getChannels() {
         return unmodifiableMap(channels);

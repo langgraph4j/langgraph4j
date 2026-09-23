@@ -4,14 +4,14 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.9.0</version>
+        <version>1.9.1</version>
     </parent>
 
     <artifactId>langgraph4j-redis-saver</artifactId>
     <packaging>jar</packaging>
 
     <description>Redis Saver for LangGraph4j</description>
-    <name>langgraph4j::redis-saver</name>
+    <name>langgraph4j::redis::saver</name>
     <url>https://github.com/langgraph4j/langgraph4j</url>
 
     <scm>

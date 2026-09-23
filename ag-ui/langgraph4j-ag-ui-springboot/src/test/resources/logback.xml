@@ -1,0 +1,31 @@
+<configuration>
+
+    <!-- 1. Define the Appender (the destination) -->
+    <!-- This corresponds to 'handlers = java.util.logging.ConsoleHandler' -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--
+            This pattern translates your format: 'java.util.logging.SimpleFormatter.format=%5$s %6$s%n'
+            - %msg is the log message (like %5$s).
+            - %n is a newline.
+            - Logback automatically appends the stack trace (%6$s) when an exception is logged,
+              so you don't need to specify it in the pattern.
+            -->
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 2. Set the log level for your specific application package -->
+    <!-- This corresponds to 'org.bsc.langgraph4j.level = FINEST' -->
+    <!-- The level 'FINEST' in java.util.logging maps to 'TRACE' in Logback/SLF4J. -->
+    <logger name="org.bsc.langgraph4j" level="TRACE" />
+
+    <!-- 3. Configure the Root Logger (the default for all other loggers) -->
+    <!-- This corresponds to '.level = SEVERE' -->
+    <!-- The level 'SEVERE' in java.util.logging maps to 'ERROR' in Logback/SLF4J. -->
+    <root level="INFO">
+        <!-- Attach the console appender to the root logger -->
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

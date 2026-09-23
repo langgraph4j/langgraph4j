@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.bsc.langgraph4j</groupId>
+		<artifactId>langgraph4j-parent</artifactId>
+		<version>1.9.1</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>langgraph4j-ag-ui-sdk</artifactId>
+	<name>langgraph4j::ag-ui::sdk</name>
+	<description>Langgraph4j integrate AG-UI protocol using AG-UI Community SDK</description>
+	<url>https://github.com/langgraph4j/langgraph4j-copilotkit</url>
+	<licenses>
+		<license>
+			<name>MIT</name>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>bsorrentino</name>
+			<email>bartolomeo.sorrentino@gmail.com</email>
+		</developer>
+	</developers>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.5.37</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.ag-ui.community</groupId>
+			<artifactId>java-server</artifactId>
+			<version>${ag-ui.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bsc.langgraph4j</groupId>
+			<artifactId>langgraph4j-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jspecify</groupId>
+			<artifactId>jspecify</artifactId>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+		</plugins>
+	</build>
+</project>

@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-parent</artifactId>
-    <version>1.9.0</version>
+    <version>1.9.1</version>
     <packaging>pom</packaging>
 
     <name>langgraph4j::parent</name>
@@ -47,6 +47,7 @@
         <langchain4j.version>1.20.0</langchain4j.version>
         <langchain4j.beta>1.20.0-beta30</langchain4j.beta>
         <spring-ai.version>2.0.1</spring-ai.version>
+        <ag-ui.version>0.1.1</ag-ui.version>
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
 
@@ -221,6 +222,11 @@
         <module>langgraph4j-core</module>
         <module>langgraph4j-dsl</module>
         <module>langgraph4j-bom</module>
+
+        <!-- Integrating LangGraph4j with AG-UI -->
+        <module>ag-ui/langgraph4j-ag-ui-json</module>
+        <module>ag-ui/langgraph4j-ag-ui-sdk</module>
+        <module>ag-ui/langgraph4j-ag-ui-springboot</module>
 
         <!-- Integrating LangGraph4j with LangChain4j -->
         <module>langchain4j/langchain4j-core</module>
