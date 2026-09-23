@@ -178,6 +178,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
     }
 
+    @Override
+    public AgentStateFactory<State> stateFactory() {
+        return stateGraph.stateFactory();
+    }
+
     /**
      * Gets the history of graph states relate to a specific Thread ID. Useful for:
      * - Debugging execution history
@@ -191,7 +196,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.list(config).stream()
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.getStateFactory() ) )
+                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) )
                 .toList();
     }
 
