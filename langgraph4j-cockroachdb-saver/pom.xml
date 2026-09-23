@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <description>CockroachDB Saver for LangGraph4j</description>
-    <name>langgraph4j::cockroachdb-saver</name>
+    <name>langgraph4j::cockroachdb::saver</name>
     <url>https://github.com/langgraph4j/langgraph4j</url>
 
     <scm>
