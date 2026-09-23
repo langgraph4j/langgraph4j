@@ -6,13 +6,12 @@
         <artifactId>langgraph4j-parent</artifactId>
         <version>1.9-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
-
     </parent>
 
     <artifactId>langgraph4j-ag-ui-json</artifactId>
+    <name>langgraph4j::ag-ui::json</name>
+    <description>Langgraph4j integrate AG-UI protocol using JSON</description>
     <packaging>jar</packaging>
-
-    <name>langgraph4j-ag-ui-json</name>
 
     <properties>
     </properties>
