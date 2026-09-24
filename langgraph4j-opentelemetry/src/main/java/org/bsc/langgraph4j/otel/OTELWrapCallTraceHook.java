@@ -6,7 +6,7 @@ import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
 import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.hook.NodeHook;
-import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
+import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class OTELWrapCallTraceHook<State extends AgentState> implements NodeHook.WrapCall<State>, EdgeHook.WrapCall<State>, OTELObservable {
 
-    final StdStateSerializer<?> stateSerializer;
+    final StateSerializer<?> stateSerializer;
     final TracerHolder tracer;
 
     /**
@@ -33,7 +33,7 @@ public class OTELWrapCallTraceHook<State extends AgentState> implements NodeHook
      *
      * @param stateSerializer serializer used to convert state data into attributes
      */
-    public OTELWrapCallTraceHook(StdStateSerializer<?> stateSerializer) {
+    public OTELWrapCallTraceHook(StateSerializer<?> stateSerializer) {
         this.stateSerializer = requireNonNull(stateSerializer, "stateSerializer cannot be null");
         tracer = new TracerHolder(otel(), getClass().getName() );
     }
