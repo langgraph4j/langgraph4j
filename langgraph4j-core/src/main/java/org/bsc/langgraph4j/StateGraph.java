@@ -97,7 +97,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      *
      * @param stateSerializer the serializer to serialize the state
      */
-    public StateGraph( StdStateSerializer<State> stateSerializer) {
+    public StateGraph( StateSerializer<State> stateSerializer) {
         this( Map.of(), stateSerializer );
 
     }
