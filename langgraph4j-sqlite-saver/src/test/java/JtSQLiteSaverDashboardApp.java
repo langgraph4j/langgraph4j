@@ -1,9 +1,13 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.1@pom
+//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9-SNAPSHOT@pom
 //DEPS org.bsc.langgraph4j:langgraph4j-sqlite-saver
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit
+//DEPS org.bsc.langgraph4j:langgraph4j-ag-ui-json
+//DEPS com.ag-ui.community:java-client:0.1.1
+//DEPS io.javelit:javelit:0.89.0
 
 import io.javelit.core.Jt;
 import io.javelit.core.JtContainer;
+import io.javelit.core.Server;
 import org.bsc.javelit.JtDataTable;
 import org.bsc.javelit.JtSessionValue;
 import org.bsc.langgraph4j.RunnableConfig;
@@ -26,13 +30,37 @@ public class JtSQLiteSaverDashboardApp {
 
         var app = new JtSQLiteSaverDashboardApp();
 
-        app.view("langgraph4j-sqlite-saver/target/SQLiteSaverV2Test.db");
+        app.startServer("langgraph4j-sqlite-saver/target/SQLiteSaverV2Test.db");
     }
 
     final StateSerializer<AgentState> JsonStateSerializer = new JacksonStateSerializer<AgentState>(AgentState::new) {};
     final StateSerializer<AgentState> binSateSerializer = new ObjectStreamStateSerializer<>(AgentState::new);
 
     final JtSessionValue<SQLiteSaverV2Dashboard> saver$ = new JtSessionValue<>("saver");
+
+    public void app (String databasePath ) throws Exception {
+        Jt.title("SQLite Saver Dashboard App").use();
+
+        final var tabs = Jt.tabs(List.of("Threads", "Tags")).use();
+
+        final var THREADS_PANEL = tabs.tab("Threads");
+        final var TAGS_PANEL = tabs.tab("Tags");
+
+        final var saver = saver$.computeIfAbsent(TryFunction.Try(key ->
+                initDashboard(databasePath)));
+
+        jtThreadsPanel(THREADS_PANEL, saver);
+        jtTagsPanel(TAGS_PANEL, saver);
+
+    }
+
+    void startServer(String databasePath) {
+        // prepare a Javelit server
+        var server = Server.builder(() -> app(databasePath), 8888).build();
+
+        // start the server - this is non-blocking, user thread
+        server.start();
+    }
 
     private SQLiteSaverV2Dashboard initDashboard(String databasePath) throws Exception {
         final var sqlConfig = new SQLiteConfig();
@@ -147,19 +175,4 @@ public class JtSQLiteSaverDashboardApp {
                 .use(container);
         }
 
-        public void view (String databasePath ) throws Exception {
-            Jt.title("SQLite Saver Dashboard App").use();
-
-            final var tabs = Jt.tabs(List.of("Threads", "Tags")).use();
-
-            final var THREADS_PANEL = tabs.tab("Threads");
-            final var TAGS_PANEL = tabs.tab("Tags");
-
-            final var saver = saver$.computeIfAbsent(TryFunction.Try(key ->
-                    initDashboard(databasePath)));
-
-            jtThreadsPanel(THREADS_PANEL, saver);
-            jtTagsPanel(TAGS_PANEL, saver);
-
-        }
 }
