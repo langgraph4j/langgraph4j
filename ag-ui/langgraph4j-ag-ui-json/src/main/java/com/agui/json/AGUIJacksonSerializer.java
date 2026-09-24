@@ -79,6 +79,14 @@ public class AGUIJacksonSerializer implements Serializer {
     }
 
     /**
+     * Returns the underlying Jackson {@link ObjectMapper} used for serialization and deserialization.
+     * @return the configured {@link ObjectMapper}
+     */
+    public ObjectMapper objectMapper() {
+        return objectMapper;
+    }
+
+    /**
      * Serializes the given value to its JSON string representation.
      *
      * @param value the object to serialize
