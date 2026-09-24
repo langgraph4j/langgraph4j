@@ -18,7 +18,6 @@ import org.bsc.langgraph4j.langchain4j.serializer.std.LC4jStateSerializer;
 import org.bsc.langgraph4j.langchain4j.tool.LC4jToolService;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
 
@@ -184,7 +183,7 @@ public interface AgentExecutor {
          * @param stateSerializer the state serializer
          * @return the updated GraphBuilder instance
          */
-        public Builder stateSerializer(StdStateSerializer<State> stateSerializer) {
+        public Builder stateSerializer(StateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
             return this;
         }
