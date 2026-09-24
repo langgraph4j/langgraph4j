@@ -3,12 +3,10 @@ package org.bsc.langgraph4j.checkpoint;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.serializer.CheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
-import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
-import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 
@@ -65,9 +63,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     }
 
     public FileSystemSaver(Path targetFolder, StateSerializer<? extends AgentState> stateSerializer) {
-        this( targetFolder, ( stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer) ?
-            new JacksonCheckpointListSerializer(jsonStateSerializer) :
-            new CheckpointListSerializer( (StdStateSerializer<? extends AgentState>)stateSerializer));
+        this( targetFolder, CheckpointListSerializer.of( stateSerializer ));
     }
 
     private String getBaseName(String threadId) {
@@ -91,29 +87,14 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         requireNonNull(outFile, "outFile cannot be null");
 
         final var outFilePath = outFile.toPath();
-        if( checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer  ) {
-            Files.writeString( outFilePath, jsonSerializer.writeDataAsString(checkpoints) );
-        }
-        else if (checkpointsSerializer instanceof CheckpointListSerializer stdSerializer) {
-            try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(outFilePath))) {
-                stdSerializer.write(checkpoints, oos);
-            }
-        }
+        Files.writeString( outFilePath, checkpointsSerializer.writeDataAsString(checkpoints) );
     }
 
     private LinkedList<Checkpoint> deserialize(File file) throws IOException, ClassNotFoundException {
         requireNonNull(file, "file cannot be null");
 
         final var filePath = file.toPath();
-        if( checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer  ) {
-            return jsonSerializer.readDataFromString(Files.readString(filePath));
-        }
-        else if (checkpointsSerializer instanceof CheckpointListSerializer stdSerializer) {
-            try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(file.toPath()))) {
-                return stdSerializer.read(ois);
-            }
-        }
-        return null;
+        return checkpointsSerializer.readDataFromString(Files.readString(filePath));
     }
 
     @Override
