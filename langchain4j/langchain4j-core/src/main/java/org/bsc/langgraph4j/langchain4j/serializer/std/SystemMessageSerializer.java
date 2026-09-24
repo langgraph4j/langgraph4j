@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j.langchain4j.serializer.std;
 
 import dev.langchain4j.data.message.SystemMessage;
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -11,7 +11,7 @@ import java.io.ObjectOutput;
  * The SystemMessageSerializer class implements the Serializer interface for the SystemMessage type.
  * It provides methods to serialize and deserialize SystemMessage objects.
  */
-public class SystemMessageSerializer implements Serializer<SystemMessage> {
+public class SystemMessageSerializer implements StdSerializer<SystemMessage> {
     
     /**
      * Serializes the given SystemMessage object to the specified ObjectOutput stream.
@@ -22,7 +22,7 @@ public class SystemMessageSerializer implements Serializer<SystemMessage> {
      */
     @Override
     public void write(SystemMessage object, ObjectOutput out) throws IOException {
-        Serializer.writeUTF(object.text(), out);
+        StdSerializer.writeUTF(object.text(), out);
     }
 
     /**
@@ -35,7 +35,7 @@ public class SystemMessageSerializer implements Serializer<SystemMessage> {
      */
     @Override
     public SystemMessage read(ObjectInput in) throws IOException, ClassNotFoundException {
-        String text = Serializer.readUTF(in);
+        String text = StdSerializer.readUTF(in);
         return SystemMessage.systemMessage(text);
     }
 }

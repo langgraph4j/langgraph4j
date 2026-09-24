@@ -222,7 +222,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.get(config)
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.getStateFactory() ) );
+                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) );
     }
 
     /**
@@ -303,7 +303,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             final var newConfig = updateRunnableConfigMetadata( config, nodeId, null );
 
-            final State derefState = stateGraph.getStateFactory().apply(state);
+            final State derefState = stateGraph.stateFactory().apply(state);
 
             // var command = route.value().action().apply(derefState,config).get();
             final var command = stateGraph.edgeHooks.applyActionWithHooks(
@@ -311,7 +311,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     nodeId,
                     derefState,
                     newConfig,
-                    stateGraph.getStateFactory(),
+                    stateGraph.stateFactory(),
                     stateGraph.getChannels() )
                     .get();
 
@@ -405,7 +405,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     Map<String,Object> initialStateFromSchema() {
-        return stateGraph.getStateFactory().initialDataFromSchema(stateGraph.getChannels());
+        return stateGraph.stateFactory().initialDataFromSchema(stateGraph.getChannels());
     }
 
     Map<String,Object> initialState(Map<String,Object> inputs, RunnableConfig config) {
@@ -416,7 +416,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.getChannels() ));
     }
 
-    State cloneState( Map<String,Object> data, RunnableConfig runnableConfig ) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    State cloneState( Map<String,Object> data, RunnableConfig runnableConfig ) throws Exception, InstantiationException, IllegalAccessException {
         if(runnableConfig.isCloneStateDisabled()) {
             return stateGraph.getStateSerializer().stateOf(data);
         }
@@ -675,7 +675,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var initState = initialState( ((GraphArgs)input).value(), config );
                 // patch for backward support of AppendableValue
-                State initializedState = stateGraph.getStateFactory().apply(initState);
+                State initializedState = stateGraph.stateFactory().apply(initState);
                 this.context = new Context( initializedState.data() );
                 this.config = configBuilder.build();
             }
@@ -688,7 +688,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         @SuppressWarnings("unchecked")
         protected Output buildStateSnapshot( Checkpoint checkpoint ) throws Exception {
-            return (Output)StateSnapshot.of( checkpoint, config, stateGraph.getStateFactory() ) ;
+            return (Output)StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) ;
         }
 
         @SuppressWarnings("unchecked")
@@ -724,7 +724,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     if( !stateGraph.nodeHooks.afterCalls.isEmpty() ) {
                                         partialResultAfterHook = stateGraph.nodeHooks.afterCalls.apply(
                                                 context.currentNodeId(),
-                                                stateGraph.getStateFactory().apply(context.currentState()),
+                                                stateGraph.stateFactory().apply(context.currentState()),
                                                 config,
                                                 returnFromEmbed.asStateDataOrLastCheckpointStateData())
                                                 .join();
@@ -775,7 +775,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         {
             final AgentStateFactory<State> stateFactory = ( data ) -> {
                 context.setCurrentState( data );
-                return stateGraph.getStateFactory().apply( data);
+                return stateGraph.stateFactory().apply( data);
             };
 
             return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() )

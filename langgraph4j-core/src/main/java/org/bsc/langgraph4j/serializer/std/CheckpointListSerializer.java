@@ -1,8 +1,6 @@
 package org.bsc.langgraph4j.serializer.std;
 
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
-import org.bsc.langgraph4j.serializer.Serializer;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
@@ -10,13 +8,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.LinkedList;
 
-public class CheckpointListSerializer implements Serializer<LinkedList<Checkpoint>> {
+public class CheckpointListSerializer implements StdSerializer<LinkedList<Checkpoint>> {
 
     private final CheckpointSerializer serializer;
 
     @SuppressWarnings("unchecked")
-    public CheckpointListSerializer(StateSerializer<? extends AgentState> stateSerializer) {
-        this.serializer = new CheckpointSerializer((StateSerializer<AgentState>) stateSerializer);
+    public <State extends AgentState> CheckpointListSerializer(StdStateSerializer<State> stateSerializer) {
+        this.serializer = new CheckpointSerializer((StdStateSerializer<AgentState>) stateSerializer);
     }
 
     @Override

@@ -50,7 +50,7 @@ public abstract class AbstractPostgresSaverV2 extends AbstractPostgresSaver {
                                 .id(rs.getString("checkpoint_id"))
                                 .nodeId(rs.getString("node_id"))
                                 .nextNodeId(rs.getString("next_node_id"))
-                                .state(decodeState(rs.getBytes("base64_data"), rs.getString("state_content_type")))
+                                .state(decodeState(rs.getString("state_data"), rs.getString("state_content_type")))
                                 .build();
 
                         checkpoints.addLast(checkpoint);

@@ -1,7 +1,5 @@
 package org.bsc.langgraph4j.serializer.std;
 
-import org.bsc.langgraph4j.serializer.Serializer;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -11,7 +9,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 
 public class SerializerMapper {
-    static final Serializer<Object> DEFAULT_SERIALIZER = new Serializer<Object>() {
+    static final StdSerializer<Object> DEFAULT_SERIALIZER = new StdSerializer<Object>() {
         @Override
         public void write(Object object, ObjectOutput out) throws IOException {
             out.writeObject(object);
@@ -58,9 +56,9 @@ public class SerializerMapper {
             return Objects.hash(_className);
         }
     }
-    private final Map<Key, Serializer<?>> _serializers = new HashMap<>();
+    private final Map<Key, StdSerializer<?>> _serializers = new HashMap<>();
 
-    public SerializerMapper register( Class<?> clazz, Serializer<?> serializer ) {
+    public SerializerMapper register( Class<?> clazz, StdSerializer<?> serializer ) {
         Objects.requireNonNull(clazz,"class cannot be null ");
         Objects.requireNonNull(clazz,"serializer cannot be null ");
 
@@ -68,20 +66,20 @@ public class SerializerMapper {
         return this;
     }
 
-    public boolean unregister( Class<? extends Serializer<?>> clazz ) {
+    public boolean unregister( Class<? extends StdSerializer<?>> clazz ) {
         Objects.requireNonNull( clazz, "Serializer's class cannot be null" );
-        Serializer<?> serializer = _serializers.remove( Key.of(clazz) );
+        StdSerializer<?> serializer = _serializers.remove( Key.of(clazz) );
         return serializer != null;
     }
 
     @SuppressWarnings("unchecked")
-    public Optional<Serializer<Object>> getSerializer( Class<?> clazz ) {
+    public Optional<StdSerializer<Object>> getSerializer(Class<?> clazz ) {
         Objects.requireNonNull(clazz,"class cannot be null ");
-        Serializer<?> ser = _serializers.get( Key.of(clazz) );
+        StdSerializer<?> ser = _serializers.get( Key.of(clazz) );
 
         return ( ser != null ) ?
 
-            Optional.of((Serializer<Object>)ser) :
+            Optional.of((StdSerializer<Object>)ser) :
 /*
             _serializers.entrySet().stream()
                     .filter( e -> e.getKey().getType().isAssignableFrom(clazz) )
@@ -97,17 +95,17 @@ public class SerializerMapper {
                         if (c2.getKey().getType().isAssignableFrom(c1.getKey().getType())) return -1;  // c1 is more specific
                         return 0;
                     })
-                    .map( e -> (Serializer<Object>)e.getValue() )
+                    .map( e -> (StdSerializer<Object>)e.getValue() )
                 ;
     }
 
     @SuppressWarnings("unchecked")
-    public Optional<Serializer<Object>> getSerializer( String className ) {
+    public Optional<StdSerializer<Object>> getSerializer(String className ) {
         Objects.requireNonNull(className,"className cannot be null ");
-        return Optional.ofNullable((Serializer<Object>)_serializers.get( Key.of(className) ));
+        return Optional.ofNullable((StdSerializer<Object>)_serializers.get( Key.of(className) ));
     }
 
-    public Serializer<Object> getDefaultSerializer() {
+    public StdSerializer<Object> getDefaultSerializer() {
         return DEFAULT_SERIALIZER;
     }
 

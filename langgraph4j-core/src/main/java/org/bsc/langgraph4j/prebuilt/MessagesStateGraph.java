@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j.prebuilt;
 
 import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 
 /**
  * Represents a state graph with messages for generic type T.
@@ -16,7 +16,7 @@ public class MessagesStateGraph<T> extends StateGraph< MessagesState<T>> {
      *
      * @param stateSerializer the serializer for messages states, must not be null
      */
-    public MessagesStateGraph( StateSerializer<MessagesState<T>> stateSerializer) {
+    public MessagesStateGraph( StdStateSerializer<MessagesState<T>> stateSerializer) {
         super(MessagesState.SCHEMA, stateSerializer);
     }
 

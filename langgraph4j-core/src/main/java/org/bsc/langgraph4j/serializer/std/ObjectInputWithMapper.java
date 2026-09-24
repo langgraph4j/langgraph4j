@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.serializer.std;
 
 import org.bsc.langgraph4j.LG4JLoggable;
-import org.bsc.langgraph4j.serializer.Serializer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,14 +24,14 @@ public class ObjectInputWithMapper implements ObjectInput, LG4JLoggable {
         if( object instanceof Class ) {
             Class<?> type = (Class<?>) object;
 
-            Optional<Serializer<Object>> optSerializer = mapper.getSerializer(type);
+            Optional<StdSerializer<Object>> optSerializer = mapper.getSerializer(type);
 
             if( !optSerializer.isPresent() ) {
                 optSerializer = mapper.getSerializer(type.getName());
             }
 
 
-            Serializer<Object> serializer = optSerializer.orElseGet( () -> {
+            StdSerializer<Object> serializer = optSerializer.orElseGet( () -> {
                 log.warn( "No serializer found for class {} in {}", type.getName(), mapper );
                 return mapper.getDefaultSerializer();
             });
@@ -145,6 +144,6 @@ public class ObjectInputWithMapper implements ObjectInput, LG4JLoggable {
 
     @Override
     public String readUTF() throws IOException {
-        return Serializer.readUTF(in);
+        return StdSerializer.readUTF(in);
     }
 }

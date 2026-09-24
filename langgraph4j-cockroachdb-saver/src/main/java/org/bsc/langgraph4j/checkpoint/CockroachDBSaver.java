@@ -1,22 +1,15 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
-import org.postgresql.ds.PGSimpleDataSource;
 
-import javax.sql.DataSource;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,105 +47,13 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  *         .build();
  * }</pre>
  */
-public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLoggable {
+public class CockroachDBSaver extends AbstractCockroachDBSaver {
 
     /** Default CockroachDB SQL port. */
     public static final int DEFAULT_PORT = 26257;
 
-    public static class Builder {
-        public StateSerializer<? extends AgentState> stateSerializer;
-        private String host;
-        private Integer port = DEFAULT_PORT;
-        private String user;
-        private String password;
-        private String database;
-        private boolean createTables;
-        private boolean dropTablesFirst;
-        private DataSource datasource;
-        private boolean plainTextStateSerializerLegacyMode = false;
-
-        public <State extends AgentState> Builder stateSerializer(StateSerializer<State> stateSerializer) {
-            this.stateSerializer = stateSerializer;
-            return this;
-        }
-
-        /**
-         * Compatibility flag for {@link PlainTextStateSerializer}-based payloads
-         * persisted by an older version of this saver, which wrote the JSON payload
-         * as a serialized Java {@code String}. Ignored unless the configured state
-         * serializer is a {@link PlainTextStateSerializer} implementation.
-         *
-         * @param mode compatibility flag value (default is false)
-         */
-        public Builder plainTextStateSerializerLegacyMode(boolean mode) {
-            this.plainTextStateSerializerLegacyMode = mode;
-            return this;
-        }
-
-        public Builder host(String host) {
-            this.host = host;
-            return this;
-        }
-
-        public Builder port(Integer port) {
-            this.port = port;
-            return this;
-        }
-
-        public Builder user(String user) {
-            this.user = user;
-            return this;
-        }
-
-        public Builder password(String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder database(String database) {
-            this.database = database;
-            return this;
-        }
-
-        public Builder datasource(DataSource datasource) {
-            this.datasource = datasource;
-            return this;
-        }
-
-        public Builder createTables(boolean createTables) {
-            this.createTables = createTables;
-            return this;
-        }
-
-        public Builder dropTablesFirst(boolean dropTablesFirst) {
-            this.dropTablesFirst = dropTablesFirst;
-            return this;
-        }
-
-        private String requireNotBlank(String value, String name) {
-            if (requireNonNull(value, format("'%s' cannot be null", name)).isBlank()) {
-                throw new IllegalArgumentException(format("'%s' cannot be blank", name));
-            }
-            return value;
-        }
-
+    public static class Builder extends AbstractBuilder<Builder> {
         public CockroachDBSaver build() throws SQLException {
-            requireNonNull(stateSerializer, "stateSerializer cannot be null");
-
-            if (datasource == null) {
-                if (port == null || port <= 0) {
-                    throw new IllegalArgumentException("port must be greater than 0");
-                }
-                var ds = new PGSimpleDataSource();
-                ds.setDatabaseName(requireNotBlank(database, "database"));
-                ds.setUser(requireNotBlank(user, "user"));
-                ds.setPassword(requireNonNull(password, "password cannot be null"));
-                ds.setPortNumbers(new int[] {port});
-                ds.setServerNames(new String[] {requireNotBlank(host, "host")});
-                datasource = ds;
-            }
-
-            createTables = createTables || dropTablesFirst;
             return new CockroachDBSaver(this);
         }
     }
@@ -161,115 +62,18 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
         return new Builder();
     }
 
-    /** Datasource used to create the store. */
-    protected final DataSource datasource;
-    private final StateSerializer<? extends AgentState> stateSerializer;
-    private final boolean plainTextStateSerializerLegacyMode;
-
     protected CockroachDBSaver(Builder builder) throws SQLException {
-        this.datasource = builder.datasource;
-        this.stateSerializer = builder.stateSerializer;
-        this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
-
-        initTable(builder.dropTablesFirst, builder.createTables);
+        super(builder);
     }
 
-    private void rollback(Connection conn, Checkpoint checkpoint, String threadId) {
-        if (conn == null) return;
-        requireNonNull(checkpoint, "checkpoint cannot be null");
-
-        try {
-            conn.rollback();
-            log.warn("Transaction rolled back for checkpoint {}", checkpoint.getId());
-        } catch (SQLException exRollback) {
-            log.error(
-                    "Failed to rollback transaction for checkpoint id {} in thread {}",
-                    checkpoint.getId(),
-                    threadId,
-                    exRollback);
-        }
+    @Override
+    protected String sqlCommandsResourcePath() {
+        return "db/v1.1__commands.sql";
     }
 
-    private String encodeState(Map<String, Object> data) throws IOException {
-        final byte[] binaryData;
-
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            binaryData = ser.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-        } else {
-            binaryData = stateSerializer.dataToBytes(data);
-        }
-        final var base64Data = Base64.getEncoder().encodeToString(binaryData);
-        return """
-                {"binaryPayload": "%s"}
-                """.formatted(base64Data);
-    }
-
-    private Map<String, Object> decodeState(byte[] binaryPayload, String contentType)
-            throws IOException, ClassNotFoundException {
-        if (!Objects.equals(contentType, stateSerializer.contentType())) {
-            throw new IllegalStateException(format(
-                    "Content Type used for store state '%s' is different from one '%s' used for deserialize it",
-                    contentType, stateSerializer.contentType()));
-        }
-
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            return ser.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
-        }
-        return stateSerializer.dataFromBytes(bytes);
-    }
-
-    protected void initTable(boolean dropTablesFirst, boolean createTables) throws SQLException {
-        var sqlDropTables = """
-                DROP TABLE IF EXISTS LG4JCheckpoint CASCADE;
-                DROP TABLE IF EXISTS LG4JThread CASCADE;
-                """;
-
-        var sqlCreateTables = """
-                CREATE TABLE IF NOT EXISTS LG4JThread (
-                     thread_id UUID PRIMARY KEY,
-                     thread_name VARCHAR(255),
-                     is_released BOOLEAN DEFAULT FALSE NOT NULL
-                 );
-
-                 CREATE TABLE IF NOT EXISTS LG4JCheckpoint (
-                     checkpoint_id UUID PRIMARY KEY,
-                     parent_checkpoint_id UUID,
-                     thread_id UUID NOT NULL,
-                     node_id VARCHAR(255),
-                     next_node_id VARCHAR(255),
-                     state_data JSONB NOT NULL,
-                     state_content_type VARCHAR(100) NOT NULL,
-                     saved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-                     CONSTRAINT fk_thread
-                         FOREIGN KEY(thread_id)
-                         REFERENCES LG4JThread(thread_id)
-                         ON DELETE CASCADE
-                 );
-
-                 CREATE INDEX IF NOT EXISTS idx_lg4jcheckpoint_thread_id ON LG4JCheckpoint(thread_id);
-                 CREATE INDEX IF NOT EXISTS idx_lg4jcheckpoint_thread_id_saved_at_desc ON LG4JCheckpoint(thread_id, saved_at DESC);
-                 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_lg4jthread_thread_name_unreleased ON LG4JThread(thread_name) WHERE is_released = FALSE;
-                """;
-
-        String sqlCommand = null;
-        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
-            if (dropTablesFirst) {
-                log.trace("Executing drop tables:\n---\n{}---", sqlDropTables);
-                sqlCommand = sqlDropTables;
-                statement.executeUpdate(sqlCommand);
-            }
-            if (createTables) {
-                log.trace("Executing create tables:\n---\n{}---", sqlCreateTables);
-                sqlCommand = sqlCreateTables;
-                statement.executeUpdate(sqlCommand);
-            }
-        } catch (SQLException ex) {
-            log.error("error executing command\n{}\n", sqlCommand, ex);
-            throw ex;
-        }
+    @Override
+    protected String sqlInitResourcePath() {
+        return "db/migration/v1.1__init.sql";
     }
 
     @Override
@@ -279,27 +83,8 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
 
         final var threadId = threadId(config);
 
-        final var sqlCheckThread = """
-                SELECT COUNT(*)
-                FROM LG4JThread
-                WHERE thread_name = ? AND is_released = FALSE
-                """;
-        final var sqlQueryCheckpoints = """
-                WITH matched_thread AS (
-                    SELECT thread_id
-                    FROM LG4JThread
-                    WHERE thread_name = ? AND is_released = FALSE
-                )
-                SELECT  c.checkpoint_id,
-                        c.node_id,
-                        c.next_node_id,
-                        c.state_data->>'binaryPayload' AS base64_data,
-                        c.state_content_type,
-                        c.parent_checkpoint_id
-                FROM matched_thread t
-                JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
-                ORDER BY c.saved_at DESC
-                """;
+        final var sqlCheckThread = sqlCommands.get("sqlCheckThread");
+        final var sqlQueryCheckpoints = sqlCommands.get("sqlSelectCheckpoints");
         try (Connection conn = getConnection()) {
 
             try (PreparedStatement ps = conn.prepareStatement(sqlCheckThread)) {
@@ -326,7 +111,7 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
                             .id(rs.getString(1))
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
-                            .state(decodeState(rs.getBytes(4), rs.getString(5)))
+                            .state(decodeState(rs.getString(4), rs.getString(5)))
                             .build();
                     checkpoints.add(checkpoint);
                 }
@@ -341,33 +126,8 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
             throws Exception {
         var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
 
-        var upsertThreadSql = """
-                WITH inserted AS (
-                    INSERT INTO LG4JThread (thread_id, thread_name, is_released)
-                    VALUES (?, ?, FALSE)
-                    ON CONFLICT (thread_name)
-                    WHERE is_released = FALSE
-                    DO NOTHING
-                    RETURNING thread_id
-                )
-                SELECT thread_id FROM inserted
-                UNION ALL
-                SELECT thread_id FROM LG4JThread
-                WHERE thread_name = ? AND is_released = FALSE
-                LIMIT 1;
-                """;
-
-        var insertCheckpointSql = """
-                INSERT INTO LG4JCheckpoint(
-                checkpoint_id,
-                parent_checkpoint_id,
-                thread_id,
-                node_id,
-                next_node_id,
-                state_data,
-                state_content_type)
-                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
-                """;
+        var upsertThreadSql = sqlCommands.get("sqlUpsertThread");
+        var insertCheckpointSql = sqlCommands.get("sqlInsertCheckpoint");
         UUID threadUUID = null;
 
         // 1. Upsert thread information
@@ -395,7 +155,7 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
             ps.setString(++field, checkpoint.getNodeId());
             ps.setString(++field, checkpoint.getNextNodeId());
             ps.setString(++field, encodeState(checkpoint.getState()));
-            ps.setString(++field, stateSerializer.contentType());
+            ps.setString(++field, stateSerializer().contentType());
 
             log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
             ps.executeUpdate();
@@ -429,10 +189,7 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
 
         final var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);
 
-        var deletePreviousCheckpointSql = """
-                DELETE FROM LG4JCheckpoint
-                WHERE checkpoint_id = ?;
-                """;
+        var deletePreviousCheckpointSql = sqlCommands.get("sqlDeletePreviousCheckpoint");
 
         Connection conn = null;
 
@@ -470,16 +227,8 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
     protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final var threadId = threadId(config);
 
-        var selectThreadSql = """
-                SELECT thread_id FROM LG4JThread
-                WHERE thread_name = ? AND is_released = FALSE
-                """;
-        var releaseThreadSql = """
-                UPDATE LG4JThread
-                SET
-                    is_released = TRUE
-                WHERE thread_id = ?;
-                """;
+        var selectThreadSql = sqlCommands.get("sqlSelectThread");
+        var releaseThreadSql = sqlCommands.get("sqlReleaseThread");
         try (Connection conn = getConnection()) {
 
             UUID threadUUID = null;
@@ -526,19 +275,6 @@ public class CockroachDBSaver extends AbstractCheckpointSaver implements LG4JLog
     @Override
     public Optional<Tag> tag(RunnableConfig config, Integer version) throws Exception {
         return Optional.empty();
-    }
-
-
-    /**
-     * Obtain a connection from the configured {@link DataSource}.
-     * Override this method if your {@code DataSource} requires custom session
-     * setup beyond what {@code build()} already configured.
-     *
-     * @return a Connection from the pool
-     * @throws SQLException if the underlying pool refuses to lend a connection
-     */
-    protected Connection getConnection() throws SQLException {
-        return datasource.getConnection();
     }
 
     /**

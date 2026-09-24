@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
@@ -29,7 +29,6 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
 
     protected JacksonStateSerializer( AgentStateFactory<State> stateFactory ) {
         this( stateFactory, new ObjectMapper() );
-
     }
 
     protected JacksonStateSerializer( AgentStateFactory<State> stateFactory, ObjectMapper objectMapper) {
@@ -57,14 +56,14 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
         return "application/json";
     }
 
-    public final String writeDataAsString(Map<String, Object> data) throws IOException {
+    public final String writeDataAsString(State state) throws IOException {
 
         final Map<String,Object> serializedData;
 
         if( transientAttributeSet.isEmpty() ) {
-            serializedData = data;
+            serializedData = state.data();
         } else {
-            serializedData = new HashMap<>(data);
+            serializedData = new HashMap<>(state.data());
 
             for( String key : transientAttributeSet ) {
                 if( serializedData.containsKey(key) ) {
@@ -77,14 +76,14 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
     }
 
     @Override
-    public final Map<String, Object> readDataFromString(String string) throws IOException {
+    public final State readDataFromString(String string) throws IOException {
         final var data =  objectMapper.readValue(string, new TypeReference<Map<String, Object>>() {});
         for( String key : transientAttributeSet ) {
             if( transientData.containsKey(key) ) {
                 data.put(key, transientData.get(key));
             }
         }
-        return data;
+        return stateFactory().apply(data);
     }
 
 }

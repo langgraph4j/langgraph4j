@@ -40,6 +40,16 @@ public class PostgresSaver extends AbstractPostgresSaver {
     }
 
     @Override
+    protected String sqlCommandsResourcePath() {
+        return "db/v1.1__commands.sql";
+    }
+
+    @Override
+    protected String sqlInitResourcePath() {
+        return "db/migration/v1.1__init.sql";
+    }
+
+    @Override
     protected void insertCheckpoint(Connection conn, RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
 
         var threadId = config.threadId().orElse(THREAD_ID_DEFAULT);

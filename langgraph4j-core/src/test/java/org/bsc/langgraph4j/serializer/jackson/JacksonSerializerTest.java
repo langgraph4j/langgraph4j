@@ -71,12 +71,12 @@ public class JacksonSerializerTest {
         assertTrue(type.isPresent());
         assertEquals(State.class, type.get());
 
-        byte[] bytes = serializer.objectToBytes(state);
+        var json = serializer.writeDataAsString(state);
 
-        assertNotNull(bytes);
-        assertTrue(bytes.length > 0);
+        assertNotNull(json);
+        assertFalse(json.isEmpty());
 
-        AgentState deserializedState = serializer.bytesToObject(bytes);
+        AgentState deserializedState = serializer.readDataFromString(json);
 
         assertNotNull(deserializedState);
         assertEquals( 1, deserializedState.data().size() );
@@ -134,11 +134,11 @@ public class JacksonSerializerTest {
                 "big_decimal", new BigDecimal(123412345678901L),
                 "person", new Person("John", 30));
 
-        var state = serializer.stateFactory().apply( data );
+        var state = serializer.stateOf( data );
 
-        var bytes = serializer.objectToBytes( state );
+        var json = serializer.writeDataAsString( state );
 
-        var clonedState = serializer.bytesToObject( bytes );
+        var clonedState = serializer.readDataFromString( json );
 
         var clonedData = clonedState.data();
 
@@ -241,7 +241,7 @@ public class JacksonSerializerTest {
         assertTrue( jsonDeserializedData.containsKey("a") );
         assertEquals("b", jsonDeserializedData.get("a"));
 
-        final var stateDeserializedData = stateSerializer.readDataFromString( jsonString );
+        final var stateDeserializedData = stateSerializer.readDataFromString( jsonString ).data();
 
         assertTrue( stateDeserializedData.containsKey("transient") );
         assertEquals(NonSerializableElement.of("I'M NOT SERIALIZABLE"), stateDeserializedData.get("transient"));

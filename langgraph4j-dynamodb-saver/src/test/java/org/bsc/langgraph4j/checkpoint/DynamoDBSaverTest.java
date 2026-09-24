@@ -3,10 +3,8 @@ package org.bsc.langgraph4j.checkpoint;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.StreamSupport;
 import java.util.logging.LogManager;
 
 import static org.bsc.langgraph4j.StateGraph.END;

@@ -1,12 +1,10 @@
 package org.bsc.langgraph4j.serializer.std;
 
-import org.bsc.langgraph4j.serializer.Serializer;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-public interface NullableObjectSerializer<T> extends Serializer<T> {
+public interface NullableObjectSerializer<T> extends StdSerializer<T> {
 
     default void writeNullableObject(Object object, ObjectOutput out) throws IOException {
         if( object == null ) {

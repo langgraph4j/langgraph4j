@@ -20,7 +20,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
         protected DataSource dataSource;
         protected CreateOption createOption = CreateOption.CREATE_IF_NOT_EXISTS;
-        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+        public Map<String, StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
 
 
         @SuppressWarnings("unchecked")
@@ -64,7 +64,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
 
     // Configuration
     protected final DataSource dataSource;
-    protected final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
+    protected final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
     protected final SqlResource.Commands sqlCommands;
 
     /**
@@ -122,8 +122,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
 
     protected final  String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
-        final byte[] binaryData = stateSerializer.dataToBytes(data);
-        return Base64.getEncoder().encodeToString(binaryData);
+        return stateSerializer.writeDataAsString(data);
     }
 
     protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
@@ -133,9 +132,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(binaryPayload).data();
     }
 
     /**

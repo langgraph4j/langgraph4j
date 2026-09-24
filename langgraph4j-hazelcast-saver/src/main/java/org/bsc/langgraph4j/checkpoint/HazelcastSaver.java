@@ -8,13 +8,13 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
@@ -116,7 +116,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
         // JSON when the state serializer is Jackson-based, binary otherwise.
         this.checkpointsSerializer = (stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer)
                 ? new JacksonCheckpointListSerializer(jsonStateSerializer)
-                : new CheckpointListSerializer(stateSerializer);
+                : new CheckpointListSerializer((StdStateSerializer<? extends AgentState>) stateSerializer);
 
         // CPMap is an Enterprise feature: its API is in the CE jar but it throws at runtime
         // unless a Hazelcast Enterprise license is present and the CP Subsystem is enabled.
@@ -178,11 +178,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
     // -------------------------------------------------------------------------
 
     private String encode(LinkedList<Checkpoint> checkpoints) throws IOException {
-        if (checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer) {
-            return jsonSerializer.writeDataAsString(checkpoints);
-        } else {
-            return Base64.getEncoder().encodeToString(checkpointsSerializer.objectToBytes(checkpoints));
-        }
+        return checkpointsSerializer.writeDataAsString(checkpoints);
     }
 
     private LinkedList<Checkpoint> decode(String value) {
@@ -190,11 +186,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
             return new LinkedList<>();
         }
         try {
-            if (checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer) {
-                return jsonSerializer.readDataFromString(value);
-            } else {
-                return checkpointsSerializer.bytesToObject(Base64.getDecoder().decode(value));
-            }
+            return checkpointsSerializer.readDataFromString(value);
         } catch (IOException | ClassNotFoundException | IllegalArgumentException e) {
             throw new IllegalStateException(
                     "Failed to decode stored checkpoints. A Hazelcast map entry must be read with the same "
@@ -256,7 +248,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
     /**
      * Builder for {@link HazelcastSaver}.
      * <p>
-     * A {@link HazelcastInstance} and a {@link StateSerializer} are required; the instance may
+     * A {@link HazelcastInstance} and a {@link StdStateSerializer} are required; the instance may
      * represent an embedded member or a client.
      */
     public static class Builder {

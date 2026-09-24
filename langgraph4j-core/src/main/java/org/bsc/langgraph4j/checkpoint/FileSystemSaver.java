@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
@@ -24,7 +25,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 
@@ -67,7 +67,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     public FileSystemSaver(Path targetFolder, StateSerializer<? extends AgentState> stateSerializer) {
         this( targetFolder, ( stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer) ?
             new JacksonCheckpointListSerializer(jsonStateSerializer) :
-            new CheckpointListSerializer(stateSerializer));
+            new CheckpointListSerializer( (StdStateSerializer<? extends AgentState>)stateSerializer));
     }
 
     private String getBaseName(String threadId) {
@@ -94,9 +94,9 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         if( checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer  ) {
             Files.writeString( outFilePath, jsonSerializer.writeDataAsString(checkpoints) );
         }
-        else {
+        else if (checkpointsSerializer instanceof CheckpointListSerializer stdSerializer) {
             try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(outFilePath))) {
-                checkpointsSerializer.write(checkpoints, oos);
+                stdSerializer.write(checkpoints, oos);
             }
         }
     }
@@ -108,9 +108,12 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         if( checkpointsSerializer instanceof JacksonCheckpointListSerializer jsonSerializer  ) {
             return jsonSerializer.readDataFromString(Files.readString(filePath));
         }
-        try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(file.toPath()))) {
-            return checkpointsSerializer.read(ois);
+        else if (checkpointsSerializer instanceof CheckpointListSerializer stdSerializer) {
+            try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(file.toPath()))) {
+                return stdSerializer.read(ois);
+            }
         }
+        return null;
     }
 
     @Override

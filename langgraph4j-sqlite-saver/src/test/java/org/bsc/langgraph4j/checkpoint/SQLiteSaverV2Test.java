@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
