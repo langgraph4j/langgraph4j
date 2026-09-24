@@ -369,7 +369,7 @@ var graphBuilder = new StateGraph<>( MessagesState.SCHEMA, MyState::new)
 
 ### Serializer 
 
-During graph execution the state needs to be serialized (mostly for cloning purpose) also for providing ability to persist the state across different executions. To do this we have provided a new streighforward implementation based on [Serializer] interface.
+During graph execution, a state is serialized to create independent copies and to persist checkpoints for later executions. LangGraph4j exposes this through the [Serializer] interface; a `StateSerializer` couples a serialization format with the factory used to rebuild the concrete `AgentState` from its data map. A serializer can also mark individual state attributes as transient with `declareTransientAttributes(...)`. Those attributes are retained for in-process cloning but are omitted from the serialized payload.
 
 #### Why create a new Serialization framework ?
 
@@ -380,27 +380,44 @@ During graph execution the state needs to be serialized (mostly for cloning purp
 
 #### Features 
 
-- [x] Allow to serialize using the java built-in standard binary serialization technique
-- [x] Allow to plug also different serialization techniques
+- [x] Built-in binary serialization, including `Map<String, Object>`, `List<Object>`, `Set<Object>`, and nullable values
+- [x] Pluggable serializers for third-party types that do not implement `java.io.Serializable`
+- [x] Text serializers, including the JSON implementation based on [Jackson]
+- [x] Round-trip cloning through `Serializer.cloneObject(...)`
 
-Currently the main class for state's serialization using built-in java stream is [ObjectStreamStateSerializer]. It is also available an abstraction allowing to plug serialization techniques text based like `JSON` and/or `YAML` that is [PlainTextStateSerializer].
+`ObjectStreamStateSerializer` is the default binary implementation used by `StateGraph` when no serializer is supplied. It uses object streams for the enclosing state data and a serializer registry for values such as third-party message objects. `PlainTextStateSerializer` is the base abstraction for textual formats such as JSON or YAML.
+
+#### JSON with Jackson
+
+`JacksonStateSerializer` is the JSON base implementation. It serializes the state data map with a [Jackson] `ObjectMapper`, reports the content type as `application/json`, and installs map/list deserializers that reconstruct nested values. Integration modules register supported third-party types in a `TypeMapper`; their JSON representation carries an `@type` discriminator, allowing values stored as `Object` in the state map to be restored to their original type. The mapper is available through `objectMapper()` and the type registry through `typeMapper()` when an application needs to add its own [Jackson] modules or supported types.
+
+Use the serializer that matches the AI integration in use:
+
+```java
+var graph = new StateGraph<>(
+        MyState.SCHEMA,
+        new LC4jJacksonStateSerializer<>(MyState::new));
+```
+
+```java
+var graph = new StateGraph<>(
+        MyState.SCHEMA,
+        new SpringAIJacksonStateSerializer<>(MyState::new));
+```
+
+The [Jackson] serializers preserve `null` values and ordinary JSON scalar, map, and list values. For arbitrary application objects stored in state, register a [Jackson] serializer/deserializer and a corresponding `TypeMapper.Reference`; otherwise an object value without a registered discriminator is read as a generic [Jackson] value.
 
 <a id="seriliazer-out-of-box"></a>
 #### Out of the Box
 
-There are several provided Serializers out-of-the-box:
+The core binary serializer provides serializers for `Map<String, Object>`, `List<Object>`, and `Set<Object>`. The following integration serializers support both the binary state serializer and their module-specific [Jackson] state serializer.
 
- class | description 
- ----- | -----
-`ListSerializer` | built-in `List<Object>` serializer
-`MapSerializer` | built-in `Map<String,Object>` serializer
-&nbsp; |  &nbsp; 
-`AiMessageSerializer` | langchain4j `AiMessage` Serializer
-`ChatMesssageSerializer` | langchain4j `ChatMesssage` Serializer
-`SystemMessageSerializer` | langchain4j `SystemMessage` Serializer
-`UserMessageSerializer` | langchain4j `UserMessage` Serializer
-`ToolExecutionRequestSerializer` | langchain4j `ToolExecutionRequest` Serializer
-`ToolExecutionResultMessageSerializer` | langchain4j `ToolExecutionResultMessage` Serializer
+| Module | State serializer | Serializable classes |
+| ----- | ----- | ----- |
+| `langchain4j/langchain4j-core` | `LC4jStateSerializer` (binary), `LC4jJacksonStateSerializer` (JSON) | `ChatMessage` and its supported implementations: `AiMessage`, `UserMessage`, `SystemMessage`, and `ToolExecutionResultMessage`; `ToolExecutionRequest`; and `Content` values `TextContent` and `ImageContent` (including `Image`). |
+| `spring-ai/spring-ai-core` | `SpringAIStateSerializer` (binary), `SpringAIJacksonStateSerializer` (JSON) | `Message` and its supported implementations: `AssistantMessage`, `UserMessage`, `SystemMessage`, and `ToolResponseMessage`; `AssistantMessage.ToolCall`; `ToolResponseMessage.ToolResponse`; and `Media`. |
+
+The class lists above are the types explicitly handled by each module. In particular, the LangChain4j JSON serializer supports text and image content; another `Content` subtype must be added to the module's [Jackson] handler and type mapper before it can be round-tripped.
 
 
 ## Nodes
@@ -772,3 +789,4 @@ System.out.println(result.getContent());
 [stream]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)
 [RunnableConfig]: /langgraph4j/apidocs/org/bsc/langgraph4j/RunnableConfig.html
 [AsyncNodeActionWithConfig]: /langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html
+[Jackson]: https://github.com/FasterXML/jackson
