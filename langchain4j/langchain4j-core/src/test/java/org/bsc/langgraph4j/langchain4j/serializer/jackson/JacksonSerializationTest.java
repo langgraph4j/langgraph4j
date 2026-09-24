@@ -35,13 +35,9 @@ public class JacksonSerializationTest {
         var state = new State(Map.of("system", SystemMessage.from("Buddy"),
                 "user", UserMessage.from("Hello")));
 
-        var stream = new ByteArrayOutputStream();
-        try (var out = new ObjectOutputStream(stream)) {
+        var data = serializer.writeDataAsString(state);
 
-            serializer.write(state, out);
-        }
-
-        var result = serializer.read(new ObjectInputStream(new ByteArrayInputStream(stream.toByteArray())));
+        var result = serializer.readDataFromString(data);
 
         assertNotNull(result);
         assertEquals(2, result.data().size());
@@ -65,13 +61,9 @@ public class JacksonSerializationTest {
                 "intent", "myIntent")
         );
 
-        var stream = new ByteArrayOutputStream();
-        try (var out = new ObjectOutputStream(stream)) {
+        var data = serializer.writeDataAsString(state);
 
-            serializer.write(state, out);
-        }
-
-        var result = serializer.read(new ObjectInputStream(new ByteArrayInputStream(stream.toByteArray())));
+        var result = serializer.readDataFromString(data);
 
         assertNotNull(result);
         assertEquals(2, result.data().size());
@@ -107,13 +99,9 @@ public class JacksonSerializationTest {
                 "messages", List.of(aiMessage))
         );
 
-        var stream = new ByteArrayOutputStream();
-        try (var out = new ObjectOutputStream(stream)) {
+        var data = serializer.writeDataAsString(state);
 
-            serializer.write(state, out);
-        }
-
-        var result = serializer.read(new ObjectInputStream(new ByteArrayInputStream(stream.toByteArray())));
+        var result = serializer.readDataFromString(data);
 
         assertNotNull(result);
         assertTrue(result.lastMessage().isPresent());
@@ -154,13 +142,9 @@ public class JacksonSerializationTest {
                 "messages", List.of(aiMessage))
         );
 
-        var stream = new ByteArrayOutputStream();
-        try (var out = new ObjectOutputStream(stream)) {
+        var data = serializer.writeDataAsString(state);
 
-            serializer.write(state, out);
-        }
-
-        var result = serializer.read(new ObjectInputStream(new ByteArrayInputStream(stream.toByteArray())));
+        var result = serializer.readDataFromString(data);
 
         assertNotNull(result);
         assertTrue(result.lastMessage().isPresent());
@@ -206,7 +190,7 @@ public class JacksonSerializationTest {
 
         assertNotNull( jsonString );
 
-        var newStateData = serializer.readDataFromString( jsonString );
+        var newStateData = serializer.readDataFromString( jsonString ).data();
 
         assertNotNull( newStateData );
         assertFalse( newStateData.isEmpty() );
@@ -239,7 +223,7 @@ public class JacksonSerializationTest {
 
         assertNotNull( jsonString );
 
-        var newState = new State( serializer.readDataFromString( jsonString ) );
+        var newState = serializer.readDataFromString( jsonString );
 
         assertNotNull( newState );
         assertFalse( newState.messages().isEmpty() );
@@ -278,7 +262,7 @@ public class JacksonSerializationTest {
 
         assertNotNull( jsonString );
 
-        var newState = new State( serializer.readDataFromString( jsonString ) );
+        var newState = serializer.readDataFromString( jsonString );
 
         assertNotNull( newState );
         assertFalse( newState.messages().isEmpty() );

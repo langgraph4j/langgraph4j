@@ -3,7 +3,7 @@ package org.bsc.langgraph4j.serializer.plain_text.gson;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
@@ -39,13 +39,13 @@ public abstract class GsonStateSerializer<State extends AgentState> extends Plai
     }
 
     @Override
-    public final String writeDataAsString(Map<String, Object> data) throws IOException {
+    public final String writeDataAsString(State state) throws IOException {
         final Map<String,Object> serializedData;
 
         if( transientAttributeSet.isEmpty() ) {
-            serializedData = data;
+            serializedData = state.data();
         } else {
-            serializedData = new HashMap<>(data);
+            serializedData = new HashMap<>(state.data());
 
             for( String key : transientAttributeSet ) {
                 if( serializedData.containsKey(key) ) {
@@ -54,11 +54,11 @@ public abstract class GsonStateSerializer<State extends AgentState> extends Plai
             }
         }
 
-        return gson.toJson(data);
+        return gson.toJson(serializedData);
     }
 
     @Override
-    public final Map<String, Object> readDataFromString(String string) throws IOException {
+    public final State readDataFromString(String string) throws IOException {
         final var data =  gson.fromJson(string, new TypeToken<Map<String, Object>>() {});
 
         for( String key : transientAttributeSet ) {
@@ -66,7 +66,7 @@ public abstract class GsonStateSerializer<State extends AgentState> extends Plai
                 data.put(key, transientData.get(key));
             }
         }
-        return data;
+        return stateFactory().apply(data);
 
     }
 

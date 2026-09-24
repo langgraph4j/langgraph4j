@@ -4,7 +4,6 @@ import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.agent.AgentEx;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.spring.ai.agent.CallModelAction;
 import org.bsc.langgraph4j.spring.ai.agent.ReactAgentBuilderEx;
 import org.bsc.langgraph4j.spring.ai.serializer.jackson.SpringAIJacksonStateSerializer;

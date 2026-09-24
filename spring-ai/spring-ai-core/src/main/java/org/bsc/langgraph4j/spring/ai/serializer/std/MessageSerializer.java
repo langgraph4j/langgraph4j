@@ -1,13 +1,13 @@
 package org.bsc.langgraph4j.spring.ai.serializer.std;
 
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 import org.springframework.ai.chat.messages.*;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class MessageSerializer implements Serializer<Message> {
+public class MessageSerializer implements StdSerializer<Message> {
     final UserMessageSerializer user = new UserMessageSerializer();
     final AssistantMessageSerializer assistant = new AssistantMessageSerializer();
     final SystemMessageSerializer system = new SystemMessageSerializer();

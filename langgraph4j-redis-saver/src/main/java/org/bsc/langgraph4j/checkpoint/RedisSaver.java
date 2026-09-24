@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
@@ -634,8 +634,8 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
             return new EncodedState(Base64.getEncoder().encodeToString(bytes), stateSerializer.contentType(), StateEncoding.PLAIN_TEXT_UTF8.redisValue);
         }
 
-        var bytes = stateSerializer.dataToBytes(data);
-        return new EncodedState(Base64.getEncoder().encodeToString(bytes), stateSerializer.contentType(), StateEncoding.SERIALIZER_BYTES.redisValue);
+        var base64String = stateSerializer.writeDataAsString(data);
+        return new EncodedState(base64String, stateSerializer.contentType(), StateEncoding.SERIALIZER_BYTES.redisValue);
     }
 
     private Map<String, Object> decodeState(String statePayload,
@@ -665,21 +665,16 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
                             stateSerializer.contentType()));
         }
 
-        var bytes = Base64.getDecoder().decode(statePayload);
         var stateEncoding = StateEncoding.fromRedisValue(stateEncodingValue);
 
         if (stateEncoding.isPresent()) {
             return switch (stateEncoding.get()) {
-                case SERIALIZER_BYTES -> stateSerializer.dataFromBytes(bytes);
-                case PLAIN_TEXT_UTF8 -> decodePlainTextBytes(bytes);
+                case SERIALIZER_BYTES -> stateSerializer.readDataFromString(statePayload).data();
+                case PLAIN_TEXT_UTF8 -> decodePlainTextBytes(Base64.getDecoder().decode(statePayload));
             };
         }
 
-        if (stateSerializer instanceof PlainTextStateSerializer<?>) {
-            return decodePlainTextBytes(bytes);
-        }
-
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(statePayload).data();
     }
 
     @SuppressWarnings("unchecked")
@@ -687,12 +682,12 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
         return objectMapper.readValue(statePayload, Map.class);
     }
 
-    private Map<String, Object> decodePlainTextBytes(byte[] bytes) throws IOException {
+    private Map<String, Object> decodePlainTextBytes(byte[] bytes) throws IOException, ClassNotFoundException {
         if (!(stateSerializer instanceof PlainTextStateSerializer<?> serializer)) {
             throw new IllegalStateException(
                     "Stored state was encoded as plain text, but configured stateSerializer is not a PlainTextStateSerializer");
         }
-        return serializer.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
+        return serializer.readDataFromString(new String(bytes, StandardCharsets.UTF_8)).data();
     }
 
 }

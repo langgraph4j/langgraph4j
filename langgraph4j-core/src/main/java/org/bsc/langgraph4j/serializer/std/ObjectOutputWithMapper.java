@@ -1,7 +1,6 @@
 package org.bsc.langgraph4j.serializer.std;
 
 import org.bsc.langgraph4j.LG4JLoggable;
-import org.bsc.langgraph4j.serializer.Serializer;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -21,7 +20,7 @@ class ObjectOutputWithMapper implements ObjectOutput, LG4JLoggable {
     public void writeObject(Object obj) throws IOException {
         Objects.requireNonNull( obj, "object to serialize cannot be null" );
 
-        Optional<Serializer<Object>> serializer = mapper.getSerializer(obj.getClass());
+        Optional<StdSerializer<Object>> serializer = mapper.getSerializer(obj.getClass());
 
         if( serializer.isPresent() ) {
             out.writeObject( obj.getClass() );
@@ -111,6 +110,6 @@ class ObjectOutputWithMapper implements ObjectOutput, LG4JLoggable {
 
     @Override
     public void writeUTF(String s) throws IOException {
-        Serializer.writeUTF( s, out );
+        StdSerializer.writeUTF( s, out );
     }
 }

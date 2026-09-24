@@ -1,13 +1,9 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import oracle.jdbc.OracleStatement;
 import oracle.jdbc.OracleTypes;
-import oracle.jdbc.provider.oson.OsonFactory;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
@@ -18,13 +14,8 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
@@ -116,8 +107,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
 
     protected final String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
-        final byte[] binaryData = stateSerializer.dataToBytes(data);
-        return Base64.getEncoder().encodeToString(binaryData);
+        return stateSerializer.writeDataAsString(data);
     }
 
     protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
@@ -127,9 +117,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(binaryPayload).data();
     }
 
     /**

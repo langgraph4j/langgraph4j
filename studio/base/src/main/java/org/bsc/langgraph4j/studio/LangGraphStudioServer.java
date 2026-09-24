@@ -1,14 +1,10 @@
 package org.bsc.langgraph4j.studio;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,11 +14,10 @@ import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.dsl.JsonDslGenerator;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -508,7 +503,11 @@ public interface LangGraphStudioServer extends LG4JLoggable {
 
                 final Map<String, Object> candidateDataMap;
                 if ( /*resume && */ instance.graph().getStateSerializer() instanceof PlainTextStateSerializer<? extends AgentState> textSerializer) {
-                    candidateDataMap = textSerializer.read(new InputStreamReader(req.getInputStream())).data();
+
+                    try( var reader = new InputStreamReader(req.getInputStream())) {
+
+                        candidateDataMap = textSerializer.readDataFromReader(reader).data();
+                    }
                 } else {
                     candidateDataMap = instance.objectMapper().readValue(req.getInputStream(), new TypeReference<>() {});
                 }

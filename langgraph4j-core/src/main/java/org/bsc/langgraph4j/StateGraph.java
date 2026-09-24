@@ -12,6 +12,7 @@ import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNode;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
@@ -96,7 +97,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      *
      * @param stateSerializer the serializer to serialize the state
      */
-    public StateGraph( StateSerializer<State> stateSerializer) {
+    public StateGraph( StdStateSerializer<State> stateSerializer) {
         this( Map.of(), stateSerializer );
 
     }

@@ -1,7 +1,5 @@
 package org.bsc.langgraph4j.serializer.std;
 
-import org.bsc.langgraph4j.serializer.Serializer;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +12,7 @@ public class SerializeTest {
 
 
 
-    private byte[] serializeState(StateSerializer<AgentState> stateSerializer, AgentState state) throws Exception {
+    private byte[] serializeState(StdStateSerializer<AgentState> stateSerializer, AgentState state) throws Exception {
         try( ByteArrayOutputStream stream = new ByteArrayOutputStream() ) {
             ObjectOutputStream oas = new ObjectOutputStream(stream);
             stateSerializer.write(state, oas);
@@ -22,7 +20,7 @@ public class SerializeTest {
             return stream.toByteArray();
         }
     }
-    private AgentState deserializeState(StateSerializer<AgentState> stateSerializer, byte[] bytes) throws Exception {
+    private AgentState deserializeState(StdStateSerializer<AgentState> stateSerializer, byte[] bytes) throws Exception {
         try(ByteArrayInputStream stream = new ByteArrayInputStream( bytes ) ) {
             ObjectInputStream ois = new ObjectInputStream( stream );
             return stateSerializer.read( ois );
@@ -114,16 +112,16 @@ public class SerializeTest {
 
         final var stateSerializer = new ObjectStreamStateSerializer<>(AgentState::new);
 
-        stateSerializer.mapper().register(NonSerializableElement.class, new Serializer<NonSerializableElement>() {
+        stateSerializer.mapper().register(NonSerializableElement.class, new StdSerializer<NonSerializableElement>() {
 
                     @Override
                     public void write(NonSerializableElement object, ObjectOutput out) throws IOException {
-                        Serializer.writeUTF(object.value, out);
+                        StdSerializer.writeUTF(object.value, out);
                     }
 
                     @Override
                     public NonSerializableElement read(ObjectInput in) throws IOException, ClassNotFoundException {
-                        return new NonSerializableElement(Serializer.readUTF(in));
+                        return new NonSerializableElement(StdSerializer.readUTF(in));
                     }
                 });
 

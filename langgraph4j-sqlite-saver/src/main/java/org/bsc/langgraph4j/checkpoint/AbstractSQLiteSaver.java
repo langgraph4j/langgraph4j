@@ -2,7 +2,6 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
@@ -12,7 +11,6 @@ import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
 
@@ -23,7 +21,7 @@ import static java.util.Optional.ofNullable;
 public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
     protected static class AbstractBuilder<B extends AbstractBuilder<B>> {
-        public Map<String,StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
+        public Map<String, StateSerializer<? extends AgentState>> stateSerializerMap = new LinkedHashMap<>(2);
         String url;
         String databasePath;
         boolean createTables;
@@ -87,7 +85,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
     }
 
     protected final DataSource datasource;
-    private final Map<String,StateSerializer<? extends AgentState>> stateSerializerMap;
+    private final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
     private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
@@ -165,12 +163,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         final var stateSerializer = encoderStateSerializer(); // get first added state serializer;
         final byte[] binaryData;
 
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            binaryData = ser.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-        } else {
-            binaryData = stateSerializer.dataToBytes(data);
-        }
-        return Base64.getEncoder().encodeToString(binaryData);
+        return stateSerializer.writeDataAsString(data);
     }
 
     protected final Map<String, Object> decodeState(String binaryPayload, String contentType) throws IOException, ClassNotFoundException {
@@ -180,12 +173,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
 
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            return ser.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
-        }
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(binaryPayload).data();
     }
 
     @Override

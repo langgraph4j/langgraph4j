@@ -10,14 +10,10 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
-import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
-import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 

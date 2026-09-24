@@ -18,11 +18,11 @@ import org.bsc.langgraph4j.langchain4j.serializer.std.LC4jStateSerializer;
 import org.bsc.langgraph4j.langchain4j.tool.LC4jToolService;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -184,7 +184,7 @@ public interface AgentExecutor {
          * @param stateSerializer the state serializer
          * @return the updated GraphBuilder instance
          */
-        public Builder stateSerializer(StateSerializer<State> stateSerializer) {
+        public Builder stateSerializer(StdStateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
             return this;
         }
@@ -239,7 +239,7 @@ public interface AgentExecutor {
             final LC4jToolService toolService = new LC4jToolService(toolMap());
 
             return agentBuilder
-                    .stateSerializer( ofNullable(stateSerializer).orElseGet(Serializers.JSON::object) )
+                    .stateSerializer( ofNullable(stateSerializer).orElseGet( Serializers.JSON::object) )
                     .schema( State.SCHEMA )
                     .callModelAction( new CallModel<>( this ) )
                     .executeToolsAction( executeTool( toolService ) )

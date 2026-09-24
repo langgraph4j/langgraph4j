@@ -1,6 +1,6 @@
 package org.bsc.langgraph4j.spring.ai.serializer.std;
 
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
 
-class ToolResponseMessageSerializer implements Serializer<ToolResponseMessage> {
+class ToolResponseMessageSerializer implements StdSerializer<ToolResponseMessage> {
 
     @Override
     public void write(ToolResponseMessage object, ObjectOutput out) throws IOException {

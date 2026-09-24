@@ -2,13 +2,10 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.bsc.langgraph4j.utils.TryFunction;
-import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
@@ -16,11 +13,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
@@ -193,14 +188,8 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
     protected String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer();
-        final byte[] binaryData;
 
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            binaryData = ser.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-        } else {
-            binaryData = stateSerializer.dataToBytes(data);
-        }
-        final var base64Data = Base64.getEncoder().encodeToString(binaryData);
+        final var base64Data = stateSerializer.writeDataAsString(data);
         return """
                 {"binaryPayload": "%s"}
                 """.formatted(base64Data);
@@ -212,13 +201,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             throw new IllegalStateException(
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
-
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            return ser.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
-        }
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(new String(binaryPayload, StandardCharsets.UTF_8)).data();
     }
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {

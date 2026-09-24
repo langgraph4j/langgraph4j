@@ -13,7 +13,7 @@ import org.bsc.langgraph4j.action.Command;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.RunnableConfig;
