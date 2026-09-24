@@ -8,12 +8,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.LinkedList;
 
-public class CheckpointListSerializer implements StdSerializer<LinkedList<Checkpoint>> {
+public class StdCheckpointListSerializer implements StdSerializer<LinkedList<Checkpoint>> {
 
     private final CheckpointSerializer serializer;
 
     @SuppressWarnings("unchecked")
-    public <State extends AgentState> CheckpointListSerializer(StdStateSerializer<State> stateSerializer) {
+    public <State extends AgentState> StdCheckpointListSerializer(StdStateSerializer<State> stateSerializer) {
         this.serializer = new CheckpointSerializer((StdStateSerializer<AgentState>) stateSerializer);
     }
 
