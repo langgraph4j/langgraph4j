@@ -158,13 +158,9 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         initTable(builder.dropTablesFirst, builder.createTables);
     }
 
-    protected String sqlCommandsResourcePath() {
-        return "db/v1.0__commands.sql";
-    }
+    protected abstract String sqlCommandsResourcePath();
 
-    protected String sqlInitResourcePath() {
-        return "db/migration/v1.0__init.sql";
-    }
+    protected abstract  String sqlInitResourcePath();
 
     protected final StateSerializer<? extends AgentState> encoderStateSerializer() {
         return stateSerializerMap.values().iterator().next(); // get first added state serializer;
@@ -189,19 +185,16 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
     protected String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer();
 
-        final var base64Data = stateSerializer.writeDataAsString(data);
-        return """
-                {"binaryPayload": "%s"}
-                """.formatted(base64Data);
+        return stateSerializer.writeDataAsString(data);
     }
 
-    protected Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+    protected Map<String, Object> decodeState(String payload, String contentType) throws IOException, ClassNotFoundException {
         final var stateSerializer = stateSerializerMap.get(contentType);
         if (stateSerializer == null) {
             throw new IllegalStateException(
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
-        return stateSerializer.readDataFromString(new String(binaryPayload, StandardCharsets.UTF_8)).data();
+        return stateSerializer.readDataFromString(payload).data();
     }
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
@@ -262,7 +255,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                             .id(rs.getString(1))
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
-                            .state(decodeState(rs.getBytes(4), rs.getString(5)))
+                            .state(decodeState(rs.getString(4), rs.getString(5)))
                             .build();
                     checkpoints.add(checkpoint);
                 }
