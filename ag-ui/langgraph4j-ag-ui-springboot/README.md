@@ -4,7 +4,9 @@ Spring Boot web and SSE integration for `langgraph4j-ag-ui-sdk`.
 
 ## Classes overview
 
-- **`AGUISSEController`** — Spring Boot `@Controller` exposing a `POST /sse/{agentId}` Server-Sent
+### AGUISSEController
+
+Spring Boot `@Controller` exposing a `POST /sse/{agentId}` Server-Sent
   Events endpoint compliant with the AG-UI protocol. It resolves the target `AGUIAgent` from an
   injected `AGUIAgentRegistry`, deserializes the request body into an `AGUIRunAgentInput`, starts
   the agent run and streams back every produced AG-UI `Event` as an SSE message, completing the

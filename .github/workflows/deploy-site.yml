@@ -57,6 +57,8 @@ jobs:
           rsync -avm --include='*/' --include='README.md' --exclude='*' spring-ai/ target/mkdocs/integrations/spring-ai/
           # Copy LangChain4j docs
           rsync -avm --include='*/' --include='README.md' --exclude='*' langchain4j/ target/mkdocs/integrations/langchain4j/
+          # Copy AG-UI docs
+          rsync -avm --include='*/' --include='README.md' --exclude='*' ag-ui/ target/mkdocs/ag-ui/
 
       - name: Build MkDocs site
         run: mkdocs build

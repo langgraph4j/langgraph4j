@@ -59,6 +59,13 @@ rsync -avm \
   --exclude='*' \
   langchain4j/ target/mkdocs/integrations/langchain4j/
 
+# Copy AG-UI docs
+rsync -avm \
+  --include='*/' \
+  --include='README.md' \
+  --exclude='*' \
+  ag-ui/ target/mkdocs/ag-ui/
+
 source .docsenv/bin/activate
 
 mkdocs build
