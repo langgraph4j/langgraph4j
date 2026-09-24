@@ -6,12 +6,12 @@ import com.hazelcast.map.IMap;
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
+import org.bsc.langgraph4j.serializer.CheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonCheckpointListSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
-import org.bsc.langgraph4j.serializer.std.CheckpointListSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * the key is the {@code threadId} and the value is the serialized, time-ordered list of that
  * thread's checkpoints (most recent first). Serialization reuses the framework's checkpoint-list
  * serializers: a {@link JacksonCheckpointListSerializer} (JSON, stored as the map value directly)
- * when a {@link JacksonStateSerializer} is configured, otherwise a {@link CheckpointListSerializer}
+ * when a {@link JacksonStateSerializer} is configured, otherwise a {@link org.bsc.langgraph4j.serializer.std.StdCheckpointListSerializer}
  * (binary, stored Base64-encoded).</p>
  *
  * <p><b>Write amplification.</b> Because a thread's checkpoints live in a single value, each
@@ -114,9 +114,7 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
 
         // Reuse the framework's checkpoint-list serializers:
         // JSON when the state serializer is Jackson-based, binary otherwise.
-        this.checkpointsSerializer = (stateSerializer instanceof JacksonStateSerializer<? extends AgentState> jsonStateSerializer)
-                ? new JacksonCheckpointListSerializer(jsonStateSerializer)
-                : new CheckpointListSerializer((StdStateSerializer<? extends AgentState>) stateSerializer);
+        this.checkpointsSerializer = CheckpointListSerializer.of(stateSerializer);
 
         // CPMap is an Enterprise feature: its API is in the CE jar but it throws at runtime
         // unless a Hazelcast Enterprise license is present and the CP Subsystem is enabled.
