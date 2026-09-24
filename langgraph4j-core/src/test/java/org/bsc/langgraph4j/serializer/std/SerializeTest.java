@@ -170,7 +170,7 @@ public class SerializeTest {
         assertEquals(NonSerializableElement.of("I'M NOT SERIALIZABLE"), deserializedData.get("transient"));
 
         var anotherSerializer = new ObjectStreamStateSerializer<>(AgentState::new);
-        Map<String,Object> deserializedDataWithoutMemory = anotherSerializer.dataFromBytes(bytes);
+        var deserializedDataWithoutMemory = anotherSerializer.bytesToObject(bytes).data();
 
         assertEquals("b", deserializedDataWithoutMemory.get("a"));
         assertFalse(deserializedDataWithoutMemory.containsKey("transient"));
