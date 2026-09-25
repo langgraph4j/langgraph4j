@@ -543,7 +543,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
 
                     var stateSnapshot = cacheEntry.compiledGraph.getState(runnableConfig);
 
-                    runnableConfig = stateSnapshot.config();
+                    runnableConfig = stateSnapshot.config(runnableConfig);
 
                     log.trace("RESUME UPDATE STATE FORM {} USING CONFIG {}\n{}", node, runnableConfig, dataMap);
 
