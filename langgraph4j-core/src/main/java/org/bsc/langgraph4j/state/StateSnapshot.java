@@ -10,34 +10,40 @@ import java.util.Objects;
 import static java.lang.String.*;
 
 public final class StateSnapshot<State extends AgentState> extends NodeOutput<State> implements SnapshotOutput {
-    public static <State extends AgentState> StateSnapshot<State> of(Checkpoint checkpoint, RunnableConfig config, AgentStateFactory<State> factory) {
+    public static <State extends AgentState> StateSnapshot<State> of(Checkpoint checkpoint, AgentStateFactory<State> factory) {
 
+        /*
         RunnableConfig newConfig = RunnableConfig.builder(config)
                 .checkPointId( checkpoint.getId() )
                 .nextNode( checkpoint.getNextNodeId() )
                 .build() ;
-        return new StateSnapshot<>( checkpoint.getNodeId(), factory.apply(checkpoint.getState()), newConfig);
+
+         */
+        return new StateSnapshot<>( checkpoint.getNodeId(), checkpoint, factory);
     }
 
-    private final RunnableConfig config;
+    private final String checkpointId;
+    private final String checkpointNextNodeId;
 
-    public String next( ) {
-        return config.nextNode().orElse(null);
+    public String nextNodeId( ) {
+        return checkpointNextNodeId;
     }
 
-    public RunnableConfig config() {
-        return config;
+    public String checkpointId() {
+        return checkpointId;
     }
 
-    private StateSnapshot( String node, State state, RunnableConfig config) {
-        super( node, state );
-        this.config = Objects.requireNonNull(config, "config cannot be null");
+    private StateSnapshot( String node, Checkpoint checkpoint, AgentStateFactory<State> factory) {
+        super( node, factory.apply(checkpoint.getState()) );
+        this.checkpointId = Objects.requireNonNull(checkpoint.getId(), "checkpointId cannot be null");
+        this.checkpointNextNodeId = Objects.requireNonNull(checkpoint.getNextNodeId(), "checkpointNextNodeId cannot be null");
     }
 
     @Override
     public String toString() {
 
-        return format("StateSnapshot{node=%s, state=%s, config=%s}", node(), state(), config());
+        return "StateSnapshot{node=%s, state=%s, checkpointId=%s, checkpointNextNodeId=%s}"
+                .formatted(node(), state(), checkpointId(), nextNodeId());
     }
 
 
