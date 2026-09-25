@@ -2,10 +2,8 @@ package org.bsc.langgraph4j;
 
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.util.ExceptionUtil;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.v5.AsyncGeneratorFlow;
-import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
@@ -18,12 +16,10 @@ import org.bsc.langgraph4j.internal.node.ParallelNode;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.StateSnapshot;
-import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -196,7 +192,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.list(config).stream()
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) )
+                .map( checkpoint -> StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) )
                 .toList();
     }
 
@@ -222,7 +218,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.get(config)
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) );
+                .map( checkpoint -> StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) );
     }
 
     /**
@@ -688,7 +684,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         @SuppressWarnings("unchecked")
         protected Output buildStateSnapshot( Checkpoint checkpoint ) throws Exception {
-            return (Output)StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) ;
+            return (Output)StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) ;
         }
 
         @SuppressWarnings("unchecked")
