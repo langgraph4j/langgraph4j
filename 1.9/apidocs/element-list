@@ -1,9 +1,12 @@
+com.agui.json
+com.agui.json.mixins
 org.bsc.javelit
 org.bsc.langgraph4j
 org.bsc.langgraph4j.action
 org.bsc.langgraph4j.agent
 org.bsc.langgraph4j.agent.skill
 org.bsc.langgraph4j.agentexecutor
+org.bsc.langgraph4j.agui.sdk
 org.bsc.langgraph4j.checkpoint
 org.bsc.langgraph4j.diagram
 org.bsc.langgraph4j.dsl
@@ -21,6 +24,7 @@ org.bsc.langgraph4j.otel
 org.bsc.langgraph4j.otel.internal
 org.bsc.langgraph4j.prebuilt
 org.bsc.langgraph4j.serializer
+org.bsc.langgraph4j.serializer.plain_text
 org.bsc.langgraph4j.serializer.plain_text.gson
 org.bsc.langgraph4j.serializer.plain_text.jackson
 org.bsc.langgraph4j.serializer.std
