@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9-SNAPSHOT@pom
+//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.2@pom
 //DEPS org.bsc.langgraph4j:langgraph4j-sqlite-saver
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit
 //DEPS org.bsc.langgraph4j:langgraph4j-ag-ui-json
