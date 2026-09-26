@@ -2,6 +2,94 @@
 
 
 
+<!-- "name: v1.9.2" is a release tag -->
+
+## [v1.9.2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.2) (2026-09-26)
+
+### Features
+
+ *  **CheckpointListSerializer**  add factory method to create a Checkpoint List serializer based upon given StateSerializer ([af7ef62921932ad](https://github.com/bsorrentino/langgraph4j/commit/af7ef62921932ad19b0e3d18d56cf5255fb6226c))
+   
+ *  **agui**  expose ObjectMapper for serialization and deserialization ([b6e0864dc2ee42f](https://github.com/bsorrentino/langgraph4j/commit/b6e0864dc2ee42f87dfb1a6ded7e39ab65634854))
+   
+
+### Bug Fixes
+
+ -  **StateGraph**  update state serializer type from StdStateSerializer to StateSerializer ([3ded2ef752da212](https://github.com/bsorrentino/langgraph4j/commit/3ded2ef752da212e818aa9f288fca61de3d12b26))
+
+ -  **OTELWrapCallTraceHook**  update state serializer type from StdStateSerializer to StateSerializer ([2ef686facc7cd97](https://github.com/bsorrentino/langgraph4j/commit/2ef686facc7cd97b1d5984cc03ea916b720d17f2))
+
+ -  **MessagesStateGraph**  update state serializer type from StdStateSerializer to StateSerializer ([55bb7317a31c580](https://github.com/bsorrentino/langgraph4j/commit/55bb7317a31c5806a196aeecf3246d45f47cffd7))
+
+ -  **agent-executor**  update state serializer type from StdStateSerializer to StateSerializer ([be8b3b0c707760a](https://github.com/bsorrentino/langgraph4j/commit/be8b3b0c707760a59aa0785edffb6923998a7fca))
+
+
+### Refactor
+
+ -  **SubGraphSnapshotOutput**  replace RunnableConfig with checkpoint ID and next node ID ([939bf0c8cea5ef9](https://github.com/bsorrentino/langgraph4j/commit/939bf0c8cea5ef9e234ab657f599852bff0f12aa))
+   
+ -  **NodeOutputSerializer**  update checkpoint retrieval and next node ID method for StateSnapshot ([ef5c6bb5d456ca8](https://github.com/bsorrentino/langgraph4j/commit/ef5c6bb5d456ca8e284ce77f1a22da79d56ebef8))
+   
+ -  **LangGraphStudioServer**  update runnableConfig retrieval to use stateSnapshot.config(runnableConfig) ([1f99372e99e27b3](https://github.com/bsorrentino/langgraph4j/commit/1f99372e99e27b3252662d9a06857168aedb3fac))
+   
+ -  **CompiledGraph**  remove config parameter from StateSnapshot instantiation ([91e37ca7556a28d](https://github.com/bsorrentino/langgraph4j/commit/91e37ca7556a28d45eef55e9969e1738e73bfe7d))
+   
+ -  **StateSnapshot**  rename next() to nextNodeId() and update config() method to config(RunnableConfig) so the StateSnapshot don't store RunnableConfig anymore. ([e0b9542b7dd945b](https://github.com/bsorrentino/langgraph4j/commit/e0b9542b7dd945bc963d403f7390027227ca28fb))
+    > BREAKING CHANGE: StateSnapshot.config() has been removed
+
+ -  **StateSerializer**  move readDataFromReader and getStateType methods to StateSerializer for better organization ([6c9b36eea4be4f3](https://github.com/bsorrentino/langgraph4j/commit/6c9b36eea4be4f344bbe341d189b7937a149fd7d))
+   
+ -  **CheckpointListSerializer**  rename to StdCheckpointListSerializer for clarity ([0d549fe3c2b07c6](https://github.com/bsorrentino/langgraph4j/commit/0d549fe3c2b07c65a6463acfe3adf76fb6d528e0))
+   
+ -  **HazelcastSaver**  streamline checkpoint serializer initialization using CheckpointListSerializer factory method ([eae01b06b3596f0](https://github.com/bsorrentino/langgraph4j/commit/eae01b06b3596f095a5c8eec280b186d83c25ccd))
+   
+ -  **FileSystemSaver**  simplify checkpoint serialization logic by using CheckpointListSerializer factory method ([0e2d56a29b313c8](https://github.com/bsorrentino/langgraph4j/commit/0e2d56a29b313c8caf7e51178233fa6c958943e3))
+   
+ -  **cockroachdb-saver**  store state data as a TEXT field ([032a1b4f85590c0](https://github.com/bsorrentino/langgraph4j/commit/032a1b4f85590c074d36c3d836f1702915c588d1))
+   
+ -  **postgres-saver**  store state data as a TEXT field ([b844ade430da253](https://github.com/bsorrentino/langgraph4j/commit/b844ade430da2537eaee4724586c749039406016))
+   
+ -  **serializer**  deep refactoring of the serialization class hierarchy to better decouple JSON vs STD serialization strategy and implementation. ([b479fce5aaf3fc6](https://github.com/bsorrentino/langgraph4j/commit/b479fce5aaf3fc6b5e527f2cb69713e3f9c87f31))
+    > BREAKING CHANGE: this update contains breaking changes
+
+
+### Test 
+
+ -  update method calls to use nextNodeId() and config(RunnableConfig) ([e349d771cf17efa](https://github.com/bsorrentino/langgraph4j/commit/e349d771cf17efad47b6b6ce81b950c7e5458251))
+   
+ -  **serializer**  update method name for clarity in deserialization process ([56bf740214b2bd3](https://github.com/bsorrentino/langgraph4j/commit/56bf740214b2bd3ca4aa7058de417320855638fc))
+   
+ -  **sqlite-saver**  refactor to start server and enhance dashboard initialization ([767b1b55bee6cb0](https://github.com/bsorrentino/langgraph4j/commit/767b1b55bee6cb0de5547030437e2a7a386a824e))
+   
+
+### Documentation
+
+ -  **ag-ui**  add ag-ui to documentation site ([166a7592937b32a](https://github.com/bsorrentino/langgraph4j/commit/166a7592937b32a8f5a41729db16cb800527750a))
+
+ -  **Serializer**  enhance documentation on state serialization and available serializers ([5ed855176e893e4](https://github.com/bsorrentino/langgraph4j/commit/5ed855176e893e4b4cac1769460ae246da90cd05))
+
+ -  **cockroachdb-saver**  align implementation with SQL resource by creating AbstractCockroachDBSaver and removing hardcoded SQL commands ([016f4d84cbd216b](https://github.com/bsorrentino/langgraph4j/commit/016f4d84cbd216bc29cecc4a2a0ef6090a7e9beb))
+
+ -  **specs**  rename checkpoint saver specs docs ([df7f7b27b456d9d](https://github.com/bsorrentino/langgraph4j/commit/df7f7b27b456d9d3c340855ea65f1f28a64baf7f))
+
+ -  update changelog ([6c7e99615392eb5](https://github.com/bsorrentino/langgraph4j/commit/6c7e99615392eb5097cf781d83e37743f36875cb))
+
+
+### ALM 
+
+ -  bump to next version 1.9.2 ([5deee5e6f1c0daa](https://github.com/bsorrentino/langgraph4j/commit/5deee5e6f1c0daaf8cd78544dff0f31b05259ced))
+   
+ -  update langchain4j version to 1.20.1 ([78f9eb04002a69b](https://github.com/bsorrentino/langgraph4j/commit/78f9eb04002a69b4d3431133f718bfb15056e62d))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([07f85dc2a4f21b0](https://github.com/bsorrentino/langgraph4j/commit/07f85dc2a4f21b0024e9c9cfb44f6877f63b8e14))
+   
+ -  **bom**  add AG UI integration dependencies ([201aa75d5a4b98f](https://github.com/bsorrentino/langgraph4j/commit/201aa75d5a4b98f67a84cb47bbec189e447754df))
+   
+
+
+
+
+
 <!-- "name: v1.9.1" is a release tag -->
 
 ## [v1.9.1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.1) (2026-09-23)
