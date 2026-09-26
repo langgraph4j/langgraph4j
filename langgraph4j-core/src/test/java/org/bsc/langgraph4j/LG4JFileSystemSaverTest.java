@@ -4,7 +4,6 @@ import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.StateSnapshot;
@@ -57,9 +56,9 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         JSON( new JsonStateSerializer() )
         ;
 
-        private final StateSerializer<State> value;
+        private final org.bsc.langgraph4j.serializer.StateSerializer<State> value;
 
-        StateSerializerEnum(StateSerializer<State> stateSerializer) {
+        StateSerializerEnum(org.bsc.langgraph4j.serializer.StateSerializer<State> stateSerializer) {
             this.value = stateSerializer;
         }
     }

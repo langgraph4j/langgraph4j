@@ -2,7 +2,7 @@ package org.bsc.langgraph4j.langchain4j.serializer.std;
 
 import dev.langchain4j.data.message.*;
 
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -12,7 +12,7 @@ import java.io.ObjectOutput;
  * The ChatMesssageSerializer class is responsible for serializing and deserializing 
  * ChatMessage objects. It implements the Serializer interface for the ChatMessage type.
  */
-public class ChatMesssageSerializer implements Serializer<ChatMessage> {
+public class ChatMesssageSerializer implements StdSerializer<ChatMessage> {
     final AiMessageSerializer ai = new AiMessageSerializer();
     final UserMessageSerializer user = new UserMessageSerializer();
     final SystemMessageSerializer system = new SystemMessageSerializer();

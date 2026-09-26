@@ -65,7 +65,7 @@ public interface SubAgent extends ToolCallback, AgentEx.ToolBehaviour<Message, A
                             .map(toolCall -> {
                                 final var newState = Map.<String, Object>of("messages", new UserMessage(toolCall.arguments()));
 
-                                return action.apply(graph.getStateFactory().apply(newState), config);
+                                return action.apply(graph.stateFactory().apply(newState), config);
                             })
                             .orElseGet(() -> failedFuture(new IllegalArgumentException("no tool execution request found!")))
 

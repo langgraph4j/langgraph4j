@@ -289,7 +289,7 @@ public class LG4JMemorySaverTest
 
         var snapshot = app.getState(runnableConfig);
         assertNotNull( snapshot );
-        assertEquals( END, snapshot.next() );
+        assertEquals( END, snapshot.nextNodeId() );
 
         log.info( "LAST SNAPSHOT:\n{}\n", snapshot );
 
@@ -315,7 +315,7 @@ public class LG4JMemorySaverTest
         assertTrue( firstSnapshot.get().state().lastMessage().isPresent() );
         assertEquals( "whether in Naples?", firstSnapshot.get().state().lastMessage().get() );
 
-        var toReplay = firstSnapshot.get().config();
+        var toReplay = firstSnapshot.get().config(runnableConfig);
 
         toReplay = app.updateState( toReplay, Map.of( "messages", "i'm bartolo") );
         results = app.stream( GraphInput.resume(), toReplay ).stream().collect( Collectors.toList() );
@@ -368,10 +368,10 @@ public class LG4JMemorySaverTest
         var state = app.getState(runnableConfig);
 
         assertNotNull( state );
-        assertEquals( "tools", state.next() );
+        assertEquals( "tools", state.nextNodeId() );
 
         log.info( "RESUME CALL");
-        results = app.stream( GraphInput.resume(), state.config() ).stream()
+        results = app.stream( GraphInput.resume(), state.config(runnableConfig) ).stream()
                                         .peek(n -> log.info( "{}", n ) )
                                         .collect(Collectors.toList());
 

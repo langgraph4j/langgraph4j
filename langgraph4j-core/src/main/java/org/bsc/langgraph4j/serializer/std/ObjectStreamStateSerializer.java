@@ -1,8 +1,6 @@
 package org.bsc.langgraph4j.serializer.std;
 
 import org.bsc.langgraph4j.LG4JLoggable;
-import org.bsc.langgraph4j.serializer.Serializer;
-import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
@@ -11,7 +9,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
-public class ObjectStreamStateSerializer<State extends AgentState> extends StateSerializer<State> implements LG4JLoggable{
+public class ObjectStreamStateSerializer<State extends AgentState> extends StdStateSerializer<State> implements LG4JLoggable{
 
     static class ListSerializer implements NullableObjectSerializer<List<Object>> {
 
@@ -58,7 +56,7 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
 
             for( Map.Entry<String,Object> e : object.entrySet() ) {
                 try {
-                    Serializer.writeUTF(e.getKey(), out);
+                    StdSerializer.writeUTF(e.getKey(), out);
 
                     writeNullableObject( e.getValue(), out );
 
@@ -79,7 +77,7 @@ public class ObjectStreamStateSerializer<State extends AgentState> extends State
             int size = in.readInt();
 
             for( int i = 0; i < size; i++ ) {
-                String key = Serializer.readUTF(in);
+                String key = StdSerializer.readUTF(in);
 
                 Object value = readNullableObject(in).orElse(null);
 

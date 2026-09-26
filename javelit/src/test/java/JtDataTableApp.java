@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.1
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.2
 
 import io.javelit.core.Jt;
 import org.bsc.javelit.JtDataTable;

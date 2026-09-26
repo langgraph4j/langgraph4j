@@ -53,6 +53,11 @@ nav:
       #   - Examples: https://github.com/langgraph4j/langgraph4j-examples
       #   - JavaDoc: apidocs/index.html
       - Getting Started: getting-started.md
+      - AI Integrations:
+          - integrations/spring-ai/README.md
+          - integrations/langchain4j/README.md
+      - AG UI: ag-ui/README.md
+      - Studio: studio/index.md
       - How to(s):
         - Add persistence (“memory”) to your graph: how-tos/persistence.ipynb
         - Adaptive RAG: how-tos/adaptiverag.ipynb
@@ -74,11 +79,6 @@ nav:
         - Subgraph as state graph: how-tos/subgraph-as-stategraph.ipynb
         - View and Update past graph state: how-tos/time-travel.ipynb
         - Wait for User input: how-tos/wait-user-input.ipynb
-      - Integrations:
-          - integrations/spring-ai/README.md
-          - integrations/langchain4j/README.md
-      - Studio: studio/index.md
-      - Builder: builder/index.md
       - Latest Release Notes: https://github.com/langgraph4j/langgraph4j/releases
   - Tutorial:
       - Core Library: core/core-library.md

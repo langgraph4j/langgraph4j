@@ -46,7 +46,7 @@ public class UserMessageSerializeTest {
 
         assertNotNull( jsonString );
 
-        var newStateData = serializer.readDataFromString( jsonString );
+        var newStateData = serializer.readDataFromString( jsonString ).data();
 
         assertNotNull( newStateData );
         assertFalse( newStateData.isEmpty() );
@@ -82,7 +82,7 @@ public class UserMessageSerializeTest {
 
         assertNotNull( jsonString );
 
-        var newState = new State( serializer.readDataFromString( jsonString ) );
+        var newState = serializer.readDataFromString( jsonString );
 
         assertNotNull( newState );
         assertFalse( newState.messages().isEmpty() );
@@ -121,7 +121,7 @@ public class UserMessageSerializeTest {
 
         assertNotNull( jsonString );
 
-        var newState = new State( serializer.readDataFromString( jsonString ) );
+        var newState = serializer.readDataFromString( jsonString );
 
         assertNotNull( newState );
         assertFalse( newState.messages().isEmpty() );

@@ -12,6 +12,7 @@ import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNode;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;

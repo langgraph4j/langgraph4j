@@ -45,12 +45,12 @@ public class GSonSerializerTest {
         assertTrue( type.isPresent() );
         assertEquals(State.class, type.get());
 
-        byte[] bytes = serializer.objectToBytes(state);
+        String json = serializer.writeDataAsString(state);
 
-        assertNotNull(bytes);
-        assertTrue(bytes.length > 0);
+        assertNotNull(json);
+        assertFalse(json.isEmpty());
 
-        AgentState deserializedState = serializer.bytesToObject(bytes);
+        AgentState deserializedState = serializer.readDataFromString(json);
 
         assertNotNull(deserializedState);
         assertEquals( 1, deserializedState.data().size() );

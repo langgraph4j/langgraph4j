@@ -4,7 +4,8 @@ import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
+import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
+import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  *
  * <p>Implements the {@link AbstractCheckpointSaver} contract and stores all checkpoints
  * in a single DynamoDB table using a composite primary key ({@code PK} + {@code SK}).
- * Checkpoint state is serialized via the supplied {@link StateSerializer} and stored as
+ * Checkpoint state is serialized via the supplied {@link StdStateSerializer} and stored as
  * a separate "chunk" item to keep the metadata item well within DynamoDB's 400 KB limit.
  *
  * <h2>Table layout</h2>
@@ -256,13 +257,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
      * Serialize the agent state map to Base64-encoded bytes (same pattern as PostgresSaver).
      */
     private byte[] encodeState(Map<String, Object> data) throws IOException {
-        final byte[] binaryData;
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            binaryData = ser.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-        } else {
-            binaryData = stateSerializer.dataToBytes(data);
-        }
-        return binaryData;
+        return stateSerializer.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -276,10 +271,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
                 contentType, stateSerializer.contentType()
             ));
         }
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            return ser.readDataFromString(new String(payload, StandardCharsets.UTF_8));
-        }
-        return stateSerializer.dataFromBytes(payload);
+        return stateSerializer.readDataFromString(new String(payload, StandardCharsets.UTF_8)).data();
     }
 
     // ─── AbstractCheckpointSaver template methods ────────────────────────────────

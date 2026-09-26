@@ -38,12 +38,12 @@ public class PostgresSaverV2 extends AbstractPostgresSaverV2 {
 
     @Override
     protected final String sqlCommandsResourcePath() {
-        return "db/v2.0__commands.sql";
+        return "db/v2.1__commands.sql";
     }
 
     @Override
     protected final String sqlInitResourcePath() {
-        return "db/migration/v2.0__init.sql";
+        return "db/migration/v2.1__init.sql";
     }
 
     private Tag internalReleaseCheckpoints(String threadId,

@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j.langchain4j.serializer.std;
 
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
 
 import java.io.IOException;
@@ -32,8 +32,8 @@ public class ToolExecutionResultMessageSerializer implements NullableObjectSeria
             log.trace( "ToolExecutionResultMessage id is null!" );
         }
         writeNullableUTF( object.id(), out );
-        Serializer.writeUTF( object.toolName(), out );
-        Serializer.writeUTF( object.text(), out );
+        StdSerializer.writeUTF( object.toolName(), out );
+        StdSerializer.writeUTF( object.text(), out );
         out.writeBoolean( ofNullable(object.isError()).orElse(false) );
         out.writeObject( object.attributes() );
     }
@@ -51,8 +51,8 @@ public class ToolExecutionResultMessageSerializer implements NullableObjectSeria
     @Override
     public ToolExecutionResultMessage read(ObjectInput in) throws IOException, ClassNotFoundException {
         String id = readNullableUTF( in ).orElse( null );
-        String toolName = Serializer.readUTF(in);
-        String text = Serializer.readUTF(in);
+        String toolName = StdSerializer.readUTF(in);
+        String text = StdSerializer.readUTF(in);
         Boolean isError = in.readBoolean();
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = (Map<String, Object>) in.readObject();

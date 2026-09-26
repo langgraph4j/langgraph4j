@@ -200,16 +200,16 @@ public abstract class AbstractCheckpointSaverTest implements LG4JTestUtil, LG4JL
 
             assertTrue(lastSnapshot.isPresent());
             assertEquals("agent_1", lastSnapshot.get().node());
-            assertEquals(END, lastSnapshot.get().next());
+            assertEquals(END, lastSnapshot.get().nextNodeId());
 
-            var updatedConfig = workflow.updateState(lastSnapshot.get().config(), Map.of("update", "update test"));
+            var updatedConfig = workflow.updateState(lastSnapshot.get().config(runnableConfig), Map.of("update", "update test"));
 
             var updatedSnapshot = workflow.stateOf(updatedConfig);
             assertTrue(updatedSnapshot.isPresent());
             assertEquals("agent_1", updatedSnapshot.get().node());
             assertTrue(updatedSnapshot.get().state().value("update").isPresent());
             assertEquals("update test", updatedSnapshot.get().state().value("update").get());
-            assertEquals(END, updatedSnapshot.get().next());
+            assertEquals(END, updatedSnapshot.get().nextNodeId());
 
             saver = buildCheckpointSaver(param.stateSerializer, threadId);
 
@@ -231,7 +231,7 @@ public abstract class AbstractCheckpointSaverTest implements LG4JTestUtil, LG4JL
             assertEquals("agent_1", updatedSnapshot.get().node());
             assertTrue(updatedSnapshot.get().state().value("update").isPresent());
             assertEquals("update test", updatedSnapshot.get().state().value("update").get());
-            assertEquals(END, updatedSnapshot.get().next());
+            assertEquals(END, updatedSnapshot.get().nextNodeId());
 
             saver.release(runnableConfig);
 

@@ -8,16 +8,13 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.serializer.Serializer;
-import org.bsc.langgraph4j.serializer.PlainTextSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.LinkedList;
 import java.util.List;
 
-public class JacksonCheckpointListSerializer implements Serializer<LinkedList<Checkpoint>>, PlainTextSerializer<LinkedList<Checkpoint>> {
+public class JacksonCheckpointListSerializer implements Serializer<LinkedList<Checkpoint>> {
 
     protected final JsonMapper objectMapper;
 
@@ -38,14 +35,10 @@ public class JacksonCheckpointListSerializer implements Serializer<LinkedList<Ch
                 .build();
     }
 
-    @Override
-    public void write(LinkedList<Checkpoint> object, ObjectOutput out) throws IOException {
-        PlainTextSerializer.super.writeData(object, out);
-    }
 
     @Override
-    public LinkedList<Checkpoint> read(ObjectInput in) throws IOException, ClassNotFoundException {
-        return PlainTextSerializer.super.readData(in);
+    public String contentType() {
+        return "application/json";
     }
 
     @Override

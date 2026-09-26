@@ -22,7 +22,6 @@ import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -239,7 +238,7 @@ public interface AgentExecutor {
             final LC4jToolService toolService = new LC4jToolService(toolMap());
 
             return agentBuilder
-                    .stateSerializer( ofNullable(stateSerializer).orElseGet(Serializers.JSON::object) )
+                    .stateSerializer( ofNullable(stateSerializer).orElseGet( Serializers.JSON::object) )
                     .schema( State.SCHEMA )
                     .callModelAction( new CallModel<>( this ) )
                     .executeToolsAction( executeTool( toolService ) )

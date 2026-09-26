@@ -2,13 +2,10 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.LG4JLoggable;
 import org.bsc.langgraph4j.RunnableConfig;
-import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
-import org.bsc.langgraph4j.serializer.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.bsc.langgraph4j.utils.TryFunction;
-import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
@@ -16,11 +13,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver implements LG4JLoggable {
 
@@ -163,13 +158,9 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         initTable(builder.dropTablesFirst, builder.createTables);
     }
 
-    protected String sqlCommandsResourcePath() {
-        return "db/v1.0__commands.sql";
-    }
+    protected abstract String sqlCommandsResourcePath();
 
-    protected String sqlInitResourcePath() {
-        return "db/migration/v1.0__init.sql";
-    }
+    protected abstract  String sqlInitResourcePath();
 
     protected final StateSerializer<? extends AgentState> encoderStateSerializer() {
         return stateSerializerMap.values().iterator().next(); // get first added state serializer;
@@ -193,32 +184,17 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
     protected String encodeState(Map<String, Object> data) throws IOException {
         final var stateSerializer = encoderStateSerializer();
-        final byte[] binaryData;
 
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            binaryData = ser.writeDataAsString(data).getBytes(StandardCharsets.UTF_8);
-        } else {
-            binaryData = stateSerializer.dataToBytes(data);
-        }
-        final var base64Data = Base64.getEncoder().encodeToString(binaryData);
-        return """
-                {"binaryPayload": "%s"}
-                """.formatted(base64Data);
+        return stateSerializer.writeDataAsString(data);
     }
 
-    protected Map<String, Object> decodeState(byte[] binaryPayload, String contentType) throws IOException, ClassNotFoundException {
+    protected Map<String, Object> decodeState(String payload, String contentType) throws IOException, ClassNotFoundException {
         final var stateSerializer = stateSerializerMap.get(contentType);
         if (stateSerializer == null) {
             throw new IllegalStateException(
                     "Content Type used for store state '%s' has not been provided!".formatted(contentType));
         }
-
-        final byte[] bytes = Base64.getDecoder().decode(binaryPayload);
-
-        if (plainTextStateSerializerLegacyMode && stateSerializer instanceof PlainTextStateSerializer<?> ser) {
-            return ser.readDataFromString(new String(bytes, StandardCharsets.UTF_8));
-        }
-        return stateSerializer.dataFromBytes(bytes);
+        return stateSerializer.readDataFromString(payload).data();
     }
 
     protected void initTable(boolean dropTablesFirst, boolean createTables) throws Exception {
@@ -279,7 +255,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                             .id(rs.getString(1))
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
-                            .state(decodeState(rs.getBytes(4), rs.getString(5)))
+                            .state(decodeState(rs.getString(4), rs.getString(5)))
                             .build();
                     checkpoints.add(checkpoint);
                 }

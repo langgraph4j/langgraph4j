@@ -106,7 +106,9 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
         return actionBuilder().message( nodeId ).attributeKey( attributeKey ).buildAsFactory();
     }
 
-    private CompiledGraph<State> subGraphWithInterruption( BaseCheckpointSaver saver, StateSerializer<State> stateSerializer, boolean asInterruptable) throws Exception {
+    private CompiledGraph<State> subGraphWithInterruption(BaseCheckpointSaver saver,
+                                                          StateSerializer<State> stateSerializer,
+                                                          boolean asInterruptable) throws Exception {
 
         final var compileConfigBuilder = CompileConfig.builder()
                 .checkpointSaver(saver)

@@ -3,7 +3,7 @@ package org.bsc.langgraph4j.langchain4j.serializer.std;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
-import org.bsc.langgraph4j.serializer.Serializer;
+import org.bsc.langgraph4j.serializer.std.StdSerializer;
 import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
 
 import java.io.EOFException;
@@ -31,7 +31,7 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
     public void write(UserMessage object, ObjectOutput out) throws IOException {
 
         if( object.hasSingleText() ) {
-            Serializer.writeUTF( object.singleText(), out );
+            StdSerializer.writeUTF( object.singleText(), out );
         }
         else {
             out.writeObject( object.contents() );
@@ -53,7 +53,7 @@ public class UserMessageSerializer implements NullableObjectSerializer<UserMessa
 
         final var builder = UserMessage.builder();
         try {
-            final var text = Serializer.readUTF(in);
+            final var text = StdSerializer.readUTF(in);
             builder.addContent(TextContent.from(text));
         }
         catch( EOFException ex ) {

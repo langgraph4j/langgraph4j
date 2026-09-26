@@ -109,7 +109,7 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
                                         .findFirst()
                                         .orElseThrow();
 
-            runnableConfig = workflow.updateState( snapshotForNodeB.config(),
+            runnableConfig = workflow.updateState( snapshotForNodeB.config(runnableConfig),
                                     Map.of( "messages", "C"));
 
             results = workflow.stream(GraphInput.resume(), runnableConfig )
