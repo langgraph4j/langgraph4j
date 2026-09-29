@@ -889,7 +889,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // CHECK ON PREVIOUS NODE
                     if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config))
+                                .reason("declared interruption after nodeId: [%s]".formatted(context.currentNodeId()))
+                                .build();
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }
@@ -899,7 +901,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     }
 
                     if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config))
+                                .reason("declared interruption before nodeId: [%s]".formatted(context.nextNodeId()))
+                                .build();
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }
