@@ -21,7 +21,7 @@
         <tag>HEAD</tag>
     </scm>
 
-add a complete ex    <dependencyManagement>
+    <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
