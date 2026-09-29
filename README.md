@@ -503,6 +503,7 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 
 ## Articles
+* [Spring AI vs LangGraph4j: Java AI Framework Comparison](https://springdevpro.com/spring-ai/comparison/spring-ai-vs-langgraph4j/)
 * [Building an Agentic Harness with Spring AI and LangGraph4j](https://dev.to/lbobylev/building-an-agentic-harness-with-spring-ai-2j1p)
 * LangGraph4j Series
   * [Part 1: State Management, Channels Reducers and Human in the Loop](https://www.futurecraft.dev/ai/State-Management/)
