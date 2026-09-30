@@ -1,0 +1,130 @@
+<script type="module">
+    import {LitElement, html, css} from '{{ LIT_DEPENDENCY }}';
+    import Jedison from 'https://cdn.jsdelivr.net/npm/jedison@1.23.1/dist/esm/jedison.js';
+
+    const jsonConverter = {
+        fromAttribute(value) {
+            if (!value) {
+                return {};
+            }
+
+            try {
+                return JSON.parse(value);
+            } catch (_) {
+                return {};
+            }
+        },
+        toAttribute(value) {
+            return value == null ? null : JSON.stringify(value);
+        }
+    };
+
+    class JtJsonEditor extends LitElement {
+        static properties = {
+            value: {attribute: 'value', converter: jsonConverter},
+            schema: {attribute: 'schema', converter: jsonConverter},
+            disabled: {type: Boolean, reflect: true},
+            componentKey: {type: String, attribute: 'component-key'}
+        };
+
+        static styles = css`
+            :host {
+                display: block;
+            }
+
+            .editor {
+                min-width: 0;
+            }
+        `;
+
+        constructor() {
+            super();
+            this.value = {};
+            this.schema = {};
+            this.disabled = false;
+            this.componentKey = '';
+            this._editor = null;
+        }
+
+        firstUpdated() {
+            this._createEditor();
+        }
+
+        updated(changedProperties) {
+            if (!this._editor) {
+                return;
+            }
+
+            if (changedProperties.has('schema')) {
+                this._createEditor();
+                return;
+            }
+
+            if (changedProperties.has('value') && !this._updatingFromEditor) {
+                this._editor.setValue(this.value, false);
+            }
+
+            if (changedProperties.has('disabled')) {
+                this._setDisabled();
+            }
+        }
+
+        disconnectedCallback() {
+            this._editor?.destroy();
+            this._editor = null;
+            super.disconnectedCallback();
+        }
+
+        _createEditor() {
+            this._editor?.destroy();
+            this._editor = new Jedison.Create({
+                container: this.renderRoot.querySelector('.editor'),
+                theme: new Jedison.Theme(),
+                schema: this.schema,
+                data: this.value
+            });
+            this._editor.on('change', (initiator) => this._onChange(initiator));
+            this._setDisabled();
+        }
+
+        _setDisabled() {
+            const rootUi = this._editor?.root?.ui;
+            if (!rootUi) {
+                return;
+            }
+
+            if (this.disabled) {
+                rootUi.disable();
+            } else {
+                rootUi.enable();
+            }
+        }
+
+        _onChange(initiator) {
+            if (initiator !== 'user') {
+                return;
+            }
+
+            const json = JSON.stringify(this._editor.getValue());
+            this._updatingFromEditor = true;
+            this.value = this._editor.getValue();
+            this._updatingFromEditor = false;
+
+            this.dispatchEvent(new CustomEvent('onUpdated', {
+                detail: {value: json},
+                bubbles: true,
+                composed: true
+            }));
+
+            if (window.javelit) {
+                window.javelit.sendComponentUpdate(this.componentKey, json);
+            }
+        }
+
+        render() {
+            return html`<div class="editor"></div>`;
+        }
+    }
+
+    customElements.define('jt-json-editor', JtJsonEditor);
+</script>
