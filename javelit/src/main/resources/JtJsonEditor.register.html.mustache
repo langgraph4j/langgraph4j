@@ -24,6 +24,7 @@
             value: {attribute: 'value', converter: jsonConverter},
             schema: {attribute: 'schema', converter: jsonConverter},
             disabled: {type: Boolean, reflect: true},
+            width: {type: String, reflect: true},
             componentKey: {type: String, attribute: 'component-key'}
         };
 
@@ -398,6 +399,7 @@
             this.value = {};
             this.schema = {};
             this.disabled = false;
+            this.width = '';
             this.componentKey = '';
             this._editor = null;
         }
@@ -407,6 +409,10 @@
         }
 
         updated(changedProperties) {
+            if (changedProperties.has('width')) {
+                this.style.minWidth = this.width || '';
+            }
+
             if (!this._editor) {
                 return;
             }
