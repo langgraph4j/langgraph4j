@@ -149,12 +149,12 @@ public class CockroachDBSaver extends AbstractCockroachDBSaver {
         // 2. Insert checkpoint data
         try (PreparedStatement ps = conn.prepareStatement(insertCheckpointSql)) {
             var field = 0;
-            ps.setObject(++field, UUID.fromString(checkpoint.getId()), Types.OTHER);
+            ps.setObject(++field, UUID.fromString(checkpoint.id()), Types.OTHER);
             ps.setNull(++field, Types.OTHER);
             ps.setObject(++field, requireNonNull(threadUUID, "threadUUID cannot be null"), Types.OTHER);
-            ps.setString(++field, checkpoint.getNodeId());
-            ps.setString(++field, checkpoint.getNextNodeId());
-            ps.setString(++field, encodeState(checkpoint.getState()));
+            ps.setString(++field, checkpoint.nodeId());
+            ps.setString(++field, checkpoint.nextNodeId());
+            ps.setString(++field, encodeState(checkpoint.state()));
             ps.setString(++field, stateSerializer().contentType());
 
             log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
@@ -174,10 +174,10 @@ public class CockroachDBSaver extends AbstractCockroachDBSaver {
             insertCheckpoint(conn, config, checkpoints, checkpoint);
 
             conn.commit();
-            log.debug("Checkpoint {} for thread {} inserted successfully.", checkpoint.getId(), threadId);
+            log.debug("Checkpoint {} for thread {} inserted successfully.", checkpoint.id(), threadId);
 
         } catch (SQLException | IOException e) {
-            log.error("Error inserting checkpoint with id {} in thread {}", checkpoint.getId(), threadId, e);
+            log.error("Error inserting checkpoint with id {} in thread {}", checkpoint.id(), threadId, e);
             rollback(conn, checkpoint, threadId);
             throw e;
         }
@@ -214,10 +214,10 @@ public class CockroachDBSaver extends AbstractCockroachDBSaver {
 
             conn.commit();
 
-            log.debug("Checkpoint with id {} for thread {} inserted successfully.", checkpoint.getId(), threadId);
+            log.debug("Checkpoint with id {} for thread {} inserted successfully.", checkpoint.id(), threadId);
 
         } catch (SQLException | IOException e) {
-            log.error("Error inserting checkpoint with id {} in thread {}", checkpoint.getId(), threadId, e);
+            log.error("Error inserting checkpoint with id {} in thread {}", checkpoint.id(), threadId, e);
             rollback(conn, checkpoint, threadId);
             throw e;
         }

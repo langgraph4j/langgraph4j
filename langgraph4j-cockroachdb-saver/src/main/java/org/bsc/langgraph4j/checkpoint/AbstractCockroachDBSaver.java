@@ -37,7 +37,6 @@ public abstract class AbstractCockroachDBSaver extends AbstractCheckpointSaver i
         private boolean createTables;
         private boolean dropTablesFirst;
         private DataSource datasource;
-        private boolean plainTextStateSerializerLegacyMode;
 
         @SuppressWarnings("unchecked")
         private B self() {
@@ -46,11 +45,6 @@ public abstract class AbstractCockroachDBSaver extends AbstractCheckpointSaver i
 
         public <State extends AgentState> B stateSerializer(StateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
-            return self();
-        }
-
-        public B plainTextStateSerializerLegacyMode(boolean mode) {
-            this.plainTextStateSerializerLegacyMode = mode;
             return self();
         }
 
@@ -91,14 +85,11 @@ public abstract class AbstractCockroachDBSaver extends AbstractCheckpointSaver i
     protected final DataSource datasource;
     protected final SqlResource.Commands sqlCommands;
     private final StateSerializer<? extends AgentState> stateSerializer;
-    @SuppressWarnings("unused")
-    private final boolean plainTextStateSerializerLegacyMode;
 
     protected AbstractCockroachDBSaver(AbstractBuilder<?> builder) throws SQLException {
         builder.validate();
         datasource = builder.datasource;
         stateSerializer = builder.stateSerializer;
-        plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
         sqlCommands = loadSqlCommands(sqlCommandsResourcePath());
         initTable(builder.dropTablesFirst, builder.createTables);
     }
@@ -161,10 +152,10 @@ public abstract class AbstractCockroachDBSaver extends AbstractCheckpointSaver i
         requireNonNull(checkpoint, "checkpoint cannot be null");
         try {
             conn.rollback();
-            log.warn("Transaction rolled back for checkpoint {}", checkpoint.getId());
+            log.warn("Transaction rolled back for checkpoint {}", checkpoint.id());
         } catch (SQLException exRollback) {
             log.error("Failed to rollback transaction for checkpoint id {} in thread {}",
-                    checkpoint.getId(), threadId, exRollback);
+                    checkpoint.id(), threadId, exRollback);
         }
     }
 

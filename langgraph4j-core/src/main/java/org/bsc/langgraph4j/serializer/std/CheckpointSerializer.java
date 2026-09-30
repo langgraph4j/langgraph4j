@@ -12,10 +12,10 @@ public  record CheckpointSerializer(
 
     @Override
     public void write(Checkpoint object, ObjectOutput out) throws IOException {
-        StdSerializer.writeUTF(object.getId(), out);
-        writeNullableUTF(object.getNodeId(), out);
-        writeNullableUTF(object.getNextNodeId(), out);
-        AgentState state = stateSerializer.stateFactory().apply(object.getState());
+        StdSerializer.writeUTF(object.id(), out);
+        writeNullableUTF(object.nodeId(), out);
+        writeNullableUTF(object.nextNodeId(), out);
+        AgentState state = stateSerializer.stateFactory().apply(object.state());
         stateSerializer.write( state, out);
     }
 

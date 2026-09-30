@@ -104,7 +104,7 @@ public abstract class AbstractCheckpointSaverTest implements LG4JTestUtil, LG4JL
                                     .findFirst();
                             assertTrue(im.isPresent());
 
-                            final var state = new State(im.get().getState());
+                            final var state = new State(im.get().state());
                             assertEquals(2, state.messages().size());
 
                             Optional<String> value = state.lastMinus(1);
