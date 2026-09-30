@@ -60,7 +60,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
                 if( config.checkPointId().isPresent() ) {
                     return config.checkPointId()
                             .flatMap( id -> checkpoints.stream()
-                                    .filter( checkpoint -> checkpoint.getId().equals(id) )
+                                    .filter( checkpoint -> checkpoint.id().equals(id) )
                                     .findFirst());
                 }
                 return getLast(checkpoints,config);
@@ -79,7 +79,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
             if (config.checkPointId().isPresent()) { // Replace Checkpoint
                 String checkPointId = config.checkPointId().get();
                 int index = IntStream.range(0, checkpoints.size())
-                        .filter(i -> checkpoints.get(i).getId().equals(checkPointId))
+                        .filter(i -> checkpoints.get(i).id().equals(checkPointId))
                         .findFirst()
                         .orElseThrow(() -> (new NoSuchElementException(format("Checkpoint with id %s not found!", checkPointId))));
                 checkpoints.set(index, checkpoint );
@@ -91,7 +91,7 @@ public abstract class AbstractCheckpointSaver implements BaseCheckpointSaver {
             insertedCheckpoint( config, checkpoints, checkpoint);
 
             return RunnableConfig.builder(config)
-                    .checkPointId(checkpoint.getId())
+                    .checkPointId(checkpoint.id())
                     .build();
 
         });

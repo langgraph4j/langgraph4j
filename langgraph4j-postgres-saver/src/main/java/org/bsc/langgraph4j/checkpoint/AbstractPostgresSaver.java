@@ -10,7 +10,6 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
 
@@ -29,7 +28,6 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
         private boolean createTables;
         private boolean dropTablesFirst;
         private DataSource datasource;
-        private boolean plainTextStateSerializerLegacyMode = false;
         private final Properties additionalProperties = new Properties();
 
         @SuppressWarnings("unchecked")
@@ -41,19 +39,6 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             this.stateSerializerMap.put(stateSerializer.contentType(), stateSerializer);
             return this$();
         }
-
-        /**
-         * Intended to enable compatibility mode for {@code PlainTextStateSerializer}-based state payloads.
-         * The legacy mode save the JSON payload as binary format (i.e. a serialized java String )
-         * If state serializer is not a PlainTextStateSerializer implementation this flag is ignored
-         *
-         * @param mode compatibility flag value (default is false)
-         */
-        public B plainTextStateSerializerLegacyMode(boolean mode) {
-            this.plainTextStateSerializerLegacyMode = mode;
-            return this$();
-        }
-
 
         public B host(String host) {
             this.host = host;
@@ -144,14 +129,12 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
      */
     protected final DataSource datasource;
     private final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
-    private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
     protected AbstractPostgresSaver(AbstractBuilder<?> builder) throws Exception {
         builder.validate();
 
         this.datasource = builder.datasource;
-        this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
         this.sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
         this.stateSerializerMap = builder.stateSerializerMap;
 
@@ -173,10 +156,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
         try {
             conn.rollback();
-            log.warn("Transaction rolled back for checkpoint {}", checkpoint.getId());
+            log.warn("Transaction rolled back for checkpoint {}", checkpoint.id());
         } catch (SQLException exRollback) {
             log.error("Failed to rollback transaction for checkpoint id {} in thread {}",
-                    checkpoint.getId(),
+                    checkpoint.id(),
                     threadId,
                     exRollback);
         }
@@ -289,10 +272,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                 final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
 
                 try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
-                    preparedStatement.setObject(1, UUID.fromString(checkpoint.getId()), Types.OTHER);
-                    preparedStatement.setString(2, checkpoint.getNodeId());
-                    preparedStatement.setString(3, checkpoint.getNextNodeId());
-                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setObject(1, UUID.fromString(checkpoint.id()), Types.OTHER);
+                    preparedStatement.setString(2, checkpoint.nodeId());
+                    preparedStatement.setString(3, checkpoint.nextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.state()));
                     preparedStatement.setObject(5, UUID.fromString(config.checkPointId().get()), Types.OTHER);
                     preparedStatement.execute();
                 }
@@ -331,7 +314,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
             insertCheckpoint(conn, config, checkpoints, checkpoint);
 
             log.debug("Checkpoint with id {} for thread {} inserted successfully.",
-                    checkpoint.getId(),
+                    checkpoint.id(),
                     threadId);
 
             return null;

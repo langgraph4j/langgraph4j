@@ -30,11 +30,11 @@ public record CheckpointHandler(StdSerializer<Checkpoint> serializer, StdDeseria
         public void serialize(Checkpoint cp, JsonGenerator gen, SerializerProvider provider) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("@type", Checkpoint.class.getName());
-            gen.writeStringField( "id", cp.getId());
-            gen.writeStringField("nodeId", cp.getNodeId());
-            gen.writeStringField("nextNodeId", cp.getNextNodeId());
+            gen.writeStringField( "id", cp.id());
+            gen.writeStringField("nodeId", cp.nodeId());
+            gen.writeStringField("nextNodeId", cp.nextNodeId());
             gen.writeFieldName("state");
-            gen.writeRawValue( stateSerializer.writeDataAsString( cp.getState()) );
+            gen.writeRawValue( stateSerializer.writeDataAsString( cp.state()) );
             gen.writeEndObject();
         }
     }

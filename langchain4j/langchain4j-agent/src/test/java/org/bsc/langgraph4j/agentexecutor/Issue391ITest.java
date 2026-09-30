@@ -117,7 +117,7 @@ public class Issue391ITest implements LG4JLoggable {
         assertEquals( 2, checkpoints.size() );
 
         checkpoints.forEach( checkpoint -> {
-            log.info("Checkpoint: nodeId:{}, nextNodeId:{}", checkpoint.getNodeId(), checkpoint.getNextNodeId());
+            log.info("Checkpoint: nodeId:{}, nextNodeId:{}", checkpoint.nodeId(), checkpoint.nextNodeId());
         });
     }
 }

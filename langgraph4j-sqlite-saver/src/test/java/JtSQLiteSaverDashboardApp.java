@@ -14,10 +14,8 @@ import com.agui.community.core.interrupt.Resume;
 import com.agui.community.core.interrupt.ResumeStatus;
 import com.agui.community.core.interrupt.SuccessOutcome;
 import com.agui.json.AGUIJacksonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javelit.components.layout.ColumnsComponent;
 import io.javelit.core.Jt;
-import io.javelit.core.JtComponent;
 import io.javelit.core.JtContainer;
 import io.javelit.core.Server;
 import org.bsc.javelit.*;
@@ -64,7 +62,7 @@ public class JtSQLiteSaverDashboardApp {
 
     void startServer() {
         // prepare a Javelit server
-        var server = Server.builder(() -> app(), 8888).build();
+        var server = Server.builder(this::app, 8888).build();
 
         // start the server - this is non-blocking, user thread
         server.start();
@@ -184,10 +182,10 @@ class CheckpointDashboard {
         final var selectCheckpoints = JtDataTable.builder(checkpoints)
                 .height("44vh")
                 .singleSelection()
-                .column("nodeId", Checkpoint::getNodeId)
-                .column("nextNodeId", Checkpoint::getNextNodeId)
+                .column("nodeId", Checkpoint::nodeId)
+                .column("nextNodeId", Checkpoint::nextNodeId)
                 .column("state", v -> {
-                    final var state = v.getState();
+                    final var state = v.state();
                     return CollectionsUtils.toString(state);
                 })
                 .use(container);
@@ -236,10 +234,10 @@ class CheckpointDashboard {
         final var selectCheckpoints = JtDataTable.builder(checkpoints)
                 .height("22vh")
                 .singleSelection()
-                .column("nodeId", Checkpoint::getNodeId)
-                .column("nextNodeId", Checkpoint::getNextNodeId)
+                .column("nodeId", Checkpoint::nodeId)
+                .column("nextNodeId", Checkpoint::nextNodeId)
                 .column("state", v -> {
-                    final var state = v.getState();
+                    final var state = v.state();
                     return CollectionsUtils.toString(state);
                 })
                 .use(container);
@@ -256,7 +254,7 @@ class CheckpointDashboard {
 
             final var newState = JtJsonEditor.builder()
                     .width(500)
-                    .json(JsonStateSerializer.writeDataAsString(selectedCheckpoint.getState()))
+                    .json(JsonStateSerializer.writeDataAsString(selectedCheckpoint.state()))
                     .schema("""
                             {
                               "title": "State",
