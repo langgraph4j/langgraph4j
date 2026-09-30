@@ -509,7 +509,7 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
         // Verify state is value1
         var loaded = saver.get(getConfig);
         assertTrue(loaded.isPresent());
-        assertEquals("value1", loaded.get().getState().get("key"));
+        assertEquals("value1", loaded.get().state().get("key"));
 
         // 2. Try to insert same checkpoint ID with different state
         var modifiedCheckpoint = Checkpoint.builder()
@@ -524,7 +524,8 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
 
         // Verify state is still value1, because the conditional write prevented overwrite
         var loaded2 = saver.get(getConfig);
-        assertEquals("value1", loaded2.get().getState().get("key"));
+        assertTrue(loaded2.isPresent());
+        assertEquals("value1", loaded2.get().state().get("key"));
 
         // 3. Now test updatedCheckpoint (allowOverwrite=true)
         // config with checkpointId routes to updatedCheckpoint
@@ -532,7 +533,8 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
 
         // Verify state is now value2
         var loaded3 = saver.get(getConfig);
-        assertEquals("value2", loaded3.get().getState().get("key"));
+        assertTrue(loaded3.isPresent());
+        assertEquals("value2", loaded3.get().state().get("key"));
 
         saver.deleteThread(threadId);
     }

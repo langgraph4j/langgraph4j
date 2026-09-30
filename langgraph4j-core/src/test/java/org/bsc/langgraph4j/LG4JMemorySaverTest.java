@@ -141,9 +141,9 @@ public class LG4JMemorySaverTest
         assertEquals( 2, checkpoints.size() );
         Optional<Checkpoint> last = saver.get(runnableConfig);
         assertTrue( last.isPresent() );
-        assertEquals( "agent_1", last.get().getNodeId() );
-        assertNotNull( last.get().getState().get("agent_1:prop1") );
-        assertEquals( "agent_1:test", last.get().getState().get("agent_1:prop1") );
+        assertEquals( "agent_1", last.get().nodeId() );
+        assertNotNull( last.get().state().get("agent_1:prop1") );
+        assertEquals( "agent_1:test", last.get().state().get("agent_1:prop1") );
 
         var tag = saver.release(runnableConfig);
 
@@ -289,7 +289,7 @@ public class LG4JMemorySaverTest
 
         var snapshot = app.getState(runnableConfig);
         assertNotNull( snapshot );
-        assertEquals( END, snapshot.next() );
+        assertEquals( END, snapshot.nextNodeId() );
 
         log.info( "LAST SNAPSHOT:\n{}\n", snapshot );
 
@@ -315,7 +315,7 @@ public class LG4JMemorySaverTest
         assertTrue( firstSnapshot.get().state().lastMessage().isPresent() );
         assertEquals( "whether in Naples?", firstSnapshot.get().state().lastMessage().get() );
 
-        var toReplay = firstSnapshot.get().config();
+        var toReplay = firstSnapshot.get().config(runnableConfig);
 
         toReplay = app.updateState( toReplay, Map.of( "messages", "i'm bartolo") );
         results = app.stream( GraphInput.resume(), toReplay ).stream().collect( Collectors.toList() );
@@ -368,10 +368,10 @@ public class LG4JMemorySaverTest
         var state = app.getState(runnableConfig);
 
         assertNotNull( state );
-        assertEquals( "tools", state.next() );
+        assertEquals( "tools", state.nextNodeId() );
 
         log.info( "RESUME CALL");
-        results = app.stream( GraphInput.resume(), state.config() ).stream()
+        results = app.stream( GraphInput.resume(), state.config(runnableConfig) ).stream()
                                         .peek(n -> log.info( "{}", n ) )
                                         .collect(Collectors.toList());
 
@@ -432,7 +432,7 @@ public class LG4JMemorySaverTest
 
         assertTrue( tag.version().isPresent() );
         assertEquals(1, tag.version().get());
-        assertEquals( checkpoint.getId(), list.stream().findFirst().map(Checkpoint::getId).orElseThrow() );
+        assertEquals( checkpoint.id(), list.stream().findFirst().map(Checkpoint::id).orElseThrow() );
 
         var checkpoint_1 = Checkpoint.builder()
                 .state(new AgentState(Map.of()))

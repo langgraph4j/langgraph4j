@@ -10,14 +10,10 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
-import org.bsc.langgraph4j.subgraph.SubGraphSnapshotOutput;
 import org.bsc.langgraph4j.utils.TypeRef;
-import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.Objects;
 
-import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -58,10 +54,10 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLogg
         gen.writeStartObject();
 
         if( nodeOutput instanceof StateSnapshot<?> snapshot) {
-            var checkpoint = snapshot.config().checkPointId();
+            var checkpoint = snapshot.checkpointId();
             log.trace( "checkpoint: {}", checkpoint );
-            if( checkpoint.isPresent() ) {
-                gen.writeStringField("checkpoint", checkpoint.get());
+            if( checkpoint != null ) {
+                gen.writeStringField("checkpoint", checkpoint);
             }
         }
 
@@ -93,7 +89,7 @@ class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLogg
         gen.writeObjectField("state", nodeOutput.state().data());
 
         if( nodeOutput instanceof StateSnapshot<?> snapshot ) {
-            gen.writeObjectField("next", snapshot.next() );
+            gen.writeObjectField("next", snapshot.nextNodeId() );
         }
         gen.writeEndObject();
         gen.writeEndArray();

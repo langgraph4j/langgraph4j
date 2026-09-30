@@ -81,7 +81,7 @@ public class PostgresSaver extends AbstractPostgresSaver {
             var field = 0;
             // checkpoint_id
             ps.setObject(++field,
-                    UUID.fromString(checkpoint.getId()),
+                    UUID.fromString(checkpoint.id()),
                     Types.OTHER);
             // parent_checkpoint_id
             ps.setNull(++field, java.sql.Types.OTHER);
@@ -90,11 +90,11 @@ public class PostgresSaver extends AbstractPostgresSaver {
                     requireNonNull(threadUUID, "threadUUID cannot be null"),
                     Types.OTHER);
             // node_id
-            ps.setString(++field, checkpoint.getNodeId());
+            ps.setString(++field, checkpoint.nodeId());
             // next_node_id
-            ps.setString(++field, checkpoint.getNextNodeId());
+            ps.setString(++field, checkpoint.nextNodeId());
             // state_data
-            ps.setString(++field, encodeState(checkpoint.getState()));
+            ps.setString(++field, encodeState(checkpoint.state()));
             // state_content_type
             ps.setString(++field, encoderStateSerializer().contentType());
 

@@ -1,6 +1,7 @@
 package org.bsc.javelit;
 
 import io.javelit.core.Jt;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -23,7 +24,7 @@ public record JtCacheValue<T>(String key ) {
     }
 
     public void setValue( T value ) {
-        Jt.sessionState().put( key(), value );
+        Jt.cache().put( key(), value );
     }
 
     @SuppressWarnings("unchecked")
@@ -46,6 +47,7 @@ public record JtCacheValue<T>(String key ) {
     }
 
     @Override
+    @NonNull
     public String toString() {
         return "CachedValue{key='%s', value=%s}".formatted(key, value().orElse(null));
     }

@@ -16,7 +16,7 @@ Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgra
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Sep 23, 2026 | `1.9.1` | last release
+| Sep 23, 2026 | `1.9.2` | last release
 
 
 | Release line | Java baseline | Notes |
@@ -173,7 +173,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.9.1</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.9.2</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -503,6 +503,7 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 
 ## Articles
+* [Spring AI vs LangGraph4j: Java AI Framework Comparison](https://springdevpro.com/spring-ai/comparison/spring-ai-vs-langgraph4j/)
 * [Building an Agentic Harness with Spring AI and LangGraph4j](https://dev.to/lbobylev/building-an-agentic-harness-with-spring-ai-2j1p)
 * LangGraph4j Series
   * [Part 1: State Management, Channels Reducers and Human in the Loop](https://www.futurecraft.dev/ai/State-Management/)

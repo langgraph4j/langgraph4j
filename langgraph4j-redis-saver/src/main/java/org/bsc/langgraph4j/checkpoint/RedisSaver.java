@@ -433,14 +433,14 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
         }
 
         // Insert checkpoint
-        String checkpointId = checkpoint.getId();
+        String checkpointId = checkpoint.id();
         String checkpointKey = keyNamingStrategy.checkpointKey(checkpointId);
-        EncodedState encodedState = encodeState(checkpoint.getState());
+        EncodedState encodedState = encodeState(checkpoint.state());
 
         batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(CHECKPOINT_ID_FIELD, checkpointId);
         batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(THREAD_ID_REF_FIELD, threadId);
-        batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(NODE_ID_FIELD, checkpoint.getNodeId() != null ? checkpoint.getNodeId() : "");
-        batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(NEXT_NODE_ID_FIELD, checkpoint.getNextNodeId() != null ? checkpoint.getNextNodeId() : "");
+        batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(NODE_ID_FIELD, checkpoint.nodeId() != null ? checkpoint.nodeId() : "");
+        batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(NEXT_NODE_ID_FIELD, checkpoint.nextNodeId() != null ? checkpoint.nextNodeId() : "");
         batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(STATE_DATA_FIELD, encodedState.payload());
         if (encodedState.contentType() != null) {
             batch.getMap(checkpointKey, StringCodec.INSTANCE).fastPutAsync(STATE_CONTENT_TYPE_FIELD, encodedState.contentType());
@@ -474,7 +474,7 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
             final String threadName = config.threadId().orElse(THREAD_ID_DEFAULT);
             final long timestamp = Instant.now().toEpochMilli();
             final String oldCheckpointId = config.checkPointId().get();
-            final String newCheckpointId = checkpoint.getId();
+            final String newCheckpointId = checkpoint.id();
             final String threadNameKey = keyNamingStrategy.threadNameKey(threadName);
 
             String threadId = redissonClient.<String>getBucket(threadNameKey, StringCodec.INSTANCE).get();
@@ -496,12 +496,12 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
 
             // Insert new checkpoint
             String newCheckpointKey = keyNamingStrategy.checkpointKey(newCheckpointId);
-            EncodedState encodedState = encodeState(checkpoint.getState());
+            EncodedState encodedState = encodeState(checkpoint.state());
 
             batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(CHECKPOINT_ID_FIELD, newCheckpointId);
             batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(THREAD_ID_REF_FIELD, threadId);
-            batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(NODE_ID_FIELD, checkpoint.getNodeId() != null ? checkpoint.getNodeId() : "");
-            batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(NEXT_NODE_ID_FIELD, checkpoint.getNextNodeId() != null ? checkpoint.getNextNodeId() : "");
+            batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(NODE_ID_FIELD, checkpoint.nodeId() != null ? checkpoint.nodeId() : "");
+            batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(NEXT_NODE_ID_FIELD, checkpoint.nextNodeId() != null ? checkpoint.nextNodeId() : "");
             batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(STATE_DATA_FIELD, encodedState.payload());
             if (encodedState.contentType() != null) {
                 batch.getMap(newCheckpointKey, StringCodec.INSTANCE).fastPutAsync(STATE_CONTENT_TYPE_FIELD, encodedState.contentType());

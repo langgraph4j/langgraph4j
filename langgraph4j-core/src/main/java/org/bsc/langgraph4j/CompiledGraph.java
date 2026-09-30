@@ -2,10 +2,8 @@ package org.bsc.langgraph4j;
 
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.util.ExceptionUtil;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.v5.AsyncGeneratorFlow;
-import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
@@ -18,12 +16,10 @@ import org.bsc.langgraph4j.internal.node.ParallelNode;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.StateSnapshot;
-import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -196,7 +192,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.list(config).stream()
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) )
+                .map( checkpoint -> StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) )
                 .toList();
     }
 
@@ -222,7 +218,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var saver = compileConfig.checkpointSaver().orElseThrow( () -> (new IllegalStateException("Missing CheckpointSaver!")) );
 
         return saver.get(config)
-                .map( checkpoint -> StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) );
+                .map( checkpoint -> StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) );
     }
 
     /**
@@ -258,7 +254,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         String nextNodeId = null;
         if( asNode != null ) {
-            final var nextNodeCommand = nextNodeId( asNode, branchCheckpoint.getState(), config );
+            final var nextNodeCommand = nextNodeId( asNode, branchCheckpoint.state(), config );
 
             nextNodeId = nextNodeCommand.gotoNode();
             branchCheckpoint =  branchCheckpoint.updateState( nextNodeCommand.update(), stateGraph.getChannels(), nextNodeId );
@@ -268,7 +264,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         final var newConfig = saver.put( config, branchCheckpoint );
 
         final var runnableConfigBuilder =  RunnableConfig.builder(newConfig)
-                .checkPointId( branchCheckpoint.getId() )
+                .checkPointId( branchCheckpoint.id() )
                 .nextNode( nextNodeId );
 
         if( stateGraph.nodes.hasSubGraphs() ) {
@@ -412,7 +408,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         return compileConfig.checkpointSaver()
                 .flatMap( saver -> saver.get( config ) )
-                .map( cp -> AgentState.updateState( cp.getState(), inputs, stateGraph.getChannels() ))
+                .map( cp -> AgentState.updateState( cp.state(), inputs, stateGraph.getChannels() ))
                 .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.getChannels() ));
     }
 
@@ -577,9 +573,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
             Context( Checkpoint cp ) {
                 currentNodeId = null;
-                nextNodeId = cp.getNextNodeId();
-                resumeFrom = cp.getNodeId();
-                currentState = cp.getState();
+                nextNodeId = cp.nextNodeId();
+                resumeFrom = cp.nodeId();
+                currentState = cp.state();
             }
 
             void reset() {
@@ -629,22 +625,19 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             if( input instanceof GraphResume resumeRequest ) {
                 log.trace( "RESUME REQUEST: {}", resumeRequest );
 
-                final var saver = compileConfig.checkpointSaver()
-                        .orElseThrow(() -> new IllegalStateException("Resume request without a configured checkpoint saver!"));
-                final var startCheckpoint = saver.get( config )
-                                                        .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") );
+                final var startCheckpoint = startCheckpoint( resumeRequest, config );
 
                 final var optionalResumeUpdateData = config.metadata(RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String,Object>>() {});
 
                 context = new Context(startCheckpoint);
 
-                final var startCheckpointNextNodeAction = nodes.get(startCheckpoint.getNextNodeId());
+                final var startCheckpointNextNodeAction = nodes.get(startCheckpoint.nextNodeId());
                 if( startCheckpointNextNodeAction instanceof SubCompiledGraphNodeAction<State> action ) {
 
                     // RESUME FORM SUBGRAPH DETECTED
                     final var resumeUpdateData = optionalResumeUpdateData
-                            .map( data -> mergeMap( data, resumeRequest.value() ))
-                            .orElseGet(resumeRequest::value);
+                            .map( data -> mergeMap( data, input.value() ))
+                            .orElseGet(input::value);
 
                     // RESUME FORM SUBGRAPH DETECTED
                     this.config = configBuilder
@@ -652,33 +645,46 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             .putMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, resumeUpdateData )
                             .build();
 
-                    context.setCurrentState( startCheckpoint.getState() );
+                    context.setCurrentState( startCheckpoint.state() );
 
                 }
                 else {
-                    final var stateData = optionalResumeUpdateData.orElseGet(resumeRequest::value);
+                    final var stateData = optionalResumeUpdateData.orElseGet(input::value);
 
                     this.config = configBuilder.build();
 
                     // FIX ISSUE #302
-                    context.setCurrentState( AgentState.updateState( startCheckpoint.getState(),
+                    context.setCurrentState( AgentState.updateState( startCheckpoint.state(),
                             stateData,
                             stateGraph.getChannels() ));
 
                 }
 
-                log.trace( "RESUME FROM {}", startCheckpoint.getNodeId() );
+                log.trace( "RESUME FROM {}", startCheckpoint.nodeId() );
             }
             else {
 
                 log.trace( "START" );
 
-                final var initState = initialState( ((GraphArgs)input).value(), config );
+                final var initState = initialState( input.value(), config );
                 // patch for backward support of AppendableValue
                 State initializedState = stateGraph.stateFactory().apply(initState);
                 this.context = new Context( initializedState.data() );
                 this.config = configBuilder.build();
             }
+        }
+
+        private Checkpoint startCheckpoint( GraphResume resume, RunnableConfig config ) {
+
+            if( resume.checkpoint() != null ) {
+                return resume.checkpoint();
+            }
+
+            final var saver = compileConfig.checkpointSaver()
+                    .orElseThrow(() -> new IllegalStateException("Resume request without a configured checkpoint saver!"));
+            return saver.get( config )
+                    .orElseThrow( () -> new IllegalStateException("Resume request without a valid checkpoint!") );
+
         }
 
         @SuppressWarnings("unchecked")
@@ -688,7 +694,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         @SuppressWarnings("unchecked")
         protected Output buildStateSnapshot( Checkpoint checkpoint ) throws Exception {
-            return (Output)StateSnapshot.of( checkpoint, config, stateGraph.stateFactory() ) ;
+            return (Output)StateSnapshot.of( checkpoint, stateGraph.stateFactory() ) ;
         }
 
         @SuppressWarnings("unchecked")
@@ -893,7 +899,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // CHECK ON PREVIOUS NODE
                     if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config))
+                                .reason("declared interruption after nodeId: [%s]".formatted(context.currentNodeId()))
+                                .build();
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }
@@ -903,7 +911,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     }
 
                     if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
-                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config)).build();
+                        final var interruptionMetadata = InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState(), config))
+                                .reason("declared interruption before nodeId: [%s]".formatted(context.nextNodeId()))
+                                .build();
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }

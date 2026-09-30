@@ -86,7 +86,6 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
     protected final DataSource datasource;
     private final Map<String, StateSerializer<? extends AgentState>> stateSerializerMap;
-    private final boolean plainTextStateSerializerLegacyMode;
     protected final SqlResource.Commands sqlCommands;
 
     public final DataSource datasource() {
@@ -113,7 +112,6 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
             throw new IllegalArgumentException("no stateSerializer provided");
         }
         this.stateSerializerMap = builder.stateSerializerMap;
-        this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
         sqlCommands = SqlResource.Commands.load(sqlCommandsResourcePath());
 
@@ -231,12 +229,12 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
         try (PreparedStatement ps = conn.prepareStatement(insertCheckpointSql)) {
             var field = 0;
-            ps.setString(++field, checkpoint.getId());
+            ps.setString(++field, checkpoint.id());
             ps.setString(++field, null);
             ps.setLong(++field, id);
-            ps.setString(++field, checkpoint.getNodeId());
-            ps.setString(++field, checkpoint.getNextNodeId());
-            ps.setString(++field, encodeState(checkpoint.getState()));
+            ps.setString(++field, checkpoint.nodeId());
+            ps.setString(++field, checkpoint.nextNodeId());
+            ps.setString(++field, encodeState(checkpoint.state()));
             ps.setString(++field, encoderStateSerializer().contentType());
 
             log.trace("Executing insert checkpoint:\n---\n{}---", insertCheckpointSql);
@@ -260,10 +258,10 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
                 final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
 
                 try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
-                    preparedStatement.setString(1, checkpoint.getId());
-                    preparedStatement.setString(2, checkpoint.getNodeId());
-                    preparedStatement.setString(3, checkpoint.getNextNodeId());
-                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setString(1, checkpoint.id());
+                    preparedStatement.setString(2, checkpoint.nodeId());
+                    preparedStatement.setString(3, checkpoint.nextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.state()));
                     preparedStatement.setString(5, config.checkPointId().get());
                     preparedStatement.execute();
                 }

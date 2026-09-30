@@ -177,10 +177,10 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
             upsertStatement.setString(2, threadName);
             upsertStatement.execute();
 
-            insertCheckpointStatement.setString(1, checkpoint.getId());
-            insertCheckpointStatement.setString(2, checkpoint.getNodeId());
-            insertCheckpointStatement.setString(3, checkpoint.getNextNodeId());
-            insertCheckpointStatement.setString(4, encodeState(checkpoint.getState()));
+            insertCheckpointStatement.setString(1, checkpoint.id());
+            insertCheckpointStatement.setString(2, checkpoint.nodeId());
+            insertCheckpointStatement.setString(3, checkpoint.nextNodeId());
+            insertCheckpointStatement.setString(4, encodeState(checkpoint.state()));
             insertCheckpointStatement.setString(5, encoderStateSerializer().contentType());
             insertCheckpointStatement.setString(6, threadName);
 
@@ -246,10 +246,10 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                 final var sqlUpdateCheckpoint = sqlCommands.get("sqlUpdateCheckpoint");
 
                 try (var preparedStatement = connection.prepareStatement(sqlUpdateCheckpoint)) {
-                    preparedStatement.setString(1, checkpoint.getId());
-                    preparedStatement.setString(2, checkpoint.getNodeId());
-                    preparedStatement.setString(3, checkpoint.getNextNodeId());
-                    preparedStatement.setString(4, encodeState(checkpoint.getState()));
+                    preparedStatement.setString(1, checkpoint.id());
+                    preparedStatement.setString(2, checkpoint.nodeId());
+                    preparedStatement.setString(3, checkpoint.nextNodeId());
+                    preparedStatement.setString(4, encodeState(checkpoint.state()));
                     preparedStatement.setString(5, encoderStateSerializer().contentType());
                     preparedStatement.setString(6, config.checkPointId().get());
                     preparedStatement.execute();

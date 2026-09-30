@@ -2,7 +2,6 @@ package org.bsc.langgraph4j.subgraph;
 
 import org.bsc.langgraph4j.HasMetadata;
 import org.bsc.langgraph4j.NodeOutput;
-import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.state.AgentState;
 
 import static java.lang.String.format;

@@ -205,10 +205,10 @@ public class JacksonSerializerTest {
         assertNotNull( newCheckpoints );
         assertEquals( checkpoints.size(), newCheckpoints.size() );
         for( int i = 0 ; i < checkpoints.size(); i++ ) {
-            assertEquals( checkpoints.get(i).getId(), newCheckpoints.get(i).getId() );
-            assertEquals( checkpoints.get(i).getNodeId(), newCheckpoints.get(i).getNodeId() );
-            assertEquals( checkpoints.get(i).getNextNodeId(), newCheckpoints.get(i).getNextNodeId() );
-            assertEquals( checkpoints.get(i).getState(), newCheckpoints.get(i).getState() );
+            assertEquals( checkpoints.get(i).id(), newCheckpoints.get(i).id() );
+            assertEquals( checkpoints.get(i).nodeId(), newCheckpoints.get(i).nodeId() );
+            assertEquals( checkpoints.get(i).nextNodeId(), newCheckpoints.get(i).nextNodeId() );
+            assertEquals( checkpoints.get(i).state(), newCheckpoints.get(i).state() );
         }
 
     }
