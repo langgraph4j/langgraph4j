@@ -30,10 +30,366 @@
         static styles = css`
             :host {
                 display: block;
+                color: var(--jt-json-editor-text, #172033);
+                font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                font-size: 0.9375rem;
+                line-height: 1.5;
+                --jt-json-editor-surface: #ffffff;
+                --jt-json-editor-surface-subtle: #f8fafc;
+                --jt-json-editor-surface-muted: #f1f5f9;
+                --jt-json-editor-border: #dbe3ef;
+                --jt-json-editor-border-strong: #c4d0df;
+                --jt-json-editor-text-muted: #64748b;
+                --jt-json-editor-primary: #2563eb;
+                --jt-json-editor-primary-hover: #1d4ed8;
+                --jt-json-editor-primary-soft: #eff6ff;
+                --jt-json-editor-danger: #dc2626;
+                --jt-json-editor-danger-soft: #fef2f2;
+                --jt-json-editor-focus: rgb(37 99 235 / 28%);
+                --jt-json-editor-radius: 0.625rem;
+                --jt-json-editor-shadow: 0 1px 2px rgb(15 23 42 / 4%), 0 8px 24px rgb(15 23 42 / 6%);
             }
 
-            .editor {
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+
+            .editor,
+            .jedi-editor-container {
                 min-width: 0;
+            }
+
+            .jedi-editor-container {
+                display: grid;
+                gap: 1rem;
+                padding: 1.25rem;
+                border: 1px solid var(--jt-json-editor-border);
+                border-radius: calc(var(--jt-json-editor-radius) + 0.125rem);
+                background: var(--jt-json-editor-surface);
+                box-shadow: var(--jt-json-editor-shadow);
+            }
+
+            .jedi-editor-fieldset,
+            .jedi-editor-radio-fieldset {
+                min-width: 0;
+                margin: 0;
+                padding: 0;
+                border: 0;
+            }
+
+            .jedi-editor-legend,
+            .jedi-label,
+            .jedi-title {
+                color: inherit;
+                font-size: 0.875rem;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+            }
+
+            .jedi-editor-legend {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                margin-bottom: 0.875rem;
+            }
+
+            .jedi-control-slot,
+            .jedi-children-slot {
+                display: grid;
+                gap: 0.75rem;
+                min-width: 0;
+            }
+
+            .jedi-description {
+                margin-top: 0.125rem;
+                color: var(--jt-json-editor-text-muted);
+                font-size: 0.8125rem;
+            }
+
+            .editor input:not([type='hidden']),
+            .editor textarea,
+            .editor select {
+                width: 100%;
+                min-height: 2.5rem;
+                padding: 0.55rem 0.75rem;
+                border: 1px solid var(--jt-json-editor-border-strong);
+                border-radius: 0.5rem;
+                outline: none;
+                background: var(--jt-json-editor-surface);
+                color: inherit;
+                font: inherit;
+                transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+            }
+
+            .editor textarea {
+                min-height: 6.5rem;
+                resize: vertical;
+            }
+
+            .editor input[type='checkbox'],
+            .editor input[type='radio'] {
+                width: 1.1rem;
+                min-height: 1.1rem;
+                padding: 0;
+                accent-color: var(--jt-json-editor-primary);
+                vertical-align: middle;
+            }
+
+            .editor input[type='range'] {
+                padding: 0;
+                accent-color: var(--jt-json-editor-primary);
+            }
+
+            .editor input:focus-visible,
+            .editor textarea:focus-visible,
+            .editor select:focus-visible,
+            .editor button:focus-visible,
+            .jedi-nav-link:focus-visible {
+                border-color: var(--jt-json-editor-primary);
+                outline: none;
+                box-shadow: 0 0 0 3px var(--jt-json-editor-focus);
+            }
+
+            .editor input:disabled,
+            .editor textarea:disabled,
+            .editor select:disabled,
+            .editor button:disabled {
+                cursor: not-allowed;
+                border-color: var(--jt-json-editor-border);
+                background: var(--jt-json-editor-surface-muted);
+                color: var(--jt-json-editor-text-muted);
+                opacity: 0.72;
+            }
+
+            .jedi-btn,
+            .jedi-x-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.375rem;
+                min-height: 2.25rem;
+                padding: 0.45rem 0.75rem;
+                border: 1px solid var(--jt-json-editor-border-strong);
+                border-radius: 0.5rem;
+                background: var(--jt-json-editor-surface);
+                color: inherit;
+                cursor: pointer;
+                font: inherit;
+                font-size: 0.8125rem;
+                font-weight: 600;
+                line-height: 1.2;
+                transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+            }
+
+            .jedi-btn:not(:disabled):hover,
+            .jedi-x-button:not(:disabled):hover {
+                border-color: #9eb0c6;
+                background: var(--jt-json-editor-surface-muted);
+            }
+
+            .jedi-btn:not(:disabled):active,
+            .jedi-x-button:not(:disabled):active {
+                transform: translateY(1px);
+            }
+
+            .jedi-array-add,
+            .jedi-array-add-after,
+            .jedi-add-property-btn,
+            .jedi-quick-add-property-toggle {
+                border-color: var(--jt-json-editor-primary);
+                background: var(--jt-json-editor-primary);
+                color: #fff;
+            }
+
+            .jedi-array-add:not(:disabled):hover,
+            .jedi-array-add-after:not(:disabled):hover,
+            .jedi-add-property-btn:not(:disabled):hover,
+            .jedi-quick-add-property-toggle:not(:disabled):hover {
+                border-color: var(--jt-json-editor-primary-hover);
+                background: var(--jt-json-editor-primary-hover);
+            }
+
+            .jedi-array-delete,
+            .jedi-array-delete-all {
+                border-color: #fecaca;
+                background: var(--jt-json-editor-danger-soft);
+                color: var(--jt-json-editor-danger);
+            }
+
+            .jedi-array-delete:not(:disabled):hover,
+            .jedi-array-delete-all:not(:disabled):hover {
+                border-color: #fca5a5;
+                background: #fee2e2;
+            }
+
+            .jedi-btn-group,
+            .jedi-actions-slot,
+            .jedi-array-actions-slot,
+            .jedi-array-footer,
+            .jedi-properties-activators {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .jedi-actions-slot {
+                justify-content: flex-end;
+            }
+
+            .jedi-editor-card,
+            .jedi-array-item {
+                overflow: hidden;
+                border: 1px solid var(--jt-json-editor-border);
+                border-radius: var(--jt-json-editor-radius);
+                background: var(--jt-json-editor-surface);
+            }
+
+            .jedi-editor-card-header,
+            .jedi-array-item-body {
+                padding: 0.875rem 1rem;
+                background: var(--jt-json-editor-surface-subtle);
+            }
+
+            .jedi-editor-card-body {
+                display: grid;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .jedi-array-item {
+                padding: 1rem;
+                background: var(--jt-json-editor-surface-subtle);
+            }
+
+            .jedi-array-item-body {
+                margin-top: 0.75rem;
+                padding: 0;
+                background: transparent;
+            }
+
+            .jedi-array-footer {
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--jt-json-editor-border);
+            }
+
+            .jedi-messages-slot {
+                display: grid;
+                gap: 0.375rem;
+                margin-top: 0.25rem;
+            }
+
+            .jedi-error-message,
+            .jedi-warning-message {
+                padding: 0.5rem 0.625rem;
+                border-radius: 0.4375rem;
+                font-size: 0.8125rem;
+            }
+
+            .jedi-error-message {
+                border: 1px solid #fecaca;
+                background: var(--jt-json-editor-danger-soft);
+                color: #b91c1c;
+            }
+
+            .jedi-warning-message {
+                border: 1px solid #fde68a;
+                background: #fffbeb;
+                color: #a16207;
+            }
+
+            .jedi-collapse,
+            .jedi-tab-pane {
+                margin-top: 0.75rem;
+            }
+
+            .jedi-collapse-toggle,
+            .jedi-properties-toggle,
+            .jedi-json-data-toggle {
+                background: var(--jt-json-editor-primary-soft);
+                color: var(--jt-json-editor-primary-hover);
+            }
+
+            .jedi-nav-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                margin: 0 0 0.875rem;
+                padding: 0;
+                list-style: none;
+            }
+
+            .jedi-nav-link {
+                display: inline-flex;
+                padding: 0.45rem 0.625rem;
+                border-radius: 0.4375rem;
+                color: var(--jt-json-editor-text-muted);
+                text-decoration: none;
+            }
+
+            .jedi-nav-link:hover,
+            .jedi-nav-link.active {
+                background: var(--jt-json-editor-primary-soft);
+                color: var(--jt-json-editor-primary-hover);
+            }
+
+            .jedi-modal-dialog[open] {
+                border: 1px solid var(--jt-json-editor-border) !important;
+                border-radius: calc(var(--jt-json-editor-radius) + 0.125rem) !important;
+                background: var(--jt-json-editor-surface);
+                color: inherit;
+                box-shadow: 0 24px 48px rgb(15 23 42 / 24%);
+            }
+
+            .jedi-modal-dialog::backdrop {
+                background: rgb(15 23 42 / 36%);
+                backdrop-filter: blur(2px);
+            }
+
+            /* Jedison creates the quick-add control as a native <dialog>. Make
+             * its closed state explicit so no surrounding application CSS can
+             * leave the overlay visible. Jedison sets [open] only after its
+             * Add property button is clicked and closes it after submit or a
+             * backdrop click. */
+            .jedi-quick-add-property-slot:not([open]) {
+                display: none !important;
+            }
+
+            .jedi-quick-add-property-slot[open] {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: end;
+                gap: 0.5rem;
+                width: min(28rem, calc(100vw - 2rem));
+                padding: 1.125rem;
+            }
+
+            .jedi-quick-add-property-slot[open] .jedi-control-slot {
+                flex: 1 1 100%;
+            }
+
+            .jedi-json-data {
+                max-width: min(52rem, calc(100vw - 2rem));
+                padding: 0.875rem;
+                border-radius: 0.5rem;
+                background: #0f172a;
+                color: #e2e8f0;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 0.8125rem;
+            }
+
+            @media (max-width: 640px) {
+                .jedi-editor-container {
+                    padding: 0.875rem;
+                }
+
+                .jedi-actions-slot {
+                    justify-content: flex-start;
+                }
             }
         `;
 
