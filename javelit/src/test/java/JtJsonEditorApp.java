@@ -22,14 +22,19 @@ public class JtJsonEditorApp {
                 }
                 """;
 
-        String editedJson = JtJsonEditor.builder(value, schema).use();
+        String editedJson = JtJsonEditor.builder()
+                .json(value)
+                .schema(schema)
+                .use();
         Jt.markdown("""
         ```
         %s
         ```
         """.formatted(editedJson)).use();
 
-        JtJsonEditor.builder(value, schema)
+        JtJsonEditor.builder()
+                .json(value)
+                .schema(schema)
                 .disabled(true)
                 .use();
     }
@@ -54,14 +59,19 @@ public class JtJsonEditorApp {
                 }
                 """;
 
-        String editedJson = JtJsonEditor.builder(value, "").use();
+        String editedJson = JtJsonEditor.builder()
+                .json(value)
+                .schema(schema)
+                .use();
         Jt.markdown("""
         ```
         %s
         ```
         """.formatted(editedJson)).use();
 
-        JtJsonEditor.builder(value, schema)
+        JtJsonEditor.builder()
+                .json(value)
+                .schema(schema)
                 .disabled(true)
                 .use();
     }

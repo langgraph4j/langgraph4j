@@ -30,14 +30,8 @@ public class JtJsonEditor extends JtComponent<String> {
         private String json;
         private String schema;
         private boolean disabled;
+        private String width;
 
-        private Builder() {
-        }
-
-        private Builder(String json, String schema) {
-            this.json = json;
-            this.schema = schema;
-        }
 
         public Builder json(String json) {
             this.json = requireNonNull(json, "json cannot be null");
@@ -57,19 +51,20 @@ public class JtJsonEditor extends JtComponent<String> {
             return this;
         }
 
+        public Builder width(String width) {
+            this.width = requireNonNull(width, "width cannot be null");            return this;
+        }
+
+        public Builder width(int width) {
+            return width("%dpx".formatted(width));
+        }
+
         @Override
         public JtJsonEditor build() {
             requireNonNull(json, "json cannot be null");
             requireNonNull(schema, "schema cannot be null");
             return new JtJsonEditor(this);
         }
-    }
-
-    /**
-     * Creates an editor builder. The supplied strings must contain JSON data and a JSON Schema.
-     */
-    public static Builder builder(String json, String schema) {
-        return new Builder(json, schema);
     }
 
     /**
@@ -82,12 +77,14 @@ public class JtJsonEditor extends JtComponent<String> {
     private final String json;
     private final String schema;
     private final boolean disabled;
+    final String width;
 
     private JtJsonEditor(Builder builder) {
         super(builder, builder.json, null);
         this.json = builder.json;
         this.schema = builder.schema;
         this.disabled = builder.disabled;
+        this.width = builder.width;
     }
 
     @SuppressWarnings("unused") // Used by the Mustache template.
@@ -99,6 +96,7 @@ public class JtJsonEditor extends JtComponent<String> {
     public String getSchema() {
         return schema;
     }
+
 
     @SuppressWarnings("unused") // Used by the Mustache template.
     public boolean isDisabled() {
