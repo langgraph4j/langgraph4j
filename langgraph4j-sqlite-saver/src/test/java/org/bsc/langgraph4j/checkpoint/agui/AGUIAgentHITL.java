@@ -5,17 +5,14 @@ import com.agui.community.core.event.Event;
 import com.agui.community.core.event.RunFinishedEvent;
 import com.agui.community.core.interrupt.Interrupt;
 import com.agui.community.core.interrupt.InterruptOutcome;
-import com.agui.community.core.interrupt.SuccessOutcome;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.agui.sdk.AGUIAgentBase;
 import org.bsc.langgraph4j.agui.sdk.AGUIHook;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.SQLiteSaverV2;
-import org.bsc.langgraph4j.hook.EdgeHook;
 import org.bsc.langgraph4j.state.AgentState;
 import org.sqlite.SQLiteDataSource;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -24,37 +21,18 @@ import java.util.Map;
 import static org.bsc.langgraph4j.GraphDefinition.END;
 import static org.bsc.langgraph4j.GraphDefinition.START;
 
-public class AGUISampleAgent extends AGUIAgentBase implements LG4JTestUtil {
+public class AGUIAgentHITL extends AGUIAbstractAgent implements LG4JTestUtil {
 
-    public AGUISampleAgent() {
-        super("agent1");
+    public AGUIAgentHITL() {
+        super("agent-hitl");
     }
 
-    private BaseCheckpointSaver buildSaver( ) throws Exception {
-        final var dir = Path.of(System.getProperty("user.home"), ".langgraph4j");
-
-        final var ds = new SQLiteDataSource();
-        ds.setUrl("jdbc:sqlite:%s".formatted(dir.resolve("SQLiteSaverTest.db").toString()));
-
-        final var stateSerializer = StateSerializerEnum.JSON.stateSerializer;
-
-        return SQLiteSaverV2.builder()
-                .datasource(ds)
-                .stateSerializer(stateSerializer)
-                .createTables(true)
-                .build();
-    }
     @Override
     protected CompiledGraph<? extends AgentState> newGraph() throws Exception {
 
-        final var dir = Path.of(System.getProperty("user.home"), ".langgraph4j");
-
-        final var ds = new SQLiteDataSource();
-        ds.setUrl("jdbc:sqlite:%s".formatted(dir.resolve("SQLiteSaverTest.db").toString()));
-
         final var stateSerializer = StateSerializerEnum.JSON.stateSerializer;
 
-        final var saver = buildSaver();
+        final var saver = buildSaver(stateSerializer);
 
         final var agent1 = CustomNodeAction.of("agent_1");
         final var agent2 = CustomNodeAction.of("agent_2");
@@ -85,7 +63,7 @@ public class AGUISampleAgent extends AGUIAgentBase implements LG4JTestUtil {
 
     @Override
     protected Collection<? extends Event> onCompleteEvents(RunAgentInput input, GraphResult result) {
-        switch( result.type() ) {
+        return switch( result.type() ) {
             case INTERRUPTION_METADATA -> {
                 final var interruptionMetadata = result.asInterruptionMetadata();
                 final var interrupt = new Interrupt(
@@ -97,7 +75,7 @@ public class AGUISampleAgent extends AGUIAgentBase implements LG4JTestUtil {
                         null,
                         Map.of() // metadata
                         );
-                return List.of(new RunFinishedEvent(
+                yield List.of(new RunFinishedEvent(
                         input.threadId(),
                         input.runId(),
                         new InterruptOutcome( List.of( interrupt ) ),
@@ -105,7 +83,8 @@ public class AGUISampleAgent extends AGUIAgentBase implements LG4JTestUtil {
                         System.currentTimeMillis(),
                         null));
             }
-        }
-        return super.onCompleteEvents(input, result);
+            default -> super.onCompleteEvents(input, result);
+        };
+
     }
 }

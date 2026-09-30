@@ -17,7 +17,8 @@ public class AGUIAgentConfigurations {
     AGUIAgentRegistry createAgentExecutor() {
 
         return new AGUIAgentRegistry(
-                new AGUISampleAgent());
+                new AGUIAgentHITL(),
+                new AGUIAgentWithError());
     }
 
 

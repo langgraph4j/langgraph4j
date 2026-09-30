@@ -14,15 +14,13 @@ import com.agui.community.core.interrupt.Resume;
 import com.agui.community.core.interrupt.ResumeStatus;
 import com.agui.community.core.interrupt.SuccessOutcome;
 import com.agui.json.AGUIJacksonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javelit.components.layout.ColumnsComponent;
 import io.javelit.core.Jt;
 import io.javelit.core.JtComponent;
 import io.javelit.core.JtContainer;
 import io.javelit.core.Server;
-import org.bsc.javelit.JtCacheValue;
-import org.bsc.javelit.JtDataTable;
-import org.bsc.javelit.JtSessionValue;
-import org.bsc.javelit.JtSpinner;
+import org.bsc.javelit.*;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.checkpoint.SQLiteSaverV2Dashboard;
@@ -60,7 +58,7 @@ public class JtSQLiteSaverDashboardApp {
 
 
     JtSQLiteSaverDashboardApp() throws Exception {
-        workflowManager = new WorkflowManager("agent1");
+        workflowManager = new WorkflowManager();
         checkpointDashboard = new CheckpointDashboard();
     }
 
@@ -74,18 +72,16 @@ public class JtSQLiteSaverDashboardApp {
 
     public void app () throws Exception {
 
-        final var databasePath = Path.of(System.getProperty("user.home"), ".langgraph4j", "SQLiteSaverTest.db");
-
         Jt.title("SQLite Saver Dashboard").use();
 
-            var page = Jt.navigation(
-                            Jt.page("Dashboard", () -> checkpointDashboard.show(databasePath) )
-                                    .title("Checkpoint Dashboard").home(),
-                            Jt.page("run-agent", () -> workflowManager.show())
-                                    .title("Run Agent")
-                            )
-                    .use();
-            page.run();
+        var page = Jt.navigation(
+                        Jt.page("Dashboard", checkpointDashboard::show)
+                                .title("Checkpoint Dashboard").home(),
+                        Jt.page("run-agent", workflowManager::show)
+                                .title("Run Agent")
+                        )
+                .use();
+        page.run();
     }
 
 }
@@ -112,7 +108,10 @@ class CheckpointDashboard {
                 .build();
     }
 
-    public void show(Path databasePath) throws Exception {
+    public void show() throws Exception {
+
+        final var databasePath = Path.of(System.getProperty("user.home"), ".langgraph4j", "SQLiteSaverTest.db");
+
         final var tabs = Jt.tabs(List.of("Threads", "Tags")).use();
 
         final var THREADS_PANEL = tabs.tab("Threads");
@@ -222,8 +221,7 @@ class CheckpointDashboard {
         if( selectedTag == null ) {
             return;
         }
-
-
+        
         Jt.markdown("### CHECKPOINTS")
                 .use(container);
 
@@ -235,8 +233,8 @@ class CheckpointDashboard {
                 .map(tag -> tag.checkpoints().stream().toList())
                 .orElse(List.of());
 
-        final var selectTags = JtDataTable.builder(checkpoints)
-                .height("44vh")
+        final var selectCheckpoints = JtDataTable.builder(checkpoints)
+                .height("22vh")
                 .singleSelection()
                 .column("nodeId", Checkpoint::getNodeId)
                 .column("nextNodeId", Checkpoint::getNextNodeId)
@@ -245,20 +243,52 @@ class CheckpointDashboard {
                     return CollectionsUtils.toString(state);
                 })
                 .use(container);
-    }
 
+        final var isSelectedCheckpoint = !selectedTags.isEmpty() && selectCheckpoints != null && !selectCheckpoints.isEmpty();
+        final var jsonEditorPanel = Jt.popover("Edit Checkpoint State & Resume Agent")
+                .disabled( !isSelectedCheckpoint)
+                .use(container);
+
+        if( isSelectedCheckpoint ) {
+
+            final var index = selectCheckpoints.iterator().next();
+            final var selectedCheckpoint = checkpoints.get(index);
+
+            final var newState = JtJsonEditor.builder()
+                    .width(500)
+                    .json(JsonStateSerializer.writeDataAsString(selectedCheckpoint.getState()))
+                    .schema("""
+                            {
+                              "title": "State",
+                              "type": "object",
+                              "properties": {
+                                "messages": {"type": "array", "minimum": 0}
+                              },
+                              "required": ["messages"]
+                            }
+                            """)
+                    .use(jsonEditorPanel);
+            final var resumeAgent = Jt.button( "Resume Agent" )
+                    .use(jsonEditorPanel);
+        }
+    }
 }
 
 
 class WorkflowManager {
-    final HttpAgent client;
+    final List<String> availableAgents = List.of("agent-hitl", "agent-error");
+
+    final com.agui.community.core.serialization.Serializer agUiSerializer = new AGUIJacksonSerializer();
 
     final JtCacheValue<RunAgentInput> agentInput$ = new JtCacheValue<>("agent-input");
 
-    public WorkflowManager(String agentName) throws URISyntaxException {
-        this.client =  new HttpAgent(
+    public WorkflowManager(){
+    }
+
+    private HttpAgent newClient(String agentName) throws URISyntaxException {
+        return new HttpAgent(
                 new URI("http://localhost:8080/sse/%s".formatted(agentName)),
-                new AGUIJacksonSerializer(),
+                agUiSerializer,
                 java.net.http.HttpClient.newHttpClient(),
                 Runnable::run, // single threaded executor
                 java.time.Duration.ofMinutes(5)
@@ -350,7 +380,7 @@ class WorkflowManager {
             final var v = agentInput.threadId().split("-");
             agentInfo = new AgentInfo(v[0], v[1]);
         } else {
-            agentInfo = new AgentInfo("agent1", "thread1");
+            agentInfo = new AgentInfo("", "thread1");
         }
 
         final var c1 = Jt.columns(2)
@@ -363,9 +393,10 @@ class WorkflowManager {
                 .gap(ColumnsComponent.Gap.NONE)
                 .use();
 
-        final var availableAgents = List.of("agent1");
+
+        final var defaultAgent = Math.max(availableAgents.indexOf(agentInfo.agentName()), 0);
         final var agentName = Jt.selectbox("Available Agents", availableAgents)
-                .index( availableAgents.indexOf(agentInfo.agentName()) )
+                .index(defaultAgent)
                 .disabled(agentInput != null)
                 .use(c1.col(0));
         final var threadName = Jt.textInput("Thread Name")
@@ -413,7 +444,7 @@ class WorkflowManager {
             }
 
 
-            runAgent(agentInput, jtExpanderEvents)
+            runAgent(agentName, agentInput, jtExpanderEvents)
                     .thenAccept( v -> {
                         final var elapsedTime = Duration.between(startTime, Instant.now());
                         Jt.success("Agent run completed in %ds%n%n".formatted(elapsedTime.toSeconds()))
@@ -427,31 +458,36 @@ class WorkflowManager {
 
     }
 
-    CompletableFuture<Void> runAgent(RunAgentInput input, JtContainer eventsContainer) {
+    CompletableFuture<Void> runAgent(String agentName, RunAgentInput input, JtContainer eventsContainer) {
         final var future = new CompletableFuture<Void>();
 
-        client.run(input).subscribe(new Flow.Subscriber<>() {
-            @Override
-            public void onSubscribe(Flow.Subscription subscription) {
-                subscription.request(Long.MAX_VALUE);
-            }
+        try {
+            newClient(agentName).run(input).subscribe(new Flow.Subscriber<>() {
+                @Override
+                public void onSubscribe(Flow.Subscription subscription) {
+                    subscription.request(Long.MAX_VALUE);
+                }
 
-            @Override
-            public void onNext(Event event) {
-                processEvent(event, eventsContainer);
-            }
+                @Override
+                public void onNext(Event event) {
+                    processEvent(event, eventsContainer);
+                }
 
-            @Override
-            public void onError(Throwable throwable) {
-                future.completeExceptionally(throwable);
-            }
+                @Override
+                public void onError(Throwable throwable) {
+                    future.completeExceptionally(throwable);
+                }
 
-            @Override
-            public void onComplete() {
-                future.complete(null);
-            }
-        });
+                @Override
+                public void onComplete() {
+                    future.complete(null);
+                }
+            });
 
+        }
+        catch (Exception e) {
+            future.completeExceptionally(e);
+        }
         return future;
     }
 }
