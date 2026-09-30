@@ -14,6 +14,9 @@ I want create a new Javelit component called `JtJsonEditor` that allows the user
 ### Frontend implementation (JavaScript)
 
 The frontend implementation  must consist in a Lit web-element that use as underlying library the [Jedison](https://www.npmjs.com/package/jedison) package which repo on [github](https://github.com/germanbisurgi/jedison).
+The Jedison library provides also the theme concept that allows to customize the look and feel of the component.
+In the theme [source](https://github.com/germanbisurgi/jedison/blob/main/src/themes/theme.js) you can find the available properties that can be customized.
+I want that you provide the CSS styles required by Jedison theme to implement a modern UI look & Feel. I don't want to use external CSS libraries like Bootstrap or Tailwind but all CSS must be declared inside component itself.
 
 ### Backend implementation (Java)
 
