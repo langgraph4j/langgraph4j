@@ -9,18 +9,48 @@ public class JtJsonEditorApp {
         Jt.title("JtJsonEditor test App").use();
 
         String value = """
-                {"name":"Ada Lovelace","age":36,"newsletter":true}
+                {"prop1":"profile","prop2":"Ada Lovelace","prop3":36,"messages":[]}
+                """;
+        String schema = """
+                {
+                  "title": "State",
+                  "type": "object",
+                  "properties": {
+                    "messages": {"type": "array", "minimum": 0}
+                  },
+                  "required": ["messages"]
+                }
+                """;
+
+        String editedJson = JtJsonEditor.builder(value, schema).use();
+        Jt.markdown("""
+        ```
+        %s
+        ```
+        """.formatted(editedJson)).use();
+
+        JtJsonEditor.builder(value, schema)
+                .disabled(true)
+                .use();
+    }
+
+    public static void main2(String[] args) {
+        Jt.title("JtJsonEditor test App").use();
+
+        String value = """
+                {"prop1":"profile","prop2":"Ada Lovelace","prop3":36,"prop4":true}
                 """;
         String schema = """
                 {
                   "title": "Profile",
                   "type": "object",
                   "properties": {
-                    "name": {"type": "string", "minLength": 1},
-                    "age": {"type": "integer", "minimum": 0},
-                    "newsletter": {"type": "boolean"}
+                    "prop1": {"type": "string", "enum": ["profile", "contact"]},
+                    "prop2": {"type": "string", "minLength": 1},
+                    "prop3": {"type": "integer", "minimum": 0},
+                    "prop4": {"type": "boolean"}
                   },
-                  "required": ["name"]
+                  "required": ["prop1", "prop2"]
                 }
                 """;
 
