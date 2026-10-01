@@ -2,6 +2,90 @@
 
 
 
+<!-- "name: v1.9.3" is a release tag -->
+
+## [v1.9.3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.3) (2026-10-01)
+
+### Features
+
+ *  add overload for resume method in GraphInput to accept Checkpoint ([0ec6ba2a56cce26](https://github.com/bsorrentino/langgraph4j/commit/0ec6ba2a56cce263e7113b18f0358fa0252fda44))
+     > work on #483
+   
+ *  add checkpoint property to GraphResume ([c07f842f092a125](https://github.com/bsorrentino/langgraph4j/commit/c07f842f092a125d5c6c5e8c71b2ea23e20a5110))
+     > work on #483
+   
+ *  **spring-ai**  add JBangJEVTest for testing TypeSafeClient functionality using nimble local model ([f8be3ae5489cfc2](https://github.com/bsorrentino/langgraph4j/commit/f8be3ae5489cfc2d6747eeff0c2e890fab1cd074))
+   
+ *  **javelit/jsoneditor**  add width property to JtJsonEditor for responsive design ([6405f3e3cdb456e](https://github.com/bsorrentino/langgraph4j/commit/6405f3e3cdb456e037709d5350a145d2d417eecc))
+   
+ *  **javelit/jsoneditor**  add width configuration to JtJsonEditor builder ([7f1d6a3dd3d3b54](https://github.com/bsorrentino/langgraph4j/commit/7f1d6a3dd3d3b5463c6332deb1a8ed7547eb1821))
+   
+ *  **javelit/jsoneditor**  enhance styling and layout for improved user experience ([ff3c07972eb6731](https://github.com/bsorrentino/langgraph4j/commit/ff3c07972eb6731e9bc7eaebea8313194ca1bdbf))
+   
+ *  **javelit**  add JsnEditor component based on jedison library ([0c1fca9bcbe991e](https://github.com/bsorrentino/langgraph4j/commit/0c1fca9bcbe991edf543fe9fae07f4ab907a92f8))
+   
+ *  add reason for declared interruptions in CompiledGraph ([9a3380b8fad4790](https://github.com/bsorrentino/langgraph4j/commit/9a3380b8fad479099d932df22f753e9588448f70))
+   
+
+### Bug Fixes
+
+ -  **studio**  read the request body as UTF-8 ([10d8246a9dfbeaa](https://github.com/bsorrentino/langgraph4j/commit/10d8246a9dfbeaaf996007c9a68b9878ed82dce8))
+     > The stream servlet read the posted input with the platform charset.
+     > The web UI sends UTF-8, so on a JVM whose default charset is not
+     > UTF-8 (Java 17 on Windows, or a container without a UTF-8 locale)
+     > text like &quot;café&quot; reached the graph as &quot;cafÃ©&quot;.
+     > Co-Authored-By: Claude Opus 5.5 (1M context) &lt;noreply@anthropic.com&gt;
+
+
+### Refactor
+
+ -  update resume strategy to accept new checkpoint input ([0fd85c279ee7738](https://github.com/bsorrentino/langgraph4j/commit/0fd85c279ee7738c1f0b530243323ba69d30756d))
+    > resolve on #483
+
+ -  convert Checkpoint from class to record ([123db86c4d9cb54](https://github.com/bsorrentino/langgraph4j/commit/123db86c4d9cb5461993b62f7d0f95777582952b))
+    > - deprecate old getter
+
+ -  convert Checkpoint from class to record ([60bdd5e05fedbe0](https://github.com/bsorrentino/langgraph4j/commit/60bdd5e05fedbe0b9824e7969d92e549ad897e1c))
+    > - deprecate old getter
+
+ -  convert Checkpoint from class to record ([69f6e748563ab54](https://github.com/bsorrentino/langgraph4j/commit/69f6e748563ab5463f8db48073805fb85f046dc2))
+    > - deprecate old getter
+
+
+### Test 
+
+ -  **sqlite-saver**  complete use case to use dashboard UI to start/resume graph execution ([94843a1cc8a2aa8](https://github.com/bsorrentino/langgraph4j/commit/94843a1cc8a2aa829c49fa11aa8c521a100f6ee6))
+    > resolve on #483
+
+ -  **sqlite-saver**  add AGUIAgentWithError for testing resume after error ([1a66a4beb7a4835](https://github.com/bsorrentino/langgraph4j/commit/1a66a4beb7a483582669eafd3c4ca0c56ddacbd1))
+   
+ -  **javeli**  add JsonEditor test app ([356a61996ed811c](https://github.com/bsorrentino/langgraph4j/commit/356a61996ed811c63f32e459c07615d51d27c839))
+   
+ -  complete example how to use AG-UI to run and resume graph using also the "Checkpoint Saver Dashboard Service" with the UI develop in Javelit ([fb2c9742d8db189](https://github.com/bsorrentino/langgraph4j/commit/fb2c9742d8db189c6126f7565bbb13c056e5e275))
+   
+
+### Documentation
+
+ -  **agent/javelit**  add JsonEditor instructions ([3fd9b9ad1494482](https://github.com/bsorrentino/langgraph4j/commit/3fd9b9ad14944827c13ba2225a15068ad32ddc31))
+
+ -  add comparison article for Spring AI and LangGraph4j ([89f15f2fe55b73d](https://github.com/bsorrentino/langgraph4j/commit/89f15f2fe55b73dcb55a80b5036710f659b0c5bc))
+
+ -  update changelog ([27fbfbe5ac96d39](https://github.com/bsorrentino/langgraph4j/commit/27fbfbe5ac96d393f7ac06c98fc4dc42cf0ecf87))
+
+
+### ALM 
+
+ -  bump to next version 1.9.3 ([a5fb9a9bdc3b8ae](https://github.com/bsorrentino/langgraph4j/commit/a5fb9a9bdc3b8aed54e934c8b744496e791be3b4))
+   
+ -  update langchain4j version to 1.20.2 ([4d52cd982ab3bae](https://github.com/bsorrentino/langgraph4j/commit/4d52cd982ab3bae43609927ff0a1442327a121b8))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([1b82da71394a461](https://github.com/bsorrentino/langgraph4j/commit/1b82da71394a461eb3ab18e4e102749e26b05e7f))
+   
+
+
+
+
+
 <!-- "name: v1.9.2" is a release tag -->
 
 ## [v1.9.2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.2) (2026-09-26)
