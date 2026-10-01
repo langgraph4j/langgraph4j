@@ -213,8 +213,25 @@ public abstract class AGUIAgentBase implements AGUIAgent {
      */
     private void runAsync( Flow.Subscriber<? super Event> subscriber, RunAgentInput input) {
 
-            graph.stream(graphInput(input), runnableConfig(input))
-                    .forEachAsync(event -> {
+            final var generator = graph.stream(graphInput(input), runnableConfig(input));
+
+            subscriber.onSubscribe( new Flow.Subscription() {
+                private volatile boolean cancelled = false;
+
+                @Override
+                public void request(long n) {
+                }
+
+                @Override
+                public void cancel() {
+                    if( cancelled ) {
+                        return;
+                    }
+                    cancelled = generator.cancel(true);
+                }
+            });
+
+            generator.forEachAsync(event -> {
                         if (event instanceof StreamingOutput<? extends AgentState> output) {
                             var messageId = streamingId.get();
                             if (messageId == null) {
