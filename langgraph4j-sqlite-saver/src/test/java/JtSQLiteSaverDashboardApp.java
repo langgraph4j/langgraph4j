@@ -28,6 +28,7 @@ import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.bsc.langgraph4j.utils.TryFunction;
+import org.jspecify.annotations.NonNull;
 import org.sqlite.SQLiteConfig;
 
 import java.net.URI;
@@ -43,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 
 public class JtSQLiteSaverDashboardApp {
+
 
     public static void main(String[] args) throws Exception {
 
@@ -154,7 +156,7 @@ class CheckpointDashboard {
                 .disabled(!selectedThread.isInterrupted())
                 .use(container);
         if( resumeThread ) {
-            final var resume = new Resume(selectedThread.message(), ResumeStatus.RESOLVED, null);
+            final var resume = new Resume( "interruption", ResumeStatus.RESOLVED, null);
             agentInput$.setValue(new RunAgentInput(
                     selectedThread.name(),
                     UUID.randomUUID().toString(),
@@ -268,6 +270,37 @@ class CheckpointDashboard {
                     .use(jsonEditorPanel);
             final var resumeAgent = Jt.button( "Resume Agent" )
                     .use(jsonEditorPanel);
+
+            if( resumeAgent ) {
+
+                final var resume = new Resume("checkpoints", ResumeStatus.RESOLVED, """
+                        [{
+                            "@type": "%s",
+                            "id": "%s",
+                            "state": %s,
+                            "nodeId": "%s",
+                            "nextNodeId": "%s"
+                        }]
+                        """.formatted(
+                                Checkpoint.class.getName(),
+                                selectedCheckpoint.id(),
+                                newState,
+                                selectedCheckpoint.nodeId(),
+                                selectedCheckpoint.nextNodeId()
+                        ));
+
+                agentInput$.setValue(new RunAgentInput(
+                        selectedTag.name(),
+                        UUID.randomUUID().toString(),
+                        Map.of(),
+                        List.of(), // messages
+                        List.of(), // tools
+                        List.of(), // context
+                        null, // forwardedProps,
+                        List.of(resume)
+                ));
+                Jt.switchPage("/run-agent");
+            }
         }
     }
 }
@@ -370,15 +403,12 @@ class WorkflowManager {
 
         System.out.println("### AGENT INPUT ###" + Jt.cache().get("agent-input"));
 
-        record AgentInfo(String agentName, String threadName) {}
-
-        final AgentInfo agentInfo;
+        final ThreadId threadId;
 
         if( agentInput != null ) {
-            final var v = agentInput.threadId().split("-");
-            agentInfo = new AgentInfo(v[0], v[1]);
+            threadId = ThreadId.parse(agentInput.threadId());
         } else {
-            agentInfo = new AgentInfo("", "thread1");
+            threadId = ThreadId.of("<none>", "thread1");
         }
 
         final var c1 = Jt.columns(2)
@@ -392,13 +422,13 @@ class WorkflowManager {
                 .use();
 
 
-        final var defaultAgent = Math.max(availableAgents.indexOf(agentInfo.agentName()), 0);
+        final var defaultAgent = Math.max(availableAgents.indexOf(threadId.agentName()), 0);
         final var agentName = Jt.selectbox("Available Agents", availableAgents)
                 .index(defaultAgent)
                 .disabled(agentInput != null)
                 .use(c1.col(0));
         final var threadName = Jt.textInput("Thread Name")
-                .value(agentInfo.threadName())
+                .value(threadId.threadName())
                 .disabled(agentInput != null)
                 .use(c1.col(1));
 
@@ -406,13 +436,12 @@ class WorkflowManager {
 
         final var runAgent = Jt.button(isResume ? "Resume Agent" : "Run Agent")
                 .use(c2.col(0));
-        final var cancelRun = Jt.button("Cancel")
+        final var dismiss = Jt.button("Dismiss")
                 .use(c2.col(1));
-        // Implement the logic to run the agent using the client
 
         Jt.divider().use();
 
-        if( cancelRun ) {
+        if( dismiss ) {
             agentInput$.clear();
             Jt.switchPage(null);
         }
@@ -431,7 +460,7 @@ class WorkflowManager {
 
             if( agentInput == null ) {
                 agentInput = new RunAgentInput(
-                        "%s-%s".formatted(agentName,threadName),
+                        ThreadId.of(agentName,threadName).toString(),
                         UUID.randomUUID().toString(),
                         Map.of(),
                         List.of(), // messages
@@ -442,7 +471,7 @@ class WorkflowManager {
             }
 
 
-            runAgent(agentName, agentInput, jtExpanderEvents)
+            runAgent(agentInput, jtExpanderEvents)
                     .thenAccept( v -> {
                         final var elapsedTime = Duration.between(startTime, Instant.now());
                         Jt.success("Agent run completed in %ds%n%n".formatted(elapsedTime.toSeconds()))
@@ -451,16 +480,22 @@ class WorkflowManager {
                     .whenComplete( (v, e) -> {
                         agentInput$.clear();
                     })
+                    .exceptionally( e -> {
+                        Jt.error("Agent run failed: %s".formatted(e.getMessage()))
+                                .use(jtSpinner);
+                        return null;
+                    })
                     .join();
         }
 
     }
 
-    CompletableFuture<Void> runAgent(String agentName, RunAgentInput input, JtContainer eventsContainer) {
+    CompletableFuture<Void> runAgent(RunAgentInput input, JtContainer eventsContainer) {
         final var future = new CompletableFuture<Void>();
 
+        ThreadId threadId = ThreadId.parse(input.threadId());
         try {
-            newClient(agentName).run(input).subscribe(new Flow.Subscriber<>() {
+            newClient(threadId.agentName()).run(input).subscribe(new Flow.Subscriber<>() {
                 @Override
                 public void onSubscribe(Flow.Subscription subscription) {
                     subscription.request(Long.MAX_VALUE);
@@ -488,6 +523,36 @@ class WorkflowManager {
         }
         return future;
     }
+}
+
+record ThreadId(String agentName, String threadName) {
+
+    static ThreadId parse(String threadId) {
+        final var parts = threadId.split("/");
+        if(parts.length != 2) {
+            throw new IllegalArgumentException("Invalid threadId format. Expected format: 'agentName/threadName'");
+        }
+        return new ThreadId(parts[0], parts[1]);
+    }
+
+    static ThreadId of(String agentName, String threadName) {
+        return new ThreadId(agentName, threadName);
+    }
+
+    public ThreadId {
+        if( Objects.requireNonNull(agentName, "agentName cannot be null").isBlank() ) {;
+            throw new IllegalArgumentException("agentName cannot be null or blank");
+        }
+        if( Objects.requireNonNull(threadName, "threadName cannot be null").isBlank() ) {
+            throw new IllegalArgumentException("threadName cannot be null or blank");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "%s/%s".formatted(agentName, threadName);
+    }
+
 }
 
 
