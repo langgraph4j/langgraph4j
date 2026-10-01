@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -504,7 +505,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
                 final Map<String, Object> candidateDataMap;
                 if ( /*resume && */ instance.graph().getStateSerializer() instanceof PlainTextStateSerializer<? extends AgentState> textSerializer) {
 
-                    try( var reader = new InputStreamReader(req.getInputStream())) {
+                    try( var reader = new InputStreamReader(req.getInputStream(), StandardCharsets.UTF_8)) {
 
                         candidateDataMap = textSerializer.readDataFromReader(reader).data();
                     }

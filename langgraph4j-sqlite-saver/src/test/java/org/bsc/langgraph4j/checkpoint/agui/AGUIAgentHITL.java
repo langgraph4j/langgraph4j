@@ -67,7 +67,7 @@ public class AGUIAgentHITL extends AGUIAbstractAgent implements LG4JTestUtil {
             case INTERRUPTION_METADATA -> {
                 final var interruptionMetadata = result.asInterruptionMetadata();
                 final var interrupt = new Interrupt(
-                        "int-1",
+                        "interruption",
                         interruptionMetadata.reason().orElse(""),
                         "",
                         null,

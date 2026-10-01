@@ -31,14 +31,14 @@ For Maven:
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-mysql-saver</artifactId>
-    <version>1.9.2</version>
+    <version>1.9.3</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```gradle
-implementation("org.bsc.langgraph4j:langgraph4j-mysql-saver:1.9.2")
+implementation("org.bsc.langgraph4j:langgraph4j-mysql-saver:1.9.3")
 ```
 
 ## Configuration

@@ -16,13 +16,13 @@ Take a look to [What's new in release 1.9](https://langgraph4j.github.io/langgra
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Sep 23, 2026 | `1.9.2` | last release
+| Oct 01, 2026 | `1.9.3` | last release
 
 
 | Release line | Java baseline | Notes |
 |---|---|---|
 | 1.9.x | Java 17+ | Release with new (experimental) features and improvements for preparing move to `2.0` |
-| `1.9-SNAPSHOT` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
+| `1.9.3` development builds | Java 17+ | Snapshot users should expect active development and pre-release changes |
 | `1.8.x` LTS release | Java 17+ | This release will be maintained for LTS support in branch `support/1.8.x`. Only bugfix and/or minor improvement |
 
 
@@ -173,7 +173,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.9.2</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.9.3</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -205,7 +205,7 @@ If you want to use the latest unreleased features, you can use a snapshot versio
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.9-SNAPSHOT</version> <!-- Or the current snapshot version -->
+    <version>1.9.3</version> <!-- Or the current snapshot version -->
 </dependency>
 ```
 You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
