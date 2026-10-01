@@ -82,7 +82,6 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
 
         private String tableName;
         private StateSerializer<? extends AgentState> stateSerializer;
-        private boolean plainTextStateSerializerLegacyMode = false;
         private Long ttlSeconds;
         private boolean createTableIfNotExists = false;
         private boolean dropTableFirst = false;
@@ -107,16 +106,6 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
          */
         public <State extends AgentState> Builder stateSerializer(StateSerializer<State> stateSerializer) {
             this.stateSerializer = stateSerializer;
-            return this;
-        }
-
-        /**
-         * Enables compatibility mode for {@link PlainTextStateSerializer}-based payloads.
-         * When {@code true}, the JSON payload is stored as a serialized Java String (binary).
-         * Ignored if the serializer is not a {@link PlainTextStateSerializer}.
-         */
-        public Builder plainTextStateSerializerLegacyMode(boolean mode) {
-            this.plainTextStateSerializerLegacyMode = mode;
             return this;
         }
 
@@ -214,14 +203,12 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
     private final DynamoDbClient client;
     private final DynamoDBRepository repository;
     private final StateSerializer<? extends AgentState> stateSerializer;
-    private final boolean plainTextStateSerializerLegacyMode;
 
     // ─── Constructor ─────────────────────────────────────────────────────────────
 
     private DynamoDBSaver(Builder builder) {
         this.client = builder.dynamoDbClient;
         this.stateSerializer = builder.stateSerializer;
-        this.plainTextStateSerializerLegacyMode = builder.plainTextStateSerializerLegacyMode;
 
         // Create StorageStrategy for payload routing (DynamoDB vs S3)
         StorageStrategy storageStrategy = new StorageStrategy(
@@ -316,14 +303,14 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
         final String threadId = threadId(config);
         final String parentCheckpointId = config.checkPointId().orElse(null);
         log.debug("Inserting checkpoint '{}' for thread '{}' (parent='{}')",
-                checkpoint.getId(), threadId, parentCheckpointId);
+                checkpoint.id(), threadId, parentCheckpointId);
 
-        final byte[] payload = encodeState(checkpoint.getState());
+        final byte[] payload = encodeState(checkpoint.state());
         repository.putCheckpoint(
             threadId,
-            checkpoint.getId(),
-            checkpoint.getNodeId(),
-            checkpoint.getNextNodeId(),
+            checkpoint.id(),
+            checkpoint.nodeId(),
+            checkpoint.nextNodeId(),
             payload,
             stateSerializer.contentType(),
             parentCheckpointId,
@@ -345,13 +332,13 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
 
         final String parentCheckpointId = config.checkPointId().orElse(null);
         log.debug("Updating checkpoint '{}' for thread '{}' (parent='{}')",
-                checkpoint.getId(), threadId, parentCheckpointId);
-        final byte[] payload = encodeState(checkpoint.getState());
+                checkpoint.id(), threadId, parentCheckpointId);
+        final byte[] payload = encodeState(checkpoint.state());
         repository.putCheckpoint(
             threadId,
-            checkpoint.getId(),
-            checkpoint.getNodeId(),
-            checkpoint.getNextNodeId(),
+            checkpoint.id(),
+            checkpoint.nodeId(),
+            checkpoint.nextNodeId(),
             payload,
             stateSerializer.contentType(),
             parentCheckpointId,

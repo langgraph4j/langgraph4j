@@ -19,7 +19,7 @@ public final class StateSnapshot<State extends AgentState> extends NodeOutput<St
                 .build() ;
 
          */
-        return new StateSnapshot<>( checkpoint.getNodeId(), checkpoint, factory);
+        return new StateSnapshot<>( checkpoint.nodeId(), checkpoint, factory);
     }
 
     private final String checkpointId;
@@ -34,9 +34,9 @@ public final class StateSnapshot<State extends AgentState> extends NodeOutput<St
     }
 
     private StateSnapshot( String node, Checkpoint checkpoint, AgentStateFactory<State> factory) {
-        super( node, factory.apply(checkpoint.getState()) );
-        this.checkpointId = Objects.requireNonNull(checkpoint.getId(), "checkpointId cannot be null");
-        this.checkpointNextNodeId = Objects.requireNonNull(checkpoint.getNextNodeId(), "checkpointNextNodeId cannot be null");
+        super( node, factory.apply(checkpoint.state()) );
+        this.checkpointId = Objects.requireNonNull(checkpoint.id(), "checkpointId cannot be null");
+        this.checkpointNextNodeId = Objects.requireNonNull(checkpoint.nextNodeId(), "checkpointNextNodeId cannot be null");
     }
 
     @Override

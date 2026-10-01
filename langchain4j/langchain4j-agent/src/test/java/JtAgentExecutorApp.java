@@ -1,7 +1,7 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.9.2
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.2
+//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.9.3
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.3
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
-//DEPS dev.langchain4j:langchain4j-bom:1.9.2@pom
+//DEPS dev.langchain4j:langchain4j-bom:1.9.3@pom
 //DEPS dev.langchain4j:langchain4j-github-models
 //DEPS dev.langchain4j:langchain4j-open-ai
 //DEPS dev.langchain4j:langchain4j-ollama

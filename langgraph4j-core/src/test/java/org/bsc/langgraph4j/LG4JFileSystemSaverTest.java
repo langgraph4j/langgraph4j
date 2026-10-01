@@ -210,7 +210,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertNotNull( tag );
         assertEquals( "thread_1", tag.threadId());
 
-        var tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        var tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
         assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
@@ -238,7 +238,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertNotNull( tag );
         assertEquals( "thread_2", tag.threadId());
 
-        tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
         assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
@@ -255,7 +255,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertNotNull( tag );
         assertEquals( "thread_1", tag.threadId());
 
-        tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
         assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
@@ -308,7 +308,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertNotNull( tag );
         assertEquals( "thread_1", tag.threadId());
 
-        var tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        var tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isEmpty() );
 
         var messages = state_1.get().messages();
@@ -334,7 +334,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertEquals( "thread_2", tag.threadId());
         assertNotNull( tag );
 
-        tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
 
         assertTrue( tagState.isEmpty() );
         assertEquals(expectedSteps, messages.size());
@@ -353,7 +353,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertFalse( result.isEmpty() );
         assertTrue( result.isCheckpointSaverTag() );
         tag = result.asCheckpointSaverTag();
-        tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
+        tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
 
         assertTrue( tagState.isPresent() );
         assertIterableEquals( state_1.get().data().entrySet(), tagState.get().entrySet() );

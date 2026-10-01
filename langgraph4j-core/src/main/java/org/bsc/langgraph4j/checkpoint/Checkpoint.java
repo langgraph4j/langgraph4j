@@ -2,6 +2,7 @@ package org.bsc.langgraph4j.checkpoint;
 
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.Channel;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
@@ -16,23 +17,36 @@ import static java.util.Objects.requireNonNull;
  *
  * @see AgentState
  */
-public class Checkpoint {
+public record Checkpoint(
+        String id,
+        Map<String, Object> state,
+        String nodeId,
+        String nextNodeId
+) {
 
-    private final String id;
-    private Map<String,Object> state = null;
-    private String nodeId = null ;
-    private String nextNodeId = null;
+    public Checkpoint {
 
+        requireNonNull( id, "id cannot be null" );
+        requireNonNull( state, "state cannot be null" );
+        requireNonNull( nodeId, "nodeId cannot be null" );
+        requireNonNull( nextNodeId, "Checkpoint.nextNodeId cannot be null" );
+
+    }
+
+    @Deprecated
     public String getId() { return id; }
 
+    @Deprecated
     public Map<String, Object> getState() {
         return state;
     }
 
+    @Deprecated
     public String getNodeId() {
         return nodeId;
     }
 
+    @Deprecated
     public String getNextNodeId() {
         return nextNodeId;
     }
@@ -50,14 +64,6 @@ public class Checkpoint {
                                 checkpoint.nextNodeId);
     }
 
-    private Checkpoint( String id, Map<String,Object> state, String nodeId, String nextNodeId ) {
-
-        this.id = requireNonNull( id, "id cannot be null" );
-        this.state =  requireNonNull( state, "state cannot be null" );
-        this.nodeId = requireNonNull( nodeId, "nodeId cannot be null" );
-        this.nextNodeId =  requireNonNull( nextNodeId, "Checkpoint.nextNodeId cannot be null" );
-
-    }
 
     public static Builder builder() {
         return new Builder();
@@ -131,8 +137,9 @@ public class Checkpoint {
     }
 
     @Override
+    @NonNull
     public String toString() {
-        return  format("Checkpoint{ id=%s, nodeId=%s, nextNodeId=%s, state=%s }" ,
+        return  "Checkpoint{ id=%s, nodeId=%s, nextNodeId=%s, state=%s }".formatted(
                 id,
                 nodeId,
                 nextNodeId,

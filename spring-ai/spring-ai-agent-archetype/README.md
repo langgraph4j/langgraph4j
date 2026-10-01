@@ -14,7 +14,7 @@ This command generates the project with predefined properties.
 mvn archetype:generate \
   -DarchetypeGroupId=org.bsc.langgraph4j \
   -DarchetypeArtifactId=spring-ai-agent-archetype \
-  -DarchetypeVersion=1.9.2
+  -DarchetypeVersion=1.9.3
 ```
 
 **Parameters:**
@@ -35,7 +35,7 @@ Alternatively, you can run the command in interactive mode and provide the value
 mvn archetype:generate \
   -DarchetypeGroupId=org.bsc.langgraph4j \
   -DarchetypeArtifactId=spring-ai-agent-archetype \
-  -DarchetypeVersion=1.9.2
+  -DarchetypeVersion=1.9.3
 ```
 
 Maven will then prompt you to enter the `groupId`, `artifactId`, `version`, and `package` for your new project.
