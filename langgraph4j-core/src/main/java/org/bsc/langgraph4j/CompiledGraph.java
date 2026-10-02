@@ -431,7 +431,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         requireNonNull( config, "config cannot be null" );
 
         final var builder = AsyncGeneratorFlow.builder();
-        config.executor().ifPresent( builder::executor );
+        config.streamExecutor().ifPresent( builder::executor );
         return builder.build( new Emitter<>( input, config ) );
     }
 

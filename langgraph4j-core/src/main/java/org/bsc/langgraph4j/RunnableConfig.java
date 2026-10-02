@@ -35,7 +35,7 @@ public final class RunnableConfig implements HasMetadata {
         private String nextNode;
         private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
         private Integer recursionLimit;
-        private Executor executor;
+        private Executor streamExecutor;
 
         /**
          * Constructs a new instance of the {@link Builder} with default configuration settings.
@@ -54,7 +54,7 @@ public final class RunnableConfig implements HasMetadata {
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
             this.recursionLimit = config.recursionLimit;
-            this.executor       = config.executor;
+            this.streamExecutor = config.streamExecutor;
 
         }
 
@@ -135,8 +135,8 @@ public final class RunnableConfig implements HasMetadata {
          * @return this builder
          * @since 1.9
          */
-        public Builder executor(Executor executor) {
-            this.executor = requireNonNull(executor, "executor cannot be null!");
+        public Builder streamExecutor(Executor streamExecutor) {
+            this.streamExecutor = requireNonNull(streamExecutor, "streamExecutor cannot be null!");
             return this;
         }
 
@@ -224,7 +224,7 @@ public final class RunnableConfig implements HasMetadata {
     private final String nextNode;
     private final CompiledGraph.StreamMode streamMode;
     private final Integer recursionLimit;
-    private final Executor executor;
+    private final Executor streamExecutor;
     private final Map<String,Object> metadata;
 
     private RunnableConfig() {
@@ -233,7 +233,7 @@ public final class RunnableConfig implements HasMetadata {
         this.nextNode = null;
         this.streamMode = CompiledGraph.StreamMode.VALUES;
         this.recursionLimit = null;
-        this.executor = null;
+        this.streamExecutor = null;
         this.metadata = null;
     }
 
@@ -248,7 +248,7 @@ public final class RunnableConfig implements HasMetadata {
         this.nextNode       = builder.nextNode;
         this.streamMode     = builder.streamMode;
         this.recursionLimit = builder.recursionLimit;
-        this.executor       = builder.executor;
+        this.streamExecutor = builder.streamExecutor;
         this.metadata       = builder.metadata();
     }
 
@@ -276,8 +276,8 @@ public final class RunnableConfig implements HasMetadata {
      * @return an optional executor, or empty when {@code CompletableFuture}'s default async executor should be used
      * @since 1.9
      */
-    public Optional<Executor> executor() {
-        return ofNullable(executor);
+    public Optional<Executor> streamExecutor() {
+        return ofNullable(streamExecutor);
     }
 
     /**

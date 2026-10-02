@@ -90,7 +90,7 @@ class GraphExecutorTest {
     }
 
     private RunnableConfig.Builder configWithExecutor() {
-        return RunnableConfig.builder().executor(executor);
+        return RunnableConfig.builder().streamExecutor(executor);
     }
 
     private void assertAllRanOnExecutorWithCallerContext(List<String> expectedSteps) {
@@ -230,7 +230,7 @@ class GraphExecutorTest {
                 .compile();
         try {
             var run = CompletableFuture.runAsync(() ->
-                    graph.invoke(GraphInput.noArgs(), RunnableConfig.builder().executor(forkJoinPool).build()));
+                    graph.invoke(GraphInput.noArgs(), RunnableConfig.builder().streamExecutor(forkJoinPool).build()));
             assertTrue(firstAttemptFailed.await(5, TimeUnit.SECONDS));
 
             CompletableFuture.runAsync(() -> {}, forkJoinPool).get(1, TimeUnit.SECONDS);

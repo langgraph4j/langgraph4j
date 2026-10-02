@@ -54,24 +54,24 @@ public class RunnableConfigTest {
     }
 
     @Test
-    public void executorIsPreservedByConfigCopies() {
+    public void streamExecutorIsPreservedByConfigCopies() {
         Executor executor = Runnable::run;
         var config = RunnableConfig.builder()
-                .executor(executor)
+                .streamExecutor(executor)
                 .build();
 
-        assertSame(executor, config.executor().orElseThrow());
-        assertSame(executor, RunnableConfig.builder(config).build().executor().orElseThrow());
-        assertSame(executor, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).executor().orElseThrow());
-        assertSame(executor, config.withCheckPointId("checkpoint-1").executor().orElseThrow());
-        assertSame(executor, config.updateMetadata(Map.of("key", "value")).executor().orElseThrow());
-        assertSame(executor, config.updateMetadata(Map.of("key", "value")).removeMetadata("key").executor().orElseThrow());
-        assertTrue(RunnableConfig.empty().executor().isEmpty());
+        assertSame(executor, config.streamExecutor().orElseThrow());
+        assertSame(executor, RunnableConfig.builder(config).build().streamExecutor().orElseThrow());
+        assertSame(executor, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).streamExecutor().orElseThrow());
+        assertSame(executor, config.withCheckPointId("checkpoint-1").streamExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).streamExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).removeMetadata("key").streamExecutor().orElseThrow());
+        assertTrue(RunnableConfig.empty().streamExecutor().isEmpty());
     }
 
     @Test
-    public void executorMustNotBeNull() {
+    public void streamExecutorMustNotBeNull() {
         assertThrows(NullPointerException.class,
-                () -> RunnableConfig.builder().executor(null));
+                () -> RunnableConfig.builder().streamExecutor(null));
     }
 }
