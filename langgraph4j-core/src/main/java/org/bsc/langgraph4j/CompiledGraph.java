@@ -428,8 +428,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
+        requireNonNull( config, "config cannot be null" );
 
-        return AsyncGeneratorFlow.create(  new Emitter<>( input, config ) );
+        final var builder = AsyncGeneratorFlow.builder();
+        config.executor().ifPresent( builder::executor );
+        return builder.build( new Emitter<>( input, config ) );
     }
 
     /**
@@ -466,10 +469,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( GraphInput input, RunnableConfig config )  {
 
-        return AsyncGeneratorFlow.create( new Emitter<>(
+        return stream(
                         requireNonNull( input, "input cannot be null" ),
                         requireNonNull( config, "config cannot be null")
-                                .withStreamMode(StreamMode.SNAPSHOTS) ));
+                                .withStreamMode(StreamMode.SNAPSHOTS) );
 
     }
 

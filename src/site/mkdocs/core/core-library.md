@@ -147,6 +147,7 @@ graph.stream(inputs, config);
 | `nextNode( String )` | Specifies which node should execute next. Primarily used internally by the graph engine when resuming interrupted executions. |
 | `streamMode( CompiledGraph.StreamMode )` | Controls how results are streamed during execution. The default is `VALUES`; `SNAPSHOTS` is also available when checkpoint snapshots are required. |
 | `recursionLimit( Integer )` | Optional maximum number of execution steps for this invocation. When absent, the graph uses its configured default. The builder rejects values less than or equal to zero. |
+| `executor( Executor )` | Optional executor that runs the graph execution loop, inherited by compiled subgraphs; defaults to `CompletableFuture`'s async executor. An executor that captures thread-bound state on submission (MDC, tracing) carries it into nodes. The loop blocks while subgraphs run on the same executor, so avoid bounded pools: prefer a cached, virtual-thread or `ForkJoinPool` executor. |
 | `addParallelNodeExecutor( String nodeId, Executor)` stores an internal executor under a generated key in the form `__PARALLEL__(nodeId)`. Use that helper rather than writing the key directly.|
 | `disableCloneState()` | Disables state cloning during graph running|
 | `putMetadata( String key, Object value )` | Add or replace a custom metadata entry to the configuration. |
