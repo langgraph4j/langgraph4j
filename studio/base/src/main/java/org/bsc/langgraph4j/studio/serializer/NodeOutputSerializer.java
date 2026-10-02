@@ -1,4 +1,4 @@
-package org.bsc.langgraph4j.studio;
+package org.bsc.langgraph4j.studio.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -9,6 +9,7 @@ import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.state.StateSnapshot;
+import org.bsc.langgraph4j.studio.LangGraphStudioServer;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
 import org.bsc.langgraph4j.utils.TypeRef;
 
@@ -21,13 +22,13 @@ import static java.util.Optional.ofNullable;
  * This class is responsible for converting NodeOutput instances into JSON format.
  */
 @SuppressWarnings("rawtypes")
-class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLoggable {
+public class NodeOutputSerializer extends StdSerializer<NodeOutput> implements LG4JLoggable {
 
     /**
      * Constructs a new NodeOutputSerializer.
      * Calls the superclass constructor with the NodeOutput class type.
      */
-    protected NodeOutputSerializer() {
+    public NodeOutputSerializer() {
         super( NodeOutput.class );
     }
 

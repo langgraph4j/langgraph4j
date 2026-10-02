@@ -1,17 +1,17 @@
-package org.bsc.langgraph4j.studio;
+package org.bsc.langgraph4j.studio.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import org.slf4j.Logger;
+import org.bsc.langgraph4j.LG4JLoggable;
+import org.bsc.langgraph4j.studio.InitGraphData;
 
 import java.io.IOException;
 
-class InitGraphDataSerializer extends StdSerializer<InitGraphData> {
-    Logger log = LangGraphStudioServer.log;
+public class InitGraphDataSerializer extends StdSerializer<InitGraphData> implements LG4JLoggable {
 
-    protected InitGraphDataSerializer(Class<InitGraphData> t) {
-        super(t);
+    public InitGraphDataSerializer() {
+        super(InitGraphData.class);
     }
 
     /**

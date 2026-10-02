@@ -13,6 +13,8 @@ import org.bsc.async.v5.BlockingQueueProcessor;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.studio.serializer.InitGraphDataSerializer;
+import org.bsc.langgraph4j.studio.serializer.NodeOutputSerializer;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
 
 import java.io.IOException;
@@ -209,7 +211,7 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
         this.viewerServlet = new LG4JViewerServlet(builder.asyncContextTimeout);
 
         final var module = new SimpleModule();
-        module.addSerializer(InitGraphData.class, new InitGraphDataSerializer(InitGraphData.class));
+        module.addSerializer(InitGraphData.class, new InitGraphDataSerializer());
         module.addSerializer(NodeOutput.class, new NodeOutputSerializer());
         objectMapper.registerModule(module);
 

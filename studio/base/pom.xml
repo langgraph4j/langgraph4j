@@ -67,7 +67,7 @@
         <dependency>
             <groupId>com.github.victools</groupId>
             <artifactId>jsonschema-generator</artifactId>
-            <version>4.36.0</version>
+            <version>5.0.0</version>
             <scope>test</scope>
         </dependency>
 

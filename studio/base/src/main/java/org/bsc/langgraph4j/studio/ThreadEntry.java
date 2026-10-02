@@ -11,4 +11,4 @@ import java.util.List;
  * @param id the ID of the thread.
  * @param entries the outputs of the thread.
  */
-record ThreadEntry(String id, List<? extends NodeOutput<? extends AgentState>> entries) {}
+public record ThreadEntry(String id, List<? extends NodeOutput<? extends AgentState>> entries) {}

@@ -17,6 +17,8 @@ import org.bsc.langgraph4j.dsl.JsonDslGenerator;
 import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.studio.serializer.InitGraphDataSerializer;
+import org.bsc.langgraph4j.studio.serializer.NodeOutputSerializer;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -280,7 +282,7 @@ public interface LangGraphStudioServer extends LG4JLoggable {
             super.init(config);
 
             var module = new SimpleModule();
-            module.addSerializer(InitGraphData.class, new InitGraphDataSerializer(InitGraphData.class));
+            module.addSerializer(InitGraphData.class, new InitGraphDataSerializer());
             objectMapper.registerModule(module);
 
         }

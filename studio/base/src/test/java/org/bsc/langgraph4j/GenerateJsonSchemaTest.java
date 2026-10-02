@@ -28,9 +28,9 @@ public class GenerateJsonSchemaTest {
                 .with(MAP_VALUES_AS_ADDITIONAL_PROPERTIES, STRICT_TYPE_INFO)
                 .build();
         SchemaGenerator generator = new SchemaGenerator(config);
-        JsonNode jsonSchema = generator.generateSchema(NodeOutput.class);
+        final var schema = generator.generateSchema(NodeOutput.class);
 
-        System.out.println(jsonSchema.toPrettyString());
+        System.out.println(schema.toPrettyString());
     }
 
     @Test

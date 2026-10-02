@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.checkpoint.agui;
 
-import org.bsc.langgraph4j.LG4JTestUtil;
 import org.bsc.langgraph4j.agui.sdk.AGUIAgentBase;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.SQLiteSaverV2;

@@ -17,51 +17,19 @@ import org.bsc.langgraph4j.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class JtAGUIClientApp {
 
-    static class EventEmitter implements Flow.Subscriber<Event> {
 
-        private Flow.Subscription subscription;
-        private final List<Event> receivedEvents = new ArrayList<>();
-        private final CompletableFuture<List<Event>> future;
-
-        public EventEmitter(CompletableFuture<List<Event>> future) {
-            this.future = Objects.requireNonNull(future);
-        }
-
-        @Override
-        public void onSubscribe(Flow.Subscription subscription) {
-            this.subscription = subscription;
-            subscription.request(Long.MAX_VALUE);
-        }
-
-        @Override
-        public void onNext(Event event) {
-            receivedEvents.add(event);
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            future.completeExceptionally(throwable);
-        }
-
-        @Override
-        public void onComplete() {
-            future.complete(receivedEvents);
-        }
-
-    }
     public static void main(String[] args) {
 
         var app = new JtAGUIClientApp();
@@ -100,7 +68,13 @@ public class JtAGUIClientApp {
             try {
                 final var startTime = Instant.now();
 
-                final var client = new HttpAgent(new URI(url), new AGUIJacksonSerializer());
+                final var client = new HttpAgent(
+                        new URI(url),
+                        new AGUIJacksonSerializer(),
+                        HttpClient.newHttpClient(),
+                        Runnable::run, // executor run on main thread
+                        Duration.ofSeconds(30)
+                        );
 
                 final var userMessage = new UserMessage(
                         "m1", "Hello, I need help with my project."
@@ -116,19 +90,33 @@ public class JtAGUIClientApp {
                         "props" // forwardedProps
                 );
 
-                final var future = new CompletableFuture<List<Event>>();
+                final var future = new CompletableFuture<Void>();
 
-                client.run(input).subscribe(new EventEmitter(future));
+                client.run(input).subscribe(new Flow.Subscriber<Event>() {
+                    @Override
+                    public void onSubscribe(Flow.Subscription subscription) {
+                        subscription.request(Long.MAX_VALUE);
+                    }
+                    @Override
+                    public void onNext(Event event) {
+                        Jt.text( Objects.toString(event) ).use();
+                    }
 
-                final var receivedEvents = future.get(1, TimeUnit.MINUTES);
+                    @Override
+                    public void onError(Throwable throwable) {
+                        future.completeExceptionally(throwable);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        future.complete(null);
+                    }
+                });
+
+                future.get(1, TimeUnit.MINUTES);
 
                 final var elapsedTime = Duration.between(startTime, Instant.now());
 
-                final var events = receivedEvents.stream()
-                        .map(Objects::toString)
-                        .map("* %s"::formatted)
-                        .collect(Collectors.joining("\n"));
-                Jt.text(events).use();
 
                 Jt.success("finished in %ds%n%n%s".formatted(elapsedTime.toSeconds(), "OK"))
                         .use(spinner);
