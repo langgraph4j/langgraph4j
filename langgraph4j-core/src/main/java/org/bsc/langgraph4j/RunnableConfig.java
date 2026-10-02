@@ -35,6 +35,7 @@ public final class RunnableConfig implements HasMetadata {
         private String nextNode;
         private CompiledGraph.StreamMode streamMode = CompiledGraph.StreamMode.VALUES;
         private Integer recursionLimit;
+        private Executor streamExecutor;
 
         /**
          * Constructs a new instance of the {@link Builder} with default configuration settings.
@@ -53,6 +54,7 @@ public final class RunnableConfig implements HasMetadata {
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
             this.recursionLimit = config.recursionLimit;
+            this.streamExecutor = config.streamExecutor;
 
         }
 
@@ -112,6 +114,29 @@ public final class RunnableConfig implements HasMetadata {
                 throw new IllegalArgumentException("recursionLimit must be > 0!");
             }
             this.recursionLimit = recursionLimit;
+            return this;
+        }
+
+        /**
+         * Sets the {@link Executor} that runs the graph execution loop for this invocation.
+         * <p>
+         * Without one, the loop runs on {@code CompletableFuture}'s default async executor.
+         * The loop is submitted from the calling thread, so an executor that captures thread-bound
+         * state on submission (tracing context, MDC) carries it into node actions, hooks, edges and
+         * retries, but not into parallel branches with their own {@link #addParallelNodeExecutor}
+         * executor. Compiled subgraphs inherit it.
+         * <p>
+         * The loop thread blocks while each node or subgraph completes, so anything scheduled on
+         * this executor meanwhile (subgraph loops, parallel branches sharing it, {@code supplyAsync}
+         * inside nodes) needs its own free thread: a single-thread or bounded fixed pool can deadlock.
+         * Prefer a cached, virtual-thread or {@code ForkJoinPool} executor.
+         *
+         * @param executor the executor that runs the graph
+         * @return this builder
+         * @since 1.9
+         */
+        public Builder streamExecutor(Executor streamExecutor) {
+            this.streamExecutor = requireNonNull(streamExecutor, "streamExecutor cannot be null!");
             return this;
         }
 
@@ -199,6 +224,7 @@ public final class RunnableConfig implements HasMetadata {
     private final String nextNode;
     private final CompiledGraph.StreamMode streamMode;
     private final Integer recursionLimit;
+    private final Executor streamExecutor;
     private final Map<String,Object> metadata;
 
     private RunnableConfig() {
@@ -207,6 +233,7 @@ public final class RunnableConfig implements HasMetadata {
         this.nextNode = null;
         this.streamMode = CompiledGraph.StreamMode.VALUES;
         this.recursionLimit = null;
+        this.streamExecutor = null;
         this.metadata = null;
     }
 
@@ -221,6 +248,7 @@ public final class RunnableConfig implements HasMetadata {
         this.nextNode       = builder.nextNode;
         this.streamMode     = builder.streamMode;
         this.recursionLimit = builder.recursionLimit;
+        this.streamExecutor = builder.streamExecutor;
         this.metadata       = builder.metadata();
     }
 
@@ -240,6 +268,16 @@ public final class RunnableConfig implements HasMetadata {
      */
     public Optional<Integer> recursionLimit() {
         return ofNullable(recursionLimit);
+    }
+
+    /**
+     * Returns the {@link Executor} that runs the graph execution loop for this invocation.
+     *
+     * @return an optional executor, or empty when {@code CompletableFuture}'s default async executor should be used
+     * @since 1.9
+     */
+    public Optional<Executor> streamExecutor() {
+        return ofNullable(streamExecutor);
     }
 
     /**

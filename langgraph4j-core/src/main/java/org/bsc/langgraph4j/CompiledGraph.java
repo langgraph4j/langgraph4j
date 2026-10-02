@@ -34,6 +34,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
+import static org.bsc.langgraph4j.internal.FutureUtils.awaitCompletion;
 
 /**
  * Represents a compiled graph of nodes and edges.
@@ -427,8 +428,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an AsyncGenerator stream of NodeOutput
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
+        requireNonNull( config, "config cannot be null" );
 
-        return AsyncGeneratorFlow.create(  new Emitter<>( input, config ) );
+        final var builder = AsyncGeneratorFlow.builder();
+        config.streamExecutor().ifPresent( builder::executor );
+        return builder.build( new Emitter<>( input, config ) );
     }
 
     /**
@@ -465,10 +469,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( GraphInput input, RunnableConfig config )  {
 
-        return AsyncGeneratorFlow.create( new Emitter<>(
+        return stream(
                         requireNonNull( input, "input cannot be null" ),
                         requireNonNull( config, "config cannot be null")
-                                .withStreamMode(StreamMode.SNAPSHOTS) ));
+                                .withStreamMode(StreamMode.SNAPSHOTS) );
 
     }
 
@@ -784,10 +788,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 return stateGraph.stateFactory().apply( data);
             };
 
-            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() )
+            return awaitCompletion( stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() ) )
                     .thenApply(TryFunction.Try(result -> {
                         if( result.hasPartialState() ) {
-                            return result.partialState().thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
+                            return awaitCompletion( result.partialState() ).thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
                                 final var embedResult = embedGenerator( $1, action, nodeId, clonedState, runnableConfig, partial);
 
                                 if( embedResult.isEmpty() ) {

@@ -3,8 +3,10 @@ package org.bsc.langgraph4j;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,5 +51,27 @@ public class RunnableConfigTest {
                 () -> RunnableConfig.builder().recursionLimit(0));
         assertThrows(IllegalArgumentException.class,
                 () -> RunnableConfig.builder().recursionLimit(-1));
+    }
+
+    @Test
+    public void streamExecutorIsPreservedByConfigCopies() {
+        Executor executor = Runnable::run;
+        var config = RunnableConfig.builder()
+                .streamExecutor(executor)
+                .build();
+
+        assertSame(executor, config.streamExecutor().orElseThrow());
+        assertSame(executor, RunnableConfig.builder(config).build().streamExecutor().orElseThrow());
+        assertSame(executor, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).streamExecutor().orElseThrow());
+        assertSame(executor, config.withCheckPointId("checkpoint-1").streamExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).streamExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).removeMetadata("key").streamExecutor().orElseThrow());
+        assertTrue(RunnableConfig.empty().streamExecutor().isEmpty());
+    }
+
+    @Test
+    public void streamExecutorMustNotBeNull() {
+        assertThrows(NullPointerException.class,
+                () -> RunnableConfig.builder().streamExecutor(null));
     }
 }
