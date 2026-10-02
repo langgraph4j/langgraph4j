@@ -56,6 +56,30 @@ class RetryPolicyTest {
     }
 
     @Test
+    void manyAttemptsDoNotGrowTheStack() {
+        final var maxAttempts = 20_000;
+        var attempts = new AtomicInteger();
+
+        AsyncNodeActionWithConfig<State> action = (state, config) ->
+                attempts.incrementAndGet() < maxAttempts
+                        ? failedFuture(new IOException("temporary failure"))
+                        : completedFuture(Map.of("result", "done"));
+
+        NodeHook.WrapCall<State> hook = RetryPolicy.builder()
+                .maxAttempts(maxAttempts)
+                .retryDelay(Duration.ZERO)
+                .jitter(false)
+                .retryOn(IOException.class)
+                .build()
+                .asHook();
+
+        var result = hook.applyWrap("call_api", new State(Map.of()), RunnableConfig.empty(), action).join();
+
+        assertEquals(maxAttempts, attempts.get());
+        assertEquals("done", result.get("result"));
+    }
+
+    @Test
     void retriesSynchronousRetryableFailureUntilSuccess() {
         var attempts = new AtomicInteger();
 
