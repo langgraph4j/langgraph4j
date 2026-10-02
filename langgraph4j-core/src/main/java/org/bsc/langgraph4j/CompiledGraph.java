@@ -34,6 +34,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
+import static org.bsc.langgraph4j.internal.FutureUtils.awaitCompletion;
 
 /**
  * Represents a compiled graph of nodes and edges.
@@ -784,10 +785,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 return stateGraph.stateFactory().apply( data);
             };
 
-            return stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() )
+            return awaitCompletion( stateGraph.nodeHooks.applyActionWithHooksHandlingInterruption(  action, nodeId, clonedState, compileConfig, runnableConfig, stateFactory, stateGraph.getChannels() ) )
                     .thenApply(TryFunction.Try(result -> {
                         if( result.hasPartialState() ) {
-                            return result.partialState().thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
+                            return awaitCompletion( result.partialState() ).thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
                                 final var embedResult = embedGenerator( $1, action, nodeId, clonedState, runnableConfig, partial);
 
                                 if( embedResult.isEmpty() ) {
