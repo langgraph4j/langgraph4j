@@ -281,28 +281,27 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
     }
 
     protected final <R> R exec(TryFunction<Connection, R, Exception> execStatement) throws Exception {
-        final var connection = dataSource.getConnection();
-
-        connection.setAutoCommit(true);
-
-        return execStatement.tryApply(connection);
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(true);
+            return execStatement.tryApply(connection);
+        }
     }
 
     protected final <R> R execTransaction(TryFunction<Connection, R, Exception> execStatement) throws Exception {
-        final var connection = dataSource.getConnection();
+        try (Connection connection = dataSource.getConnection()) {
+            final var previousAutoCommit = connection.getAutoCommit();
 
-        final var previousAutoCommit = connection.getAutoCommit();
-
-        connection.setAutoCommit(false);
-        try {
-            return execStatement.tryApply(connection);
-        } catch (Exception e) {
-            log.error("Error executing statement", e);
-            connection.rollback();
-            throw e;
-        } finally {
-            connection.commit();
-            connection.setAutoCommit(previousAutoCommit);
+            connection.setAutoCommit(false);
+            try {
+                return execStatement.tryApply(connection);
+            } catch (Exception e) {
+                log.error("Error executing statement", e);
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.commit();
+                connection.setAutoCommit(previousAutoCommit);
+            }
         }
     }
 
