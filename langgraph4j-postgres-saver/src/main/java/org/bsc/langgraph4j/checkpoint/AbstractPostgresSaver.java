@@ -324,11 +324,10 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
 
 
     protected final <R> R exec(TryFunction<Connection, R, Exception> execStatement) throws Exception {
-        final var connection = datasource.getConnection();
-
-        connection.setAutoCommit(true);
-
-        return execStatement.tryApply(connection);
+        try (Connection connection = datasource.getConnection()) {
+            connection.setAutoCommit(true);
+            return execStatement.tryApply(connection);
+        }
     }
 
 
