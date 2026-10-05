@@ -34,7 +34,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
-import static org.bsc.langgraph4j.internal.FutureUtils.awaitCompletion;
+import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 /**
  * Represents a compiled graph of nodes and edges.
@@ -431,7 +431,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         requireNonNull( config, "config cannot be null" );
 
         final var builder = AsyncGeneratorFlow.builder();
-        config.streamExecutor().ifPresent( builder::executor );
+        config.emitterExecutor().ifPresent( builder::executor );
         return builder.build( new Emitter<>( input, config ) );
     }
 
