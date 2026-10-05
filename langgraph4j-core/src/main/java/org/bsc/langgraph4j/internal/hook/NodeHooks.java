@@ -15,8 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
-import static org.bsc.langgraph4j.internal.FutureUtils.awaitCompletion;
+import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 public class NodeHooks<State extends AgentState> {
 
