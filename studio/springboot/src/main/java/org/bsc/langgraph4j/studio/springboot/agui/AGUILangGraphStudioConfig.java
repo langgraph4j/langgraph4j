@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.studio.springboot.agui;
 
-import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.agui.sdk.AGUIAgentRegistry;
 import org.bsc.langgraph4j.studio.agui.AGUILangGraphStudioJacksonSerializer;
 import org.bsc.langgraph4j.studio.agui.AGUILangGraphStudioServer;

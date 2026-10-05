@@ -1,0 +1,27 @@
+{
+  "name": "langgraph4j-studio-webagui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --port 1234",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --environment happy-dom",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "package": "npm run build && sh package.sh"
+  },
+  "dependencies": {
+    "@ag-ui/client": "^1.0.1",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.14.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

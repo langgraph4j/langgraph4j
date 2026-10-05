@@ -1,0 +1,10 @@
+:root {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #e5e7eb;
+  background: #0f172a;
+  color-scheme: dark;
+}
+body { margin: 0; }
+main { max-width: 64rem; margin: 0 auto; padding: 2rem 1rem; }
+h1 { margin-bottom: 0.5rem; }
+p { color: #94a3b8; }
