@@ -18,7 +18,7 @@ import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.bsc.langgraph4j.internal.FutureUtils.awaitCompletion;
+import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 /**
  * Retries a node action when a configured failure occurs.
