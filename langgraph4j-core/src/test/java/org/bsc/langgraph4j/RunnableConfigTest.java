@@ -57,21 +57,21 @@ public class RunnableConfigTest {
     public void streamExecutorIsPreservedByConfigCopies() {
         Executor executor = Runnable::run;
         var config = RunnableConfig.builder()
-                .streamExecutor(executor)
+                .emitterExecutor(executor)
                 .build();
 
-        assertSame(executor, config.streamExecutor().orElseThrow());
-        assertSame(executor, RunnableConfig.builder(config).build().streamExecutor().orElseThrow());
-        assertSame(executor, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).streamExecutor().orElseThrow());
-        assertSame(executor, config.withCheckPointId("checkpoint-1").streamExecutor().orElseThrow());
-        assertSame(executor, config.updateMetadata(Map.of("key", "value")).streamExecutor().orElseThrow());
-        assertSame(executor, config.updateMetadata(Map.of("key", "value")).removeMetadata("key").streamExecutor().orElseThrow());
-        assertTrue(RunnableConfig.empty().streamExecutor().isEmpty());
+        assertSame(executor, config.emitterExecutor().orElseThrow());
+        assertSame(executor, RunnableConfig.builder(config).build().emitterExecutor().orElseThrow());
+        assertSame(executor, config.withStreamMode(CompiledGraph.StreamMode.SNAPSHOTS).emitterExecutor().orElseThrow());
+        assertSame(executor, config.withCheckPointId("checkpoint-1").emitterExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).emitterExecutor().orElseThrow());
+        assertSame(executor, config.updateMetadata(Map.of("key", "value")).removeMetadata("key").emitterExecutor().orElseThrow());
+        assertTrue(RunnableConfig.empty().emitterExecutor().isEmpty());
     }
 
     @Test
     public void streamExecutorMustNotBeNull() {
         assertThrows(NullPointerException.class,
-                () -> RunnableConfig.builder().streamExecutor(null));
+                () -> RunnableConfig.builder().emitterExecutor(null));
     }
 }
