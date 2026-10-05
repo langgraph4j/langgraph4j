@@ -274,36 +274,35 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
 
 
     protected final  <R> R exec(TryFunction<Connection,R,Exception> execStatement) throws Exception {
-        final var connection = datasource.getConnection();
-
-        connection.setAutoCommit(true);
-        try (var statement = connection.createStatement()) {
-            statement.execute(sqlCommands.get("sqlEnableForeignKeys"));
+        try (Connection connection = datasource.getConnection()) {
+            connection.setAutoCommit(true);
+            try (var statement = connection.createStatement()) {
+                statement.execute(sqlCommands.get("sqlEnableForeignKeys"));
+            }
+            return execStatement.tryApply(connection);
         }
-
-        return execStatement.tryApply(connection);
     }
 
     protected final <R> R execTransaction(TryFunction<Connection,R,Exception> execStatement) throws Exception {
-        final var connection = datasource.getConnection();
+        try (Connection connection = datasource.getConnection()) {
+            final var previousAutoCommit = connection.getAutoCommit();
 
-        final var previousAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(true);
+            try (var statement = connection.createStatement()) {
+                statement.execute(sqlCommands.get("sqlEnableForeignKeys"));
+            }
 
-        connection.setAutoCommit(true);
-        try (var statement = connection.createStatement()) {
-            statement.execute(sqlCommands.get("sqlEnableForeignKeys"));
-        }
-
-        connection.setAutoCommit(false);
-        try {
-            return execStatement.tryApply(connection);
-        } catch (Exception e) {
-            log.error("Error executing statement", e);
-            connection.rollback();
-            throw e;
-        } finally {
-            connection.commit();
-            connection.setAutoCommit(previousAutoCommit);
+            connection.setAutoCommit(false);
+            try {
+                return execStatement.tryApply(connection);
+            } catch (Exception e) {
+                log.error("Error executing statement", e);
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.commit();
+                connection.setAutoCommit(previousAutoCommit);
+            }
         }
     }
 
