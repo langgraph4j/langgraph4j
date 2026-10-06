@@ -25,6 +25,7 @@ import {
 } from '@xyflow/react';
 
 import { debug } from './debug.js';
+import type { GraphState, NextNodeData } from './types.js';
 
 const _DBG = debug( { on: true, topic: 'LG4JGraph' } )
 
@@ -1256,6 +1257,12 @@ export class LG4JDSLViewElement extends HTMLElement {
     return ['node-gap'];
   }
 
+  declare mount: HTMLDivElement;
+  declare root: import('react-dom/client').Root | null;
+  declare source: string | undefined;
+  declare activeNodeId: string | undefined;
+  declare lastActiveNodeId: string | undefined;
+  declare interruptedNodeId: string | undefined;
   /**
    * Creates the shadow root, style element, and React mount point.
    */
@@ -1265,20 +1272,14 @@ export class LG4JDSLViewElement extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     const style = document.createElement('style');
     style.textContent = componentStyles();
-    /** @type {HTMLDivElement} React mount point inside the shadow root. */
     this.mount = document.createElement('div');
     this.mount.className = 'mount';
     shadow.append(style, this.mount);
 
-    /** @type {import('react-dom/client').Root | null} React root for the viewer. */
     this.root = null;
-    /** @type {string | undefined} Last serialized graph DSL received from events. */
     this.source = undefined;
-    /** @type {string | undefined} Active node id highlighted in the graph. */
     this.activeNodeId = undefined;
-    /** @type {string | undefined} Last valid active node id received from executor events. */
     this.lastActiveNodeId = undefined;
-    /** @type {string | undefined} Interrupted node id highlighted in the graph. */
     this.interruptedNodeId = undefined;
 
   }
@@ -1310,9 +1311,12 @@ export class LG4JDSLViewElement extends HTMLElement {
       this.root = createRoot(this.mount);
     }
 
-    this.addEventListener('graph', /** @type {EventListener} */ (this.render));
-    this.addEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
-    this.addEventListener('state-updated', /** @type {EventListener} */ (this.onStateUpdated));
+    //@ts-ignore
+    this.addEventListener('graph',this.render);
+    //@ts-ignore
+    this.addEventListener('graph-active', this.onActive);
+    //@ts-ignore
+    this.addEventListener('state-updated',this.onStateUpdated);
 
   }
 
@@ -1322,10 +1326,12 @@ export class LG4JDSLViewElement extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-
-    this.removeEventListener('graph', /** @type {EventListener} */ (this.render));
-    this.removeEventListener('graph-active', /** @type {EventListener} */ (this.onActive));
-    this.removeEventListener( 'node-updated', /** @type {EventListener} */ (this.onStateUpdated));
+    //@ts-ignore
+    this.removeEventListener('graph', this.render);
+    //@ts-ignore
+    this.removeEventListener('graph-active', this.onActive);
+    //@ts-ignore
+    this.removeEventListener('state-updated', this.onStateUpdated);
     // unmount root
     this.root?.unmount();
     this.root = null;
@@ -1337,7 +1343,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    * @param {CustomEvent<string>} event - Event containing serialized DSL content.
    * @returns {void}
    */
-  render(event) {
+  render(event: CustomEvent<string>): void {
     this.source = event.detail;
     this.update();
   }
@@ -1348,7 +1354,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    * @param {CustomEvent<NextNodeData>} event - Event containing active node ids.
    * @returns {void}
    */
-  onActive(event) {
+  onActive(event: CustomEvent<NextNodeData>): void {
     _DBG('Active node changed:', event.detail);
     const { detail: { node, subgraphNode } } = event;
     if (node === INTERRUPTED_NODE) {
@@ -1366,7 +1372,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    * 
    * @param {CustomEvent<import('./types.js').GraphState>} event 
    */
-  onStateUpdated(event) {
+  onStateUpdated(event: CustomEvent<GraphState>): void {
     _DBG('On State Update', event.detail);
 
     if( event.detail === 'interrupted') {
