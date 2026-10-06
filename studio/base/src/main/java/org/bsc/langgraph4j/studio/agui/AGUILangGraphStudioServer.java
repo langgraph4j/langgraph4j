@@ -50,9 +50,8 @@ public interface AGUILangGraphStudioServer {
         }
 
         private Optional<InitGraphData> initGraphDataFromRequest(HttpServletRequest request) {
-
             return ofNullable(request.getParameter("agent"))
-                    .flatMap(agentId -> Optional.of(agentRegistry.agent(agentId))
+                    .flatMap(agentId -> agentRegistry.agent(agentId)
                             .map(AGUILangGraphStudioAgent.class::cast))
                     .map(AGUILangGraphStudioAgent::toInitGraphData);
         }
