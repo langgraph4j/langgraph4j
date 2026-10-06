@@ -5,6 +5,6 @@
   color-scheme: dark;
 }
 body { margin: 0; }
-main { max-width: 64rem; margin: 0 auto; padding: 2rem 1rem; }
-h1 { margin-bottom: 0.5rem; }
-p { color: #94a3b8; }
+html, body { min-height: 100%; }
+body { min-height: 100vh; }
+* { box-sizing: border-box; }
