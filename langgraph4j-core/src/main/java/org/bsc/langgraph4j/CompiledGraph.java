@@ -428,7 +428,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> stream( GraphInput input, RunnableConfig config ) {
 
-        return AsyncGeneratorFlow.create(  new Emitter<>( input, config ) );
+        return createStream(input, config);
+    }
+
+    private AsyncGenerator.Cancellable<NodeOutput<State>> createStream(GraphInput input, RunnableConfig config) {
+        final var builder = AsyncGeneratorFlow.builder();
+        config.metadata(RunnableConfig.CUSTOM_DISPATCHER, new TypeRef<Dispatcher<State, NodeOutput<State>>>() {})
+                .ifPresent(parent -> builder.cancelledBy(parent.delegate));
+        return builder.build(new Emitter<>(input, config));
     }
 
     /**
@@ -465,10 +472,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     public AsyncGenerator.Cancellable<NodeOutput<State>> streamSnapshots( GraphInput input, RunnableConfig config )  {
 
-        return AsyncGeneratorFlow.create( new Emitter<>(
+        return createStream(
                         requireNonNull( input, "input cannot be null" ),
                         requireNonNull( config, "config cannot be null")
-                                .withStreamMode(StreamMode.SNAPSHOTS) ));
+                                .withStreamMode(StreamMode.SNAPSHOTS) );
 
     }
 
@@ -720,7 +727,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                                     final var returnFromEmbed = GraphResult.from(reduceResult.resultValue());
 
-                                    if (returnFromEmbed.isInterruptionMetadata()) {
+                                    if (returnFromEmbed.isInterruptionMetadata() || returnFromEmbed.isCancelled()) {
                                         return returnFromEmbed;
                                     }
 
@@ -790,6 +797,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             return result.partialState().thenApply( TryFunction.<Map<String,Object>, AsyncGenerator.Data<Output>, Exception>Try(partial -> {
                                 final var embedResult = embedGenerator( $1, action, nodeId, clonedState, runnableConfig, partial);
 
+                                if( embedResult.isPresent() && embedResult.get().isCancelled() ) {
+                                    return AsyncGenerator.Data.done(embedResult.get());
+                                }
+
                                 if( embedResult.isEmpty() ) {
                                     context.setCurrentState(AgentState.updateState(context.currentState(), partial, stateGraph.getChannels()));
                                 }
@@ -844,6 +855,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 final var maxIterations = config.recursionLimit().orElse(compileConfig.recursionLimit());
                 var iteration = 0;
                 for(;;) {
+                    if( $1.isCancelled() ) {
+                        break;
+                    }
                     // GUARD: CHECK MAX ITERATION REACHED
                     if( ++iteration > maxIterations ) {
                         // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
@@ -934,6 +948,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     final var clonedState = cloneState(context.currentState(), config);
 
+                    if( $1.isCancelled() ) {
+                        break;
+                    }
 
                     try {
 
@@ -947,6 +964,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     }
                     catch( InterruptedException ex ) {
+                        if( $1.isCancelled() ) {
+                            break;
+                        }
                         log.error( ex.getMessage(), ex );
                         if( action instanceof ParallelNode.AsyncParallelNodeAction<?> parallelNodeAction ) {
                             log.info( "PARALLEL NODE {} INTERRUPTED!", context.currentNodeId() );
