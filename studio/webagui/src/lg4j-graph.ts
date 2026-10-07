@@ -1318,8 +1318,6 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.addEventListener('graph-active', this.onActive);
     //@ts-ignore
     this.addEventListener('agui-event', this.onAGUIEvent);
-    //@ts-ignore
-    this.addEventListener('state-updated',this.onStateUpdated);
 
   }
 
@@ -1336,8 +1334,6 @@ export class LG4JDSLViewElement extends HTMLElement {
     //@ts-ignore
     this.removeEventListener('agui-event', this.onAGUIEvent);
     //@ts-ignore
-    this.removeEventListener('state-updated', this.onStateUpdated);
-    // unmount root
     this.root?.unmount();
     this.root = null;
   }
@@ -1367,7 +1363,7 @@ export class LG4JDSLViewElement extends HTMLElement {
         }
         break;  
         case EventType.RUN_FINISHED: {
-          let e = <RunFinishedEvent>aguiEvent;
+          const e = <RunFinishedEvent>aguiEvent;
           if( e.outcome ) {
             if( e.outcome.type === 'interrupt' ) {
                 const interrupt = <RunFinishedInterruptOutcome>e.outcome;
@@ -1386,14 +1382,14 @@ export class LG4JDSLViewElement extends HTMLElement {
         break;
         case EventType.STEP_STARTED: {
           // Handle step started event
-          let e = <StepStartedEvent>aguiEvent;
+          const e = <StepStartedEvent>aguiEvent;
 
           this.activeNodeId = e.stepName
         }
         break;
         case EventType.STEP_FINISHED: {
           // Handle step finished event
-          let e = <StepFinishedEvent>aguiEvent;
+          const e = <StepFinishedEvent>aguiEvent;
 
           this.lastActiveNodeId = e.stepName;
           
@@ -1426,21 +1422,6 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.lastActiveNodeId = this.activeNodeId;
     this.interruptedNodeId = undefined;
     this.update();
-  }
-
-
-  /**
-   * 
-   * @param {CustomEvent<import('./types.js').GraphState>} event
-   * @deprecated Use the new AGUI event handling mechanism instead.
-   */
-  onStateUpdated(event: CustomEvent<GraphState>): void {
-    _DBG('On State Update', event.detail);
-
-    if( event.detail === 'interrupted') {
-      this.#renderInterruption()
-    }
-
   }
 
   /**
