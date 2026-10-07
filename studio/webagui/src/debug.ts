@@ -1,23 +1,20 @@
 
 
-/**
- * Configuration object for debugging settings.
- *
- * @typedef {object} DebugConfig
- * @property {boolean} on - Flag indicating whether debugging is enabled.
- * @property {string} topic - The specific topic or category to filter debug messages for.
- */
+type DebugConfig = {
+    on: boolean,
+    topic: string
+}
 
 
 /**
  * 
  * @param {DebugConfig} config 
  */
-export const debug = ( config ) => {
+export const debug = ( config:DebugConfig ) => {
     /**
      * @param { any[] } args 
      */    
-    return ( ...args ) => {
+    return ( ...args:any[] ) => {
         if( !config.on || args.length === 0 ) return
         if( typeof(args[0]) === 'function' ) {
           args[0]()
