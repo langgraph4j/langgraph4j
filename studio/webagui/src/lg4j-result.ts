@@ -1,7 +1,7 @@
 import { html, css, LitElement } from 'lit';
 import { Stack } from './stack';
 import { debug } from './debug';
-import { EventType, type BaseEvent, type CustomEvent as AGUICustomEvent } from '@ag-ui/client';
+import { EventType, type BaseEvent, type CustomEvent as AGUICustomEvent, type RunFinishedEvent, type RunFinishedInterruptOutcome } from '@ag-ui/client';
 import type { GraphState, ResultData } from './types.js';
 
 
@@ -179,8 +179,6 @@ export class LG4JResultElement extends LitElement {
     this.addEventListener( 'init-threads', this.#onInitThreads )
     // @ts-ignore
     this.addEventListener( 'node-updated', this.#onNodeUpdated )
-    // @ts-ignore
-    this.addEventListener( 'state-updated', this.#onStateUpdated );
     //@ts-ignore
     this.addEventListener('agui-event', this.onAGUIEvent);
 
@@ -189,8 +187,6 @@ export class LG4JResultElement extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback()
 
-    // @ts-ignore
-    this.removeEventListener( 'state-updated', this.#onStateUpdated );
     // @ts-ignore
     this.removeEventListener( 'result',  this.#onResult )
     // @ts-ignore
@@ -214,10 +210,28 @@ export class LG4JResultElement extends LitElement {
           this.#onResult( new CustomEvent("custom", { detail: e.value } ) )
         }
         break;
-        case EventType.RUN_STARTED:
-        case EventType.RUN_FINISHED: 
-        case EventType.STEP_STARTED:
+        case EventType.RUN_FINISHED: {
+          const e = <RunFinishedEvent>aguiEvent;
+          if( e.outcome ) {
+            if( e.outcome.type === 'interrupt' ) {
+              _DBG("graph interrupted")
+            }
+            else if( e.outcome.type === 'cancelled' ) {
+                _DBG("graph cancelled")
+            }
+            else { // success
+              if( this.selectedTab ) { 
+                // add new elemnt into history stack
+                this.threadMap.get( this.selectedTab )?.push( [] )
+              }
+            }
+            
+          }
+
+        }
         case EventType.STEP_FINISHED: 
+        case EventType.RUN_STARTED:
+        case EventType.STEP_STARTED:
         case EventType.RUN_ERROR:      
         break;
 
@@ -341,20 +355,6 @@ export class LG4JResultElement extends LitElement {
    */
   #onNodeUpdated( e:CustomEvent<ResultData> ) {
     _LOG( 'onNodeUpdated', e )
-  }
-
-  /**
-   * 
-   * @param {CustomEvent<import('./types.js').GraphState>} event 
-   */
-  #onStateUpdated( event:CustomEvent<GraphState> ) {
-    _LOG( 'onStateUpdated', event )
-    if( event.detail === 'stop' && this.selectedTab ) { 
-
-      // add new elemnt into history stack
-      this.threadMap.get( this.selectedTab )?.push( [] )
-
-    }
   }
 
   /** 
