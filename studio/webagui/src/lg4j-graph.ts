@@ -26,6 +26,7 @@ import {
 
 import { debug } from './debug.js';
 import type { GraphState, NextNodeData } from './types.js';
+import { EventType, type BaseEvent, type RunFinishedCancelledOutcome, type RunFinishedEvent, type RunFinishedInterruptOutcome, type RunStartedEvent, type StepFinishedEvent, type StepStartedEvent } from '@ag-ui/client';
 
 const _DBG = debug( { on: true, topic: 'LG4JGraph' } )
 
@@ -1304,7 +1305,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    *
    * @returns {void}
    */
-  connectedCallback() {
+  connectedCallback(): void {
 
     // mount root
     if( !this.root ) {
@@ -1316,6 +1317,8 @@ export class LG4JDSLViewElement extends HTMLElement {
     //@ts-ignore
     this.addEventListener('graph-active', this.onActive);
     //@ts-ignore
+    this.addEventListener('agui-event', this.onAGUIEvent);
+    //@ts-ignore
     this.addEventListener('state-updated',this.onStateUpdated);
 
   }
@@ -1325,11 +1328,13 @@ export class LG4JDSLViewElement extends HTMLElement {
    *
    * @returns {void}
    */
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     //@ts-ignore
     this.removeEventListener('graph', this.render);
     //@ts-ignore
     this.removeEventListener('graph-active', this.onActive);
+    //@ts-ignore
+    this.removeEventListener('agui-event', this.onAGUIEvent);
     //@ts-ignore
     this.removeEventListener('state-updated', this.onStateUpdated);
     // unmount root
@@ -1348,11 +1353,66 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.update();
   }
 
+  onAGUIEvent( event:CustomEvent<BaseEvent> ): void {
+        _DBG("process event ", event);
+
+        const aguiEvent = event.detail;
+
+        this.interruptedNodeId = undefined;
+
+        switch( aguiEvent.type) { 
+        case EventType.RUN_STARTED: {
+          //let e = <RunStartedEvent>aguiEvent;
+          this.activeNodeId = '__START__'
+        }
+        break;  
+        case EventType.RUN_FINISHED: {
+          let e = <RunFinishedEvent>aguiEvent;
+          if( e.outcome ) {
+            if( e.outcome.type === 'interrupt' ) {
+                const interrupt = <RunFinishedInterruptOutcome>e.outcome;
+                _DBG("graph interrupted", interrupt.interrupts)
+                this.#renderInterruption()
+                return;
+            }
+            if( e.outcome.type === 'cancelled' ) {
+                _DBG("graph cancelled")
+                return;
+            }
+            
+          }
+          this.activeNodeId = '__END__'
+        }
+        break;
+        case EventType.STEP_STARTED: {
+          // Handle step started event
+          let e = <StepStartedEvent>aguiEvent;
+
+          this.activeNodeId = e.stepName
+        }
+        break;
+        case EventType.STEP_FINISHED: {
+          // Handle step finished event
+          let e = <StepFinishedEvent>aguiEvent;
+
+          this.lastActiveNodeId = e.stepName;
+          
+        }
+        break;
+        case EventType.CUSTOM:
+        case EventType.RUN_ERROR:      
+          break;
+
+      }
+      this.update();
+  }
+
   /**
    * Handles active node events from the executor.
    *
    * @param {CustomEvent<NextNodeData>} event - Event containing active node ids.
    * @returns {void}
+   * @deprecated Use the new AGUI event handling mechanism instead.
    */
   onActive(event: CustomEvent<NextNodeData>): void {
     _DBG('Active node changed:', event.detail);
@@ -1368,9 +1428,11 @@ export class LG4JDSLViewElement extends HTMLElement {
     this.update();
   }
 
+
   /**
    * 
-   * @param {CustomEvent<import('./types.js').GraphState>} event 
+   * @param {CustomEvent<import('./types.js').GraphState>} event
+   * @deprecated Use the new AGUI event handling mechanism instead.
    */
   onStateUpdated(event: CustomEvent<GraphState>): void {
     _DBG('On State Update', event.detail);
@@ -1386,7 +1448,7 @@ export class LG4JDSLViewElement extends HTMLElement {
    *
    * @returns {void}
    */
-  update() {
+  update(): void{
 
     this.root?.render( 
       h('main', { className: 'app' },
