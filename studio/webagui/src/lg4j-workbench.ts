@@ -1,7 +1,7 @@
 import { html, css, LitElement, type PropertyDeclarations } from 'lit';
 import { debug } from './debug';
 import type { NextNodeData, Instance } from './types';
-import type { BaseEvent } from '@ag-ui/client';
+import { EventType, type BaseEvent, type RunFinishedEvent } from '@ag-ui/client';
 
 
 const _LOG = debug( { on: true, topic: 'LG4JWorkbench' } )
@@ -249,9 +249,32 @@ export class LG4JWorkbenchElement extends LitElement {
     this.#routeEvent( new CustomEvent( `${e.type}`, { detail: e.detail }), 'executor');
   }
 
-  private routeAGUIEvent( e:CustomEvent<BaseEvent> ): void {
-    this.#routeEvent(  e , "graph");
-    this.#routeEvent(  e , "result");
+  private routeAGUIEvent( event:CustomEvent<BaseEvent> ): void {
+    const elem = this.shadowRoot?.getElementById('spinner')
+
+    const { type } = event.detail;
+
+    switch (type) {
+      case EventType.RUN_STARTED: {
+          elem?.classList.remove('hidden') 
+      }
+      break;
+      case EventType.RUN_ERROR:
+          elem?.classList.add('hidden')
+      break;
+      case EventType.RUN_FINISHED: {
+          elem?.classList.add('hidden')
+
+          const e = <RunFinishedEvent>event.detail;
+          if( e.outcome?.type === 'interrupt') {
+            this.#writeMessage( 'INTERRUPTED' )
+          }
+      }
+      break;
+    }
+
+    this.#routeEvent(  event , "graph");
+    this.#routeEvent(  event , "result");
   }
 
   /**
@@ -274,29 +297,6 @@ export class LG4JWorkbenchElement extends LitElement {
     this.#routeEvent( e )
   }
 
-  /**
-   * 
-   * @param {CustomEvent<'start'|'stop'|'interrupted'|'error'>} e 
-   */
-  #onStateUpdated( e:CustomEvent<'start'|'stop'|'interrupted'|'error'> ) {
-    const elem = this.shadowRoot?.getElementById('spinner')
-    if( elem ) {
-
-      if( e.detail === 'start' ) {
-        elem.classList.remove('hidden')
-        return 
-      }
-
-      elem.classList.add('hidden')
-
-      if( e.detail === 'interrupted' ) {
-        this.#writeMessage( 'INTERRUPTED' )
-      }
-      
-    }
-    this.#routeEvent( e , 'result')
-    this.#routeEvent( e , 'graph')
-  }
 
   connectedCallback() {
     super.connectedCallback()
@@ -312,8 +312,6 @@ export class LG4JWorkbenchElement extends LitElement {
     // @ts-ignore
     this.addEventListener( 'node-updated', this.#routeUpdateEvent )
     // @ts-ignore
-    this.addEventListener( 'state-updated', this.#onStateUpdated );
-    // @ts-ignore
     this.addEventListener( 'agui-event', this.routeAGUIEvent );
 
   }
@@ -321,8 +319,6 @@ export class LG4JWorkbenchElement extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback()
 
-    // @ts-ignore
-    this.removeEventListener( 'state-updated', this.#onStateUpdated );
     // @ts-ignore
     this.removeEventListener( 'node-updated', this.#routeUpdateEvent )
     // @ts-ignore
