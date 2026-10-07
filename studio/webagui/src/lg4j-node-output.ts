@@ -1,24 +1,18 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'; 
 import ReactJson from '@microlink/react-json-view'
-import { debug } from './debug.js';
+import { debug } from './debug';
+import type { EditEvent, ResultData, UpdatedState } from './types';
 
 const _DBG = debug( { on: true, topic: 'LG4JNodeOutput' } )
-
-
-/**
- * @file
- * @typedef {import('./types.js').ResultData} ResultData * 
- * @typedef {import('./types.js').EditEvent} EditEvent
- * @typedef {import('./types.js').UpdatedState} UpdatedState
- */
-
 
 export class LG4JNodeOutput extends HTMLElement {
     
   static get observedAttributes() {
       return ['value'];
   }
+
+  declare root: ReactDOM.Root
 
   constructor() {
       super()
@@ -40,7 +34,7 @@ export class LG4JNodeOutput extends HTMLElement {
    * @param {any} oldValue
    * @param {any} newValue
    */
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name:string, oldValue:any, newValue:any) {
       if (name === 'value') {
         if (newValue !== null && newValue !== oldValue) {
           _DBG( 'attributeChangedCallback.value', newValue )
@@ -76,14 +70,14 @@ export class LG4JNodeOutput extends HTMLElement {
    * @param {EditEvent} e
    * @param {ResultData} result
    */
-  #onEdit( e, result ) {
+  #onEdit( e:EditEvent, result:ResultData ) {
 
     if( result.checkpoint ) {
 
       /**
        * @type {UpdatedState}
        */
-      const detail = {
+      const detail:UpdatedState = {
         node: result.node,
         checkpoint: result.checkpoint,
         data: e.updated_src
@@ -109,7 +103,7 @@ export class LG4JNodeOutput extends HTMLElement {
    * @param {ResultData} value 
    * @returns 
    */
-  #createRoot( value ) {
+  #createRoot( value:ResultData ) {
 
     const mountPointId = `json-view-${this.id}`;
     
@@ -130,7 +124,7 @@ export class LG4JNodeOutput extends HTMLElement {
       name: false,
       collapsed: this.isCollapsed,
       theme: 'monokai',
-      onEdit: (/** @type {any} */ e) => this.#onEdit(e, value ),
+      onEdit: (e:any) => this.#onEdit(e, value ),
       validationMessage: 'Read only'
 
     } )
