@@ -278,14 +278,6 @@ export class LG4JExecutorElement extends LitElement {
 
   #startExecution() {
     this._executing = true;
-    this.dispatchEvent(
-      new CustomEvent("state-updated", {
-        detail: "start",
-        bubbles: true,
-        composed: true,
-        cancelable: true,
-      }),
-    );
   }
 
   /**
@@ -296,35 +288,6 @@ export class LG4JExecutorElement extends LitElement {
   ) {
     this._executing = false;
 
-    // NO ACTION
-    if (!result) {
-      return;
-    }
-
-    // ON ERROR
-    if (result instanceof Error) {
-      this.dispatchEvent(
-        new CustomEvent("state-updated", {
-          detail: "error",
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        }),
-      );
-      return;
-    }
-    // ON SUCCESS
-    const [_, { node }] = result;
-
-    // Asuume that flow is interrupted if last node is different by last node (__END__)
-    this.dispatchEvent(
-      new CustomEvent("state-updated", {
-        detail: (node !== "__END__") ? "interrupted" : "stop",
-        bubbles: true,
-        composed: true,
-        cancelable: true,
-      }),
-    );
   }
 
   /**
