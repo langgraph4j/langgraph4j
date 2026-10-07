@@ -1,16 +1,13 @@
 import { html, css, LitElement } from 'lit';
-import { Stack } from './stack.js';
-import { debug } from './debug.js';
+import { Stack } from './stack';
+import { debug } from './debug';
+import { EventType, type BaseEvent, type CustomEvent as AGUICustomEvent } from '@ag-ui/client';
+import type { GraphState, ResultData } from './types.js';
 
 
 const _LOG = debug( { on: true, topic: 'LG4JResult' } )
-const _DBG = debug( { on: false, topic: 'LG4JResult' } )
+const _DBG = debug( { on: true, topic: 'LG4JResult' } )
 
-/**
- * @file
- * @typedef {import('./types.js').NextNodeData} NextNodeData * 
- * @typedef {import('./types.js').ResultData} ResultData * 
- */
 
 // @ts-ignore
 export class LG4JResultElement extends LitElement {
@@ -146,12 +143,12 @@ export class LG4JResultElement extends LitElement {
   /**
    * @type {Map<string, Stack<ResultData[]>>}
    */
-  threadMap = new Map()
+  threadMap:Map<string, Stack<ResultData[]>> = new Map()
   
   /** 
    * @type {string|undefined}
    */
-  #selectedThread;
+  #selectedThread: string|undefined ;
 
   get selectedTab() {
     return this.#selectedThread
@@ -184,6 +181,8 @@ export class LG4JResultElement extends LitElement {
     this.addEventListener( 'node-updated', this.#onNodeUpdated )
     // @ts-ignore
     this.addEventListener( 'state-updated', this.#onStateUpdated );
+    //@ts-ignore
+    this.addEventListener('agui-event', this.onAGUIEvent);
 
   }
 
@@ -198,6 +197,32 @@ export class LG4JResultElement extends LitElement {
     this.removeEventListener( 'init-threads',  this.#onInitThreads )
     // @ts-ignore
     this.removeEventListener( 'node-updated', this.#onNodeUpdated )
+    //@ts-ignore
+    this.removeEventListener('agui-event', this.onAGUIEvent);
+
+  }
+
+  private onAGUIEvent( event:CustomEvent<BaseEvent> ): void {
+        _DBG("process event ", event);
+
+        const aguiEvent = event.detail;
+
+        switch( aguiEvent.type) { 
+        case EventType.CUSTOM: {
+          const e = <AGUICustomEvent>aguiEvent;
+          _DBG( "customEvent", e)
+          this.#onResult( new CustomEvent("custom", { detail: e.value } ) )
+        }
+        break;
+        case EventType.RUN_STARTED:
+        case EventType.RUN_FINISHED: 
+        case EventType.STEP_STARTED:
+        case EventType.STEP_FINISHED: 
+        case EventType.RUN_ERROR:      
+        break;
+
+      }
+      
   }
 
   /**
@@ -206,14 +231,14 @@ export class LG4JResultElement extends LitElement {
    * @param {CustomEvent} e - The event object containing the result data.
    * 
    */
-  #onInitThreads = (e) => {
+  #onInitThreads = (e:CustomEvent<Array<[string,ResultData[]]>>) => {
     const { detail: threads  = [] } = e 
 
     _LOG( 'threads', threads )
 
-    this.threadMap = new Map( threads.map( ( /** @type {[string, ResultData[]]} */ [ thread, results ] ) => 
-      [ thread, new Stack( results ) ]
-    ))
+    const s = threads.map( ( [ thread, results ] ) => [ thread, new Stack( results ) ] )
+    
+    this.threadMap = new Map( <any>s )
     
     if( threads && threads.length > 0 ) {
       this.selectedTab = threads[0][0]
@@ -227,7 +252,7 @@ export class LG4JResultElement extends LitElement {
    * @param {CustomEvent<[string, ResultData]>} e - The event object containing the result data.
    * 
    */
-  #onResult = (e) => {
+  #onResult = (e:CustomEvent<[string, ResultData]>) => {
 
     const [ thread, result ] = e.detail
     _LOG( 'ON RESULT', thread, result  )
@@ -254,7 +279,6 @@ export class LG4JResultElement extends LitElement {
 
     if( result.next || result.node) {
 
-      /** @typedef {CustomEvent<NextNodeData>} */
       const event = new CustomEvent( 'graph-active', { 
         detail: { node: result.next ?? result.node, subgraphNode: result.subgraphNode },
         bubbles: true,
@@ -285,7 +309,7 @@ export class LG4JResultElement extends LitElement {
    * @param {Event} event - The event object.
    * 
    */
-  #onSelectTab( event ) {
+  #onSelectTab( event:Event ) {
     // @ts-ignore
     const { id } = event.target
 
@@ -297,7 +321,7 @@ export class LG4JResultElement extends LitElement {
   }
 
   // @ts-ignore
-  #onNewTab(event) {
+  #onNewTab(event:Event) {
     _LOG( 'NEW TAB', event)
 
     const threadId = `Thread-${this.threadMap.size+1}`
@@ -315,7 +339,7 @@ export class LG4JResultElement extends LitElement {
    * @param {CustomEvent<ResultData>} e - The event object containing the result data.
    * 
    */
-  #onNodeUpdated( e ) {
+  #onNodeUpdated( e:CustomEvent<ResultData> ) {
     _LOG( 'onNodeUpdated', e )
   }
 
@@ -323,12 +347,12 @@ export class LG4JResultElement extends LitElement {
    * 
    * @param {CustomEvent<import('./types.js').GraphState>} event 
    */
-  #onStateUpdated( event ) {
+  #onStateUpdated( event:CustomEvent<GraphState> ) {
     _LOG( 'onStateUpdated', event )
     if( event.detail === 'stop' && this.selectedTab ) { 
 
       // add new elemnt into history stack
-      const stack = this.threadMap.get( this.selectedTab )?.push( [] )
+      this.threadMap.get( this.selectedTab )?.push( [] )
 
     }
   }
@@ -339,7 +363,7 @@ export class LG4JResultElement extends LitElement {
    * @returns The template for the result.
    */
   // @ts-ignore
-  #renderResult(result, index) {
+  #renderResult(result:ResultData, index:number) {
     
     return html`
     <details>
