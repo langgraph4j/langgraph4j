@@ -1,6 +1,7 @@
-import { html, css, LitElement, type PropertyDeclaration, type PropertyDeclarations } from 'lit';
+import { html, css, LitElement, type PropertyDeclarations } from 'lit';
 import { debug } from './debug';
 import type { NextNodeData, Instance } from './types';
+import type { BaseEvent } from '@ag-ui/client';
 
 
 const _LOG = debug( { on: true, topic: 'LG4JWorkbench' } )
@@ -248,6 +249,11 @@ export class LG4JWorkbenchElement extends LitElement {
     this.#routeEvent( new CustomEvent( `${e.type}`, { detail: e.detail }), 'executor');
   }
 
+  private routeAGUIEvent( e:CustomEvent<BaseEvent> ): void {
+    this.#routeEvent(  e , "graph");
+    this.#routeEvent(  e , "result");
+  }
+
   /**
    * 
    * @param {string} message 
@@ -307,6 +313,8 @@ export class LG4JWorkbenchElement extends LitElement {
     this.addEventListener( 'node-updated', this.#routeUpdateEvent )
     // @ts-ignore
     this.addEventListener( 'state-updated', this.#onStateUpdated );
+    // @ts-ignore
+    this.addEventListener( 'agui-event', this.routeAGUIEvent );
 
   }
 
@@ -325,6 +333,8 @@ export class LG4JWorkbenchElement extends LitElement {
     this.removeEventListener( 'result', this.#routeEvent );
     // @ts-ignore
     this.removeEventListener( 'init', this.#routeInitEvent );
+    // @ts-ignore
+    this.removeEventListener( 'agui-event', this.routeAGUIEvent );
 
   }
 
