@@ -1,56 +1,64 @@
+import {
+  css,
+  CSSResult,
+  html,
+  LitElement,
+  type PropertyDeclarations,
+} from "lit";
+import { type BaseEvent, HttpAgent, type RunAgentInput } from "@ag-ui/client";
+import { type Subscription } from "rxjs";
 
-import { html, css, LitElement, CSSResult, type PropertyDeclarations } from 'lit';
-import { HttpAgent, type RunAgentInput} from '@ag-ui/client';
-import type { Subscription } from 'rxjs';
+import { debug } from "./debug";
+import type {
+  ArgumentMetadata,
+  Instance,
+  ResultData,
+  UpdatedState,
+} from "./types";
 
-import { debug } from './debug';
-import type { ArgumentMetadata, Instance, UpdatedState } from './types';
-
-const _DBG = debug( { on: true, topic: 'LG4JExecutor' } )
-const _DBGW = debug( { on: true, topic: 'LG4JViewerExecutor' } )
-
+const _DBG = debug({ on: true, topic: "LG4JExecutor" });
+const _DBGW = debug({ on: true, topic: "LG4JViewerExecutor" });
 
 /**
  * Asynchronously waits for a specified number of milliseconds.
- * 
+ *
  * @param {number} ms - The number of milliseconds to wait.
  * @returns {Promise<void>} A promise that resolves after the specified delay.
  */
-const delay = async (ms:number) => (new Promise(resolve => setTimeout(resolve, ms)));
-
+const delay = async (
+  ms: number,
+): Promise<void> => (new Promise((resolve) => setTimeout(resolve, ms)));
 
 class LG4JFetchError extends Error {
-
   /**
    * @param {Response} response
    */
-  constructor(response:Response) {
-    super(response.statusText || 'Retrieve data error');
+  constructor(response: Response) {
+    super(response.statusText || "Retrieve data error");
   }
-
 }
 
 /**
  * LG4JInputElement is a custom web component that extends LitElement.
  * It provides a styled input container with a placeholder.
- * 
+ *
  * @class
  * @extends {LitElement}
  */
 export class LG4JExecutorElement extends LitElement {
-
   /**
    * Styles applied to the component.
-   * 
+   *
    * @static
    * @type {Array<CSSResult>}
    */
-  static styles:CSSResult[] = [css`
+  static styles: CSSResult[] = [css`
     :host {
       display: block;
       color: #e5e7eb;
       font-size: var(--lg4j-workbench-font-size, 12px);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
     }
 
     .container {
@@ -110,7 +118,8 @@ export class LG4JExecutorElement extends LitElement {
       font: inherit;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s
+        ease;
     }
 
     button:disabled {
@@ -200,140 +209,143 @@ export class LG4JExecutorElement extends LitElement {
     }
   `];
 
-
   /**
    * Properties of the component.
-   * 
+   *
    * @static
    * @type { import('lit').PropertyDeclarations }
    */
-  static properties:PropertyDeclarations = {
+  static properties: PropertyDeclarations = {
     url: { type: String, reflect: true },
-    _executing: { state: true }
-
-  }
+    _executing: { state: true },
+  };
 
   declare url: string | null;
   declare _executing: boolean;
 
   /**
    * current selected thread
-   * 
+   *
    * @type {string|undefined} - thread id
    */
-  _selectedThread: string|undefined = undefined
+  _selectedThread: string | undefined = undefined;
 
   /**
-   * current state for update 
-   * 
+   * current state for update
+   *
    * @type {UpdatedState|null}
    */
-  #updatedState:UpdatedState|null = null
-  
+  #updatedState: UpdatedState | null = null;
+
   /**
    * Instance id
-   * 
+   *
    * @type {string|undefined} - instance id
    */
-  #instanceId: string|undefined = undefined;
+  #instanceId: string | undefined = undefined;
 
   private formMetaData: ArgumentMetadata[] = [];
-  private subscription:Subscription|null = null
+  private subscription: Subscription | null = null;
 
   /**
    * Creates an instance of LG4JInputElement.
-   * 
+   *
    * @constructor
    */
   constructor() {
     super();
-    this.url = null
-    this._executing = false
+    this.url = null;
+    this._executing = false;
   }
 
   /**
    * if url is not set, return context path
-   * 
+   *
    * @returns {string} - context path
    */
-  get _contextPath():string {
+  get _contextPath(): string {
     // vadidate url
-    const url = new URL(this.url || `${window.location.protocol}//${window.location.host}`);
+    const url = new URL(
+      this.url || `${window.location.protocol}//${window.location.host}`,
+    );
 
-    const pathName =  (( this.url ) ? 
-      url.toString() : // if url is set, use it as is
-      url.pathname).replace(/\/+$/,'')
+    const pathName = ((this.url)
+      ? url.toString() // if url is set, use it as is
+      : url.pathname).replace(/\/+$/, "");
 
-    return pathName.replace(/\/+$/,'') // remove trailing slash
+    return pathName.replace(/\/+$/, ""); // remove trailing slash
   }
 
-
   #startExecution() {
-
-    this._executing = true
-    this.dispatchEvent(new CustomEvent('state-updated', {
-      detail: 'start',
-      bubbles: true,
-      composed: true,
-      cancelable: true
-    }));
+    this._executing = true;
+    this.dispatchEvent(
+      new CustomEvent("state-updated", {
+        detail: "start",
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
   }
 
   /**
-   * 
-   * @param {[ string, UpdatedState & { next: string } ]|Error|null} result 
+   * @param {[ string, UpdatedState & { next: string } ]|Error|null} result
    */
-  #stopExecution( result:[ string, UpdatedState & { next: string } ]|Error|null ) {
-    this._executing = false
-    
+  #stopExecution(
+    result: [string, UpdatedState & { next: string }] | Error | null,
+  ) {
+    this._executing = false;
+
     // NO ACTION
-    if( !result ) {
-      return
+    if (!result) {
+      return;
     }
 
     // ON ERROR
-    if( result instanceof Error ) {
-      this.dispatchEvent(new CustomEvent('state-updated', {
-        detail: 'error',
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      }));
-      return 
+    if (result instanceof Error) {
+      this.dispatchEvent(
+        new CustomEvent("state-updated", {
+          detail: "error",
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        }),
+      );
+      return;
     }
     // ON SUCCESS
-    const [ _, { node } ] = result
+    const [_, { node }] = result;
 
-    // Asuume that flow is interrupted if last node is different by last node (__END__) 
-    this.dispatchEvent(new CustomEvent('state-updated', {
-        detail: ( node!=='__END__' ) ? 'interrupted' : 'stop',
+    // Asuume that flow is interrupted if last node is different by last node (__END__)
+    this.dispatchEvent(
+      new CustomEvent("state-updated", {
+        detail: (node !== "__END__") ? "interrupted" : "stop",
         bubbles: true,
         composed: true,
-        cancelable: true
-      }));
+        cancelable: true,
+      }),
+    );
   }
-  
 
   /**
    * Event handler for the 'update slected thread' event.
-   * 
+   *
    * @param {CustomEvent<string>} e - The event object containing the updated data.
    */
   #onThreadUpdated(e: CustomEvent<string>) {
-    _DBG('thread-updated', e.detail)
-    this._selectedThread = e.detail
-    this.#updatedState = null
-    this.requestUpdate()
+    _DBG("thread-updated", e.detail);
+    this._selectedThread = e.detail;
+    this.#updatedState = null;
+    this.requestUpdate();
   }
 
   /**
-   * 
    * @param {CustomEvent<UpdatedState>} e - The event object containing the result data.
    */
   #onNodeUpdated(e: CustomEvent<UpdatedState>) {
-    _DBG('onNodeUpdated', e)
-    this.#updatedState = e.detail
-    this.requestUpdate()
+    _DBG("onNodeUpdated", e);
+    this.#updatedState = e.detail;
+    this.requestUpdate();
   }
 
   /**
@@ -345,134 +357,97 @@ export class LG4JExecutorElement extends LitElement {
     // @ts-ignore
     this.addEventListener("thread-updated", this.#onThreadUpdated);
     // @ts-ignore
-    this.addEventListener('node-updated', this.#onNodeUpdated)
+    this.addEventListener("node-updated", this.#onNodeUpdated);
 
-    this._callInit()
-
+    this._callInit();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
 
     // @ts-ignore
-    this.removeEventListener("thread-updated", this.#onThreadUpdated)
+    this.removeEventListener("thread-updated", this.#onThreadUpdated);
     // @ts-ignore
-    this.removeEventListener('node-updated', this.#onNodeUpdated)
+    this.removeEventListener("node-updated", this.#onNodeUpdated);
   }
 
-
   /**
-   * 
-   * @param {string} detail 
+   * @param {string} detail
    */
-  #requestShowError( detail:string ) {
-
-    const elem = this.shadowRoot?.getElementById('error_dialog')
-    if (elem && 'showModal' in elem ) {
-      const msgElem = elem.querySelector('#error_message')
-      if( msgElem ) {
-        msgElem.textContent = detail
+  #requestShowError(detail: string) {
+    const elem = this.shadowRoot?.getElementById("error_dialog");
+    if (elem && "showModal" in elem) {
+      const msgElem = elem.querySelector("#error_message");
+      if (msgElem) {
+        msgElem.textContent = detail;
       }
       //@ts-ignore
-      elem.showModal()
-      
+      elem.showModal();
+
       // if( timeout ) {
       //   await delay(timeout)
       //   //@ts-ignore
       //   elem.close()
       // }
-   }
-  
+    }
   }
 
   // PROTECTED METHOD
-  async _callInit() {    
-    let initUrl = `${this._contextPath}/init${window.location.search}`
-    _DBG('initUrl', initUrl)
-    
+  async _callInit() {
+    let initUrl = `${this._contextPath}/init${window.location.search}`;
+    _DBG("initUrl", initUrl);
+
     const initResponse = await fetch(initUrl, {
-      method: 'GET',
-      credentials: 'include'
-    })
+      method: "GET",
+      credentials: "include",
+    });
 
-    if( !initResponse.ok ) {
-      this.#requestShowError(initResponse.statusText) 
-      return null
+    if (!initResponse.ok) {
+      this.#requestShowError(initResponse.statusText);
+      return null;
     }
-  
-    const instance:Instance = await initResponse.json()
 
-    _DBG('initData', instance);
+    const instance: Instance = await initResponse.json();
 
-    this.dispatchEvent(new CustomEvent('init', {
-      detail: instance,
-      bubbles: true,
-      composed: true,
-      cancelable: true
-    }));
+    _DBG("initData", instance);
 
+    this.dispatchEvent(
+      new CustomEvent("init", {
+        detail: instance,
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
 
-    this.#instanceId = instance.id
-    this.formMetaData = instance.args
+    this.#instanceId = instance.id;
+    this.formMetaData = instance.args;
     // this.#nodes = initData.nodes
-    this.requestUpdate()
+    this.requestUpdate();
   }
 
   async #callResume() {
-
-    this.#startExecution()
-    let result = null
+    this.#startExecution();
+    let result = null;
 
     try {
-
       // if (this.test) {
       //   await test.callSubmitAction(this, this.#selectedThread);
       //   return
       // }
 
-      result =  await this.#callResumeAction()
-
-    }
-    catch (err) {
-      if(err instanceof Error) {
-        this.#requestShowError(err.message)
-        result = err
+      result = await this.#callResumeAction();
+    } catch (err) {
+      if (err instanceof Error) {
+        this.#requestShowError(err.message);
+        result = err;
       }
+    } finally {
+      this.#stopExecution(result);
     }
-    finally {
-      this.#stopExecution(result)
-    }
-
   }
 
   async #callResumeAction() {
-
-  }
-
-  async _callSubmit() {
-
-    _DBG('callSubmit')
-    
-    this.#startExecution()
-    let result = null
-
-    try {
-
-      // if (this.test) {
-      //   await test.callSubmitAction(this, this.#selectedThread);
-      // }
-
-      result = await this.#callSubmitAction()
-    }
-    catch (err) {
-      if(err instanceof LG4JFetchError) {
-        this.#requestShowError(err.message)
-        result = err
-      }
-    }
-    finally {
-      this.#stopExecution(result)
-    }
   }
 
   /**
@@ -483,129 +458,154 @@ export class LG4JExecutorElement extends LitElement {
     // If not executing, ignore
     if (!this._executing) return;
 
-    const execResponse = await fetch(`${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}&cancel=true`, {
-      method: 'DELETE', // *GET, POST, PUT, DELETE, etc.
-      credentials: 'include'
-    });
+    const execResponse = await fetch(
+      `${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}&cancel=true`,
+      {
+        method: "DELETE", // *GET, POST, PUT, DELETE, etc.
+        credentials: "include",
+      },
+    );
 
-    if( !execResponse.ok ) {
-      throw new LG4JFetchError( execResponse )
+    if (!execResponse.ok) {
+      throw new LG4JFetchError(execResponse);
     }
 
-    /** @typedef {CustomEvent<[string,ResultData]>} */
-    const event = new CustomEvent('result',{
-        detail: [ this._selectedThread, { cancelled:true } ],
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      })
-    this.dispatchEvent( event );
+    const event = new CustomEvent<[string, ResultData]>("result", {
+      detail: [this._selectedThread!, {
+        node: "",
+        next: "",
+        state: {},
+        subgraphNode: undefined,
+        cancelled: true,
+      }],
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(event);
   }
 
-  async #callSubmitAction() {
-
+async _callSubmit() {
+    _DBG("callSubmit");
+    
     // Get input as object
-    const result:Record<string,any>  = {}
-    const data:Record<string,any>  = this.formMetaData.reduce((acc, md) => {
-
-      const { name, type } = md
-      const elem = this.shadowRoot?.getElementById(name)
+    const result: Record<string, any> = {};
+    const data: Record<string, any> = this.formMetaData.reduce((acc, md) => {
+      const { name, type } = md;
+      const elem = this.shadowRoot?.getElementById(name);
 
       switch (type) {
-        case 'STRING':
+        case "STRING":
           //@ts-ignore
-          acc[name] = elem?.value
+          acc[name] = elem?.value;
           break;
-        case 'IMAGE':
+        case "IMAGE":
           //@ts-ignore
-          acc[name] = elem?.value
+          acc[name] = elem?.value;
           break;
       }
 
-      return acc
+      return acc;
     }, result);
 
+    
+    this.#startExecution();
+
+    const catchError = (error: unknown) => {
+      let result:Error;
+      if (error instanceof Error) {
+        result = error;
+      } else {
+        result = new Error(JSON.stringify(error));
+      }
+      this.#requestShowError(result.message);
+      this.#stopExecution(result);
+    };
+
     try {
-    let agent = new HttpAgent({
-      url: `${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}`,
-      fetch: (url, init) => fetch(url, { ...init, credentials: 'include' }),
-    });
 
-    let input: RunAgentInput = {
-      runId: "run1",
-      threadId: this._selectedThread!,
-      state: data,
-      messages: [],
-      tools: [],
-      context: [],
-    }
+      let agent = new HttpAgent({
+        url:
+          `${this._contextPath}/stream/${this.#instanceId}?thread=${this._selectedThread}`,
+        fetch: (url, init) => fetch(url, { ...init, credentials: "include" }),
+      });
 
-    this.subscription = agent.run(input).subscribe({
+      let input: RunAgentInput = {
+        runId: "run1",
+        threadId: this._selectedThread!,
+        state: data,
+        messages: [],
+        tools: [],
+        context: [],
+      };
+
+      this.subscription = agent.run(input).subscribe({
         next: (event) => {
-          _DBG( "Received event: " + JSON.stringify(event))
+          _DBG("Received event: ", JSON.stringify(event));
 
-          /*
-          const e:CustomEvent<[string,ResultData]> = new CustomEvent('result', {
-                detail: event,
-                bubbles: true,
-                composed: true,
-                cancelable: true
+          const e: CustomEvent<BaseEvent> = new CustomEvent("agui-event", {
+            detail: event,
+            bubbles: true,
+            composed: true,
+            cancelable: true,
           });
           this.dispatchEvent(e);
-          */
-
         },
-        error: (error: unknown) => { },
-        complete: () => {},
+        error: (error: unknown) => catchError(error),
+        complete: () => this.#stopExecution(null),
       });
-    } catch (error) { 
-
+    } catch (error: unknown) {
+      catchError(error);
     }
-    
   }
 
-    /**
+  /**
    * Renders the HTML template for the component.
-   * 
+   *
    * @returns The rendered HTML template.
    */
   render() {
-
     return html`
-        <div class="container">
-          ${this.formMetaData.map(({ name, type }) => {
-            switch (type) {
-              case 'STRING':
-                return html`<textarea id="${name}" placeholder="${name}"></textarea>`
-              case 'IMAGE':
-                return html`<lg4j-image-uploader id="${name}"></lg4j-image-uploader>`
-            }
-          })}
-          <div class="commands">
-            <button id="submit" ?disabled=${this._executing} @click="${this._callSubmit}" class="primary item1">Submit</button>
-            <button id="resume" ?disabled=${!this.#updatedState || this._executing} @click="${this.#callResume}" class="secondary item2">
-            Resume ${this.#updatedState ? '(from ' + this.#updatedState?.node + ')' : ''}
-            </button>
-            <button id="cancel" @click="${this.#callCancel}" ?disabled=${!this._executing} class="danger item3" aria-label="Stop">
-              Cancel
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24">
-                <rect x="5" y="5" width="14" height="14" rx="2" ry="2" />
-              </svg>
-            </button>
-          </div>
+      <div class="container">
+        ${this.formMetaData.map(({ name, type }) => {
+          switch (type) {
+            case "STRING":
+              return html`<textarea id="${name}" placeholder="${name}"></textarea>`;
+            case "IMAGE":
+              return html`<lg4j-image-uploader id="${name}"></lg4j-image-uploader>`;
+          }
+        })}
+        <div class="commands">
+          <button id="submit" ?disabled=${this._executing} @click="${this
+            ._callSubmit}" class="primary item1">Submit</button>
+          <button id="resume" ?disabled=${!this.#updatedState ||
+            this._executing} @click="${this
+            .#callResume}" class="secondary item2">
+          Resume ${this.#updatedState
+            ? "(from " + this.#updatedState?.node + ")"
+            : ""}
+          </button>
+          <button id="cancel" @click="${this.#callCancel}" ?disabled=${!this
+            ._executing} class="danger item3" aria-label="Stop">
+            Cancel
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24">
+              <rect x="5" y="5" width="14" height="14" rx="2" ry="2" />
+            </svg>
+          </button>
         </div>
-        <!--
-        ==============
-        ERROR DIALOG 
-        ==============
-        -->
-        <dialog id="error_dialog">
-          <div class="modal-box">
-            <form method="dialog">
-              <button class="close-button">x</button>
-            </form>
-              <div class="error-content">
-              <svg
+      </div>
+      <!--
+      ==============
+      ERROR DIALOG
+      ==============
+      -->
+      <dialog id="error_dialog">
+        <div class="modal-box">
+          <form method="dialog">
+            <button class="close-button">x</button>
+          </form>
+          <div class="error-content">
+            <svg
               xmlns="http://www.w3.org/2000/svg"
               class="icon"
               fill="none"
@@ -618,49 +618,44 @@ export class LG4JExecutorElement extends LitElement {
             </svg>
             <p id="error_message">ERROR</p>
           </div>
-          </div>
-        </dialog>        
-        `;
+        </div>
+      </dialog>
+    `;
   }
-
 }
 
 class LG4JViewerExecutorElement extends LG4JExecutorElement {
-
   static styles = [
     ...LG4JExecutorElement.styles,
     css`
       .container {
         display: none;
       }
-    `
+    `,
   ];
 
   connectedCallback() {
-    this.hidden = true
-    this.setAttribute('aria-hidden', 'true')
-    super.connectedCallback()
+    this.hidden = true;
+    this.setAttribute("aria-hidden", "true");
+    super.connectedCallback();
   }
 
   get _contextPath() {
-    
-    return super._contextPath.concat('/viewer')
+    return super._contextPath.concat("/viewer");
   }
 
-  async _callInit() {    
-    _DBGW('_callInit')
-    const result = await super._callInit()
+  async _callInit() {
+    _DBGW("_callInit");
+    const result = await super._callInit();
 
     setTimeout(async () => {
-      this._selectedThread = 'default'
-      await this._callSubmit()
+      this._selectedThread = "default";
+      await this._callSubmit();
     }, 1000);
-  
-    return result
 
+    return result;
   }
-
 }
 
-window.customElements.define('lg4j-executor', LG4JExecutorElement);
-window.customElements.define('lg4j-viewer-executor', LG4JViewerExecutorElement);
+window.customElements.define("lg4j-executor", LG4JExecutorElement);
+window.customElements.define("lg4j-viewer-executor", LG4JViewerExecutorElement);
