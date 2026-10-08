@@ -162,7 +162,7 @@ public class StreamingChatGenerator<State extends AgentState> implements AsyncGe
                         last = mergeResponses(last, current);
 
 
-                        processor.dispatchAsync( Data.of(
+                        processor.dispatcher().dispatchAsync( Data.of(
                                 new StreamingOutput<>( textFromResponse(current).orElse(""),
                                         builder.startingNode,
                                         builder.startingState,
@@ -175,15 +175,15 @@ public class StreamingChatGenerator<State extends AgentState> implements AsyncGe
                 .last()
                 .doOnSuccess( last -> {
                     if( builder.emitStreamingOutputEnd ) {
-                        processor.dispatchAsync(Data.of(
+                        processor.dispatcher().dispatchAsync(Data.of(
                                 new StreamingOutputEnd<>(  textFromResponse(last).orElse(null),
                                         builder.startingNode,
                                         builder.startingState,
                                         Metadata.of(last) )));
                     }
-                    processor.dispatchAsync(Data.done( builder.mapResult.apply(last) ));
+                    processor.dispatcher().dispatchAsync(Data.done( builder.mapResult.apply(last) ));
                 })
-                .doOnError( error -> processor.dispatchAsync( Data.error(error) ))
+                .doOnError( error -> processor.dispatcher().dispatchAsync( Data.error(error) ))
                 .subscribe( ) ;
 
     }
