@@ -151,7 +151,7 @@ public class StreamingChatGenerator<State extends AgentState> implements AsyncGe
                         builder.startingNode,
                         builder.startingState,
                         null );
-                processor.dispatchAsync( AsyncGenerator.Data.of( output ) );
+                processor.dispatcher().dispatchAsync( AsyncGenerator.Data.of( output ) );
 
             }
 
@@ -167,16 +167,16 @@ public class StreamingChatGenerator<State extends AgentState> implements AsyncGe
                             builder.startingState,
                             Metadata.of( chatResponse ) );
 
-                    processor.dispatchAsync( AsyncGenerator.Data.of(output));
+                    processor.dispatcher().dispatchAsync( AsyncGenerator.Data.of(output));
                 }
-                processor.dispatchAsync( AsyncGenerator.Data.done( builder.mapResult.apply(chatResponse) ));
+                processor.dispatcher().dispatchAsync( AsyncGenerator.Data.done( builder.mapResult.apply(chatResponse) ));
 
             }
 
             @Override
             public void onError(Throwable error) {
                 log.trace("onError", error);
-                processor.dispatchAsync( AsyncGenerator.Data.error(error) );
+                processor.dispatcher().dispatchAsync( AsyncGenerator.Data.error(error) );
             }
         };
     }
