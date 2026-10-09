@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.9.3</version>
+        <version>1.9.4</version>
     </parent>
 
     <artifactId>langgraph4j-bom</artifactId>
@@ -93,6 +93,12 @@
                 <artifactId>langgraph4j-langchain4j</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Deprecated coordinates, retained for consumers migrating via Maven relocation. -->
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
                 <artifactId>langgraph4j-agent-executor</artifactId>

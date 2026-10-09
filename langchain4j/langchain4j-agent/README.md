@@ -27,6 +27,39 @@ flowchart TD
 
 ## How to use
 
+### Maven dependency
+
+Starting with release `1.9.4`, use:
+
+```xml
+<dependency>
+    <groupId>org.bsc.langgraph4j</groupId>
+    <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
+    <version>1.9.4</version>
+</dependency>
+```
+
+The previous artifact ID, `langgraph4j-agent-executor`, is deprecated. For the
+1.9.4 release, its POM redirects Maven to the new artifact ID at the same version
+and emits a migration warning. Java packages and APIs are unchanged. Versions
+already published, including `1.9.3`, keep their original coordinates.
+
+### Publishing the relocation
+
+The root reactor includes `langchain4j/langchain4j-agent-relocation`, a POM-only
+module with the old artifact ID. It inherits the parent version, publishing
+configuration and release signing, so the existing root snapshot and release
+workflows publish both coordinates. Run release version updates from the root
+so both modules receive the same version. When publishing selected modules,
+include both `langchain4j/langchain4j-agent` and
+`langchain4j/langchain4j-agent-relocation`, together with their required modules.
+The relocation module publishes no replacement JAR; consumers receive the JAR
+from the new coordinates. The BOM manages both names to support migration.
+
+This follows the [Maven relocation guide](https://maven.apache.org/guides/mini/guide-relocation.html).
+
+### Java usage
+
 ```java
 
 public class TestTool {

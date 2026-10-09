@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.bsc.langgraph4j</groupId>
+        <artifactId>langgraph4j-parent</artifactId>
+        <version>1.9.4</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>langgraph4j-agent-executor</artifactId>
+    <packaging>pom</packaging>
+
+    <name>langgraph4j::langchain4j::agentexecutor::relocation</name>
+    <description>Deprecated coordinates for the LangChain4j agent executor; relocated to langgraph4j-langchain4j-agentexecutor.</description>
+
+    <distributionManagement>
+        <relocation>
+            <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
+            <message>Deprecated artifactId: use org.bsc.langgraph4j:langgraph4j-langchain4j-agentexecutor instead of org.bsc.langgraph4j:langgraph4j-agent-executor.</message>
+        </relocation>
+    </distributionManagement>
+</project>

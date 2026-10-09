@@ -1,5 +1,5 @@
 //DEPS com.fasterxml.jackson.core:jackson-databind:2.21.4
-//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.3@pom
+//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.4@pom
 //DEPS org.bsc.langgraph4j:langgraph4j-sqlite-saver
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit
 //DEPS org.bsc.langgraph4j:langgraph4j-ag-ui-json

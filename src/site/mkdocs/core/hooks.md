@@ -131,6 +131,8 @@ The other builder options are optional:
 * `maxInterval(Duration)` defaults to `128 s` and caps the backoff delay before jitter is added.
 * `jitter(boolean)` defaults to `true` and adds a random delay from zero up to the capped delay. With jitter enabled, the actual delay can be nearly twice `maxInterval`.
 
+Attempts and back-off run on the graph execution thread, which waits for the node anyway, so the hook returns once the node succeeds or retries are exhausted. To bound each attempt, put a timeout inside the retry, not around it.
+
 Apply retry policies only to idempotent operations, or operations that have their own idempotency key, to avoid repeated side effects.
 
 ## Code Examples

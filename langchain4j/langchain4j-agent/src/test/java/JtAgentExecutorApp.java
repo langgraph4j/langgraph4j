@@ -1,8 +1,7 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-agent-executor:1.9.3
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.3
+//DEPS org.bsc.langgraph4j:langgraph4j-langchain4j-agentexecutor:1.9.4
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9.4
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
-//DEPS dev.langchain4j:langchain4j-bom:1.9.3@pom
-//DEPS dev.langchain4j:langchain4j-github-models
+//DEPS dev.langchain4j:langchain4j-bom:1.22.0@pom
 //DEPS dev.langchain4j:langchain4j-open-ai
 //DEPS dev.langchain4j:langchain4j-ollama
 //DEPS dev.langchain4j:langchain4j-azure-open-ai
@@ -43,7 +42,7 @@ public class JtAgentExecutorApp {
 
     public void view() {
         Jt.title("LangGraph4J React Agent").use();
-        Jt.markdown("### Powered by LangGraph4j and SpringAI").use();
+        Jt.markdown("### Powered by LangGraph4j and LangChain4j").use();
 
         var modelOptional = JtSelectAiModel.get();
         var streaming = Jt.toggle("Streaming output")

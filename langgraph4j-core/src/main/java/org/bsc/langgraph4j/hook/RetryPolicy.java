@@ -12,14 +12,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 /**
  * Retries a node action when a configured failure occurs.
@@ -50,37 +49,57 @@ public final class RetryPolicy {
         return new Builder();
     }
 
+    /**
+     * Returns a node hook applying this policy.
+     * <p>
+     * The hook waits for each attempt and back-off on the calling thread, which in a graph is the
+     * execution loop thread already waiting on the node, and returns a completed future. A timeout
+     * meant to bound each attempt belongs inside the retry, not around it.
+     *
+     * @param <S> the state type
+     * @return the retrying hook
+     */
     public <S extends AgentState> NodeHook.WrapCall<S> asHook() {
-        return (nodeId, state, config, action) -> apply(action, state, config, 1);
+        return (nodeId, state, config, action) -> apply(action, state, config);
     }
 
     private <S extends AgentState> CompletableFuture<Map<String, Object>> apply(
             AsyncNodeActionWithConfig<S> action,
             S state,
-            RunnableConfig config,
-            int attempt) {
+            RunnableConfig config) {
 
-        CompletableFuture<Map<String, Object>> futureResult;
+        for (int attempt = 1; ; attempt++) {
+            CompletableFuture<Map<String, Object>> futureResult;
 
-        try {
-            futureResult = action.apply(state, config);
-        } catch (Throwable error) {
-            futureResult = failedFuture(error);
-        }
+            try {
+                futureResult = action.apply(state, config);
+            } catch (Throwable error) {
+                futureResult = failedFuture(error);
+            }
 
-        return futureResult.handle((result, error) -> {
+            // Blocking is safe here: the caller is the graph loop thread, already waiting on this node,
+            // and staying on it keeps every attempt there even when one fails on a pool the node used.
+            if (!awaitCompletion(futureResult).isDone()) {
+                return futureResult;
+            }
+
+            final var error = futureResult.handle((result, failure) -> failure).join();
             if (error == null) {
-                return completedFuture(result);
+                return futureResult;
             }
 
             var cause = unwrap(error);
             if (attempt == maxAttempts || !retryOn.test(cause)) {
-                return CompletableFuture.<Map<String, Object>>failedFuture(cause);
+                return failedFuture(cause);
             }
 
-            return delay(attempt).thenCompose(ignored -> apply(action, state, config, attempt + 1));
-        })
-                .thenCompose(Function.identity());
+            // Waiting on a delayed future, rather than sleeping, is a managed block that a ForkJoinPool compensates for.
+            final var backoff = runAsync(() -> {
+            }, delayedExecutor(delayNanos(attempt), NANOSECONDS));
+            if (!awaitCompletion(backoff).isDone()) {
+                return failedFuture(new InterruptedException("interrupted during retry back-off"));
+            }
+        }
     }
 
     private static Throwable unwrap(Throwable error) {
@@ -88,11 +107,6 @@ public final class RetryPolicy {
                 && error.getCause() != null
                         ? error.getCause()
                         : error;
-    }
-
-    private CompletableFuture<Void> delay(int attempt) {
-        return runAsync(() -> {
-        }, delayedExecutor(delayNanos(attempt), NANOSECONDS));
     }
 
     long delayNanos(int attempt) {

@@ -4,11 +4,11 @@
     <parent>
         <groupId>org.bsc.langgraph4j</groupId>
         <artifactId>langgraph4j-parent</artifactId>
-        <version>1.9.3</version>
+        <version>1.9.4</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>langgraph4j-agent-executor</artifactId>
+    <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
     <packaging>jar</packaging>
 
     <name>langgraph4j::langchain4j::agentexecutor</name>

@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
+import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 public class NodeHooks<State extends AgentState> {
 
@@ -188,11 +188,11 @@ public class NodeHooks<State extends AgentState> {
             AgentStateFactory<State> stateFactory,
             Map<String, Channel<?>> schema) {
 // FIX #336, #342
-        return beforeCalls.apply(nodeId, state, config, stateFactory, schema)
+        return awaitCompletion(beforeCalls.apply(nodeId, state, config, stateFactory, schema))
                 .thenCompose(newState -> {
                     final var result = applyWrapCallHooksHandlingInterruption(nodeId, newState, compileConfig, config, action);
                     if (result.hasPartialState()) {
-                        return result.partialState().thenApply(partial -> {
+                        return awaitCompletion(result.partialState()).thenApply(partial -> {
                             // Checking if the Node return AsyncGenerator as a Streaming node
                             if (hasStreamingGenerator(partial)) {
                                 // Streaming: Skip AfterHook call here，Call in embedGenerator after get the completed result

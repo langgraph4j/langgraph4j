@@ -35,7 +35,7 @@ import java.util.Objects;
  */
 public class AGUIJacksonSerializer implements Serializer {
 
-    private final ObjectMapper objectMapper;
+    protected final ObjectMapper objectMapper;
 
     /**
      * Creates a new serializer, building and configuring the underlying Jackson

@@ -221,9 +221,9 @@ public final class LG4JEmbedViewerService implements LG4JLoggable {
 
     public void dispatchAsync(NodeOutput<? extends AgentState> output) {
 
-        processor.dispatchAsync( AsyncGenerator.Data.of(output));
+        processor.dispatcher().dispatchAsync( AsyncGenerator.Data.of(output));
         if(output.isEND() && !(output instanceof SubGraphOutput<?>) ) {
-            processor.dispatchAsync( AsyncGenerator.Data.done() );
+            processor.dispatcher().dispatchAsync( AsyncGenerator.Data.done() );
         }
 
     }
