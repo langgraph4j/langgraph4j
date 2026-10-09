@@ -8,7 +8,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>langgraph4j-agent-executor</artifactId>
+    <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
     <packaging>jar</packaging>
 
     <name>langgraph4j::langchain4j::agentexecutor</name>

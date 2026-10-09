@@ -95,7 +95,13 @@
             </dependency>
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
-                <artifactId>langgraph4j-agent-executor</artifactId>
+                <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Deprecated coordinates, retained for consumers migrating via Maven relocation. -->
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-langchain4j-agentexecutor</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

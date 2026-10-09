@@ -231,6 +231,7 @@
         <!-- Integrating LangGraph4j with LangChain4j -->
         <module>langchain4j/langchain4j-core</module>
         <module>langchain4j/langchain4j-agent</module>
+        <module>langchain4j/langchain4j-agent-relocation</module>
 
         <!-- Integrating LangGraph4j with Spring AI -->
         <module>spring-ai/spring-ai-core</module>
