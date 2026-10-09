@@ -24,7 +24,7 @@ jobs:
       - name: Check for SNAPSHOT version
         id: check-snapshot
         run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           if [[ $VERSION == *"-SNAPSHOT" ]]; then
             echo "is_snapshot=true" >> $GITHUB_OUTPUT
             # echo "::set-output name=is_snapshot::true"
@@ -37,7 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
-        run: mvn -B clean source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml
+        run: ./mvnw -B clean source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml
       - name: Upload all module artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -61,7 +61,7 @@ jobs:
       - name: Check for SNAPSHOT version
         id: check-snapshot
         run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           if [[ $VERSION == *"-SNAPSHOT" ]]; then
             echo "is_snapshot=true" >> $GITHUB_OUTPUT
           else
@@ -72,4 +72,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
-        run: mvn -B clean source:jar javadoc:jar install central-publishing:publish -pl javelit --file pom.xml -s settings-template.xml
+        run: ./mvnw -B clean source:jar javadoc:jar install central-publishing:publish -pl javelit --file pom.xml -s settings-template.xml
