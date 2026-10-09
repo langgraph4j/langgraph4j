@@ -86,7 +86,7 @@ jobs:
           fi
 
           if [ -f pom.xml ]; then
-            if [ -f mvnw ]; then chmod +x mvnw; ./mvnw -B -ntp -DskipTests validate; else mvn -B -ntp -DskipTests validate; fi
+            ./mvnw -B -ntp -DskipTests validate
             ran=1
           fi
 
@@ -116,7 +116,7 @@ jobs:
           fi
 
           if [ -f pom.xml ]; then
-            if [ -f mvnw ]; then chmod +x mvnw; ./mvnw -B -ntp -DskipTests package; else mvn -B -ntp -DskipTests package; fi
+            ./mvnw -B -ntp -DskipTests package
             ran=1
           fi
 
@@ -151,7 +151,7 @@ jobs:
           fi
 
           if [ -f pom.xml ]; then
-            if [ -f mvnw ]; then chmod +x mvnw; ./mvnw -B -ntp test; else mvn -B -ntp test; fi
+            ./mvnw -B -ntp test
             ran=1
           fi
 

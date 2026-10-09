@@ -28,7 +28,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
-        run: mvn -B -Prelease source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw -B -Prelease source:jar javadoc:jar install central-publishing:publish --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
       - name: Upload build outputs
         if: always()
         uses: actions/upload-artifact@v7
@@ -60,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
-        run: mvn -B -Prelease source:jar javadoc:jar install central-publishing:publish -pl javelit --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw -B -Prelease source:jar javadoc:jar install central-publishing:publish -pl javelit --file pom.xml -s settings-template.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
       - name: Upload javelit build outputs
         if: always()
         uses: actions/upload-artifact@v7
