@@ -30,7 +30,7 @@ jobs:
           cache: maven
       - name: Build Maven Site
         run: |
-          mvn site:site site:stage -T1
+          ./mvnw site:site site:stage -T1
 
       - name: Prepare MkDocs content
         run: |

@@ -3,6 +3,7 @@ package org.bsc.langgraph4j;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.bsc.langgraph4j.utils.TypeRef;
 import org.junit.jupiter.api.Disabled;
@@ -13,12 +14,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
+import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled("LG4JCancellationTest is disabled because it is not works on github action anymore due to timing issues. It needs to be fixed.")
@@ -310,4 +313,41 @@ public class LG4JCancellationTest {
         }
     }
 
+    @Test
+    void issue486() throws Exception {
+
+        final AtomicBoolean n3Ran = new AtomicBoolean();
+        final var g = new StateGraph<AgentState>(Map.of(), AgentState::new)
+                .addNode("n1", node_async(s -> Map.of()))
+                .addNode("n2", node_async(s -> {
+                    Thread.sleep(300);
+                    return Map.of();
+                }))
+                .addNode("n3", node_async(s -> {
+                    Thread.sleep(300);
+                    n3Ran.set(true);
+                    return Map.of();
+                }))
+                .addEdge(START, "n1")
+                .addEdge("n1", "n2")
+                .addEdge("n2", "n3")
+                .addEdge("n3", END)
+                .compile();
+
+        final var gen = g.stream(
+                GraphInput.args(Map.of()),
+                RunnableConfig.builder()
+                        .threadId("t")
+                        .build());
+
+        for (var out : gen) {
+            if (out.node().equals("n1")) {
+                gen.cancel(true);
+                break;
+            }
+        }
+        Thread.sleep(1500);
+        assertFalse(n3Ran.get(), "n3Ran must be false after cancel(true)");
+
+    }
 }
