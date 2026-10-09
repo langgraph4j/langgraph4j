@@ -2,6 +2,84 @@
 
 
 
+<!-- "name: v1.9.4" is a release tag -->
+
+## [v1.9.4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.4) (2026-10-09)
+
+### Features
+
+ *  **core**  let callers supply the Executor that runs a graph ([6c54e12c18eb532](https://github.com/bsorrentino/langgraph4j/commit/6c54e12c18eb532a8c46ebfd6d244eaf56f5015d))
+     > resolve #485
+
+ *  **agui**  propagate cancel subscription to the graph async generator ([4dbc3fc9b2fa7ed](https://github.com/bsorrentino/langgraph4j/commit/4dbc3fc9b2fa7ed341b4ff1cbcd3fb099bef107d))
+
+
+### Bug Fixes
+
+ -  update artifact ID for LangChain4j agent executor dependency ([9cf2edec396b753](https://github.com/bsorrentino/langgraph4j/commit/9cf2edec396b753935f5fe9a5a3a9cf2bb37d695))
+
+ -  update dispatch method calls to use dispatcher() for async operations on async processor ([347093dde08beab](https://github.com/bsorrentino/langgraph4j/commit/347093dde08beab45b46ba7f22da42274b436bae))
+
+ -  **core**  run node continuations on the graph loop thread ([d604582e9d2d65a](https://github.com/bsorrentino/langgraph4j/commit/d604582e9d2d65a33888fbf325a1aecff22c0d4d))
+     > After-hooks, edges, checkpointing and retries of an async node ran on
+     > whichever thread completed the node&#x27;s future.
+
+ -  **savers**  close JDBC connections in exec and execTransaction ([0fe3d77dc873287](https://github.com/bsorrentino/langgraph4j/commit/0fe3d77dc8732870a056716938a706fe4bb7408c))
+     > exec() in the Postgres, MySQL, Oracle and SQLite savers, and execTransaction()
+     > in the MySQL, Oracle and SQLite savers, borrowed a connection from the
+     > DataSource and never closed it. With a pooled DataSource (e.g. HikariCP) every
+     > loadCheckpoints() call keeps a connection checked out, so the pool runs dry
+     > after a few graph steps. With the default PGSimpleDataSource each call leaves
+     > an open server session until the connection is garbage collected.
+     > Both methods now use try-with-resources, as AbstractPostgresSaver&#x27;s
+     > execTransaction and the CockroachDB saver already do. Behaviour inside the
+     > methods is unchanged.
+     > Adds a regression test for the Postgres and SQLite savers that wraps the
+     > DataSource and asserts no connection is left open after build, list, get, put
+     > and release.
+
+
+### Refactor
+
+ -  relocate LangChain4j agent executor Maven artifact ([eeb37c0a3cedc92](https://github.com/bsorrentino/langgraph4j/commit/eeb37c0a3cedc926369cd94a4bfa3bdc5fd95532))
+    > Rename langgraph4j-agent-executor to langgraph4j-langchain4j-agentexecutor
+ > and update dependent modules, examples, and documentation.
+ > Add a POM-only relocation module that publishes the deprecated coordinates
+ > with a migration warning. Manage both artifact IDs in the BOM to preserve
+ > compatibility for existing consumers.
+
+ -  **RunnableConfig**  rename streamExecutor to emitterExecutor for clarity ([1cfb99050afa20f](https://github.com/bsorrentino/langgraph4j/commit/1cfb99050afa20f35786d761ad7a353e0d34d659))
+
+ -  **core**  move FutureUtils to utils package and change class to interface ([8bb4344d5ca4c22](https://github.com/bsorrentino/langgraph4j/commit/8bb4344d5ca4c225d6397f701fbdac5c6ecd8474))
+
+ -  **core**  rename executor to streamExecutor ([1e83ad15cc67d9b](https://github.com/bsorrentino/langgraph4j/commit/1e83ad15cc67d9be70e2ac791338ab822e7b19bd))
+
+
+
+### Documentation
+
+ -  update changelog ([54898d47e56f9ea](https://github.com/bsorrentino/langgraph4j/commit/54898d47e56f9ea78578980dafc3399f38e67b04))
+
+
+### ALM
+
+ -  bump to next version 1.9.4 ([da73cf4aa445cc3](https://github.com/bsorrentino/langgraph4j/commit/da73cf4aa445cc3cd255d15125176c01319a23d1))
+
+ -  update langchain4j BOM version to 1.22.0 ([1ec1be9ea5b70f9](https://github.com/bsorrentino/langgraph4j/commit/1ec1be9ea5b70f93bb3297b025a0513a577a9d4f))
+
+ -  update langchain4j version to 1.22.0 and beta version to 1.22.0-beta32 ([2a418a2e5ab0669](https://github.com/bsorrentino/langgraph4j/commit/2a418a2e5ab06692ac3ab7d5c6ca6711cc933a62))
+
+ -  update Maven distribution URL to version 4.0.0-rc-7 ([efc61733b97de9a](https://github.com/bsorrentino/langgraph4j/commit/efc61733b97de9af32ee782d01a4c06faee5a08e))
+
+ -  **core**  update async.generator version to 5.1.0 ([911079778940ab8](https://github.com/bsorrentino/langgraph4j/commit/911079778940ab83ec21c2c4d84e48a802fa4a05))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([8a99144221a0931](https://github.com/bsorrentino/langgraph4j/commit/8a99144221a093187084562a3500832d108cfe73))
+
+
+
+
+
+
 <!-- "name: v1.9.3" is a release tag -->
 
 ## [v1.9.3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.3) (2026-10-01)
