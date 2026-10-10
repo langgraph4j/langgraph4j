@@ -63,6 +63,7 @@ nav:
         - Adaptive RAG: how-tos/adaptiverag.ipynb
         - Agent Executor: how-tos/agentexecutor.ipynb
         - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
+        - Agent Executor with Parallel Search MCP: how-tos/parallel-search-mcp.ipynb
         - Agentic RAG: how-tos/agentic-rag.ipynb
         - Basic Reflection: how-tos/basic-reflection.ipynb
         - Corrective RAG: how-tos/corrective-rag.ipynb
@@ -100,6 +101,7 @@ nav:
       - Adaptive RAG: how-tos/adaptiverag.ipynb
       - Agent Executor: how-tos/agentexecutor.ipynb
       - Agent Executor with MCP: how-tos/agentexecutor-mcp.ipynb
+      - Agent Executor with Parallel Search MCP: how-tos/parallel-search-mcp.ipynb
       - Multi-agent supervisor: how-tos/multi-agent-supervisor.ipynb
       - Plan-and-Execute: how-tos/plan-and-execute.ipynb
       - Basic Reflection: how-tos/basic-reflection.ipynb
