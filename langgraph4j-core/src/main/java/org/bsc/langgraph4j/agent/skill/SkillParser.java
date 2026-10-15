@@ -1,9 +1,12 @@
 package org.bsc.langgraph4j.agent.skill;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SkillParser {
+
+    private static final Pattern FRONT_MATTER_END = Pattern.compile("(?m)^---[\\t ]*\\r?$");
 
     public record FrontMatter( Map<String, Object> values ) {
 
@@ -71,16 +74,16 @@ public class SkillParser {
         // Check if document starts with front-matter delimiter (---)
         if (markdown.startsWith("---")) {
             // Find the closing delimiter
-            int endIndex = markdown.indexOf("---", 3);
+            var endDelimiter = FRONT_MATTER_END.matcher(markdown);
 
-            if (endIndex != -1) {
+            if (endDelimiter.find(3)) {
                 // Extract front-matter section
-                String frontMatterSection = markdown.substring(3, endIndex).trim();
+                String frontMatterSection = markdown.substring(3, endDelimiter.start()).trim();
                 parseFrontMatter(frontMatterSection);
 
                 // Extract remaining content (skip the closing --- and any following
                 // newlines)
-                content = markdown.substring(endIndex + 3).trim();
+                content = markdown.substring(endDelimiter.end()).trim();
             }
             else {
                 // No closing delimiter found, treat entire document as content
