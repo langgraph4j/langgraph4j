@@ -44,6 +44,14 @@ rsync -avm \
 --exclude='*' \
 langgraph4j-oracle-saver/ target/mkdocs/core/oracle-saver/
 
+# Copy MongoDB Checkpoint Saver docs
+rsync -avm \
+--include='*/' \
+--include='README.md' \
+--include='SAVER*.md' \
+--exclude='*' \
+langgraph4j-mongodb-saver/ target/mkdocs/core/mongodb-saver/
+
 
 # Copy Spring AI docs
 rsync -avm \

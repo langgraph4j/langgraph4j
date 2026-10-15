@@ -53,6 +53,8 @@ jobs:
           rsync -avm --include='*/' --include='README.md' --include='SAVER*.md' --exclude='*' langgraph4j-sqlite-saver/ target/mkdocs/core/sqlite-saver/
           # Copy Oracle Checkpoint Saver docs
           rsync -avm --include='*/' --include='README.md' --include='SAVER*.md' --exclude='*' langgraph4j-oracle-saver/ target/mkdocs/core/oracle-saver/
+          # Copy MongoDB Checkpoint Saver docs
+          rsync -avm --include='*/' --include='README.md' --include='SAVER*.md' --exclude='*' langgraph4j-mongodb-saver/ target/mkdocs/core/mongodb-saver/
           # Copy Spring AI docs
           rsync -avm --include='*/' --include='README.md' --exclude='*' spring-ai/ target/mkdocs/integrations/spring-ai/
           # Copy LangChain4j docs

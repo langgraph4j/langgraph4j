@@ -122,6 +122,7 @@ Useful starting points for persistence:
 - [`langgraph4j-mysql-saver/README.md`](langgraph4j-mysql-saver/README.md) for MySQL-backed checkpoints
 - [`langgraph4j-postgres-saver/README.md`](langgraph4j-postgres-saver/README.md) for PostgreSQL-backed checkpoints
 - [`langgraph4j-redis-saver/README.md`](langgraph4j-redis-saver/README.md) for Redis-backed checkpoints
+- [`langgraph4j-mongodb-saver/README.md`](langgraph4j-mongodb-saver/README.md) for MongoDB-backed checkpoints
 
 If you only want to see the minimal integration point first, look for `CompileConfig.builder().checkpointSaver(...)` in the saver module examples before diving into the full storage details.
 
@@ -137,6 +138,7 @@ langgraph4j/
 ├── langgraph4j-postgres-saver           # LangGraph4j persistent checkpoint saver based on PostgresSQL
 ├── langgraph4j-dynamodb-saver           # LangGraph4j persistent checkpoint saver based on Amazon DynamoDB
 ├── langgraph4j-cockroachdb-saver        # LangGraph4j persistent checkpoint saver based on CockroachDB
+├── langgraph4j-mongodb-saver            # LangGraph4j persistent checkpoint saver based on MongoDB
 ├── langgraph4j-redis-saver              # LangGraph4j persistent checkpoint saver based on Redis
 ├── langgraph4j-hazelcast-saver          # LangGraph4j persistent checkpoint saver based on Hazelcast
 ├── langgraph4j-sqlite-saver             # LangGraph4j persistent checkpoint saver based on SQLite

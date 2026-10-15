@@ -94,6 +94,7 @@ nav:
         - Postgres: core/postgres-saver/README.md
         - MySQL: core/mysql-saver/README.md
         - Oracle: core/oracle-saver/README.md
+        - MongoDB: core/mongodb-saver/README.md
   - Features: features.md
   - Examples: https://github.com/langgraph4j/langgraph4j-examples
   - How to(s):

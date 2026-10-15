@@ -148,6 +148,11 @@
                 <artifactId>langgraph4j-cockroachdb-saver</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-mongodb-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
