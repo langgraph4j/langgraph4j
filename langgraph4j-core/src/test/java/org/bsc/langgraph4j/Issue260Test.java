@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -89,7 +89,7 @@ public class Issue260Test {
     }
 
     @Test
-    public void reproduceErrorTest() throws Exception
+    public void removalPropagatesFromSubgraphTest() throws Exception
     {
         var graph = getCompiledGraph();
         var runConfig = RunnableConfig.builder()
@@ -104,7 +104,7 @@ public class Issue260Test {
 
         var state = output.state();
 
-        assertFalse( state.myValue().isEmpty(), "Expected: my_value should be NOT_PRESENT after subgraph");
+        assertTrue( state.myValue().isEmpty(), "Expected: my_value should be NOT_PRESENT after subgraph");
     }
 
     private static CompiledGraph<GraphState> getFixedCompiledGraph() throws GraphStateException

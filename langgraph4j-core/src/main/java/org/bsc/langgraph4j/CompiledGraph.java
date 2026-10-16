@@ -268,7 +268,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 .checkPointId( branchCheckpoint.id() )
                 .nextNode( nextNodeId );
 
-        if( stateGraph.nodes.hasSubGraphs() ) {
+        if( stateGraph.nodes.isSubgraphNode( branchCheckpoint.nextNodeId() ) ) {
             runnableConfigBuilder.putMetadata( RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, values ) ;
         }
 
@@ -764,9 +764,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                             partialStateWithoutGenerator,
                                             stateGraph.getChannels());
 
-                                    final var intermediateState = AgentState.updateState(context.currentState(),
-                                            generatorStateMerged,
-                                            stateGraph.getChannels());
+                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ? generatorStateMerged : AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.getChannels());
 
                                     context.setCurrentState(intermediateState);
 
