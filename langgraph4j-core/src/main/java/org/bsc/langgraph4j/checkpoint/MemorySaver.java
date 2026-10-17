@@ -76,8 +76,7 @@ public class MemorySaver extends AbstractCheckpointSaver {
         requireNonNull(config, "config cannot be null");
         return ofNullable(_tagsByThread.get(threadId(config)))
                 .map( tagsByVersion ->
-                        ofNullable(version).map(tagsByVersion::get)
-                                .orElseGet( () -> tagsByVersion.lastEntry().getValue() ));
+                        version == null ? tagsByVersion.lastEntry().getValue() : tagsByVersion.get(version));
 
 
     }

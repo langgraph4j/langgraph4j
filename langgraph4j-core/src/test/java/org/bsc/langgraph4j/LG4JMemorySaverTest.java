@@ -455,6 +455,11 @@ public class LG4JMemorySaverTest
         var tag2 = saver.release(configWithVersion1);
 
         assertEquals(2, tag2.checkpoints().size());
+        assertSame(tag, saver.tag(configWithVersion1, 1).orElseThrow());
+        assertSame(tag2, saver.tag(configWithVersion1, 2).orElseThrow());
+        assertSame(tag2, saver.lastTag(configWithVersion1).orElseThrow());
+        assertTrue(saver.tag(configWithVersion1, 0).isEmpty());
+        assertTrue(saver.tag(configWithVersion1, 3).isEmpty());
 
     }
 
