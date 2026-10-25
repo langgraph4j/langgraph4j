@@ -38,12 +38,15 @@ class ImageUploader extends LitElement {
     _file: { state: true }, // Holds the uploaded file
     nopreview: { attribute: 'no-preview', type: Boolean } // New reactive property
   };
+  
+  nopreview: boolean;
+  _file: File | null;
+  private _base64: string | null;
 
   constructor() {
     super();
     this.nopreview = false; 
     this._file = null
-    /** @type {string|null} */
     this._base64 = null
   }
 
@@ -64,7 +67,7 @@ class ImageUploader extends LitElement {
         <input type="file" @change=${this._handleFileUpload} accept="image/*">
         ${this.#imageUrl
           ? this.nopreview
-            ? html`<p>Uploaded File: ${this._file.name}</p>` 
+            ? html`<p>Uploaded File: ${this._file?.name}</p>` 
             : html`<p>Uploaded Image:</p><img class="thumbnail" src=${this.#imageUrl} alt="Uploaded image">`
           : html`<p>Click here or drag and drop an image file</p>`}
       </div>
@@ -72,8 +75,7 @@ class ImageUploader extends LitElement {
   }
 
   _openFileDialog() {
-    /**  @type {HTMLInputElement|null|undefined} */
-    const input = this.shadowRoot?.querySelector('input[type="file"]')
+    const input = this.shadowRoot?.querySelector('input[type="file"]') as HTMLInputElement|null|undefined
     input?.click();
   }
 
@@ -81,12 +83,12 @@ class ImageUploader extends LitElement {
    *
    * @param {Event} e  event
    */
-  _handleFileUpload(e) {
+  _handleFileUpload(e:Event) {
     // @ts-ignore
     const file = e.target?.files[0];
     if (file && file.type.startsWith('image/')) {
       this._file = file; // Set the file name
-      this.#convertFileToBase64(file)
+      this.convertFileToBase64(file)
         .then( base64 => this._base64 = base64 )
         .catch( error => alert(error.message) );
     } else {
@@ -99,7 +101,7 @@ class ImageUploader extends LitElement {
    * @param {File} file File object to convert
    * @return {Promise<string>} Promise resolving to the Base64 string
    */
-  #convertFileToBase64(file) {
+  private convertFileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {

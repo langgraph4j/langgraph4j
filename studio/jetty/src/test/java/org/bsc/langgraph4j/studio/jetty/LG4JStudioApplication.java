@@ -1,4 +1,4 @@
-package org.bsc.langgraph4j.jetty;
+package org.bsc.langgraph4j.studio.jetty;
 
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.model.ollama.OllamaChatModel;
@@ -7,14 +7,11 @@ import org.bsc.langgraph4j.SampleGraph;
 import org.bsc.langgraph4j.TestTool;
 import org.bsc.langgraph4j.agentexecutor.AgentExecutorEx;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
-import org.bsc.langgraph4j.studio.jetty.LangGraphStudioServer4Jetty;
 
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.bsc.langgraph4j.SampleGraph.issue216;
-import static org.bsc.langgraph4j.SampleGraph.issue241;
 
 public interface LG4JStudioApplication {
 
@@ -46,8 +43,8 @@ public interface LG4JStudioApplication {
         LangGraphStudioServer4Jetty.builder()
                 .port(8081)
                 .instance(agentExecutor())
-                .instance(Map.entry("issue216", issue216()))
-                .instance(Map.entry("issue241", issue241()))
+                .instance(Map.entry("issue216", SampleGraph.issue216()))
+                .instance(Map.entry("issue241", SampleGraph.issue241()))
                 .instance(Map.entry( "nested_subgraph", SampleGraph.withNestedSubgraph() ))
                 .instance(Map.entry( "sample", SampleGraph.withConditionalEdge() ))
                 .instance(Map.entry( "state_subgraph", SampleGraph.withStateSubgraph() ))

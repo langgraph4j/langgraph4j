@@ -1,4 +1,4 @@
-package org.bsc.langgraph4j.jetty;
+package org.bsc.langgraph4j.studio.jetty;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
