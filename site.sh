@@ -1,5 +1,11 @@
 #!/bin/bash
 
+MODE="${1:-run}"
+case "$MODE" in
+  run|deploy) ;;
+  *) echo "Usage: $0 [run|deploy]" >&2; exit 1 ;;
+esac
+
 # Build sites and stage results
 mvn site:site site:stage -T1 -o
 # Build sites and stage results (run locally)
@@ -107,9 +113,11 @@ rsync -avm \
 
 source .docsenv/bin/activate
 
-mkdocs build
-
-mkdocs serve 
-
-# Site deploy with version
-# mike deploy --push --update-aliases 1.9 main
+case "$MODE" in
+  run)
+    mkdocs build ; mkdocs serve
+    ;;
+  deploy)
+    mike deploy --push --update-aliases 1.9 main
+    ;;
+esac
