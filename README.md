@@ -1,5 +1,5 @@
 
-#  ![avatar](https://avatars.githubusercontent.com/u/212100817?s=40&v=4)️ Welcome to LangGraph4j
+#  ![avatar](https://avatars.githubusercontent.com/u/212100817?s=60&v=4)️ Welcome to LangGraph4j
 
 ### *Enabling Graph Engineering for Agentic AI Workflows in Java*
 
