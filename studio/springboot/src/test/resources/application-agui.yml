@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: langgraph4j::studio::springboot
+  web:
+    resources:
+      static-locations:
+        #- file:./agui/dist/      # live folder on disk, no rebuild needed
+        - classpath:/agui/static/
+      cache:
+        period: 0
+cors:
+  allowed-origins: "http://localhost:1234"
+server:
+  port : 8081
+  compression:
+    enabled: false
