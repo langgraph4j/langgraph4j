@@ -1,7 +1,7 @@
 import { html, css, LitElement } from 'lit';
 import { Stack } from './stack';
 import { debug } from './debug';
-import { EventType, type BaseEvent, type CustomEvent as AGUICustomEvent, type RunFinishedEvent, type RunFinishedInterruptOutcome } from '@ag-ui/client';
+import { EventType, type BaseEvent, type CustomEvent as AGUICustomEvent, type RunFinishedEvent } from '@ag-ui/client';
 import type { ResultData } from './types.js';
 
 
@@ -294,18 +294,6 @@ export class LG4JResultElement extends LitElement {
     }
 
     this.threadMap.set( thread, stack );
-
-    if( result.next || result.node) {
-
-      const event = new CustomEvent( 'graph-active', { 
-        detail: { node: result.next ?? result.node, subgraphNode: result.subgraphNode },
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      });
-
-      this.dispatchEvent( event );
-    }
     
     this.requestUpdate()
     

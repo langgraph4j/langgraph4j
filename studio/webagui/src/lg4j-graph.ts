@@ -1322,8 +1322,6 @@ export class LG4JDSLViewElement extends HTMLElement {
     //@ts-ignore
     this.addEventListener('graph',this.render);
     //@ts-ignore
-    this.addEventListener('graph-active', this.onActive);
-    //@ts-ignore
     this.addEventListener('agui-event', this.onAGUIEvent);
 
   }
@@ -1336,8 +1334,6 @@ export class LG4JDSLViewElement extends HTMLElement {
   disconnectedCallback(): void {
     //@ts-ignore
     this.removeEventListener('graph', this.render);
-    //@ts-ignore
-    this.removeEventListener('graph-active', this.onActive);
     //@ts-ignore
     this.removeEventListener('agui-event', this.onAGUIEvent);
     //@ts-ignore
@@ -1415,27 +1411,6 @@ export class LG4JDSLViewElement extends HTMLElement {
 
       }
       this.update();
-  }
-
-  /**
-   * Handles active node events from the executor.
-   *
-   * @param {CustomEvent<NextNodeData>} event - Event containing active node ids.
-   * @returns {void}
-   * @deprecated Use the new AGUI event handling mechanism instead.
-   */
-  onActive(event: CustomEvent<NextNodeData>): void {
-    _DBG('Active node changed:', event.detail);
-    const { detail: { node, subgraphNode } } = event;
-    if (node === INTERRUPTED_NODE) {
-      this.#renderInterruption()
-      return;
-    }
-
-    this.activeNodeId = subgraphNode ?? node;
-    this.lastActiveNodeId = this.activeNodeId;
-    this.interruptedNodeId = undefined;
-    this.update();
   }
 
   /**
