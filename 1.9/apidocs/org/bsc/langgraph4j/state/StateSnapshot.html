@@ -135,16 +135,21 @@ implements <a href="../SnapshotOutput.html" title="interface in org.bsc.langgrap
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#checkpointId()" class="member-name-link">checkpointId</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#nextNodeId()" class="member-name-link">nextNodeId</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;State extends <a href="AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;<br><a href="StateSnapshot.html" title="class in org.bsc.langgraph4j.state">StateSnapshot</a><wbr>&lt;State&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(org.bsc.langgraph4j.checkpoint.Checkpoint,org.bsc.langgraph4j.state.AgentStateFactory)" class="member-name-link">of</a><wbr>(<a href="../checkpoint/Checkpoint.html" title="class in org.bsc.langgraph4j.checkpoint">Checkpoint</a>&nbsp;checkpoint,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createdAt()" class="member-name-link">createdAt</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The creation date of the checkpoint this snapshot refers to.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#nextNodeId()" class="member-name-link">nextNodeId</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;State extends <a href="AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;<br><a href="StateSnapshot.html" title="class in org.bsc.langgraph4j.state">StateSnapshot</a><wbr>&lt;State&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(org.bsc.langgraph4j.checkpoint.Checkpoint,org.bsc.langgraph4j.state.AgentStateFactory)" class="member-name-link">of</a><wbr>(<a href="../checkpoint/Checkpoint.html" title="class in org.bsc.langgraph4j.checkpoint">Checkpoint</a>&nbsp;checkpoint,
  <a href="AgentStateFactory.html" title="interface in org.bsc.langgraph4j.state">AgentStateFactory</a>&lt;State&gt;&nbsp;factory)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -201,6 +206,21 @@ implements <a href="../SnapshotOutput.html" title="interface in org.bsc.langgrap
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../SnapshotOutput.html#checkpointId()">checkpointId</a></code>&nbsp;in interface&nbsp;<code><a href="../SnapshotOutput.html" title="interface in org.bsc.langgraph4j">SnapshotOutput</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="createdAt()">
+<h3>createdAt</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a></span>&nbsp;<span class="element-name">createdAt</span>()</div>
+<div class="block">The creation date of the checkpoint this snapshot refers to.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the checkpoint creation date</dd>
+<dt>Since:</dt>
+<dd>1.9.6</dd>
 </dl>
 </div>
 </section>

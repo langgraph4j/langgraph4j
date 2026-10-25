@@ -927,6 +927,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#order-checkpoints-by-creation-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Checkpoints by Creation Date
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2634,6 +2645,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#order-checkpoints-by-creation-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order Checkpoints by Creation Date
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3763,13 +3785,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="kd">var</span><span class="w"> </span><span class="n">localRespoUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"file://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/.m2/repository/"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.22.0"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jbeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.22.0-beta32"</span><span class="p">;</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.6"</span><span class="p">;</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.7"</span><span class="p">;</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">var userHomeDir = System.getProperty("user.home");
 var localRespoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.22.0";
 var langchain4jbeta = "1.22.0-beta32";
-var langgraph4jVersion = "1.9.6";</div>
+var langgraph4jVersion = "1.9.7";</div>
 </div>
 </div>
 </div>
@@ -5115,6 +5137,20 @@ for( var r : result ) {
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="order-checkpoints-by-creation-date">Order Checkpoints by Creation Date<a class="anchor-link" href="#order-checkpoints-by-creation-date">¶</a></h2><p>Every <a href="https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/Checkpoint.html"><code>Checkpoint</code></a> carries a <code>createdAt</code> timestamp, assigned when the checkpoint is created.
+This makes it possible to order checkpoints reliably, even when the underlying storage
+(eg. a custom saver backed by a store that doesn't preserve the insertion order) returns them
+in an arbitrary sequence.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -5134,10 +5170,65 @@ for( var r : result ) {
 </div>
 </clipboard-copy>
 </div>
+<div class="highlight-ipynb hl-java"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">org.bsc.langgraph4j.checkpoint.Checkpoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Comparator</span><span class="p">;</span>
+
+<span class="c1">// list() returns the checkpoints of the thread, newest first</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">checkpoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">util</span><span class="p">.</span><span class="na">ArrayList</span><span class="o">&lt;</span><span class="n">Checkpoint</span><span class="o">&gt;</span><span class="p">(</span><span class="w"> </span><span class="n">hazelcastSaver</span><span class="p">.</span><span class="na">list</span><span class="p">(</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="n">cp</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">checkpoints</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="s">"%s -&gt; %s"</span><span class="p">.</span><span class="na">formatted</span><span class="p">(</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">id</span><span class="p">(),</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">createdAt</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// sort them oldest first</span>
+<span class="n">checkpoints</span><span class="p">.</span><span class="na">sort</span><span class="p">(</span><span class="w"> </span><span class="n">Comparator</span><span class="p">.</span><span class="na">comparing</span><span class="p">(</span><span class="w"> </span><span class="n">Checkpoint</span><span class="p">::</span><span class="n">createdAt</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="c1">// the same information is exposed by the state snapshot</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">persistentGraph</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">).</span><span class="na">createdAt</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-21">import org.bsc.langgraph4j.checkpoint.Checkpoint;
+import java.util.Comparator;
+
+// list() returns the checkpoints of the thread, newest first
+var checkpoints = new java.util.ArrayList&lt;Checkpoint&gt;( hazelcastSaver.list( runnableConfig ) );
+
+for( var cp : checkpoints ) {
+  System.out.println( "%s -&gt; %s".formatted( cp.id(), cp.createdAt() ) );
+}
+
+// sort them oldest first
+checkpoints.sort( Comparator.comparing( Checkpoint::createdAt ) );
+
+// the same information is exposed by the state snapshot
+System.out.println( persistentGraph.getState( runnableConfig ).createdAt() );</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-22">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
 <div class="highlight-ipynb hl-java"><pre><span></span><span class="c1">// Shut down the embedded member when done (the caller owns the HazelcastInstance lifecycle).</span>
 <span class="n">hz</span><span class="p">.</span><span class="na">shutdown</span><span class="p">();</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-21">// Shut down the embedded member when done (the caller owns the HazelcastInstance lifecycle).
+<div class="clipboard-copy-txt" id="cell-22">// Shut down the embedded member when done (the caller owns the HazelcastInstance lifecycle).
 hz.shutdown();</div>
 </div>
 </div>

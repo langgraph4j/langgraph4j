@@ -125,19 +125,25 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Creates a node whose id is the given action name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;State extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;<br><a href="../node/Node.ActionFactory.html" title="interface in org.bsc.langgraph4j.node">Node.ActionFactory</a><wbr>&lt;State&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#nodeAction(java.lang.String)" class="member-name-link">nodeAction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;State extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;<br><a href="../node/Node.html" title="class in org.bsc.langgraph4j.node">Node</a><wbr>&lt;State&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#node(java.lang.String,java.lang.String)" class="member-name-link">node</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a node with the given id and a registered node action.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;State extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;<br><a href="../node/Node.ActionFactory.html" title="interface in org.bsc.langgraph4j.node">Node.ActionFactory</a><wbr>&lt;State&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#nodeAction(java.lang.String)" class="member-name-link">nodeAction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Returns the registered node action factory with the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="../node/Node.ActionFactory.html" title="interface in org.bsc.langgraph4j.node">Node.ActionFactory</a>&lt;? extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#nodeActions()" class="member-name-link">nodeActions</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="../node/Node.ActionFactory.html" title="interface in org.bsc.langgraph4j.node">Node.ActionFactory</a>&lt;? extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#nodeActions()" class="member-name-link">nodeActions</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the node action factories, indexed by action name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static &lt;Catalog extends <a href="ActionCatalog.html" title="interface in org.bsc.langgraph4j.annotation">ActionCatalog</a>&gt;<br><a href="ActionCatalogRepository.html" title="interface in org.bsc.langgraph4j.annotation">ActionCatalogRepository</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(Catalog)" class="member-name-link">of</a><wbr>(Catalog&nbsp;catalog)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;Catalog extends <a href="ActionCatalog.html" title="interface in org.bsc.langgraph4j.annotation">ActionCatalog</a>&gt;<br><a href="ActionCatalogRepository.html" title="interface in org.bsc.langgraph4j.annotation">ActionCatalogRepository</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(Catalog)" class="member-name-link">of</a><wbr>(Catalog&nbsp;catalog)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Builds a repository from the public methods of the catalog annotated with
  <a href="NodeAction.html" title="annotation interface in org.bsc.langgraph4j.annotation"><code>NodeAction</code></a> or <a href="EdgeCondition.html" title="annotation interface in org.bsc.langgraph4j.annotation"><code>EdgeCondition</code></a>.</div>
 </div>
@@ -239,6 +245,29 @@ loadScripts(document, 'script');</script>
 <dd>the node</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if the node action is not found</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="node(java.lang.String,java.lang.String)">
+<h3>node</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;State extends <a href="../state/AgentState.html" title="class in org.bsc.langgraph4j.state">AgentState</a>&gt;</span>&nbsp;<span class="return-type"><a href="../node/Node.html" title="class in org.bsc.langgraph4j.node">Node</a>&lt;State&gt;</span>&nbsp;<span class="element-name">node</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId)</span></div>
+<div class="block">Creates a node with the given id and a registered node action.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>State</code> - the agent state type</dd>
+<dt>Parameters:</dt>
+<dd><code>id</code> - the node id</dd>
+<dd><code>actionId</code> - the node action name</dd>
+<dt>Returns:</dt>
+<dd>the node</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if the node action is not found</dd>
+<dt>Since:</dt>
+<dd>1.9.7</dd>
 </dl>
 </div>
 </section>

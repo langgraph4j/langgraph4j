@@ -130,12 +130,45 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#approvalOn(java.lang.String,java.util.function.BiFunction)" class="member-name-link">approvalOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>,<wbr><a href="../action/InterruptionMetadata.html" title="class in org.bsc.langgraph4j.action">InterruptionMetadata</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&gt;&nbsp;interruptionMetadataProvider)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addApprovalActionHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)" class="member-name-link">addApprovalActionHook</a><wbr>(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../StateGraph.html" title="class in org.bsc.langgraph4j">StateGraph</a><wbr>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#build()" class="member-name-link">build</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addCallModelHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)" class="member-name-link">addCallModelHook</a><wbr>(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addDispatchActionHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)" class="member-name-link">addDispatchActionHook</a><wbr>(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addDispatchToolsHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)" class="member-name-link">addDispatchToolsHook</a><wbr>(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.AfterCall)" class="member-name-link">addEdgeHook</a><wbr>(<a href="../hook/EdgeHook.AfterCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.AfterCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.BeforeCall)" class="member-name-link">addEdgeHook</a><wbr>(<a href="../hook/EdgeHook.BeforeCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.BeforeCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)" class="member-name-link">addEdgeHook</a><wbr>(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addNodeHook(org.bsc.langgraph4j.hook.NodeHook.AfterCall)" class="member-name-link">addNodeHook</a><wbr>(<a href="../hook/NodeHook.AfterCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.AfterCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addNodeHook(org.bsc.langgraph4j.hook.NodeHook.BeforeCall)" class="member-name-link">addNodeHook</a><wbr>(<a href="../hook/NodeHook.BeforeCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.BeforeCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addNodeHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)" class="member-name-link">addNodeHook</a><wbr>(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addShouldContinueHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)" class="member-name-link">addShouldContinueHook</a><wbr>(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#approvalOn(java.lang.String,java.util.function.BiFunction)" class="member-name-link">approvalOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;actionId,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>,<wbr><a href="../action/InterruptionMetadata.html" title="class in org.bsc.langgraph4j.action">InterruptionMetadata</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&gt;&nbsp;interruptionMetadataProvider)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../StateGraph.html" title="class in org.bsc.langgraph4j">StateGraph</a><wbr>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#build()" class="member-name-link">build</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds the state graph.</div>
 </div>
 </div>
@@ -177,6 +210,94 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="addNodeHook(org.bsc.langgraph4j.hook.NodeHook.BeforeCall)">
+<h3>addNodeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addNodeHook</span><wbr><span class="parameters">(<a href="../hook/NodeHook.BeforeCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.BeforeCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addNodeHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)">
+<h3>addNodeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addNodeHook</span><wbr><span class="parameters">(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addNodeHook(org.bsc.langgraph4j.hook.NodeHook.AfterCall)">
+<h3>addNodeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addNodeHook</span><wbr><span class="parameters">(<a href="../hook/NodeHook.AfterCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.AfterCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.BeforeCall)">
+<h3>addEdgeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addEdgeHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.BeforeCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.BeforeCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)">
+<h3>addEdgeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addEdgeHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addEdgeHook(org.bsc.langgraph4j.hook.EdgeHook.AfterCall)">
+<h3>addEdgeHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addEdgeHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.AfterCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.AfterCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;hook)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addCallModelHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)">
+<h3>addCallModelHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addCallModelHook</span><wbr><span class="parameters">(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addDispatchToolsHook(org.bsc.langgraph4j.hook.NodeHook.WrapCall)">
+<h3>addDispatchToolsHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addDispatchToolsHook</span><wbr><span class="parameters">(<a href="../hook/NodeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">NodeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addApprovalActionHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)">
+<h3>addApprovalActionHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addApprovalActionHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addDispatchActionHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)">
+<h3>addDispatchActionHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addDispatchActionHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addShouldContinueHook(org.bsc.langgraph4j.hook.EdgeHook.WrapCall)">
+<h3>addShouldContinueHook</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AgentExecutorEx.Builder.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.Builder</a></span>&nbsp;<span class="element-name">addShouldContinueHook</span><wbr><span class="parameters">(<a href="../hook/EdgeHook.WrapCall.html" title="interface in org.bsc.langgraph4j.hook">EdgeHook.WrapCall</a>&lt;<a href="AgentExecutorEx.State.html" title="class in org.bsc.langgraph4j.agentexecutor">AgentExecutorEx.State</a>&gt;&nbsp;wrapCall)</span></div>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="approvalOn(java.lang.String,java.util.function.BiFunction)">
 <h3>approvalOn</h3>
