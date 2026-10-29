@@ -79,6 +79,9 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     private final StateSerializer<State> stateSerializer;
 
+    List<String> inputSchema;
+    List<String> outputSchema;
+
     /**
      *
      * @param channels the state's schema of the graph
@@ -118,6 +121,14 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         this( channels, new ObjectStreamStateSerializer<>(stateFactory) );
     }
 
+    public StateSerializer<State> stateSerializer() {
+        return stateSerializer;
+    }
+
+    /**
+     * @deprecated use {@link #stateSerializer()} instead
+     */
+    @Deprecated( since = "1.9.8" )
     public StateSerializer<State> getStateSerializer() {
          return stateSerializer;
     }
@@ -140,11 +151,28 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return stateSerializer.stateFactory();
     }
 
-
+    /**
+     * Returns the channels associated with this graph.
+     * @return the channels map
+     * @deprecated use {@link #channels()} instead
+     */
+    @Deprecated
     public Map<String, Channel<?>> getChannels() {
         return Map.copyOf(channels);
     }
 
+    public Map<String, Channel<?>> channels() {
+        return Map.copyOf(channels);
+    }
+
+    public StateGraph<State> withInputSchema( String ...allowChannelNames ) {
+        inputSchema = Arrays.asList(allowChannelNames);
+        return this;
+    }
+    public StateGraph<State> withOutputSchema( String ...allowChannelNames ) {
+        outputSchema = Arrays.asList(allowChannelNames);
+        return this;
+    }
 
     public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
         nodeHooks.wrapCalls.add( wrapCallHook );
