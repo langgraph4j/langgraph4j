@@ -141,7 +141,7 @@ public class ParallelStreamingBranchTest {
                 .addEdge("join", END)
                 .compile();
 
-        var result = (State) app.invoke(Map.of()).orElseThrow();
+        var result = app.invoke(GraphInput.noArgs(),RunnableConfig.empty()).orElseThrow();
 
         assertEquals("from-a", result.<String>value("a").orElseThrow());
         assertEquals("from-stream", result.<String>value("b").orElseThrow());
