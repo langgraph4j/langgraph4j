@@ -2,8 +2,12 @@ package org.bsc.langgraph4j.state;
 
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * A factory interface for creating instances of {@link AgentState}.
@@ -16,9 +20,13 @@ public interface AgentStateFactory<State extends AgentState> extends Function<Ma
     default Map<String,Object> initialDataFromSchema( Map<String,Channel<?>> schema  ) {
         return schema.entrySet().stream()
                 .filter( c -> c.getValue().getDefault().isPresent() )
-                .collect(Collectors.toMap(Map.Entry::getKey, e ->
-                        e.getValue().getDefault().get().get()
-                ));
+                .map( e ->
+                    e.getValue().getDefault()
+                            .flatMap( v -> ofNullable(v.get()) )
+                            .map( v -> Map.entry( e.getKey(), v) )
+                            .orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
