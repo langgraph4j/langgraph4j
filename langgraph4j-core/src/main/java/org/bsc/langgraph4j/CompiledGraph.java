@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.checkFromIndexSize;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -250,7 +251,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         // merge values with checkpoint values
         var branchCheckpoint = saver.get(config)
                             .map(Checkpoint::copyOf)
-                            .map( cp -> cp.updateState(values, stateGraph.channels()) )
+                            .map( cp -> cp.updateState(values, stateGraph.schema()) )
                             .orElseThrow( () -> (new IllegalStateException("Missing Checkpoint!")) );
 
         String nextNodeId = null;
@@ -258,7 +259,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             final var nextNodeCommand = nextNodeId( asNode, branchCheckpoint.state(), config );
 
             nextNodeId = nextNodeCommand.gotoNode();
-            branchCheckpoint =  branchCheckpoint.updateState( nextNodeCommand.update(), stateGraph.channels(), nextNodeId );
+            branchCheckpoint =  branchCheckpoint.updateState( nextNodeCommand.update(), stateGraph.schema(), nextNodeId );
 
         }
         // update checkpoint in saver
@@ -319,7 +320,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 throw RunErrors.missingNodeInEdgeMapping.exception(config, nodeId, newRoute);
             }
 
-            final var currentState = AgentState.updateState(state, command.update(), stateGraph.channels());
+            final var currentState = AgentState.updateState(state, command.update(), stateGraph.schema());;
 
             return new Command(result, currentState);
         }
@@ -409,8 +410,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         return compileConfig.checkpointSaver()
                 .flatMap( saver -> saver.get( config ) )
-                .map( cp -> AgentState.updateState( cp.state(), inputs, stateGraph.channels() ))
-                .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.channels() ));
+                .map( cp -> AgentState.updateState( cp.state(), inputs, stateGraph.schema() ))
+                .orElseGet( () -> AgentState.updateState( initialStateFromSchema(), inputs, stateGraph.schema() ));
     }
 
     State cloneState( Map<String,Object> data, RunnableConfig runnableConfig ) throws Exception, InstantiationException, IllegalAccessException {
@@ -662,8 +663,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     // FIX ISSUE #302
                     context.setCurrentState( AgentState.updateState( startCheckpoint.state(),
                             stateData,
-                            stateGraph.channels() ));
-
+                            stateGraph.schema() ));
                 }
 
                 log.trace( "RESUME FROM {}", startCheckpoint.nodeId() );
@@ -676,7 +676,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 // patch for backward support of AppendableValue
                 final var initializedState = stateGraph.stateFactory()
                             .apply(initState)
-                            .filterByKeys(stateGraph.inputSchema);
+                            .filterBySchema(stateGraph.inputSchema);
                 this.context = new Context( initializedState );
                 this.config = configBuilder.build();
             }
@@ -726,7 +726,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 })
                                 .thenApply(reduceResult -> {
 
-                                    final var returnFromEmbed = GraphResult.from(reduceResult.resultValue());
+                                    final var returnFromEmbed = GraphResult.from(reduceResult.resultValue(), stateGraph);
 
                                     if (returnFromEmbed.isInterruptionMetadata() || returnFromEmbed.isCancelled()) {
                                         return returnFromEmbed;
@@ -740,11 +740,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                                 context.currentNodeId(),
                                                 stateGraph.stateFactory().apply(context.currentState()),
                                                 config,
-                                                returnFromEmbed.asStateDataOrLastCheckpointStateData())
+                                                returnFromEmbed.asStateData())
                                                 .join();
                                     }
                                     else {
-                                        partialResultAfterHook = returnFromEmbed.asStateDataOrLastCheckpointStateData();
+                                        partialResultAfterHook = returnFromEmbed.asStateData();
                                     }
 
                                     config = config.removeMetadata(
@@ -764,9 +764,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                                     final var generatorStateMerged = AgentState.updateState(partialResultAfterHook,
                                             partialStateWithoutGenerator,
-                                            stateGraph.channels());
+                                            stateGraph.schema());
 
-                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ? generatorStateMerged : AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.channels());
+                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ? generatorStateMerged : AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
 
                                     context.setCurrentState(intermediateState);
 
@@ -797,6 +797,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 final var embedResult = embedGenerator( $1, action, nodeId, clonedState, runnableConfig, partial);
 
                                 if( embedResult.isPresent() && embedResult.get().isCancelled() ) {
+                                    log.trace("Execution cancelled during embedded generator for nodeId: [{}] result:\n {}",
+                                            nodeId,
+                                            embedResult.get());
                                     return AsyncGenerator.Data.done(embedResult.get());
                                 }
 
@@ -807,7 +810,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     if (action instanceof ParallelNode.AsyncParallelNodeAction) {
                                         context.setCurrentState(partial);
                                     } else {
-                                        context.setCurrentState(AgentState.updateState(context.currentState(), partial, stateGraph.channels()));
+                                        context.setCurrentState(AgentState.updateState(context.currentState(), partial, stateGraph.schema()));
                                     }
                                 }
 
@@ -820,9 +823,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 }
 
                                 if( embedResult.isPresent() ) {
-                                    final var res = GraphResult.from(embedResult.get());
+                                    final var res = GraphResult.from(embedResult.get(), stateGraph);
 
                                     if( res.isInterruptionMetadata() ) {
+                                        log.trace("Execution interrupted during embedded generator for nodeId: [{}] result:\n {}",
+                                                nodeId,
+                                                embedResult.get());
                                         return AsyncGenerator.Data.done(embedResult.get());
                                     }
                                 }
@@ -875,10 +881,16 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // GUARD: CHECK IF IT IS END
                     if( context.nextNodeId() == null && context.currentNodeId() == null  ) {
-                        $1.dispatchAsync(
-                            releaseThread()
-                                .map(AsyncGenerator.Data::<Output>done)
-                                .orElseGet( () -> AsyncGenerator.Data.done(context.currentState()) ));
+                        final var result = releaseThread()
+                                .map( v -> {
+                                    log.trace("Execution ended with state:\n{}\n", v);
+                                    return AsyncGenerator.Data.<Output>done( GraphResult.from(v, stateGraph));
+                                })
+                                .orElseGet( () -> {
+                                    log.trace("Execution ended with state:\n{}\n", context.currentState());
+                                    return AsyncGenerator.Data.done(GraphResult.from(context.currentState(), stateGraph));
+                                });
+                        $1.dispatchAsync( result );
                         break;
                     }
 
@@ -926,6 +938,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }
+
+                        log.trace("Execution interrupted with metadata:\n{}\n", interruptionMetadata);
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done( interruptionMetadata ));
                         break;
@@ -938,6 +952,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                         if( compileConfig.checkpointSaver().isPresent() ) {
                             compileConfig.checkpointSaver().get().registerInterruption(config, interruptionMetadata);
                         }
+                        log.trace("Execution interrupted with metadata:\n{}\n", interruptionMetadata);
                         $1.dispatchAsync(
                                 AsyncGenerator.Data.done(interruptionMetadata ));
                         break;
@@ -999,6 +1014,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             final var interruptMetadata = InterruptionMetadata.builder(nodeId, clonedState)
                                     .reason(interruptException.getMessage())
                                     .build();
+                            log.trace("Execution interrupted with metadata:\n{}\n", interruptMetadata);
                             $1.dispatchAsync(AsyncGenerator.Data.done(interruptMetadata));
 
                         }
