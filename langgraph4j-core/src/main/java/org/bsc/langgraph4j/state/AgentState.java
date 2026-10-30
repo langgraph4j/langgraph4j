@@ -7,16 +7,52 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.entryOf;
+import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 
 /**
  * Represents the state of an agent with a map of data.
  */
 public class AgentState {
+    /**
+     * Experimental Interface representing a schema for an agent's state, defining the channels and their configurations.
+     * This schema is used to validate and manage the state of an agent in a structured manner.
+     *
+     * @since 1.9.8
+     */
+    public sealed interface Schema permits SchemaImpl {
+
+        static Schema emptySchema( ) {
+            return new SchemaImpl(Map.of());
+        }
+
+        static Schema overallSchema( Map<String, Channel<?>> channels ) {
+            return new SchemaImpl(channels);
+        }
+
+        static Schema filterSchema( String ...allowChannelNames ) {
+            return new SchemaImpl(Arrays.stream(allowChannelNames)
+                    .collect(Collectors.toMap(name -> name, name -> Channels.bare())));
+        }
+
+        Map<String, Channel<?>> channels();
+
+        default Schema merge(Map<String, Channel<?>> other ) {
+            return new SchemaImpl(mergeMap( this.channels(), other, (a,b) -> a ));
+        }
+
+        default Schema merge(Schema other ) {
+            return merge( other.channels() );
+        }
+    }
+
+
     /**
      * Marker value that resets a state entry through its configured {@link Channel}.
      * <p>
@@ -75,7 +111,6 @@ public class AgentState {
                 Collector.Characteristics.UNORDERED);
     }
 
-
     private static Collector<Map.Entry<String, Object>, ?, Map<String, Object>> toMapAllowingNulls() {
         return Collector.of(
                 HashMap::new,
@@ -112,7 +147,6 @@ public class AgentState {
                 .collect(toMapAllowingNulls());
     }
 
-
     /**
      * Updates a state with the provided partial state.
      * The merge function is used to merge the current state value with the new value.
@@ -133,47 +167,47 @@ public class AgentState {
             return state;
         }
 
-        Map<String, Object> updatedPartialState = updatePartialStateFromSchema(state, partialState, channels);
+        final var updatedPartialState = updatePartialStateFromSchema(state, partialState, channels);
 
         return Stream.concat(state.entrySet().stream(), updatedPartialState.entrySet().stream())
                 .collect(toMapRemovingItemMarkedForRemoval());
     }
 
     /**
+     * Updates a state with the provided partial state.
+     * The merge function is used to merge the current state value with the new value.
+     * If {@code channels} is {@code null} or empty, channel resolution is skipped;
+     * the partial state is still merged into the current state, including the standard
+     * handling for reset and removal markers.
+     *
+     * @param state        the current state
+     * @param partialState the partial state to update from
+     * @param schema       the schema used to update matching partial-state values; may be
+     *                     {@code null} or empty
+     * @return the updated state
+     * @throws NullPointerException if state is null
+     */
+    public static Map<String, Object> updateState(@NonNull Map<String, Object> state, @Nullable Map<String, Object> partialState, @Nullable Schema schema) {
+        return updateState(state, partialState, schema != null ? schema.channels() : null);
+    }
+
+
+    /**
      * Filters the state to include only the specified attribute names.
      *
      * @param state          the current state
-     * @param attributeNames the list of attribute names to include in the filtered state
+     * @param schema the input/output schema to include in the filtered state
      * @return a new map containing only the specified attributes from the state
      * @throws NullPointerException if state is null
      */
-    public static Map<String, Object> filterByKeys(@NonNull Map<String, Object> state, @Nullable List<String> attributeNames) {
+    public static Map<String, Object> filterBySchema(@NonNull Map<String, Object> state, @Nullable Schema schema) {
         Objects.requireNonNull(state, "state cannot be null");
-        if (attributeNames == null || attributeNames.isEmpty()) {
+        if (schema == null || schema.channels().isEmpty()) {
             return state;
         }
 
         return state.entrySet().stream()
-                .filter(entry -> attributeNames.contains(entry.getKey()))
-                .collect(toMapAllowingNulls());
-    }
-
-    /**
-     * Filters out the specified keys from the given state map.
-     *
-     * @param state          the state map to filter
-     * @param attributeNames the list of attribute names to exclude from the filtered state
-     * @return a new map containing the state data excluding the specified attributes
-     * @throws NullPointerException if state is null
-     */
-    public static Map<String, Object> filterOutKeys(@NonNull Map<String, Object> state, @Nullable List<String> attributeNames) {
-        Objects.requireNonNull(state, "state cannot be null");
-        if (attributeNames == null || attributeNames.isEmpty()) {
-            return state;
-        }
-
-        return state.entrySet().stream()
-                .filter(entry -> !attributeNames.contains(entry.getKey()))
+                .filter(entry -> schema.channels().containsKey(entry.getKey()))
                 .collect(toMapAllowingNulls());
     }
 
@@ -200,7 +234,6 @@ public class AgentState {
         return updateState(state.data(), partialState, channels);
     }
 
-
     private final java.util.Map<String, Object> data;
 
     /**
@@ -208,7 +241,7 @@ public class AgentState {
      *
      * @param initData the initial data for the agent state
      */
-    public AgentState(Map<String, Object> initData) {
+    public AgentState( Map<String, Object> initData ) {
         this.data = new HashMap<>(initData);
     }
 
@@ -230,7 +263,7 @@ public class AgentState {
      * @return an Optional containing the value if present, otherwise an empty Optional
      */
     @SuppressWarnings("unchecked")
-    public final <T> Optional<T> value(String key) {
+    public final <T> Optional<T> value( String key ) {
         return ofNullable((T) data().get(key));
     }
 
@@ -252,34 +285,50 @@ public class AgentState {
      * handling for reset and removal markers.
      *
      * @param partialState the partial state to update from
+     * @param schema     the channels used to update matching partial-state values; may be
+     *                     {@code null} or empty
+     * @return a new copy of the updated state's data
+     * @since 1.9.8
+     */
+    public Map<String, Object> update(Map<String, Object> partialState, @Nullable Schema schema) {
+        return updateState(this.data(), partialState, schema != null ? schema.channels() : null);
+    }
+
+    /**
+     * Provides a new state's data as result of the  state updates with the provided partial state.
+     * The merge function is used to merge the current state value with the new value.
+     * If {@code channels} is {@code null} or empty, channel resolution is skipped;
+     * the partial state is still merged into the current state, including the standard
+     * handling for reset and removal markers.
+     *
+     * @param partialState the partial state to update from
      * @param channels     the channels used to update matching partial-state values; may be
      *                     {@code null} or empty
      * @return a new copy of the updated state's data
      * @since 1.9.8
      */
-    public Map<String, Object> update(Map<String, Object> partialState, Map<String, Channel<?>> channels) {
+    public Map<String, Object> update(Map<String, Object> partialState, @Nullable Map<String, Channel<?>> channels) {
         return updateState(this.data(), partialState, channels);
     }
 
     /**
      * Provides a new state's data as result of filtering the state data to include only the specified attribute names.
      *
-     * @param attributeNames the list of attribute names to include in the filtered state
+     * @param schema the input schema to include in the filtered state
      * @return a new map containing only the specified attributes from the state data
      * @since 1.9.8
      */
-    public Map<String, Object> filterByKeys(@Nullable List<String> attributeNames) {
-        return filterByKeys(this.data(), attributeNames);
+    public Map<String, Object> filterBySchema(@Nullable Schema schema) {
+        return filterBySchema(this.data(), schema);
+    }
+}
+
+
+record SchemaImpl(Map<String, Channel<?>> channels) implements AgentState.Schema {
+
+    SchemaImpl(Map<String, Channel<?>> channels) {
+        this.channels = requireNonNullElse(channels, Map.of());
     }
 
-    /**
-     * Provides a new state's data as result of filtering the state data to exclude the specified attribute names.
-     *
-     * @param attributeNames the list of attribute names to exclude from the filtered state
-     * @return a new map containing the state data excluding the specified attributes
-     * @since 1.9.8
-     */
-    public Map<String, Object> filterOutKeys(@Nullable List<String> attributeNames) {
-        return filterOutKeys(this.data(), attributeNames);
-    }
+
 }
