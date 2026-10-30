@@ -24,4 +24,14 @@ public interface Channels {
     static <T> Channel<T> base( Reducer<T> reducer, Supplier<T> defaultProvider ) {
         return new BaseChannel<>(reducer, defaultProvider);
     }
+
+    /**
+     * Creates a bare channel with no reducer and no default value.
+     *
+     * @return a new instance of a bare channel
+     */
+    static <T> Channel<T> bare() {
+        return new BaseChannel<>(null, null);
+    }
+
 }
