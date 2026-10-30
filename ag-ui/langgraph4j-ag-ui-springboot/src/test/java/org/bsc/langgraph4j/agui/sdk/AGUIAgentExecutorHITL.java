@@ -130,7 +130,7 @@ public class AGUIAgentExecutorHITL extends AGUIAgentBase {
                             null,
                             System.currentTimeMillis(),
                             null))
-                    .build(END, graph.stateFactory().apply( result.asStateDataOrLastCheckpointStateData() ));
+                    .build(END, result.asState() );
             return output.events();
 
 

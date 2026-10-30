@@ -306,7 +306,7 @@ public class AgentExecutorITest {
             }
             else {
 
-                final var state = new AgentExecutorEx.State(result.asStateDataOrLastCheckpointStateData());
+                final AgentExecutorEx.State state = result.asState();
 
                 System.out.println( """
                 =============================

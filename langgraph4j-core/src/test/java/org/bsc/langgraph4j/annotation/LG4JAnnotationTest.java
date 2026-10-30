@@ -385,13 +385,12 @@ public class LG4JAnnotationTest implements LG4JLoggable {
                 .addEdge("node_4", END)
                 .compile();
 
-        final var state = graph.stream(
+        final State state = graph.stream(
                     GraphInput.args(Map.of("input", "test1")),
                     RunnableConfig.empty())
                 .toCompletableFuture()
-                .thenApply( GraphResult::from )
-                .thenApply(GraphResult::asStateDataOrLastCheckpointStateData)
-                .thenApply( s -> graph.stateFactory().apply(s) )
+                .thenApply(GraphResult::from)
+                .thenApply(GraphResult::<State>asState)
                 .join();
 
         assertIterableEquals( List.of("node_1", "node_2", "node_4"), state.messages());

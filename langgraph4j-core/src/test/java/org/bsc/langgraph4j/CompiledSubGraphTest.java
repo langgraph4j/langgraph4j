@@ -304,9 +304,9 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
 
                     continue;
                 }
-                if (result.isStateDataOrCheckpointSaverTag()) {
+                if (result.isStateData()) {
 
-                    final var stateData = new State(result.asStateDataOrLastCheckpointStateData());
+                    final State stateData = result.asState();
 
                     assertIterableEquals(List.of(
                             "NODE1",
@@ -510,7 +510,7 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
                     .reduce((a, b) -> b)
                     .thenAccept( reduceResult -> {
                         final var  result = GraphResult.from(reduceResult.resultValue());
-                        if( result.isStateDataOrCheckpointSaverTag() ) {
+                        if( result.isStateData() ) {
                             assertTrue(reduceResult.result().isEND());
                             assertIterableEquals(List.of(
                                     "NODE1",

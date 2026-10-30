@@ -253,7 +253,7 @@ public class LG4JCancellationTest {
             assertTrue(saver.tag(config, null).isEmpty(), "cancellation tagged a normally completed thread");
 
             var resumed = graph.stream(GraphInput.resume(), config).forEachAsync(output -> {});
-            assertTrue(GraphResult.from(resumed.get(5, TimeUnit.SECONDS)).isStateDataOrCheckpointSaverTag());
+            assertTrue(GraphResult.from(resumed.get(5, TimeUnit.SECONDS)).isStateData());
             assertTrue(nextNodeRan.get(), "resume did not run the next node");
         } finally {
             pending.complete(Map.of());

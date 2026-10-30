@@ -355,8 +355,8 @@ public class ParallelNodeTest {
                 .thenApply( GraphResult::from )
                 .whenComplete((result, throwable) -> {
                     assertNotNull(throwable);
-                    assertTrue(result.isStateDataOrCheckpointSaverTag());
-                    final var stateData = result.asStateDataOrLastCheckpointStateData();
+                    assertTrue(result.isStateData());
+                    final var stateData = result.asStateData();
                     assertEquals( "L", stateData.get("left") );
                     assertEquals( "R", stateData.get("right") );
                 });

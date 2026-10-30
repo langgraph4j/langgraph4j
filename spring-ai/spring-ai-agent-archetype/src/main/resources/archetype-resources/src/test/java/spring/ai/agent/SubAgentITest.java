@@ -155,7 +155,7 @@ public class SubAgentITest {
                     continue;
                 }
 
-                final var state = new AgentExecutorEx.State( result.asStateDataOrLastCheckpointStateData() );
+                final AgentExecutorEx.State state = result.asState();
 
                 state.lastMessage()
                         .map(Content::getText)
