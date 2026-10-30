@@ -6,7 +6,6 @@ import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
-import org.bsc.langgraph4j.state.StateSchema;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.jspecify.annotations.NonNull;
 
@@ -27,9 +26,9 @@ public final class GraphResult {
     private final Object result;
     private final Type type;
     private final AgentStateFactory<?> stateFactory;
-    private final StateSchema outputSchema;
+    private final AgentState.Schema outputSchema;
 
-    private GraphResult(Object result, Type type, AgentStateFactory<?> stateFactory, StateSchema outputSchema) {
+    private GraphResult(Object result, Type type, AgentStateFactory<?> stateFactory, AgentState.Schema outputSchema) {
         this.result = result;
         this.type = type;
         this.stateFactory = stateFactory;
@@ -297,7 +296,7 @@ public final class GraphResult {
      * @return the state data map, restricted to the keys allowed by the output schema.
      * @throws IllegalStateException if the result is neither state data nor a checkpoint saver tag,
      *         or if the tag does not contain any checkpoint.
-     * @see AgentState#filterBySchema(Map, StateSchema)
+     * @see AgentState#filterBySchema(Map, AgentState.Schema)
      * @see #asLastCheckpointStateData()
      */
     @SuppressWarnings("unchecked")
@@ -342,8 +341,8 @@ public final class GraphResult {
      * @throws IllegalStateException if the result does not contain a checkpoint saver tag or if the tag does not contain any checkpoint.
      * @see BaseCheckpointSaver.Tag#lastCheckpoint()
      * @see Checkpoint#state()
-     * @see AgentState#filterBySchema(Map, StateSchema)
-     * @see StateSchema
+     * @see AgentState#filterBySchema(Map, AgentState.Schema)
+     * @see AgentState.Schema
      * @see GraphResult#isCheckpointSaverTag()
      */
     public Map<String,Object> asLastCheckpointStateData() {
