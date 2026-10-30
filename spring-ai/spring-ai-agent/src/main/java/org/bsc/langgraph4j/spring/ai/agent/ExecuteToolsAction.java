@@ -40,7 +40,7 @@ public class ExecuteToolsAction<State extends MessagesState<Message>> implements
 
             if (assistantMessage.hasToolCalls()) {
 
-                return toolService.executeFunctions(assistantMessage.getToolCalls(), state.data(), MessagesState.MESSAGES_STATE)
+                return toolService.executeFunctions(assistantMessage.getToolCalls(), state.data(), MessagesState.MESSAGES)
                         .thenApply( command -> {
                             if( command.gotoNodeSafe().isPresent() ) {
                                 return command;

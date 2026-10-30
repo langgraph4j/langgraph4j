@@ -190,8 +190,8 @@ public interface LG4JTestUtil extends LG4JLoggable {
             }
 
             final var partialResult = ofNullable(attributeKey)
-                    .map( key -> Map.<String,Object>of(State.MESSAGES_STATE, message.concat(Objects.toString(state.value(key).orElse("")))) )
-                    .orElseGet(() -> Map.of(State.MESSAGES_STATE, message));
+                    .map( key -> Map.<String,Object>of(State.MESSAGES, message.concat(Objects.toString(state.value(key).orElse("")))) )
+                    .orElseGet(() -> Map.of(State.MESSAGES, message));
 
             return completedFuture(partialResult);
         }

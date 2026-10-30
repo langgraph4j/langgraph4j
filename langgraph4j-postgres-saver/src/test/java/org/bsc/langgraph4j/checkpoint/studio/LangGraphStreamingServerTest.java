@@ -43,7 +43,7 @@ public class LangGraphStreamingServerTest {
 
                         assertEquals(nodeId, config.nodeId());
 
-                        return completedFuture( Map.of(MessagesState.MESSAGES_STATE, "%s-%d".formatted(nodeId, System.nanoTime() )));
+                        return completedFuture( Map.of(MessagesState.MESSAGES, "%s-%d".formatted(nodeId, System.nanoTime() )));
                     };
 
         }

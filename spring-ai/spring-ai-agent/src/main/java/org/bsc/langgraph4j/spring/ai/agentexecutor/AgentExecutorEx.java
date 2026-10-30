@@ -275,7 +275,7 @@ public interface AgentExecutorEx extends LG4JLoggable {
                         .build();
 
                 return Map.of(
-                        State.MESSAGES_STATE, toolResponseMessage,
+                        State.MESSAGES, toolResponseMessage,
                         State.TOOL_EXECUTION_RESPONSES, MARK_FOR_RESET,
                         State.NEXT_ACTION, MARK_FOR_REMOVAL,
                         State.TOOL_EXECUTION_REQUESTS, MARK_FOR_RESET);
