@@ -1,5 +1,7 @@
 package org.bsc.langgraph4j.state;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -18,11 +20,10 @@ class BaseChannel<T> implements Channel<T> {
     /**
      * Constructs a new BaseChannel with the specified {@code reducer} and {@code defaultProvider}.
      *
-     * @param reducer the function to apply in the reduction process; must not be null
-     * @param defaultProvider the supplier of default value for operations where no input is provided; must not be null
-     * @throws NullPointerException if either the {@code reducer} or {@code defaultProvider} is null
+     * @param reducer the function to apply in the reduction process; may be null
+     * @param defaultProvider the supplier of default value for operations where no input is provided; may be null
      */
-    BaseChannel(Reducer<T> reducer, Supplier<T> defaultProvider ) {
+    BaseChannel(@Nullable Reducer<T> reducer, @Nullable Supplier<T> defaultProvider ) {
         this.defaultProvider = defaultProvider;
         this.reducer = reducer;
     }
