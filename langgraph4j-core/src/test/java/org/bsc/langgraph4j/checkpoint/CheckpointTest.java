@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -96,7 +97,9 @@ public class CheckpointTest {
                 .createdAt(FIXED_DATE)
                 .build();
 
-        final var updated = checkpoint.updateState(Map.of("prop2", "value2"), null);
+        final var updated = checkpoint.updateState(
+                Map.of("prop2", "value2"),
+                AgentState.Schema.emptySchema());
 
         assertEquals(FIXED_DATE, updated.createdAt());
         assertEquals(checkpoint.id(), updated.id());
