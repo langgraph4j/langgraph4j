@@ -172,6 +172,10 @@ public record Checkpoint(
         return updateState( values, channels, this.nextNodeId );
     }
 
+    public Checkpoint updateState(Map<String,Object> values, AgentState.Schema schema ) {
+        return updateState( values, schema, this.nextNodeId );
+    }
+
     /**
      * Returns a new Checkpoint with updated state and a new nextNodeId.
      *
@@ -190,6 +194,14 @@ public record Checkpoint(
 
         return new Checkpoint( this.id,
                 AgentState.updateState( this.state, values, channels ),
+                this.nodeId,
+                requireNonNull(nextNodeId, "nextNodeId cannot be null"),
+                this.createdAt );
+    }
+    public Checkpoint updateState(Map<String,Object> values, AgentState.Schema schema, String nextNodeId ) {
+
+        return new Checkpoint( this.id,
+                AgentState.updateState( this.state, values, schema.channels() ),
                 this.nodeId,
                 requireNonNull(nextNodeId, "nextNodeId cannot be null"),
                 this.createdAt );
