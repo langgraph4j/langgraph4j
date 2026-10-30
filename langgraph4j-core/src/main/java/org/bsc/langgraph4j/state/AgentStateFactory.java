@@ -2,12 +2,10 @@ package org.bsc.langgraph4j.state;
 
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A factory interface for creating instances of {@link AgentState}.
@@ -16,17 +14,41 @@ import static java.util.Optional.ofNullable;
  */
 public interface AgentStateFactory<State extends AgentState> extends Function<Map<String,Object>, State> {
 
+    /**
+     * Initializes the state with default values from the provided schema.
+     * This method processes the provided schema to extract default values for each channel that has a defined default value.
+     *
+     * @param schema the schema containing channel definitions
+     * @return a map containing the initial data with default values applied
+     */
+    default Map<String,Object> initialDataFromSchema( AgentState.Schema schema  ) {
+        return initialDataFromSchema( requireNonNull(schema,"schema cannot be null").channels() );
+    }
 
-    default Map<String,Object> initialDataFromSchema( Map<String,Channel<?>> schema  ) {
-        return schema.entrySet().stream()
+    /**
+     * Initializes the state with default values from the provided channels.
+     * This method processes the provided channels to extract default values for each channel that has a defined default value.
+     *
+     * @param channels the map of channel definitions
+     * @return a map containing the initial data with default values applied
+     */
+    default Map<String,Object> initialDataFromSchema( Map<String,Channel<?>> channels  ) {
+        return channels.entrySet().stream()
                 .filter( c -> c.getValue().getDefault().isPresent() )
-                .map( e ->
-                    e.getValue().getDefault()
-                            .flatMap( v -> ofNullable(v.get()) )
-                            .map( v -> Map.entry( e.getKey(), v) )
-                            .orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, e ->
+                        e.getValue().getDefault().get().get()
+                ));
+    }
+
+    /**
+     * Initializes this state from the given schema.
+     * This method processes the provided schema to extract default values for each channel that has a defined default value.
+     *
+     * @param schema the schema containing channel definitions
+     * @return the initialized state with default values applied
+     */
+    default State applyFromSchema( AgentState.Schema schema )  {
+        return applyFromSchema( requireNonNull(schema,"schema cannot be null").channels() );
     }
 
     /**
@@ -36,8 +58,9 @@ public interface AgentStateFactory<State extends AgentState> extends Function<Ma
      * @param schema the schema map containing channel definitions
      * @return the initialized state with default values applied
      */
-    default State applyFromSchema(Map<String,Channel<?>> schema )  {
+    default State applyFromSchema( Map<String,Channel<?>> schema )  {
         return apply( initialDataFromSchema(schema) );
     }
+
 
 }
