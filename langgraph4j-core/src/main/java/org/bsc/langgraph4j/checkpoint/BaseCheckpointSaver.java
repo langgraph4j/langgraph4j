@@ -3,6 +3,7 @@ package org.bsc.langgraph4j.checkpoint;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.utils.CollectionsUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -42,6 +43,19 @@ public interface BaseCheckpointSaver {
 
         public Optional<Integer> version() {
             return ofNullable(version);
+        }
+
+        @Override
+        public String toString() {
+            return """
+                    Tag{
+                        threadId='%s',
+                        version='%s',
+                        checkpoints=%s
+                    }""".formatted(
+                            threadId,
+                            version,
+                            CollectionsUtils.toString(checkpoints));
         }
     }
 
