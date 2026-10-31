@@ -12,6 +12,7 @@ import org.sqlite.SQLiteDataSource;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
+import java.time.Instant;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -174,6 +175,23 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
         return stateSerializer.readDataFromString(binaryPayload).data();
     }
 
+    /**
+     * Parses the {@code saved_at} column into an {@link Instant}.
+     *
+     * <p>The schema fills this column with {@code strftime('%Y-%m-%dT%H:%M:%fZ', 'now')},
+     * which is an ISO-8601 instant and therefore directly parseable. A null column
+     * means the storage did not record a time, so it maps to a null saved-at time
+     * rather than being replaced with "now" — otherwise every load would invent a
+     * different value for the same checkpoint, and relying on the load order would
+     * become the only way to tell checkpoints apart.
+     *
+     * @param value the raw column value, may be null
+     * @return the parsed instant, or null when the column is null
+     */
+    protected static Instant parseSavedAt( String value ) {
+        return ( value == null ) ? null : Instant.parse( value );
+    }
+
     @Override
     protected LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception {
         final var checkpoints = new LinkedList<Checkpoint>();
@@ -194,6 +212,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
                             .state(decodeState(rs.getString(4), rs.getString(5)))
+                            .savedAt(parseSavedAt(rs.getString("saved_at")))
                             .build();
                     checkpoints.add(checkpoint);
                 }

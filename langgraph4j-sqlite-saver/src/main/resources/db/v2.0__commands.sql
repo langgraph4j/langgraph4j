@@ -14,7 +14,8 @@ SELECT  c.checkpoint_id,
         c.next_node_id,
         c.state_data,
         c.state_content_type,
-        c.parent_checkpoint_id
+        c.parent_checkpoint_id,
+        c.saved_at
 FROM matched_thread t
 JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
 ORDER BY c.saved_at DESC
@@ -102,7 +103,8 @@ SELECT
     c.next_node_id,
     c.state_data,
     c.state_content_type,
-    c.parent_checkpoint_id
+    c.parent_checkpoint_id,
+    c.saved_at
 FROM LG4JThreadTag t
 JOIN LG4JCheckpoint c ON c.thread_id = t.thread_id
 WHERE %s thread_name = ? AND t.released_version = ?
