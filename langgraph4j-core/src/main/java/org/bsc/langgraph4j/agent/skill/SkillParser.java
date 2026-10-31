@@ -35,7 +35,7 @@ public class SkillParser {
             if( value instanceof String stringValue ) {
                 return Optional.of(List.of(stringValue.split(" ")));
             }
-            throw new IllegalStateException("property '%s' doesn't contain a list of strings! ");
+            throw new IllegalStateException("property '%s' doesn't contain a list of strings!".formatted(key));
         }
     }
 
