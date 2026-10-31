@@ -51,6 +51,7 @@ public abstract class AbstractSQLiteSaverV2 extends AbstractSQLiteSaver {
                                 .nodeId(rs.getString("node_id"))
                                 .nextNodeId(rs.getString("next_node_id"))
                                 .state(decodeState(rs.getString("state_data"), rs.getString("state_content_type")))
+                                .savedAt(parseSavedAt(rs.getString("saved_at")))
                                 .build();
 
                         checkpoints.addLast(checkpoint);

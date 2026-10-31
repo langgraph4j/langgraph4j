@@ -157,13 +157,13 @@ public class LG4JMemorySaverTest
         assertEquals( "agent_1", last.get().nodeId() );
         assertNotNull( last.get().state().get("agent_1:prop1") );
         assertEquals( "agent_1:test", last.get().state().get("agent_1:prop1") );
-        assertNotNull( last.get().createdAt(), "checkpoint must carry a creation date" );
+        assertNotNull( last.get().savedAt(), "checkpoint must carry a creation date" );
 
         // checkpoints are returned newest first: creation dates must not increase going deeper in the list
         final var orderedCheckpoints = new ArrayList<>(checkpoints);
         for( int i = 0 ; i < orderedCheckpoints.size() - 1 ; i++ ) {
-            assertFalse( orderedCheckpoints.get(i).createdAt()
-                    .isBefore( orderedCheckpoints.get(i+1).createdAt() ) );
+            assertFalse( orderedCheckpoints.get(i).savedAt()
+                    .isBefore( orderedCheckpoints.get(i+1).savedAt() ) );
         }
 
         var tag = saver.release(runnableConfig);
