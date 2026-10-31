@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.bsc.langgraph4j.state.AppenderChannel.ReplaceAllWith;
 
-import static org.bsc.langgraph4j.state.AgentState.Schema.filterSchema;
+import static org.bsc.langgraph4j.state.AgentState.Schema.select;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mapOf;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -161,14 +161,14 @@ public class AgentStateTest {
         assertEquals(5, state.steps());
         assertIterableEquals( List.of("A", "B", "C"), state.messages());
 
-        var newState = new State(state.filterBySchema(filterSchema("messages")));
+        var newState = new State(state.filterBySchema(select("messages")));
 
         assertEquals( 1, newState.data().size());
         assertTrue(newState.value("steps").isEmpty());
         assertTrue(newState.value("messages").isPresent());
         assertIterableEquals( List.of("A", "B", "C"), newState.messages());
 
-        var newState2 = new State(state.filterBySchema(filterSchema("steps")));
+        var newState2 = new State(state.filterBySchema(select("steps")));
 
         assertEquals( 1, newState2.data().size());
         assertTrue(newState2.value("steps").isPresent());

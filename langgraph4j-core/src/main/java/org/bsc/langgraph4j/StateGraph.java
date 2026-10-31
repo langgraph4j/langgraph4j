@@ -101,7 +101,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      */
     public StateGraph( Map<String, Channel<?>> channels,
                       StateSerializer<State> stateSerializer ) {
-        this.schema = AgentState.Schema.overallSchema(channels);
+        this.schema = AgentState.Schema.of(channels);
         this.stateSerializer = Objects.requireNonNull(stateSerializer, "stateSerializer cannot be null");
     }
 
@@ -111,7 +111,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      * @param stateSerializer the serializer to serialize the state
      */
     public StateGraph( StateSerializer<State> stateSerializer ) {
-        this( AgentState.Schema.emptySchema(), stateSerializer );
+        this( AgentState.Schema.empty(), stateSerializer );
     }
 
     /**
@@ -120,7 +120,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      * @param stateFactory the factory to create agent states
      */
     public StateGraph( AgentStateFactory<State> stateFactory ) {
-        this( AgentState.Schema.emptySchema(), stateFactory );
+        this( AgentState.Schema.empty(), stateFactory );
     }
 
     /**
@@ -200,11 +200,11 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
     }
 
     public StateGraph<State> withInputSchema( String ...allowChannelNames  ) {
-        return withInputSchema( AgentState.Schema.filterSchema(allowChannelNames) );
+        return withInputSchema( AgentState.Schema.select(allowChannelNames) );
     }
 
     public StateGraph<State> withOutputSchema( String ...allowChannelNames ) {
-        return withOutputSchema( AgentState.Schema.filterSchema(allowChannelNames) );
+        return withOutputSchema( AgentState.Schema.select(allowChannelNames) );
     }
 
     public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {

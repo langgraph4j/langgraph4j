@@ -30,7 +30,7 @@ import static org.bsc.langgraph4j.action.AsyncCommandAction.command_async;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
-import static org.bsc.langgraph4j.state.AgentState.Schema.overallSchema;
+import static org.bsc.langgraph4j.state.AgentState.Schema.of;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -764,12 +764,11 @@ public class LG4JTest implements LG4JLoggable {
             public static final String CONTEXT = "context";
             public static final String RESULT = "result";
 
-            public static final Map<String, Channel<?>> SCHEMA =
-                    overallSchema(Map.of(
+            public static final AgentState.Schema SCHEMA =
+                    AgentState.Schema.of(Map.of(
                             CONTEXT, Channels.bare(),
                             RESULT, Channels.base(() -> "")))
-                            .merge(MessagesState.SCHEMA)
-                            .channels();
+                            .merge(MessagesState.SCHEMA);
 
             public ProcessorState(Map<String, Object> initData) {
                 super(initData);
@@ -828,12 +827,11 @@ public class LG4JTest implements LG4JLoggable {
             public static final String CONTEXT = "context";
             public static final String RESULT = "result";
 
-            public static final Map<String, Channel<?>> SCHEMA =
-                    overallSchema(Map.of(
+            public static final AgentState.Schema SCHEMA =
+                        AgentState.Schema.of(Map.of(
                             CONTEXT, Channels.bare(),
                             RESULT, Channels.base(() -> "")))
-                            .merge(MessagesState.SCHEMA)
-                            .channels();
+                            .merge(MessagesState.SCHEMA);
 
             public ProcessorState(Map<String, Object> initData) {
                 super(initData);

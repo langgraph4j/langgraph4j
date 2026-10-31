@@ -28,26 +28,36 @@ public class AgentState {
      */
     public sealed interface Schema permits SchemaImpl {
 
-        static Schema emptySchema( ) {
+        static Schema empty( ) {
             return new SchemaImpl(Map.of());
         }
 
-        static Schema overallSchema( Map<String, Channel<?>> channels ) {
+        static Schema of( Map<String, Channel<?>> channels ) {
             return new SchemaImpl(channels);
         }
 
-        static Schema filterSchema( String ...allowChannelNames ) {
-            return new SchemaImpl(Arrays.stream(allowChannelNames)
+        /**
+         * Creates a schema containing only the specified channel names.
+         *
+         * <p>Each selected channel is configured as a bare channel.
+         * This schema is intended to restrict the attributes exposed
+         * through agent input/output boundaries.
+         *
+         * @param channelNames the names of the allowed channels
+         * @return a schema containing the selected channels
+         */
+        static Schema select( String ...channelNames ) {
+            return new SchemaImpl(Arrays.stream(channelNames)
                     .collect(Collectors.toMap(name -> name, name -> Channels.bare())));
         }
 
         Map<String, Channel<?>> channels();
 
-        default Schema merge(Map<String, Channel<?>> other ) {
+        default Schema merge( Map<String, Channel<?>> other ) {
             return new SchemaImpl(mergeMap( this.channels(), other, (a,b) -> a ));
         }
 
-        default Schema merge(Schema other ) {
+        default Schema merge( Schema other ) {
             return merge( other.channels() );
         }
     }

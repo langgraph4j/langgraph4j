@@ -99,7 +99,7 @@ public class CheckpointTest {
 
         final var updated = checkpoint.updateState(
                 Map.of("prop2", "value2"),
-                AgentState.Schema.emptySchema());
+                AgentState.Schema.empty());
 
         assertEquals(FIXED_DATE, updated.createdAt());
         assertEquals(checkpoint.id(), updated.id());
