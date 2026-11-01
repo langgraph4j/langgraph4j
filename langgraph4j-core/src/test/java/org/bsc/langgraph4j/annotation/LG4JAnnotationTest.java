@@ -390,7 +390,7 @@ public class LG4JAnnotationTest implements LG4JLoggable {
                     RunnableConfig.empty())
                 .toCompletableFuture()
                 .thenApply( GraphResult::from )
-                .thenApply(GraphResult::asStateDataOrLastCheckpointStateData)
+                .thenApply(GraphResult::asStateData)
                 .thenApply( s -> graph.stateFactory().apply(s) )
                 .join();
 
