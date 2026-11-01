@@ -169,15 +169,17 @@ public class LG4JCancellationTest {
                 .addEdge("right", "parent_next")
                 .addEdge("parent_next", END)
                 .compile();
-        final var executor = Executors.newFixedThreadPool(4);
-
-        var config = RunnableConfig.builder().addParallelNodeExecutor(START, executor).build();
+        var executor = Executors.newCachedThreadPool();
+        var config = RunnableConfig.builder()
+                .emitterExecutor(executor)
+                .addParallelNodeExecutor(START, executor)
+                .build();
         var generator = graph.stream(GraphInput.args(Map.of()), config);
-
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "parallel child nodes did not start");
             assertTrue(generator.cancel(mayInterruptIfRunning));
             pending.complete(Map.of());
+            executor.shutdown();
             awaitGraphExecution(executionThreads);
 
             assertFalse(nextChildNodeRan.get(), "parallel child node ran after cancellation");
