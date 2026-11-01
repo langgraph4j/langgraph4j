@@ -11,8 +11,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -174,12 +175,17 @@ public class LG4JCancellationTest {
                 .addEdge("right", "parent_next")
                 .addEdge("parent_next", END)
                 .compile();
-        var config = RunnableConfig.builder().addParallelNodeExecutor(START, ForkJoinPool.commonPool()).build();
+        var executor = Executors.newCachedThreadPool();
+        var config = RunnableConfig.builder()
+                .emitterExecutor(executor)
+                .addParallelNodeExecutor(START, executor)
+                .build();
         var generator = graph.stream(GraphInput.args(Map.of()), config);
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "parallel child nodes did not start");
             assertTrue(generator.cancel(mayInterruptIfRunning));
             pending.complete(Map.of());
+            executor.shutdown();
             awaitGraphExecution(executionThreads);
 
             assertFalse(nextChildNodeRan.get(), "parallel child node ran after cancellation");
@@ -187,6 +193,7 @@ public class LG4JCancellationTest {
         } finally {
             pending.complete(Map.of());
             generator.cancel(true);
+            executor.shutdownNow();
         }
     }
 
