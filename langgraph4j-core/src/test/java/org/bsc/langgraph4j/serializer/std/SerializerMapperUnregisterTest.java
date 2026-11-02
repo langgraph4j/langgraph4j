@@ -10,9 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * {@link SerializerMapper#register} keys its registry by the type being serialized,
- * so {@link SerializerMapper#unregister} must look the entry up by the serializer's
- * own type instead of treating that type as a registry key.
+ * {@link SerializerMapper#register} stores each serializer under the type it serializes,
+ * so {@link SerializerMapper#unregister} has to be given that same type.
  */
 class SerializerMapperUnregisterTest {
 
@@ -29,26 +28,30 @@ class SerializerMapperUnregisterTest {
         }
     }
 
-    static class UnusedSerializer implements StdSerializer<Integer> {
+    static class IntegerSerializer implements StdSerializer<Integer> {
 
         @Override
-        public void write(Integer object, ObjectOutput out) { }
+        public void write(Integer object, ObjectOutput out) throws IOException {
+            out.writeInt(object);
+        }
 
         @Override
-        public Integer read(ObjectInput in) { return null; }
+        public Integer read(ObjectInput in) throws IOException {
+            return in.readInt();
+        }
     }
 
     @Test
-    void unregisterShouldRemoveTheRegisteredSerializer() {
+    void unregisterShouldRemoveTheSerializerOfTheGivenType() {
 
         final var mapper = new SerializerMapper();
 
         mapper.register( String.class, new StringSerializer() );
 
         assertTrue( mapper.getSerializer( String.class ).isPresent(),
-                "precondition: the serializer is registered for String" );
+                "precondition: a serializer is registered for String" );
 
-        assertTrue( mapper.unregister( StringSerializer.class ),
+        assertTrue( mapper.unregister( String.class ),
                 "unregister() should report that it removed the serializer" );
 
         assertTrue( mapper.getSerializer( String.class ).isEmpty(),
@@ -56,14 +59,30 @@ class SerializerMapperUnregisterTest {
     }
 
     @Test
-    void unregisterShouldReportFalseForASerializerThatWasNeverRegistered() {
+    void unregisterShouldOnlyRemoveTheGivenType() {
+
+        final var mapper = new SerializerMapper();
+
+        mapper.register( String.class, new StringSerializer() );
+        mapper.register( Integer.class, new IntegerSerializer() );
+
+        assertTrue( mapper.unregister( String.class ) );
+
+        assertTrue( mapper.getSerializer( String.class ).isEmpty(),
+                "the unregistered type should be gone" );
+        assertTrue( mapper.getSerializer( Integer.class ).isPresent(),
+                "a different type must keep its serializer" );
+    }
+
+    @Test
+    void unregisterShouldReportFalseForATypeThatWasNeverRegistered() {
 
         final var mapper = new SerializerMapper();
 
         mapper.register( String.class, new StringSerializer() );
 
-        assertFalse( mapper.unregister( UnusedSerializer.class ),
-                "unregister() should not claim to remove a serializer that was never registered" );
+        assertFalse( mapper.unregister( Integer.class ),
+                "unregister() should not claim to remove a type that was never registered" );
 
         assertTrue( mapper.getSerializer( String.class ).isPresent(),
                 "an unrelated unregister() call must leave other registrations untouched" );
