@@ -283,15 +283,19 @@ public class LG4JCancellationTest {
                 .addEdge("next", END)
                 .compile();
 
-        var generator = graph.stream(GraphInput.args(Map.of()), RunnableConfig.builder().build());
+        var executor = Executors.newCachedThreadPool();
+        var config = RunnableConfig.builder().emitterExecutor(executor).build();
+        var generator = graph.stream(GraphInput.noArgs(), config);
         try {
-            var result = generator.forEachAsync(output -> {}).get(5, TimeUnit.SECONDS);
+            var result = generator.toCompletableFuture().get(5, TimeUnit.SECONDS);
             assertTrue(GraphResult.from(result).isCancelled());
+            executor.shutdown();
             awaitGraphExecution(executionThreads);
             assertFalse(edgeEvaluated.get(), "edge evaluated after the embedded generator was cancelled");
             assertFalse(nextNodeRan.get(), "next node ran after the embedded generator was cancelled");
         } finally {
             generator.cancel(true);
+            executor.shutdownNow();
         }
     }
 }
