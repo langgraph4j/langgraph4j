@@ -39,7 +39,7 @@ public class SkillParser {
                         .filter( item -> !item.isEmpty() )
                         .toList() );
             }
-            throw new IllegalStateException("property '%s' doesn't contain a list of strings! ");
+            throw new IllegalStateException("property '%s' doesn't contain a list of strings!".formatted(key));
         }
     }
 
