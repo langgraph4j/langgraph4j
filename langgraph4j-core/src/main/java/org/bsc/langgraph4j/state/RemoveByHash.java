@@ -9,20 +9,15 @@ import java.util.Objects;
  */
 public record RemoveByHash<T>(T value ) implements AppenderChannel.RemoveIdentifier<T> {
     /**
-     * Checks whether the given element is the value this identifier refers to.
-     * <p>
-     * The comparison is by value ({@link Objects#equals(Object, Object)}), not by hash
-     * code: two distinct values can share a hash code (e.g. {@code "Aa"} and {@code "BB"}
-     * both hash to 2112), and comparing hashes would treat them as the same element.
-     * Removing one of them would then silently remove the unrelated one as well.
-     *
+     * Compares the hash code of this object with another element at a specific index.
+     * 
      * @param element the element to compare with
      * @param atIndex the index of the element in the context (ignored in comparison)
-     * @return zero if the element is the referenced value, a positive value otherwise
+     * @return the difference between the hash codes of this object and the given element
      */
     @Override
     public int compareTo(T element, int atIndex) {
-        return Objects.equals(value, element) ? 0 : 1;
+        return Objects.hashCode(value) - Objects.hashCode(element);
     }
 
     /**
