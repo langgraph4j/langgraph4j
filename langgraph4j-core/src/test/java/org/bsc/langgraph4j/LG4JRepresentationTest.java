@@ -7,6 +7,7 @@ import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.EdgeMappings;
+import org.bsc.langgraph4j.utils.TrySupplier;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -15,13 +16,9 @@ import java.util.concurrent.CompletableFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class LG4JRepresentationTest {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     CompletableFuture<Map<String, Object>> dummyNodeAction(AgentState state) {
         return CompletableFuture.completedFuture(Map.of());
@@ -662,4 +659,48 @@ end
         }
         return false;
     }
+
+    /**
+     * fix(core): emit PlantUML output with LF only
+     * @see <a href="https://github.com/langgraph4j/langgraph4j/pull/506">PR #506</a>
+     */
+    @Test
+    public void plantUmlShouldOnlyUseLfAsLineSeparator() throws Exception {
+       final var nestedGraph = TrySupplier.Try(() -> {
+            final AsyncNodeAction<AgentState> action =
+                    AsyncNodeAction.node_async(ignored -> Map.of());
+
+            final var subGraph = new StateGraph<>(AgentState::new)
+                    .addNode("bar1", action)
+                    .addNode("bar2", action)
+                    .addEdge(START, "bar1")
+                    .addEdge("bar1", "bar2")
+                    .addEdge("bar2", END)
+                    .compile();
+
+            return new StateGraph<>(AgentState::new)
+                    .addNode("main1", action)
+                    .addNode("subgraph1", subGraph)
+                    .addEdge(START, "main1")
+                    .addEdge("main1", "subgraph1")
+                    .addEdge("subgraph1", END);
+        });
+
+        final var content = nestedGraph.get()
+                .getGraph(GraphRepresentation.Type.PLANTUML, "line-ending", false)
+                .content();
+
+        System.out.println(content);
+
+        assertFalse(content.contains("\r"),
+                () -> "PlantUML output must not contain CR, got:\n" + content);
+
+        // lines emitted for a sub graph are the ones that used to embed the platform separator
+        assertTrue(content.contains("package subgraph1 {\n"),
+                () -> "sub graph declaration is not LF terminated, got:\n" + content);
+
+        assertTrue(content.endsWith("@enduml\n"),
+                () -> "document is not LF terminated, got:\n" + content);
+    }
+
 }

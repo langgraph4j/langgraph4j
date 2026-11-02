@@ -36,7 +36,6 @@ public class SerializeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void serializeStateTest() throws Exception {
 
         final var stateSerializer = new ObjectStreamStateSerializer<>(AgentState::new);
@@ -75,7 +74,7 @@ public class SerializeTest {
         assertInstanceOf( ValueWithNull.class, deserializeState.get("e") );
         assertNull( ((ValueWithNull)deserializeState.get("e")).name );
         assertInstanceOf( List.class, deserializeState.get("list") );
-        List<String> list = (List<String>)deserializeState.get("list");
+        List<?> list = (List<?>)deserializeState.get("list");
         assertEquals( 4, list.size() );
         assertEquals( "aa", list.get(0) );
         assertNull(  list.get(1) );
