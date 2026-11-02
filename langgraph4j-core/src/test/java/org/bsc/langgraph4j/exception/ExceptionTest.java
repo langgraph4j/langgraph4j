@@ -1,12 +1,18 @@
 package org.bsc.langgraph4j.exception;
 
-import org.bsc.langgraph4j.GraphInterruptException;
-import org.bsc.langgraph4j.GraphRunnerException;
-import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.*;
+import org.bsc.langgraph4j.annotation.ActionCatalog;
+import org.bsc.langgraph4j.annotation.ActionCatalogRepository;
+import org.bsc.langgraph4j.annotation.NodeAction;
+import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import java.util.Map;
+
+import static org.bsc.langgraph4j.GraphDefinition.END;
+import static org.bsc.langgraph4j.GraphDefinition.START;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExceptionTest {
 
@@ -46,4 +52,40 @@ public class ExceptionTest {
         }
     }
 
+
+    @Test
+    void testActionExceptionTypeIsPreserved() throws GraphStateException {
+
+        var eex = ExceptionUtils.unwrap(null);
+
+        class State extends MessagesState<String> {
+            public State(Map<String, Object> initData) {
+                super(initData);
+            }
+        }
+
+        class OuterException extends RuntimeException {
+            OuterException(String message, Throwable cause) { super(message, cause); }
+        }
+        class MyActionCatalog implements ActionCatalog {
+            @NodeAction(name = "node_with_exception")
+            public Map<String, Object> nodeAction(State state, RunnableConfig config) {
+                throw new OuterException("outer", new java.io.IOException("inner"));
+            }
+        }
+
+        final var repo = ActionCatalogRepository.of(new MyActionCatalog());
+
+        final var workflow = new StateGraph<>(MessagesState.SCHEMA, State::new)
+                .add(repo.node("node_with_exception"))
+                .addEdge(START, "node_with_exception")
+                .addEdge("node_with_exception", END)
+                .compile();
+
+        final var ex = assertThrows(Exception.class,
+                () -> workflow.invoke(GraphInput.noArgs(), RunnableConfig.empty()));
+
+        assertTrue(ExceptionUtils.findCauseByType(ex, OuterException.class).isPresent(),
+                "the exception thrown by the action should be preserved");
+    }
 }
