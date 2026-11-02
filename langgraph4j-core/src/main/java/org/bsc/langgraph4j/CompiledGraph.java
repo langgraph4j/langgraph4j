@@ -512,6 +512,24 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     /**
+     * Invokes the graph execution with the provided inputs and returns the final {@link GraphResult}.
+     * The {@code GraphResult} contains the final state of the graph and the ID of the last
+     * node that was executed. This is useful for determining if the graph finished
+     * normally (the node ID will be {@link StateGraph#END}) or was interrupted.
+     *
+     * @param input the input data for the graph execution.
+     * @param config the configuration for this specific invocation.
+     * @return a {@link GraphResult} containing the final state and node ID of the graph execution.
+     * @since 1.9.8
+     */
+    public GraphResult invokeSync( GraphInput input, RunnableConfig config ) {
+        return stream(input, config)
+                .toCompletableFuture()
+                .thenApply( result -> GraphResult.from( result, stateGraph ) )
+                .join();
+    }
+
+    /**
      * Invokes the graph execution with the provided inputs and returns the final state.
      *
      * @param input the input data
@@ -519,7 +537,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an Optional containing the final state if present, otherwise an empty Optional
      */
     public Optional<State> invoke(GraphInput input, RunnableConfig config ) {
-        return invokeFinal( input, config ).map( NodeOutput::state);
+        final var result =  invokeSync( input, config );
+        return result.isStateData() ?
+                Optional.of( result.asState() ) :
+                Optional.empty();
     }
 
     /**
@@ -532,7 +553,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     @Deprecated(forRemoval = true)
     public Optional<State> invoke(Map<String,Object> inputs, RunnableConfig config ) {
-        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), config ).map( NodeOutput::state);
+        return invoke( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), config );
     }
 
     /**
@@ -544,7 +565,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      */
     @Deprecated(forRemoval = true)
     public Optional<State> invoke( Map<String,Object> inputs )  {
-        return invokeFinal( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() ).map( NodeOutput::state);
+        return invoke( inputs == null ? GraphInput.resume() : GraphInput.args(inputs), RunnableConfig.empty() );
     }
 
 
@@ -737,10 +758,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     final Map<String,Object> partialResultAfterHook;
                                     if( !stateGraph.nodeHooks.afterCalls.isEmpty() ) {
                                         partialResultAfterHook = stateGraph.nodeHooks.afterCalls.apply(
-                                                context.currentNodeId(),
-                                                stateGraph.stateFactory().apply(context.currentState()),
-                                                config,
-                                                returnFromEmbed.asStateData())
+                                                    context.currentNodeId(),
+                                                    stateGraph.stateFactory().apply(context.currentState()),
+                                                    config,
+                                                    returnFromEmbed.asStateData())
+                                                // FIX #306: AfterHook sanitize the result. It applies MARK_AS_REMOVAL and other transformations.
+                                                .thenApply( result -> AgentState.updateState(Map.of(), result, stateGraph.schema()))
                                                 .join();
                                     }
                                     else {
@@ -766,7 +789,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                             partialStateWithoutGenerator,
                                             stateGraph.schema());
 
-                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ? generatorStateMerged : AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
+                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
+                                            generatorStateMerged :
+                                            AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
 
                                     context.setCurrentState(intermediateState);
 
