@@ -172,6 +172,7 @@ public interface ActionCatalogRepository {
         return new CatalogRepositoryImpl(nodeActions, edgeActions);
     }
 
+
     @SuppressWarnings("unchecked")
     private static <State extends AgentState> Node.ActionFactory<State> toNodeAction(Object catalog, Method method) {
         method.setAccessible(true);
@@ -251,7 +252,7 @@ public interface ActionCatalogRepository {
                 return unsupportedReturn.apply(result.getClass());
 
             } catch (Throwable e) {
-                return failedFuture(ExceptionUtils.getRootCause(e));
+                return failedFuture(ExceptionUtils.unwrap(e));
             }
         };
 
@@ -314,7 +315,7 @@ public interface ActionCatalogRepository {
                 return unsupportedReturn.apply(result.getClass());
 
             } catch (Throwable e) {
-                return failedFuture(ExceptionUtils.getRootCause(e));
+                return failedFuture(ExceptionUtils.unwrap(e));
             }
         };
     }
