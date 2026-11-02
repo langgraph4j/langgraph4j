@@ -66,10 +66,9 @@ public class SerializerMapper {
         return this;
     }
 
-    public boolean unregister( Class<? extends StdSerializer<?>> clazz ) {
-        Objects.requireNonNull( clazz, "Serializer's class cannot be null" );
-        StdSerializer<?> serializer = _serializers.remove( Key.of(clazz) );
-        return serializer != null;
+    public boolean unregister( Class<?> clazz ) {
+        Objects.requireNonNull( clazz, "class cannot be null" );
+        return _serializers.remove( Key.of( clazz ) ) != null;
     }
 
     @SuppressWarnings("unchecked")
