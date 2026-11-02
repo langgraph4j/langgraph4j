@@ -56,8 +56,6 @@ public class ExceptionTest {
     @Test
     void testActionExceptionTypeIsPreserved() throws GraphStateException {
 
-        var eex = ExceptionUtils.unwrap(null);
-
         class State extends MessagesState<String> {
             public State(Map<String, Object> initData) {
                 super(initData);
