@@ -33,7 +33,11 @@ public class SkillParser {
                 return Optional.of( (List<String>)listValue );
             }
             if( value instanceof String stringValue ) {
-                return Optional.of(List.of(stringValue.split(" ")));
+                // a plain value may list the items separated by commas, by blanks or by both:
+                // "Bash, Write", "Bash,Write" and "Bash Write" all mean two entries
+                return Optional.of( Arrays.stream( stringValue.split( "[,\\s]+" ) )
+                        .filter( item -> !item.isEmpty() )
+                        .toList() );
             }
             throw new IllegalStateException("property '%s' doesn't contain a list of strings! ");
         }
