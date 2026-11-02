@@ -304,9 +304,9 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
 
                     continue;
                 }
-                if (result.isStateDataOrCheckpointSaverTag()) {
+                if (result.isStateData()) {
 
-                    final var stateData = new State(result.asStateDataOrLastCheckpointStateData());
+                    final State state = result.asState();
 
                     assertIterableEquals(List.of(
                             "NODE1",
@@ -316,12 +316,12 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
                             "NODE3.3",
                             "NODE3.4<myNewValue>",
                             "NODE4",
-                            "NODE5<myNewValue>"), stateData.messages());
+                            "NODE5<myNewValue>"), state.messages());
 
                     break;
                 }
 
-                fail("expected GraphInterruptException or StateDataOrCheckpointSaverTag, but got: %s ".formatted(result));
+                fail("expected GraphInterruptException or StateData, but got: %s ".formatted(result));
             }
             catch( Throwable ex ) {
                 saver.release( runnableConfig );
@@ -510,7 +510,7 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
                     .reduce((a, b) -> b)
                     .thenAccept( reduceResult -> {
                         final var  result = GraphResult.from(reduceResult.resultValue());
-                        if( result.isStateDataOrCheckpointSaverTag() ) {
+                        if( result.isStateData() ) {
                             assertTrue(reduceResult.result().isEND());
                             assertIterableEquals(List.of(
                                     "NODE1",

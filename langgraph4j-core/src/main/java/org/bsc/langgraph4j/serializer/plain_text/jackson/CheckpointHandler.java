@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import org.bsc.langgraph4j.state.AgentState;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -34,10 +35,24 @@ public record CheckpointHandler(StdSerializer<Checkpoint> serializer, StdDeseria
             gen.writeStringField( "id", cp.id());
             gen.writeStringField("nodeId", cp.nodeId());
             gen.writeStringField("nextNodeId", cp.nextNodeId());
-            gen.writeStringField("createdAt", cp.createdAt().toString());
+            writeSavedAt(cp, gen);
             gen.writeFieldName("state");
             gen.writeRawValue( stateSerializer.writeDataAsString( cp.state()) );
             gen.writeEndObject();
+        }
+
+        /**
+         * Writes the saved-at time, or nothing at all when the storage did not
+         * supply one, so that a payload can always be read back into a checkpoint
+         * whose saved-at time is {@code null}.
+         */
+        private void writeSavedAt(Checkpoint cp, JsonGenerator gen) throws IOException {
+            final var savedAt = cp.savedAt();
+            if( savedAt == null ) {
+                gen.writeNullField("savedAt");
+                return;
+            }
+            gen.writeStringField("savedAt", savedAt.toString());
         }
     }
 
@@ -59,10 +74,11 @@ public record CheckpointHandler(StdSerializer<Checkpoint> serializer, StdDeseria
             resultBuilder.nodeId( root.get("nodeId").asText() );
             resultBuilder.nextNodeId( root.get("nextNodeId").asText() );
 
-            // createdAt is optional to keep backward compatibility with payloads written before its introduction
-            final var createdAt = root.get("createdAt");
-            if( createdAt != null && !createdAt.isNull() ) {
-                resultBuilder.createdAt( Instant.parse( createdAt.asText() ) );
+            // savedAt is optional, and payloads written before the rename still carry it
+            // under its former name, so read both before falling back to the builder default.
+            final var savedAt = readSavedAt(root);
+            if( savedAt != null ) {
+                resultBuilder.savedAt( savedAt );
             }
 
             final var stateJson = root.get("state").toString();
@@ -76,6 +92,22 @@ public record CheckpointHandler(StdSerializer<Checkpoint> serializer, StdDeseria
             }
             */
             return resultBuilder.build();
+        }
+
+        /**
+         * Reads the saved-at time, preferring the current name and falling back to
+         * {@code createdAt}, the name it carried in 1.9.6 and 1.9.7. Returns null
+         * when neither is present or usable, which leaves the builder to decide.
+         */
+        private @Nullable Instant readSavedAt(ObjectNode root) {
+            var savedAt = root.get("savedAt");
+            if( savedAt == null || savedAt.isNull() ) {
+                savedAt = root.get("createdAt");
+            }
+            if( savedAt == null || savedAt.isNull() ) {
+                return null;
+            }
+            return Instant.parse( savedAt.asText() );
         }
 
     }
