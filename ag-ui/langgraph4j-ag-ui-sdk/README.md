@@ -1,34 +1,236 @@
 # LangGraph4j support for AG-UI
 
-This module provides the building blocks to expose a [LangGraph4j](https://github.com/langgraph4j/langgraph4j) graph
-as an agent compliant with the [AG-UI protocol](https://github.com/ag-ui-protocol/ag-ui), streaming its execution as
-a sequence of AG-UI events (message chunks, step lifecycle, run lifecycle, errors, etc.).
+This module connects a LangGraph4j graph to the [AG-UI protocol](https://github.com/ag-ui-protocol/ag-ui). An `AGUIAgent` accepts a `RunAgentInput` and publishes AG-UI events. `AGUIAgentBase` handles graph execution and event translation; the remaining classes support registration, step events, custom node events, and request deserialization.
 
-## Classes overview
+The [Studio sample agents](../../studio/base/src/test/java/org/bsc/langgraph4j/agui/AGUISampleAgent.java) are references: `baseAgent` registers automatic step events, while `agentWithInterruption` adds a checkpoint saver and interrupts after node `B`. They use `AGUILangGraphStudioAgent`, a Studio-specific subclass of `AGUIAgentBase`.
 
-### AGUIAgent 
-Core interface representing an AG-UI compliant agent. Exposes a unique `id()` and a `run(RunAgentInput)` method returning a `Flow.Publisher<Event>` that streams the AG-UI events produced by the agent execution.
+## API reference
 
-### AGUIAgentBase
+These tables cover methods declared by each SDK type, including protected extension points. Constructors and the record's generated accessor are included because callers use them directly. Inherited `Object`, `NodeOutput`, and `LG4JLoggable` methods are outside this module's API description.
 
-Abstract base implementation of `AGUIAgent` that bridges a LangGraph4j `CompiledGraph` to the AG-UI event stream. It lazily compiles the graph (via the abstract `newGraph()` method), builds the graph input from the incoming request (via the abstract `graphInput(RunAgentInput)` method), runs it either asynchronously or synchronously, and translates node/streaming outputs, errors and completion into the corresponding AG-UI events. 
-Subclasses typically only need to implement the two abstract methods.
+### `AGUIAgent`
 
-### AGUIAgentRegistry
-A simple registry (`Map<String, AGUIAgent>`) used to look up a registered `AGUIAgent` by its identifier, typically used to dispatch an incoming AG-UI run request to the appropriate agent implementation.
+The interface is the entry point consumed by an AG-UI transport.
 
-### AGUIHook
-A LangGraph4j `NodeHook` implementation dedicated to the AG-UI protocol.
-Its `stepEvents()` factory method returns a `NodeHook.WrapCall` that automatically dispatches the AG-UI `StepStartedEvent` before a node runs and the `StepFinishedEvent` after it completes successfully, without requiring manual event handling in the node's own logic.
+| Method | Arguments | Role |
+| --- | --- | --- |
+| `id()` | None | Returns the agent identifier used for lookup and routing. |
+| `run(RunAgentInput input)` | `input`: AG-UI run request | Returns a `Flow.Publisher<? extends Event>` for the run. Events are delivered on subscription. |
 
-### AGUINodeOutput
-A custom LangGraph4j `NodeOutput` implementation that acts as a bridge between LangGraph4j's
-output streaming and AG-UI events. It carries a list of AG-UI `Event`s (e.g. text message events, step lifecycle
-events) produced by a node, which are then forwarded to the AG-UI subscriber. Instances are created through its
-fluent `Builder` (`AGUINodeOutput.builder()`).
+### `AGUIAgentBase`
 
-### AGUIRunAgentInput
-A mutable, bean-style wrapper around AG-UI's `RunAgentInput` (thread id, run id, tools,
-context, messages, forwarded properties, resume, state), convenient for deserialization frameworks. It exposes
-`toRunAgentParameters()` to convert itself into an immutable `RunAgentInput` instance.
+This abstract implementation lazily compiles a graph, runs it through `graph.stream(...)`, and translates outputs to AG-UI events. Implement `newGraph` and `graphInput` at minimum. Override the other protected methods to customize mapping or configuration.
 
+| Method or constructor | Arguments | Role |
+| --- | --- | --- |
+| `AGUIAgentBase(String id)` | `id`: non-null agent identifier | Initializes the identity; rejects null. |
+| `id()` | None | Returns the supplied ID. |
+| `newGraph()` **protected, abstract** | None | Supplies a compiled graph on the first subscription; the result is cached. May throw on compilation failure. |
+| `graphInput(RunAgentInput input)` **protected, abstract** | `input`: incoming request | Converts messages, state, or resume data to a LangGraph4j `GraphInput`. |
+| `newMessageId()` **protected** | None | Supplies IDs for streamed assistant text. Default: current time in milliseconds; override if stronger uniqueness is needed. |
+| `runnableConfig(RunAgentInput input)` **protected** | `input`: incoming request | Builds the graph configuration, passing `input.threadId()` by default. |
+| `onNextEvents(RunAgentInput input, NodeOutput<? extends AgentState> output)` **protected** | `input`: request; `output`: graph output | Forwards `AGUINodeOutput.events()`; ignores ordinary node outputs by default. |
+| `onErrorEvents(RunAgentInput input, Throwable error)` **protected** | `input`: request; `error`: execution failure | Produces a `RunErrorEvent`, using a nested `GraphRunnerException` message when available. |
+| `onCompleteEvents(RunAgentInput input, GraphResult result)` **protected** | `input`: request; `result`: graph result | Produces a `RunFinishedEvent` with `SuccessOutcome` by default; a cancelled result produces a `cancelled` custom event. |
+| `run(RunAgentInput input)` | `input`: AG-UI request | Returns a publisher that initializes the graph if needed, emits `RunStartedEvent`, then starts asynchronous streaming on subscription. |
+
+Compilation failure reaches the subscriber through `onError`. Ordinary execution failures are translated by `onErrorEvents`; a checkpoint cleanup failure also reaches `onError`. The base class does not convert an interruption to an AG-UI `InterruptOutcome`; an adapter must override `onCompleteEvents` to do that.
+
+### `AGUIAgentRegistry`
+
+The registry maps agent IDs to instances. The map constructor and record accessor are generated by Java.
+
+| Method or constructor | Arguments | Role |
+| --- | --- | --- |
+| `AGUIAgentRegistry(Map<String, AGUIAgent> map)` | `map`: ID-to-agent map | Creates a registry backed by this map. |
+| `AGUIAgentRegistry(AGUIAgent... agents)` | `agents`: agents to register | Builds the map from `id()`; duplicate IDs cause `Collectors.toMap` to throw. |
+| `map()` | None | Returns the backing map. |
+| `agent(String agentId)` | `agentId`: requested ID | Returns an `Optional<AGUIAgent>`, empty when the ID is unknown. |
+
+### `AGUIHook`
+
+This hook wraps node actions and dispatches step lifecycle outputs through the graph's custom dispatcher.
+
+| Method | Arguments | Role |
+| --- | --- | --- |
+| `stepEvents()` **static** | None; `State extends AgentState` is inferred | Returns a `NodeHook.WrapCall<State>` that dispatches `StepStartedEvent` before the action and `StepFinishedEvent` after successful completion. An exceptional action has no finish event. |
+
+### `AGUINodeOutput<State>` and `AGUINodeOutput.Builder`
+
+An `AGUINodeOutput` carries AG-UI events alongside a LangGraph4j node ID and state. `AGUIAgentBase.onNextEvents` forwards its events to the subscriber.
+
+| Method or constructor | Arguments | Role |
+| --- | --- | --- |
+| `AGUINodeOutput.builder()` **static** | None; optional `State extends AgentState` | Creates an empty event builder. |
+| `AGUINodeOutput(String node, State state, List<Event> events)` **protected** | `node`: node ID; `state`: node state; `events`: non-null list | Creates an output directly, mainly for subclasses. |
+| `events()` | None | Returns the carried event list. |
+| `Builder()` | None | Creates an empty builder (implicit public constructor). |
+| `Builder.addEvent(Event event)` | `event`: one AG-UI event | Appends one event and returns the builder. |
+| `Builder.addEvents(Event... event)` | `event`: one or more events | Appends all supplied events and returns the builder. |
+| `Builder.singleTextContentEvents(String messageId, Role role, String content)` | `messageId`: message ID; `role`: author; `content`: complete text | Appends start, content, and end events for one non-streamed message. |
+| `Builder.stepStartedEvent(String stepName)` | `stepName`: node/step ID | Appends a step-start event without a raw payload. |
+| `Builder.stepStartedEvent(String stepName, Object rawEvent)` | `stepName`: node/step ID; `rawEvent`: optional payload | Appends a step-start event with a raw payload. |
+| `Builder.stepFinishedEvent(String stepName)` | `stepName`: node/step ID | Appends a step-finish event without a raw payload. |
+| `Builder.stepFinishedEvent(String stepName, Object rawEvent)` | `stepName`: node/step ID; `rawEvent`: optional payload | Appends a step-finish event with a raw payload. |
+| `Builder.build(String nodeId, State state)` | `nodeId`: producing node ID; `state`: associated state | Binds accumulated events to an output. |
+
+The builder passes its event list into the output without copying it. Finish adding events before `build`, and use a fresh builder for another output.
+
+### `AGUIRunAgentInput`
+
+This mutable bean holds incoming AG-UI request fields for deserialization frameworks. `toRunAgentParameters` creates the protocol `RunAgentInput` used by `AGUIAgent.run`. The bean does not validate required fields or supply defaults.
+
+| Method or constructor | Arguments | Role |
+| --- | --- | --- |
+| `AGUIRunAgentInput()` | None | Creates an empty bean (implicit public constructor). |
+| `setThreadId(String threadId)` / `getThreadId()` | Setter: conversation thread ID | Stores/reads the ID used by the default graph `RunnableConfig` and run events. |
+| `setRunId(String runId)` / `getRunId()` | Setter: run ID | Stores/reads the ID included in run events. |
+| `setState(Object state)` / `getState()` | Setter: shared state payload | Stores/reads the request state forwarded to `RunAgentInput`. |
+| `setMessages(List<Message> messages)` / `getMessages()` | Setter: conversation messages | Stores/reads messages a graph input mapper can consume. |
+| `setTools(List<Tool> tools)` / `getTools()` | Setter: available tools | Stores/reads tools forwarded to the agent. |
+| `setContext(List<Context> context)` / `getContext()` | Setter: context entries | Stores/reads additional run context. |
+| `setForwardedProps(Object forwardedProps)` / `getForwardedProps()` | Setter: arbitrary properties | Stores/reads application-specific request properties. |
+| `setResume(List<Resume> resume)` / `getResume()` | Setter: resume entries | Stores/reads responses to interruptions. |
+| `toRunAgentParameters()` | None | Creates a `RunAgentInput` from the bean's current fields, including state and resume. |
+
+## Usage examples
+
+The snippets use imports from `org.bsc.langgraph4j.agui.sdk` and the packages shown in the [sample agent](../../studio/base/src/test/java/org/bsc/langgraph4j/agui/AGUISampleAgent.java). Its `baseAgent` and `agentWithInterruption` methods contain complete graph definitions.
+
+### Run an `AGUIAgent`
+
+The Studio sample's `baseAgent` is an `AGUIAgent`. A transport resolves it, calls `run`, and subscribes to the publisher. Keep the subscription open until `onComplete` so all events can be sent to the client.
+
+```java
+// The Studio builder creates a concrete AGUIAgentBase for the graph in baseAgent.
+AGUIAgent agent = AGUISampleAgent.baseAgent("base-agent");
+Flow.Publisher<? extends Event> events = agent.run(request);
+// Subscribe with the transport's Flow.Subscriber to forward each Event.
+```
+
+Here `request` is a `RunAgentInput` and `AGUISampleAgent` is the test fixture linked above. In an application, the transport typically owns subscription and event serialization.
+
+### Implement `AGUIAgentBase`
+
+For a graph with a `messages` state channel, map incoming messages in `graphInput`. The graph can be prepared elsewhere and compiled when the first run is subscribed to.
+
+```java
+/**
+ * Bridges a messages graph to AG-UI.
+ * One instance retains its compiled graph across runs.
+ */
+final class MessagesAgent extends AGUIAgentBase {
+    /** Graph definition compiled when the first run is subscribed to. */
+    private final StateGraph<? extends AgentState> stateGraph;
+
+    /**
+     * Uses a graph whose messages channel accepts the incoming message list.
+     *
+     * @param id non-null identifier used for request routing
+     * @param stateGraph graph definition to compile on first use
+     */
+    MessagesAgent(String id, StateGraph<? extends AgentState> stateGraph) {
+        super(id);
+        this.stateGraph = stateGraph;
+    }
+
+    /**
+     * Compiles the stored definition on first subscription.
+     *
+     * @return compiled graph cached by AGUIAgentBase
+     * @throws Exception if graph compilation fails
+     */
+    @Override
+    protected CompiledGraph<? extends AgentState> newGraph() throws Exception {
+        return stateGraph.compile();
+    }
+
+    /**
+     * Maps the request's non-null message list into the graph's messages channel.
+     *
+     * @param input incoming AG-UI request with messages
+     * @return graph input for a new run
+     */
+    @Override
+    protected GraphInput graphInput(RunAgentInput input) {
+        return GraphInput.args(Map.of("messages", input.messages()));
+    }
+}
+```
+
+The graph's `messages` channel must accept the request's message type, and `input.messages()` must be non-null for this `Map.of` example. For a checkpointed graph, override `graphInput` to return `GraphInput.resume(...)` when the request carries a resume response, and override `onCompleteEvents` to map interruption results to an AG-UI `InterruptOutcome`. The [Studio adapter](../../studio/base/src/main/java/org/bsc/langgraph4j/studio/agui/AGUILangGraphStudioAgent.java) demonstrates those overrides.
+
+### Register and resolve agents with `AGUIAgentRegistry`
+
+```java
+// IDs come from each AGUIAgent.id() implementation.
+AGUIAgentRegistry registry = new AGUIAgentRegistry(
+        AGUISampleAgent.baseAgent("base-agent"),
+        AGUISampleAgent.agentWithInterruption("agentWithInterruption"));
+
+AGUIAgent agent = registry.agent("base-agent")
+        .orElseThrow(() -> new IllegalArgumentException("Unknown agent"));
+```
+
+Use the lookup result to dispatch a request to `agent.run(request)`. The [Spring Boot controller](../langgraph4j-ag-ui-springboot/src/main/java/org/bsc/langgraph4j/agui/sdk/AGUISSEController.java) shows this routing in an HTTP endpoint.
+
+### Add `AGUIHook.stepEvents()` to a graph
+
+Both Studio samples install the hook before adding nodes:
+
+```java
+StateGraph<AgentState> graph = new StateGraph<>(AgentState::new)
+        .addWrapCallNodeHook(AGUIHook.stepEvents());
+// Add nodes and edges, then compile the graph for an AGUIAgentBase implementation.
+```
+
+Each wrapped node dispatches start and finish outputs through the graph's custom dispatcher. An `AGUIAgentBase` forwards those events. In `agentWithInterruption`, `CompileConfig` installs a `MemorySaver`, sets `interruptAfter("B")`, and enables `interruptBeforeEdge(true)` so the run can pause after node `B` before choosing its next edge. The Studio adapter returns an `InterruptOutcome` at that pause and uses a checkpoint and serialized state from a later resume payload to continue the graph. Keep the same thread ID across interrupted and resumed runs.
+
+The interruption setup in the sample is:
+
+```java
+// Save state at the pause so a later request can resume this run.
+CompileConfig compileConfig = CompileConfig.builder()
+        .checkpointSaver(new MemorySaver())
+        .interruptAfter("B")
+        .interruptBeforeEdge(true)
+        .build();
+
+AGUIAgent interruptedAgent = AGUILangGraphStudioAgent.builder()
+        .id("agentWithInterruption")
+        .stateGraph(graph)
+        .compileConfig(compileConfig)
+        .build();
+```
+
+Here `graph` is the sample's complete `StateGraph` with nodes `A`, `B`, and `C`, its conditional edge from `B`, and `AGUIHook.stepEvents()`. The Studio adapter expects a resume entry whose payload contains the checkpoint ID and serialized state under `checkpoint` and `data`. Its `graphInput` restores that checkpoint and returns `GraphInput.resume(...)`; the SDK base class does not supply this mapping automatically.
+
+### Emit custom events with `AGUINodeOutput`
+
+When a node or hook has access to its node ID, state, and `RunnableConfig`, it can dispatch a complete message:
+
+```java
+// The dispatcher inserts this output into the graph stream consumed by AGUIAgentBase.
+AGUINodeOutput<AgentState> output = AGUINodeOutput.<AgentState>builder()
+        .singleTextContentEvents("reply-1", Role.ASSISTANT, "Hello")
+        .build(config.nodeId(), state);
+config.customDispatcher().dispatchAsync(output);
+```
+
+Use `addEvent` or `addEvents` for other event types. The builder's step event methods support manual step reporting; if `AGUIHook.stepEvents()` already wraps the node, adding the same step events manually would duplicate them.
+
+### Convert `AGUIRunAgentInput` for a transport
+
+```java
+// A deserializer may populate the same bean properties from an HTTP body.
+AGUIRunAgentInput body = new AGUIRunAgentInput();
+body.setThreadId("thread-1");
+body.setRunId("run-1");
+body.setMessages(messages);
+body.setResume(resumeEntries);
+
+RunAgentInput request = body.toRunAgentParameters();
+Flow.Publisher<? extends Event> events = agent.run(request);
+```
+
+Here `messages` is a `List<Message>` and `resumeEntries` is a `List<Resume>` (use an empty list for a new run if the agent's mapper expects one). Set tools, context, forwarded properties, or state before conversion when the agent uses them. The [SSE controller](../langgraph4j-ag-ui-springboot/src/main/java/org/bsc/langgraph4j/agui/sdk/AGUISSEController.java) performs this conversion for HTTP requests.

@@ -89,8 +89,8 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
             if (result.isEmpty() || result.isCancelled()) {
                 return null;
             }
-            if (result.isStateDataOrCheckpointSaverTag()) {
-                return result.asStateDataOrLastCheckpointStateData();
+            if (result.isStateData()) {
+                return result.asStateData();
             }
             if (result.isInterruptionMetadata()) {
                 throw new UnsupportedOperationException("Interruption metadata cannot be returned from a parallel branch streaming generator");
@@ -138,8 +138,8 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
             if (result.isEmpty() || result.isCancelled()) {
                 return partialState;
             }
-            if (result.isStateDataOrCheckpointSaverTag()) {
-                return AgentState.updateState(partialState, result.asStateDataOrLastCheckpointStateData(), channels);
+            if (result.isStateData()) {
+                return AgentState.updateState(partialState, result.asStateData(), channels);
             }
             if (result.isInterruptionMetadata()) {
                 throw new UnsupportedOperationException("Interruption metadata cannot be returned from a parallel branch streaming generator");

@@ -78,7 +78,7 @@ class TransientStateSerializerTest {
                 .toCompletableFuture()
                 .thenApply( GraphResult::from )
                 .thenAccept( result -> {
-                    final var stateData = result.asStateDataOrLastCheckpointStateData();
+                    final var stateData = result.asStateData();
                     assertEquals(false, stateData.get("visible"));
                     assertFalse(stateData.containsKey("transient"));
                     assertEquals("value", stateData.get("keep"));
