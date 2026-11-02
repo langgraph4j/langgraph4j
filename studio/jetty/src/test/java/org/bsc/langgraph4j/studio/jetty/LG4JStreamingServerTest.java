@@ -1,4 +1,4 @@
-package org.bsc.langgraph4j.jetty;
+package org.bsc.langgraph4j.studio.jetty;
 
 import jakarta.servlet.*;
 import org.bsc.langgraph4j.CompileConfig;
@@ -10,7 +10,6 @@ import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
-import org.bsc.langgraph4j.studio.jetty.LangGraphStudioServer4Jetty;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;

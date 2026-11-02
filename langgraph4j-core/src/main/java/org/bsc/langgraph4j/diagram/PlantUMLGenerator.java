@@ -26,9 +26,9 @@ public class PlantUMLGenerator extends DiagramGenerator {
             final var end = subGraphPrefixInDeclare(ctx, END);
 
             ctx.sb()
-                .append("package %s {%n".formatted(ctx.title()))
-                .append("circle \" \" as %s%n".formatted(start))
-                .append("circle exit as %s%n".formatted(end))
+                .append("package %s {\n".formatted(ctx.title()))
+                .append("circle \" \" as %s\n".formatted(start))
+                .append("circle exit as %s\n".formatted(end))
             ;
             return;
         }
@@ -91,7 +91,7 @@ public class PlantUMLGenerator extends DiagramGenerator {
     @Override
     protected void declareNode( Context ctx, String name ) {
         if( ctx.isSubGraph() ) {
-            ctx.sb().append(  "usecase \"%s\"<<Node>> as %s%n".formatted( name, subGraphPrefixInDeclare(ctx, name) ) );
+            ctx.sb().append(  "usecase \"%s\"<<Node>> as %s\n".formatted( name, subGraphPrefixInDeclare(ctx, name) ) );
             return;
         }
         ctx.sb().append(  "usecase \"%s\"<<Node>>\n".formatted( name ) );

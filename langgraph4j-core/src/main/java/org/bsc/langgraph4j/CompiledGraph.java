@@ -511,6 +511,24 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     /**
+     * Invokes the graph execution with the provided inputs and returns the final {@link GraphResult}.
+     * The {@code GraphResult} contains the final state of the graph and the ID of the last
+     * node that was executed. This is useful for determining if the graph finished
+     * normally (the node ID will be {@link StateGraph#END}) or was interrupted.
+     *
+     * @param input the input data for the graph execution.
+     * @param config the configuration for this specific invocation.
+     * @return a {@link GraphResult} containing the final state and node ID of the graph execution.
+     * @since 1.9.8
+     */
+    public GraphResult invokeSync( GraphInput input, RunnableConfig config ) {
+        return stream(input, config)
+                .toCompletableFuture()
+                .thenApply( result -> GraphResult.from( result, stateGraph ) )
+                .join();
+    }
+
+    /**
      * Invokes the graph execution with the provided inputs and returns the final state.
      *
      * @param input the input data
@@ -518,7 +536,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
      * @return an Optional containing the final state if present, otherwise an empty Optional
      */
     public Optional<State> invoke(GraphInput input, RunnableConfig config ) {
-        return invokeFinal( input, config ).map( NodeOutput::state);
+        final var result =  invokeSync( input, config );
+        return result.isStateData() ?
+                Optional.of( result.asState() ) :
+                Optional.empty();
     }
 
     /**
@@ -724,7 +745,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 })
                                 .thenApply(reduceResult -> {
 
-                                    final var returnFromEmbed = GraphResult.from(reduceResult.resultValue());
+                                    final var returnFromEmbed = GraphResult.from(reduceResult.resultValue(), stateGraph);
 
                                     if (returnFromEmbed.isInterruptionMetadata() || returnFromEmbed.isCancelled()) {
                                         return returnFromEmbed;
@@ -735,14 +756,16 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                     final Map<String,Object> partialResultAfterHook;
                                     if( !stateGraph.nodeHooks.afterCalls.isEmpty() ) {
                                         partialResultAfterHook = stateGraph.nodeHooks.afterCalls.apply(
-                                                context.currentNodeId(),
-                                                stateGraph.stateFactory().apply(context.currentState()),
-                                                config,
-                                                returnFromEmbed.asStateDataOrLastCheckpointStateData())
+                                                    context.currentNodeId(),
+                                                    stateGraph.stateFactory().apply(context.currentState()),
+                                                    config,
+                                                    returnFromEmbed.asStateData())
+                                                // FIX #306: AfterHook sanitize the result. It applies MARK_AS_REMOVAL and other transformations.
+                                                .thenApply( result -> AgentState.updateState(Map.of(), result, stateGraph.getChannels()))
                                                 .join();
                                     }
                                     else {
-                                        partialResultAfterHook = returnFromEmbed.asStateDataOrLastCheckpointStateData();
+                                        partialResultAfterHook = returnFromEmbed.asStateData();
                                     }
 
                                     config = config.removeMetadata(
@@ -764,7 +787,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                             partialStateWithoutGenerator,
                                             stateGraph.getChannels());
 
-                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ? generatorStateMerged : AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.getChannels());
+                                    final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
+                                            generatorStateMerged :
+                                            AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.getChannels());
 
                                     context.setCurrentState(intermediateState);
 
@@ -818,7 +843,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 }
 
                                 if( embedResult.isPresent() ) {
-                                    final var res = GraphResult.from(embedResult.get());
+                                    final var res = GraphResult.from(embedResult.get(), stateGraph);
 
                                     if( res.isInterruptionMetadata() ) {
                                         return AsyncGenerator.Data.done(embedResult.get());
@@ -873,10 +898,16 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // GUARD: CHECK IF IT IS END
                     if( context.nextNodeId() == null && context.currentNodeId() == null  ) {
-                        $1.dispatchAsync(
-                            releaseThread()
-                                .map(AsyncGenerator.Data::<Output>done)
-                                .orElseGet( () -> AsyncGenerator.Data.done(context.currentState()) ));
+                        final var result = releaseThread()
+                                .map( v -> {
+                                    log.trace("Execution ended with state:\n{}\n", v);
+                                    return AsyncGenerator.Data.<Output>done( GraphResult.from(v, stateGraph));
+                                })
+                                .orElseGet( () -> {
+                                    log.trace("Execution ended with state:\n{}\n", context.currentState());
+                                    return AsyncGenerator.Data.done(GraphResult.from(context.currentState(), stateGraph));
+                                });
+                        $1.dispatchAsync( result );
                         break;
                     }
 

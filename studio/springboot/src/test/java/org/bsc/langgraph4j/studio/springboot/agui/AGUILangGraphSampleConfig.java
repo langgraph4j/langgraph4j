@@ -11,7 +11,8 @@ public class AGUILangGraphSampleConfig extends AGUILangGraphStudioBaseConfig {
     protected AGUIAgentRegistry agentRegistry() throws Exception {
 
         return new AGUIAgentRegistry(
-                AGUISampleAgent.baseAgent("base-agent")
+                AGUISampleAgent.baseAgent("base-agent"),
+                AGUISampleAgent.agentWithInterruption("agent-with-interruption")
         );
     }
 }

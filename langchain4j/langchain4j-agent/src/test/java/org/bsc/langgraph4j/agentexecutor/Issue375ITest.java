@@ -92,7 +92,7 @@ public class Issue375ITest {
                 .join();
 
         assertNotNull(resultResume);
-        assertTrue(resultResume.isStateDataOrCheckpointSaverTag());
+        assertTrue(resultResume.isStateData());
 
 
     }
