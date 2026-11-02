@@ -1,6 +1,7 @@
 ## Langgraph4j Studio - Jetty reference implementation
 
-This module provides the class `LangGraphStudioServer4Jetty` that provides basic implementation of LangGraph4j Studio for the [Jetty] server.
+This module provide the reference implementation of LangGraph4j Studio using [Jetty] server.
+
 
 ### Add dependency
 
@@ -11,6 +12,17 @@ This module provides the class `LangGraphStudioServer4Jetty` that provides basic
     <version>1.9.7</version>
 </dependency>
 ```
+
+From version `1.9.8` a new Studio implementation based on AG-UI protocol has been introduced.
+This new implementation will be the only supported and previous is going to be deprecate.
+
+## New Implementation (from `1.9.8`)
+
+_<TO DO >_
+
+## Legacy Implementation (before `1.9.8`)
+
+This module provides the class `LangGraphStudioServer4Jetty` that provides basic implementation of LangGraph4j Studio for the [Jetty] server.
 
 ### Create a workflow and connect it to the playground webapp
 

@@ -342,7 +342,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                     .id(doc.getString(FieldEnum.ID.fieldName()))
                     .nodeId(doc.getString(FieldEnum.NODE_ID.fieldName()))
                     .nextNodeId(doc.getString(FieldEnum.NEXT_NODE_ID.fieldName()))
-                    .createdAt(doc.getDate(FieldEnum.CREATED_AT.fieldName()))
+                    .savedAt(doc.getDate(FieldEnum.CREATED_AT.fieldName()))
                     .state(decodeState(doc.getString(FieldEnum.STATE_DATA.fieldName()),
                             doc.getString(FieldEnum.STATE_CONTENT_TYPE.fieldName())))
                     .build());
@@ -365,7 +365,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                 .append(FieldEnum.NEXT_NODE_ID.fieldName(), checkpoint.nextNodeId())
                 .append(FieldEnum.STATE_DATA.fieldName(), stateData)
                 .append(FieldEnum.STATE_CONTENT_TYPE.fieldName(), stateSerializer.contentType())
-                .append(FieldEnum.CREATED_AT.fieldName(), checkpoint.createdAt()));
+                .append(FieldEnum.CREATED_AT.fieldName(), checkpoint.savedAt()));
         log.debug("Checkpoint {} for thread {} inserted successfully.", checkpoint.id(), threadId(config));
     }
 
@@ -390,7 +390,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                         set(FieldEnum.NEXT_NODE_ID.fieldName(), checkpoint.nextNodeId()),
                         set(FieldEnum.STATE_DATA.fieldName(), encodeState(checkpoint.state())),
                         set(FieldEnum.STATE_CONTENT_TYPE.fieldName(), stateSerializer.contentType()),
-                        set(FieldEnum.CREATED_AT.fieldName(), checkpoint.createdAt())));
+                        set(FieldEnum.CREATED_AT.fieldName(), checkpoint.savedAt())));
         if (result.getMatchedCount() == 0) {
             throw new NoSuchElementException(format("Checkpoint with id %s not found!", previousId));
         }

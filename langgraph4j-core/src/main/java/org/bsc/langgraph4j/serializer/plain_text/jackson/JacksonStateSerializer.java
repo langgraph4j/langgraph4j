@@ -21,13 +21,13 @@ import java.util.Objects;
  *
  * @param <State> The type of the agent state to be serialized/deserialized.
  */
-public abstract class JacksonStateSerializer <State extends AgentState> extends PlainTextStateSerializer<State> {
+public class JacksonStateSerializer <State extends AgentState> extends PlainTextStateSerializer<State> {
     protected final ObjectMapper objectMapper;
 
     protected TypeMapper typeMapper = new TypeMapper();
     private final Map<String, Object> transientData = new HashMap<>(8);
 
-    protected JacksonStateSerializer( AgentStateFactory<State> stateFactory ) {
+    public JacksonStateSerializer( AgentStateFactory<State> stateFactory ) {
         this( stateFactory, new ObjectMapper() );
     }
 
