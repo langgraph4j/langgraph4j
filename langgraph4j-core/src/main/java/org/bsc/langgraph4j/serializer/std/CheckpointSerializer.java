@@ -18,7 +18,8 @@ public  record CheckpointSerializer(
         writeNullableUTF(object.nextNodeId(), out);
         AgentState state = stateSerializer.stateFactory().apply(object.state());
         stateSerializer.write( state, out);
-        StdSerializer.writeUTF(object.createdAt().toString(), out);
+        // null here means the storage never supplied a time, written as absent so it reads back as null
+        writeNullableUTF( object.savedAt() != null ? object.savedAt().toString() : null, out );
     }
 
     @Override
@@ -28,7 +29,7 @@ public  record CheckpointSerializer(
                 .nodeId(readNullableUTF(in).orElse(null))
                 .nextNodeId(readNullableUTF(in).orElse(null))
                 .state(stateSerializer.read(in))
-                .createdAt(Instant.parse(StdSerializer.readUTF(in)))
+                .savedAt(readNullableUTF(in).map(Instant::parse).orElse(null))
                 .build();
     }
 

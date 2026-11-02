@@ -182,7 +182,7 @@ public class JacksonSerializerTest {
                     .nodeId("NODE%d".formatted(i))
                     .nextNodeId("NEXT_NODE%d".formatted(i + 1))
                     .state(state)
-                    .createdAt(Instant.parse("2025-09-10T10:37:3%dZ".formatted(i)))
+                    .savedAt(Instant.parse("2025-09-10T10:37:3%dZ".formatted(i)))
                     .build();
 
             checkpoints.add(cp);
@@ -196,10 +196,10 @@ public class JacksonSerializerTest {
 
         assertEquals("""
                 [
-                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID1","nodeId":"NODE1","nextNodeId":"NEXT_NODE2","createdAt":"2025-09-10T10:37:31Z","state":{"prop1":"value1"}},
-                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID2","nodeId":"NODE2","nextNodeId":"NEXT_NODE3","createdAt":"2025-09-10T10:37:32Z","state":{"prop2":"value2","prop1":"value1"}},
-                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID3","nodeId":"NODE3","nextNodeId":"NEXT_NODE4","createdAt":"2025-09-10T10:37:33Z","state":{"prop2":"value2","prop1":"value1","prop3":"value3"}},
-                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID4","nodeId":"NODE4","nextNodeId":"NEXT_NODE5","createdAt":"2025-09-10T10:37:34Z","state":{"prop2":"value2","prop1":"value1","prop4":"value4","prop3":"value3"}}]
+                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID1","nodeId":"NODE1","nextNodeId":"NEXT_NODE2","savedAt":"2025-09-10T10:37:31Z","state":{"prop1":"value1"}},
+                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID2","nodeId":"NODE2","nextNodeId":"NEXT_NODE3","savedAt":"2025-09-10T10:37:32Z","state":{"prop2":"value2","prop1":"value1"}},
+                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID3","nodeId":"NODE3","nextNodeId":"NEXT_NODE4","savedAt":"2025-09-10T10:37:33Z","state":{"prop2":"value2","prop1":"value1","prop3":"value3"}},
+                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID4","nodeId":"NODE4","nextNodeId":"NEXT_NODE5","savedAt":"2025-09-10T10:37:34Z","state":{"prop2":"value2","prop1":"value1","prop4":"value4","prop3":"value3"}}]
                 """.replace("\n", ""), result );
 
         final var newCheckpoints = cpSerializer.readDataFromString( result );
@@ -210,7 +210,7 @@ public class JacksonSerializerTest {
             assertEquals( checkpoints.get(i).id(), newCheckpoints.get(i).id() );
             assertEquals( checkpoints.get(i).nodeId(), newCheckpoints.get(i).nodeId() );
             assertEquals( checkpoints.get(i).nextNodeId(), newCheckpoints.get(i).nextNodeId() );
-            assertEquals( checkpoints.get(i).createdAt(), newCheckpoints.get(i).createdAt() );
+            assertEquals( checkpoints.get(i).savedAt(), newCheckpoints.get(i).savedAt() );
             assertEquals( checkpoints.get(i).state(), newCheckpoints.get(i).state() );
         }
 
@@ -234,7 +234,50 @@ public class JacksonSerializerTest {
         assertEquals( 1, checkpoints.size() );
         final var checkpoint = checkpoints.get(0);
         assertEquals( "ID1", checkpoint.id() );
-        assertNotNull( checkpoint.createdAt(), "missing creation date must fall back to the default one" );
+        assertNotNull( checkpoint.savedAt(), "a payload written before the saved-at time existed must fall back to the default one" );
+    }
+
+    @Test
+    void checkPointDeserializationMapsTheFormerCreatedAtNameTest() throws Exception {
+
+        final var serializer = new MyJacksonStateSerializer();
+        final var cpSerializer = new JacksonCheckpointListSerializer(serializer);
+
+        // payload written by 1.9.6/1.9.7, when the attribute was named createdAt
+        final var renamedJson = """
+                [
+                {"@type":"org.bsc.langgraph4j.checkpoint.Checkpoint","id":"ID1","nodeId":"NODE1","nextNodeId":"NEXT_NODE2","createdAt":"2025-09-10T10:37:31Z","state":{"prop1":"value1"}}]
+                """.replace("\n", "");
+
+        final var checkpoints = cpSerializer.readDataFromString( renamedJson );
+
+        assertEquals( 1, checkpoints.size() );
+        final var checkpoint = checkpoints.get(0);
+        assertEquals( Instant.parse("2025-09-10T10:37:31Z"), checkpoint.savedAt(),
+                "checkpoints persisted under the former name must still carry their saved-at time" );
+    }
+
+    @Test
+    void checkPointSerializationWritesTheCurrentNameTest() throws Exception {
+
+        final var serializer = new MyJacksonStateSerializer();
+        final var cpSerializer = new JacksonCheckpointListSerializer(serializer);
+
+        final var checkpoints = new LinkedList<Checkpoint>();
+        checkpoints.add( Checkpoint.builder()
+                .id("ID1")
+                .nodeId("NODE1")
+                .nextNodeId("NEXT_NODE2")
+                .state(Map.of("prop1", "value1"))
+                .savedAt(Instant.parse("2025-09-10T10:37:31Z"))
+                .build() );
+
+
+        final var json = cpSerializer.writeDataAsString( checkpoints );
+
+        assertTrue( json.contains("\"savedAt\":\"2025-09-10T10:37:31Z\""),
+                "new payloads are written under the new name: " + json );
+        assertFalse( json.contains("createdAt"), "the deprecated name is not written again: " + json );
     }
 
     private record NonSerializableElement(  String value )  {

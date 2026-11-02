@@ -398,17 +398,17 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
             assertFalse(checkpoints.isEmpty());
             for( final var checkpoint : checkpoints ) {
-                assertNotNull( checkpoint.createdAt(), "creation date must survive the persistence round trip" );
+                assertNotNull( checkpoint.savedAt(), "creation date must survive the persistence round trip" );
             }
 
             // checkpoints are returned newest first: creation dates must not increase going deeper in the list
             for( int i = 0 ; i < checkpoints.size() - 1 ; i++ ) {
-                assertFalse( checkpoints.get(i).createdAt().isBefore( checkpoints.get(i+1).createdAt() ) );
+                assertFalse( checkpoints.get(i).savedAt().isBefore( checkpoints.get(i+1).savedAt() ) );
             }
 
             final var snapshot = app.getState( runnableConfig );
             assertNotNull(snapshot);
-            assertEquals( checkpoints.get(0).createdAt(), snapshot.createdAt() );
+            assertEquals( checkpoints.get(0).savedAt(), snapshot.savedAt() );
         }
         finally {
             saver.release( runnableConfig );

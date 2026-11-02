@@ -49,7 +49,7 @@ public class SQLiteSaverV2Dashboard extends AbstractSQLiteSaverV2 {
 
     @Override
     protected String sqlCommandsResourcePath() {
-        return "db/v2.0__commands.sql";
+        return "db/v2.1__commands.sql";
     }
 
     public List<ThreadRecord> selectAllThreads() throws Exception {
