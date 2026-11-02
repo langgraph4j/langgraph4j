@@ -173,7 +173,7 @@ class Issue412Test {
 
 		assertEquals(0, tool.invocations.get(), "the in-graph tool call must be skipped");
 
-		final var state = new AgentExecutorEx.State(resumed.asStateDataOrLastCheckpointStateData());
+		final AgentExecutorEx.State state = resumed.asState();
 
 		assertTrue(state.messages()
 			.stream()
