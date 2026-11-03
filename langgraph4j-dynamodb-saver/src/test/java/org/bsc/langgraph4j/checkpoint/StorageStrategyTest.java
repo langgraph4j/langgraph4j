@@ -8,6 +8,7 @@ import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -42,8 +43,10 @@ public class StorageStrategyTest {
             .withFixedExposedPort(8345, DYNAMODB_PORT) // Different port to avoid conflict
             .waitingFor(Wait.forLogMessage(".*Initializing DynamoDB Local.*\\n", 1));
 
+    static final DockerImageName myImage = DockerImageName.parse("pgsty/silo:RELEASE.2026-09-16T00-00-00Z").asCompatibleSubstituteFor("minio/minio");
+
     @Container
-    static final MinIOContainer minioContainer = new MinIOContainer("minio/minio:latest")
+    static final MinIOContainer minioContainer = new MinIOContainer(myImage)
         .withUserName("minioadmin")
         .withPassword("minioadmin");
 

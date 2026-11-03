@@ -234,7 +234,7 @@ public class JacksonSerializerTest {
         assertEquals( 1, checkpoints.size() );
         final var checkpoint = checkpoints.get(0);
         assertEquals( "ID1", checkpoint.id() );
-        assertNotNull( checkpoint.savedAt(), "a payload written before the saved-at time existed must fall back to the default one" );
+        assertFalse( checkpoint.hasSavedAt(), "a payload written before the saved-at time existed must fall back to the default one" );
     }
 
     @Test

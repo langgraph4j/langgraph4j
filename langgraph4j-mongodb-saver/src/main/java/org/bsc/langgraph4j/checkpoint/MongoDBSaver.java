@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
@@ -345,6 +346,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                     .savedAt(doc.getDate(FieldEnum.CREATED_AT.fieldName()))
                     .state(decodeState(doc.getString(FieldEnum.STATE_DATA.fieldName()),
                             doc.getString(FieldEnum.STATE_CONTENT_TYPE.fieldName())))
+                    .savedAt(doc.getDate(FieldEnum.CREATED_AT.fieldName()))
                     .build());
         }
         return result;
@@ -356,7 +358,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
         // serialize first: a state that cannot be written must not create a live thread
         final var stateData = encodeState(checkpoint.state());
         final var thread = claimSeq(threadId(config));
-
+        final var timestamp = Instant.now();
         this.checkpoints.insertOne(new Document()
                 .append(FieldEnum.ID.fieldName(), checkpoint.id())
                 .append(FieldEnum.THREAD_REF.fieldName(), thread.getObjectId("_id"))
@@ -365,7 +367,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                 .append(FieldEnum.NEXT_NODE_ID.fieldName(), checkpoint.nextNodeId())
                 .append(FieldEnum.STATE_DATA.fieldName(), stateData)
                 .append(FieldEnum.STATE_CONTENT_TYPE.fieldName(), stateSerializer.contentType())
-                .append(FieldEnum.CREATED_AT.fieldName(), checkpoint.savedAt()));
+                .append(FieldEnum.CREATED_AT.fieldName(), timestamp));
         log.debug("Checkpoint {} for thread {} inserted successfully.", checkpoint.id(), threadId(config));
     }
 
@@ -375,7 +377,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
         final var threadId = threadId(config);
         final var previousId = config.checkPointId()
                 .orElseThrow(() -> new IllegalStateException("checkpoint id is required to update a checkpoint"));
-
+        final var timestamp = Instant.now();
         final var thread = findActiveThread(threadId);
         if (thread == null) {
             throw new NoSuchElementException(format("active Thread '%s' not found", threadId));
@@ -390,7 +392,7 @@ public class MongoDBSaver extends AbstractCheckpointSaver implements LG4JLoggabl
                         set(FieldEnum.NEXT_NODE_ID.fieldName(), checkpoint.nextNodeId()),
                         set(FieldEnum.STATE_DATA.fieldName(), encodeState(checkpoint.state())),
                         set(FieldEnum.STATE_CONTENT_TYPE.fieldName(), stateSerializer.contentType()),
-                        set(FieldEnum.CREATED_AT.fieldName(), checkpoint.savedAt())));
+                        set(FieldEnum.CREATED_AT.fieldName(), timestamp)));
         if (result.getMatchedCount() == 0) {
             throw new NoSuchElementException(format("Checkpoint with id %s not found!", previousId));
         }

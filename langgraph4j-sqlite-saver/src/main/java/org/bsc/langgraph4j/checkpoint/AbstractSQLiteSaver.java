@@ -176,7 +176,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
     }
 
     /**
-     * Parses the {@code saved_at} column into an {@link Instant}.
+     * Parses the timestamp column into an {@link Instant}.
      *
      * <p>The schema fills this column with {@code strftime('%Y-%m-%dT%H:%M:%fZ', 'now')},
      * which is an ISO-8601 instant and therefore directly parseable. A null column
@@ -188,7 +188,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
      * @param value the raw column value, may be null
      * @return the parsed instant, or null when the column is null
      */
-    protected static Instant parseSavedAt( String value ) {
+    protected static Instant toInstant(String value ) {
         return ( value == null ) ? null : Instant.parse( value );
     }
 
@@ -212,7 +212,7 @@ public abstract class AbstractSQLiteSaver extends AbstractCheckpointSaver implem
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
                             .state(decodeState(rs.getString(4), rs.getString(5)))
-                            .savedAt(parseSavedAt(rs.getString("saved_at")))
+                            .savedAt(toInstant(rs.getString("saved_at")))
                             .build();
                     checkpoints.add(checkpoint);
                 }

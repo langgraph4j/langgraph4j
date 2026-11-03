@@ -5,9 +5,12 @@ import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -125,7 +128,7 @@ public abstract class AbstractCheckpointSaverTest implements LG4JTestUtil, LG4JL
 
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)
-    public final void testCheckpointWithReleasedThread( StateSerializerEnum param ) throws Exception {
+    public void testCheckpointWithReleasedThread( StateSerializerEnum param ) throws Exception {
 
         final var saver = buildCheckpointSaver(param.stateSerializer, null);
 
@@ -259,4 +262,28 @@ public abstract class AbstractCheckpointSaverTest implements LG4JTestUtil, LG4JL
 
     }
 
+    @Test
+    public final void testCheckpointSavedAtIsReadBackFromStorage() throws Exception {
+        final var threadId = "thread-savedAtIsReadBackFromStorage";
+        final var saver = buildCheckpointSaver(StateSerializerEnum.JSON.stateSerializer, threadId);
+
+        final var checkpoint = Checkpoint.builder()
+                .state(Map.of("step", 1))
+                .nodeId("node")
+                .nextNodeId("next")
+                .savedAt((Date)null)
+                .build();
+
+        final var config = RunnableConfig.builder()
+                .threadId(threadId)
+                .build();
+
+        saver.put(config, checkpoint);
+
+        final var retrievedCheckpoint = saver.get(config);
+
+        assertTrue(retrievedCheckpoint.isPresent());
+        assertNotNull(retrievedCheckpoint.get().savedAt(),
+                "the 'saved at'  must be read back into the checkpoint");
+    }
 }

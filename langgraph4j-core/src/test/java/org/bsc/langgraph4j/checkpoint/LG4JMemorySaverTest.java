@@ -1,13 +1,15 @@
-package org.bsc.langgraph4j;
+package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.annotation.ActionCatalog;
 import org.bsc.langgraph4j.annotation.ActionCatalogRepository;
-import org.bsc.langgraph4j.checkpoint.Checkpoint;
-import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +23,7 @@ import java.util.logging.LogManager;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
@@ -88,30 +91,32 @@ public class LG4JMemorySaverTest
         }
     }
 
+    <S extends AgentState> S initialState(BaseCheckpointSaver checkpointSaver,
+                                    Map<String, Object> inputs,
+                                    RunnableConfig config,
+                                    StateSerializer<S> stateSerializer,
+                                    Map<String, Channel<?>> channels) throws IOException, ClassNotFoundException {
+
+
+        final var result = ofNullable( checkpointSaver)
+                .flatMap( saver -> saver.get( config ) )
+                .map( cp -> AgentState.updateState( cp.state(), inputs, channels ))
+                .orElseGet( () -> AgentState.updateState(stateSerializer.stateFactory().initialDataFromSchema(channels), inputs, channels ));
+        return stateSerializer.cloneObject(result);
+    }
+
+
     @Test
     public void testCheckpointInitialState() throws Exception {
-        NodeAction<AgentState> agent_1 = state -> {
-            log.info( "agent_1");
-            return Map.of("agent_1:prop1", "agent_1:test");
-        };
-
-        var workflow = new StateGraph<>(AgentState::new)
-            .addNode("agent_1", node_async( agent_1 ))
-            .addEdge( START,"agent_1")
-            .addEdge( "agent_1",  END)
-        ;
+        final var stateSerializer = new ObjectStreamStateSerializer<>(AgentState::new);
 
         var saver = new MemorySaver();
 
-        var compileConfig = CompileConfig.builder().checkpointSaver(saver).build();
-
         var runnableConfig = RunnableConfig.empty();
-        var app = workflow.compile( compileConfig );
 
         Map<String, Object> inputs = Map.of( "input", "test1");
 
-        var initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
-
+        var initState = initialState(saver, inputs, runnableConfig, stateSerializer, Map.of());
         assertEquals( 1, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );
         assertEquals( "test1", initState.value("input").get() );
@@ -127,8 +132,7 @@ public class LG4JMemorySaverTest
                 .nextNodeId("agent_1")
                 .build() ) ;
 
-        app = workflow.compile( compileConfig );
-        initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
+        initState = initialState(saver, inputs, runnableConfig, stateSerializer, Map.of());
 
         assertEquals( 1, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );
@@ -141,8 +145,7 @@ public class LG4JMemorySaverTest
                 .nodeId( "agent_1")
                 .nextNodeId(END)
                 .build() ) ;
-        app = workflow.compile( compileConfig );
-        initState = app.cloneState( app.initialState( inputs, runnableConfig ), runnableConfig );
+        initState = initialState(saver, inputs, runnableConfig, stateSerializer, Map.of());
 
         assertEquals( 2, initState.data().size() );
         assertTrue(  initState.value("input").isPresent() );

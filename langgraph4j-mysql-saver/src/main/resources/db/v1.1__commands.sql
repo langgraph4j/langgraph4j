@@ -16,6 +16,7 @@ SELECT
     c.next_node_id,
     c.state_data,
     c.state_content_type,
+    c.saved_at,
     c.parent_checkpoint_id
 FROM matched_thread t
 JOIN LANGRAPH4J_CHECKPOINT c

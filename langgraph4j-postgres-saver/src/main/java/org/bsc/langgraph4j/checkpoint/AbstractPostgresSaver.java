@@ -239,6 +239,7 @@ public abstract class AbstractPostgresSaver extends AbstractCheckpointSaver impl
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
                             .state(decodeState(rs.getString(4), rs.getString(5)))
+                            .savedAt(rs.getTimestamp(6)) // Use getTimestamp to retrieve the saved_at value
                             .build();
                     checkpoints.add(checkpoint);
                 }

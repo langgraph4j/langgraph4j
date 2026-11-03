@@ -284,6 +284,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
                     .nodeId(record.nodeId())
                     .nextNodeId(record.nextNodeId())
                     .state(state)
+                    .savedAt( new Date(record.savedAt()))
                     .build();
                 checkpoints.add(checkpoint);
             } catch (Exception e) {

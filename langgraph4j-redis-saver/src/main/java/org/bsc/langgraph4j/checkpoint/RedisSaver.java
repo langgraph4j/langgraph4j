@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
@@ -400,6 +401,9 @@ public class RedisSaver extends AbstractCheckpointSaver implements LG4JLoggable 
                         .nodeId(checkpointMap.get(NODE_ID_FIELD))
                         .nextNodeId(checkpointMap.get(NEXT_NODE_ID_FIELD))
                         .state(state)
+                        .savedAt( ofNullable(checkpointMap.get(SAVED_AT_FIELD))
+                                    .map(s -> new Date(Long.parseLong(s)))
+                                    .orElse(null))
                         .build();
                 checkpoints.add(checkpoint);
             }

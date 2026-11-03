@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiPredicate;
@@ -99,6 +100,9 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
 
     @Override
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        int index = checkpoints.indexOf(checkpoint);
+        checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
+
         final var targetFile = getFile(config);
         serialize(checkpoints, targetFile);
     }
