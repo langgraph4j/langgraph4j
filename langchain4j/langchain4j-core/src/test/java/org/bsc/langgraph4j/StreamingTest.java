@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -61,7 +62,7 @@ public class StreamingTest {
             final var secondChunk = "%s_second".formatted(now());
             handler.onPartialResponse(secondChunk);
             handler.onCompleteResponse(createChatResponse( firstChunk + secondChunk ));
-        });
+        }, Executors.newSingleThreadExecutor());
 
         for (var agentStateStreamingOutput : generator) {
             final var date = simpleDateFormat.format(new Date());
