@@ -1,7 +1,6 @@
 ## Langgraph4j Studio - Spring Boot reference implementation
 
-This module provides the class `LangGraphStudioConfig` that registers LangGraph4j Studio Servlets in a [Spring Boot](https://spring.io/projects/spring-boot) server.  
-For more details, see the [LangGraph4j Studio documentation]().
+This module provide the reference implementation of LangGraph4j Studio using Spring Boot framework.
 
 ### Add dependency
 
@@ -9,9 +8,22 @@ For more details, see the [LangGraph4j Studio documentation]().
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-springboot</artifactId>
-    <version>1.9.7</version>
+    <version>1.9.8</version>
 </dependency>
 ```
+
+From version `1.9.8` a new Studio implementation based on AG-UI protocol has been introduced.
+This new implementation will be the only supported and previous is going to be deprecate.
+
+## New Implementation (from `1.9.8`)
+
+_<TO DO >_
+
+## Legacy Implementation (before `1.9.8`)
+
+This module provides the class `LangGraphStudioConfig` that registers LangGraph4j Studio Servlets in a [Spring Boot](https://spring.io/projects/spring-boot) server.  
+For more details, see the [LangGraph4j Studio documentation]().
+
 
 ### Create a Custom Configuration Bean
 

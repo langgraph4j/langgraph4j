@@ -15,6 +15,7 @@ import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
@@ -139,11 +140,17 @@ public class HazelcastSaver extends AbstractCheckpointSaver implements LG4JLogga
 
     @Override
     protected void insertedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        int index = checkpoints.indexOf(checkpoint);
+        checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
+
         store.put(threadId(config), encode(checkpoints));
     }
 
     @Override
     protected void updatedCheckpoint(RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        int index = checkpoints.indexOf(checkpoint);
+        checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
+
         store.put(threadId(config), encode(checkpoints));
     }
 

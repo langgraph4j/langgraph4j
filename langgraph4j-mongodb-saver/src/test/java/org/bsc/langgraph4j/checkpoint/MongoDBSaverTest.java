@@ -99,8 +99,8 @@ public class MongoDBSaverTest extends AbstractCheckpointSaverTest {
 
         assertEquals(List.of(a2.id(), a1.id()), saver.list(a).stream().map(Checkpoint::id).toList());
         assertEquals(List.of(b1.id()), saver.list(b).stream().map(Checkpoint::id).toList());
-        assertEquals(a2, saver.get(a).orElseThrow());
-        assertEquals(a1, saver.get(RunnableConfig.builder(a).checkPointId(a1.id()).build()).orElseThrow());
+        assertTrue(a2.equalsIgnoreSavedAt(saver.get(a).orElseThrow()));
+        assertTrue(a1.equalsIgnoreSavedAt(saver.get(RunnableConfig.builder(a).checkPointId(a1.id()).build()).orElseThrow()));
         assertTrue(saver.list(thread("unknown")).isEmpty());
         assertTrue(saver.get(thread("unknown")).isEmpty());
     }
@@ -120,7 +120,7 @@ public class MongoDBSaverTest extends AbstractCheckpointSaverTest {
         var history = List.copyOf(saver.list(cfg));
         assertEquals(2, history.size());
         assertEquals(c2.id(), history.get(0).id());
-        assertEquals(replacement, history.get(1));
+        assertTrue(replacement.equalsIgnoreSavedAt(history.get(1)));
 
         assertThrows(NoSuchElementException.class,
                 () -> saver.put(RunnableConfig.builder(cfg).checkPointId("missing").build(), c2));
@@ -144,11 +144,12 @@ public class MongoDBSaverTest extends AbstractCheckpointSaverTest {
         var tag2 = saver.release(cfg, "done");
         assertEquals(Optional.of(2), tag2.version());
 
-        assertEquals(List.of(first), List.copyOf(saver.tag(cfg, 1).orElseThrow().checkpoints()));
-        assertEquals(List.of(second), List.copyOf(saver.tag(cfg, 2).orElseThrow().checkpoints()));
+
+        assertTrue(first.equalsIgnoreSavedAt(List.copyOf(saver.tag(cfg, 1).orElseThrow().checkpoints()).get(0)));
+        assertTrue(second.equalsIgnoreSavedAt(List.copyOf(saver.tag(cfg, 2).orElseThrow().checkpoints()).get(0)));
         var last = saver.lastTag(cfg).orElseThrow();
         assertEquals(Optional.of(2), last.version());
-        assertEquals(Optional.of(second), last.lastCheckpoint());
+        assertTrue(second.equalsIgnoreSavedAt(last.lastCheckpoint().orElseThrow()));
         assertTrue(saver.tag(cfg, 3).isEmpty());
         assertTrue(saver.lastTag(thread("never-released")).isEmpty());
 
@@ -213,7 +214,7 @@ public class MongoDBSaverTest extends AbstractCheckpointSaverTest {
         assertEquals("waiting for approval", doc.getString("interruption_reason"));
 
         // checkpoints survive a new saver instance (resume after restart)
-        assertEquals(c, newSaver("interrupt").get(cfg).orElseThrow());
+        assertTrue(c.equalsIgnoreSavedAt(newSaver("interrupt").get(cfg).orElseThrow()));
     }
 
     private static InterruptionMetadata<AgentState> interruption(String reason) {

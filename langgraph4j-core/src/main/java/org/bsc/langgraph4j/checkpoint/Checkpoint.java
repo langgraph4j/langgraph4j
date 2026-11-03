@@ -3,6 +3,7 @@ package org.bsc.langgraph4j.checkpoint;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.Channel;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,9 +18,17 @@ import static java.util.Optional.ofNullable;
  * and a {@code String} that represents the next state.
  * The checkpoint is serializable and can be persisted and restored.
  *
- * <p>Every checkpoint carries the {@link #createdAt() creation date} that
- * can be used to order checkpoints reliably ( ie. by custom checkpoint savers )
- * even when the underlying storage doesn't preserve insertion order.
+ * <p>Every checkpoint carries the {@link #savedAt() saved-at time}, that is the
+ * instant the checkpoint was persisted, which can be used to order checkpoints
+ * reliably ( ie. by custom checkpoint savers ) even when the underlying storage
+ * doesn't preserve insertion order.
+ *
+ * <p>The value is meant to be assigned by the side that writes to the storage,
+ * because when several instances of a graph share one store the local clock of
+ * the node that built the checkpoint is not comparable across nodes. Savers that
+ * cannot pre-fill it ( or that read a payload written before it existed ) leave
+ * it {@code null}, which means "the storage did not give us a time" and not
+ * "the checkpoint was never saved".
  *
  * @see AgentState
  * @since 1.0.0
@@ -29,24 +38,134 @@ public record Checkpoint(
         @NonNull Map<String, Object> state,
         @NonNull String nodeId,
         @NonNull String nextNodeId,
-        @NonNull Instant createdAt
+        @Nullable Instant savedAt
 ) {
+
+    /** The storage did not give us a time". Sorts as the oldest possible checkpoint. */
+    public static final Instant UNKNOWN_SAVED_AT = Instant.EPOCH;
+
+    public static class Builder {
+        private String id = UUID.randomUUID().toString();
+        private Map<String,Object> state = null;
+        private String nodeId = null ;
+        private String nextNodeId = null;
+        private Instant savedAt = null;
+
+        public Builder id( String id ) {
+            this.id = id;
+            return this;
+        }
+        public Builder state( AgentState state ) {
+            this.state = state.data();
+            return this;
+        }
+        public Builder state( Map<String,Object> state ) {
+            this.state = state;
+            return this;
+        }
+        public Builder nodeId( String nodeId ) {
+            this.nodeId = nodeId;
+            return this;
+        }
+        public Builder nextNodeId( String nextNodeId ) {
+            this.nextNodeId = nextNodeId;
+            return this;
+        }
+
+        /**
+         * Set the time the checkpoint was persisted.
+         * This is how a saver hands over the time assigned by its own storage; when
+         * it is not supplied the saved-at time falls back to {@link Instant#now()}
+         * truncated to millisecond precision.
+         * Warning: The Instant by default {@link Instant#now()} use nanoseconds precision.
+         * This could have side effects on your Checkpoint saver underlying storage.
+         * Just in case use {@code truncatedTo(ChronoUnit.MILLIS)} to truncated to millisecond precision.
+         *
+         * @param savedAt the saved-at time, may be null
+         * @return this builder
+         * @since 1.9.8
+         */
+        public Builder savedAt( @Nullable Instant savedAt ) {
+            this.savedAt = Objects.requireNonNullElse(savedAt, UNKNOWN_SAVED_AT);
+            return this;
+        }
+
+        /**
+         * Set the time the checkpoint was persisted using a {@link Date}.
+         *
+         * @param savedAt the saved-at time, may be null
+         * @return this builder
+         * @since 1.9.8
+         */
+        public Builder savedAt( @Nullable Date savedAt ) {
+            return savedAt(savedAt == null ? null : savedAt.toInstant());
+        }
+
+        /**
+         * Alias of {@link #savedAt(Instant)}.
+         *
+         * @param createdAt the saved-at time
+         * @return this builder
+         * @deprecated use {@link #savedAt(Instant)} instead; kept so savers written
+         *             against 1.9.6/1.9.7 ( eg. {@code MongoDBSaver} ) keep compiling
+         * @since 1.9.7
+         */
+        @Deprecated( since = "1.9.8", forRemoval = true )
+        public Builder createdAt( @Nullable Instant createdAt ) {
+            return savedAt( createdAt );
+        }
+
+        /**
+         * Alias of {@link #savedAt(Date)}.
+         *
+         * @param createdAt the saved-at time
+         * @return this builder
+         * @deprecated use {@link #savedAt(Date)} instead, see {@link #createdAt(Instant)}
+         * @since 1.9.7
+         */
+        @Deprecated( since = "1.9.8", forRemoval = true )
+        public Builder createdAt( @Nullable Date createdAt ) {
+            return savedAt( createdAt );
+        }
+
+        public Checkpoint build() {
+            return new Checkpoint(id, state, nodeId, nextNodeId, savedAt);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * create a copy of given checkpoint with a new id
+     * @param checkpoint value from which copy is created
+     * @return new copy with different id
+     */
+    public static Checkpoint copyOf( Checkpoint checkpoint ) {
+        requireNonNull( checkpoint, "checkpoint cannot be null" );
+        return new Checkpoint( UUID.randomUUID().toString(),
+                checkpoint.state,
+                checkpoint.nodeId,
+                checkpoint.nextNodeId,
+                checkpoint.savedAt);
+    }
 
     public Checkpoint {
         requireNonNull( id, "id cannot be null" );
         requireNonNull( state, "state cannot be null" );
         requireNonNull( nodeId, "nodeId cannot be null" );
         requireNonNull( nextNodeId, "Checkpoint.nextNodeId cannot be null" );
-        requireNonNull( createdAt, "Checkpoint.createdAt cannot be null" );
-
+        savedAt = Objects.requireNonNullElse(savedAt, UNKNOWN_SAVED_AT);
     }
 
     /**
-     * Creates a checkpoint without an explicit creation date.
-     * The creation date defaults to {@link Instant#now()} truncated to
+     * Creates a checkpoint without an explicit saved-at time.
+     * The saved-at time defaults to {@link Instant#now()} truncated to
      * millisecond precision, so a value that survives a round trip through a
      * database ( most of which store milliseconds at best ) compares equal to
-     * the one held in memory.
+     * the one held in memory. Savers able to pre-fill the field from the
+     * storage should do so instead of relying on this default.
      *
      * @param id         the checkpoint id
      * @param state      the checkpoint state
@@ -76,89 +195,38 @@ public record Checkpoint(
     }
 
     /**
-     * create a copy of given checkpoint with a new id
-     * @param checkpoint value from which copy is created
-     * @return new copy with different id
+     * Alias of {@link #savedAt()}, kept so that code reading the attribute
+     * introduced in 1.9.6 keeps compiling after the rename.
+     *
+     * @return the saved-at time, {@code null} when the storage did not supply one
+     * @deprecated use {@link #savedAt()} instead; this alias will be removed once
+     *             consumers had one release to migrate
+     * @since 1.9.6
      */
-    public static Checkpoint copyOf( Checkpoint checkpoint ) {
-        requireNonNull( checkpoint, "checkpoint cannot be null" );
-        return new Checkpoint( UUID.randomUUID().toString(),
-                                checkpoint.state,
-                                checkpoint.nodeId,
-                                checkpoint.nextNodeId,
-                                Instant.now().truncatedTo(ChronoUnit.MILLIS));
+    @Deprecated( since = "1.9.8", forRemoval = true )
+    public @Nullable Instant createdAt() { return savedAt; }
+
+    /**
+     * Returns if the checkpoint has a saved-at time set.
+     *
+     * @return {@code true} if the checkpoint has a saved-at time, {@code false} otherwise
+     * @since 1.9.8
+     */
+    public boolean hasSavedAt() {
+        return !UNKNOWN_SAVED_AT.equals(savedAt);
     }
-
-
-    public static Builder builder() {
-        return new Builder();
+    /**
+     * Returns a new Checkpoint with the given saved-at time, if it was not set yet.
+     * If the checkpoint already has a saved-at time, it is returned unchanged.
+     *
+     * @param savedAt the saved-at time to set
+     * @return a new Checkpoint with the given saved-at time, or this checkpoint if it already has one
+     * @since 1.9.8
+     */
+    public Checkpoint withSavedAtIfUnset( @NonNull Instant savedAt ) {
+        requireNonNull(savedAt, "savedAt cannot be null");
+        return hasSavedAt() ? this : new Checkpoint(id, state, nodeId, nextNodeId, savedAt);
     }
-
-    public static class Builder {
-        private String id = UUID.randomUUID().toString();
-        private Map<String,Object> state = null;
-        private String nodeId = null ;
-        private String nextNodeId = null;
-        private Instant createdAt = null;
-
-        public Builder id( String id ) {
-            this.id = id;
-            return this;
-        }
-        public Builder state( AgentState state ) {
-            this.state = state.data();
-            return this;
-        }
-        public Builder state( Map<String,Object> state ) {
-            this.state = state;
-            return this;
-        }
-        public Builder nodeId( String nodeId ) {
-            this.nodeId = nodeId;
-            return this;
-        }
-        public Builder nextNodeId( String nextNodeId ) {
-            this.nextNodeId = nextNodeId;
-            return this;
-        }
-
-        /**
-         * Set the creation date of the checkpoint.
-         * Warning: The Instant by default {@link Instant#now()} use nanoseconds precision.
-         * This could have side effects on your Checkpoint saver underlying storage.
-         * Just in case use {@code truncatedTo(ChronoUnit.MILLIS)} to truncated to millisecond precision.
-         *
-         * @param createdAt the creation date
-         * @return this builder
-         * @since 1.9.7
-         */
-        public Builder createdAt( Instant createdAt ) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        /**
-         * Set the creation date of the checkpoint using a {@link Date}.
-         *
-         * @param createdAt the creation date
-         * @return this builder
-         * @since 1.9.7
-         */
-        public Builder createdAt( Date createdAt ) {
-            this.createdAt = createdAt != null ? createdAt.toInstant() : null;
-            return this;
-        }
-
-        public Checkpoint build() {
-            return new Checkpoint(  id,
-                                    state,
-                                    nodeId,
-                                    nextNodeId,
-                                    ofNullable(createdAt)
-                                            .orElseGet( () -> Instant.now().truncatedTo(ChronoUnit.MILLIS) ) );
-        }
-    }
-
     /**
      * Returns a new Checkpoint with updated state, keeping the current nextNodeId.
      *
@@ -175,7 +243,7 @@ public record Checkpoint(
     /**
      * Returns a new Checkpoint with updated state and a new nextNodeId.
      *
-     * <p>The creation date is preserved because the checkpoint keeps its identity
+     * <p>The saved-at time is preserved because the checkpoint keeps its identity
      * ( ie. the same {@link #id()} ) and it is updated in place.
      *
      * @param values     the partial state updates to merge into this checkpoint's state
@@ -192,17 +260,33 @@ public record Checkpoint(
                 AgentState.updateState( this.state, values, channels ),
                 this.nodeId,
                 requireNonNull(nextNodeId, "nextNodeId cannot be null"),
-                this.createdAt );
+                this.savedAt );
+    }
+
+    /**
+     * Compares this checkpoint to another, ignoring the saved-at time.
+     * This is useful when comparing checkpoints that have been persisted and
+     * restored, as the saved-at time may differ even if the other fields are equal.
+     *
+     * @param other the checkpoint to compare to
+     * @return true if the checkpoints are equal ignoring the saved-at time, false otherwise
+     * @since 1.9.8
+     */
+    public boolean equalsIgnoreSavedAt( Checkpoint other ) {
+        return  Objects.equals( this.id, other.id ) &&
+                Objects.equals( this.state, other.state ) &&
+                Objects.equals( this.nodeId, other.nodeId ) &&
+                Objects.equals( this.nextNodeId, other.nextNodeId );
     }
 
     @Override
     @NonNull
     public String toString() {
-        return  "Checkpoint{ id=%s, nodeId=%s, nextNodeId=%s, createdAt=%s, state=%s }".formatted(
+        return  "Checkpoint{ id=%s, nodeId=%s, nextNodeId=%s, savedAt=%s, state=%s }".formatted(
                 id,
                 nodeId,
                 nextNodeId,
-                createdAt,
+                savedAt,
                 state
         );
     }

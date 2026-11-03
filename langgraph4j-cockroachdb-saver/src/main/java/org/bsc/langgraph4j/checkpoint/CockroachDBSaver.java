@@ -112,6 +112,7 @@ public class CockroachDBSaver extends AbstractCockroachDBSaver {
                             .nodeId(rs.getString(2))
                             .nextNodeId(rs.getString(3))
                             .state(decodeState(rs.getString(4), rs.getString(5)))
+                            .savedAt(rs.getTimestamp(6))
                             .build();
                     checkpoints.add(checkpoint);
                 }

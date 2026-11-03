@@ -1,6 +1,8 @@
 package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.serializer.StateSerializer;
+import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.SqlResource;
 import org.jspecify.annotations.Nullable;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.sqlite.SQLiteDataSource;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -97,5 +100,37 @@ public class SQLiteSaverV2Test extends AbstractCheckpointSaverTest {
 
     }
 
+    @Test
+    void everyConnectionTheSaverBorrowsIsClosed() throws Exception {
+        var ds$ = new TrackingDataSource(ds);
+        BaseCheckpointSaver saver = SQLiteSaverV2.builder()
+                .datasource(ds$)
+                .stateSerializer(new ObjectStreamStateSerializer<>(AgentState::new))
+                .createTables(true)
+                .build();
+        assertEquals(0, ds$.openConnections(), "after build");
+
+        var config = RunnableConfig.builder().threadId("connection-leak-test").build();
+
+        saver.list(config);
+        assertEquals(0, ds$.openConnections(), "after list");
+
+        saver.get(config);
+        assertEquals(0, ds$.openConnections(), "after get");
+
+        var checkpoint = Checkpoint.builder()
+                .state(Map.of("step", 1))
+                .nodeId("node")
+                .nextNodeId("next")
+                .build();
+        config = saver.put(config, checkpoint);
+        assertEquals(0, ds$.openConnections(), "after put");
+
+        assertTrue(saver.get(config).isPresent());
+        assertEquals(0, ds$.openConnections(), "after get of a stored checkpoint");
+
+        saver.release(config);
+        assertEquals(0, ds$.openConnections(), "after release");
+    }
 
 }

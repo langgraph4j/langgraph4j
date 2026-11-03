@@ -1,5 +1,5 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9.7
-//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.7@pom
+//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9.8
+//DEPS org.bsc.langgraph4j:langgraph4j-bom:1.9.8@pom
 //DEPS org.bsc.langgraph4j:langgraph4j-core
 //DEPS org.bsc.langgraph4j:langgraph4j-javelit
 //DEPS org.springframework.ai:spring-ai-bom:1.1.4@pom
@@ -142,9 +142,9 @@ public class JtCommitAssistantAgentApp {
                         }
 
                         // FINISHED
-                        if( result.isStateDataOrCheckpointSaverTag() ) {
+                        if( result.isStateData() ) {
 
-                            final var state = new AgentExecutorEx.State( result.asStateDataOrLastCheckpointStateData() );
+                            final AgentExecutorEx.State state = result.asState();
 
                             final var response = state.lastMessage()
                                     .map(Content::getText)

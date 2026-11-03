@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -23,10 +24,14 @@ public class MemorySaver extends AbstractCheckpointSaver {
 
     @Override
     protected final void insertedCheckpoint( RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        int index = checkpoints.indexOf(checkpoint);
+        checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
     }
 
     @Override
     protected final void updatedCheckpoint( RunnableConfig config, LinkedList<Checkpoint> checkpoints, Checkpoint checkpoint) throws Exception {
+        int index = checkpoints.indexOf(checkpoint);
+        checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
     }
 
     private Optional<Integer> lastVersion( TreeMap<Integer,Tag> prevTagsByThread) {

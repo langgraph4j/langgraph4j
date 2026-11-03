@@ -144,6 +144,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                 oracleStatement.defineColumnType(3, OracleTypes.VARCHAR); // next_node_id
                 oracleStatement.defineColumnType(4, OracleTypes.CLOB); // state_data
                 oracleStatement.defineColumnType(5, OracleTypes.VARCHAR); // state_data_type
+                oracleStatement.defineColumnType(6, OracleTypes.TIMESTAMP); // saved_at
                 oracleStatement.setLobPrefetchSize(Integer.MAX_VALUE); // Workaround for Oracle JDBC bug 37030121
 
                 preparedStatement.setString(1, threadName);
@@ -154,6 +155,7 @@ public abstract class AbstractOracleSaver extends AbstractCheckpointSaver implem
                                 .nodeId(rs.getString(2))
                                 .nextNodeId(rs.getString(3))
                                 .state(decodeState(rs.getString(4), rs.getString(5)))
+                                .savedAt(rs.getTimestamp(6)) // Use getTimestamp to retrieve the saved_at value
                                 .build();
                         checkpoints.add(checkpoint);
                     }
