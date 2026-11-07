@@ -120,6 +120,7 @@ You'll typically use a `CheckpointSaver` implementation (e.g., `MemorySaver` for
 Useful starting points for persistence:
 
 - [`langgraph4j-mysql-saver/README.md`](langgraph4j-mysql-saver/README.md) for MySQL-backed checkpoints
+- [`langgraph4j-filesystem-saver/README.md`](langgraph4j-filesystem-saver/README.md) for file-backed V2 checkpoints
 - [`langgraph4j-postgres-saver/README.md`](langgraph4j-postgres-saver/README.md) for PostgreSQL-backed checkpoints
 - [`langgraph4j-redis-saver/README.md`](langgraph4j-redis-saver/README.md) for Redis-backed checkpoints
 - [`langgraph4j-mongodb-saver/README.md`](langgraph4j-mongodb-saver/README.md) for MongoDB-backed checkpoints
@@ -134,6 +135,7 @@ langgraph4j/
 ├── langgraph4j-core/                    # LangGraph4j core components
 ├── langgraph4j-opentelemetry/           # LangGraph4j Hook & OpenTelemetry integration module
 ├── langgraph4j-mysql-saver              # LangGraph4j persistent checkpoint saver based on MySQL
+├── langgraph4j-filesystem-saver         # LangGraph4j persistent checkpoint saver based on files
 ├── langgraph4j-oracle-saver             # LangGraph4j persistent checkpoint saver based on OracleDB
 ├── langgraph4j-postgres-saver           # LangGraph4j persistent checkpoint saver based on PostgresSQL
 ├── langgraph4j-dynamodb-saver           # LangGraph4j persistent checkpoint saver based on Amazon DynamoDB
