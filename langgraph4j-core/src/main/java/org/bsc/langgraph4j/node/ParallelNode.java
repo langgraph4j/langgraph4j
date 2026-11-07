@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class ParallelNode<State extends AgentState> extends Node<State> {
@@ -59,16 +60,18 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
         }
 
         private CompletableFuture<Map<String, Object>> evalGenerator(AsyncGenerator<NodeOutput<State>> generator, Map<String, Object> initPartialState) {
-            return generator.reduce(new ArrayList<NodeOutput<State>>(), (result, value) -> {
-                        result.add(value);
-                        return result;
-                    })
-                    .thenApply(list -> {
+            return generator.reduce((first, output) -> first == null ? output : first)
+                    .thenApply(reduced -> {
+                        // The terminal Data can carry a result even when the generator does not
+                        // expose it through HasResultValue.
+                        final var result = ofNullable(reduced.resultValue())
+                                .map( GraphResult::from )
+                                .orElseGet(() -> GraphResult.from(generator));
                         // A subgraph branch yields full-state snapshots. Merging every snapshot
                         // would apply non-idempotent reducers multiple times, so its contribution
                         // is the final state itself (apply() merges it via key replacement).
-                        if (!list.isEmpty() && list.get(0) instanceof SubGraphOutput) {
-                            return subgraphFinalState(generator);
+                        if (reduced.result() instanceof SubGraphOutput) {
+                            return subgraphFinalState(result);
                         }
                         // Chunk outputs are progress notifications: their state is the branch's
                         // starting state, not a delta. Like the serial path (embedGenerator),
@@ -76,16 +79,14 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
                         // Merging every chunk's full state would turn the branch result into a
                         // full-state map, which apply() would then merge as a delta - reverting
                         // sibling branches' writes and double-applying non-idempotent reducers.
-                        return mergeGeneratorResultValue(generator, initPartialState);
+                        return mergeGeneratorResultValue(result, initPartialState);
                     });
         }
 
         // Extracts the final full state produced by a subgraph branch, without merging
         // intermediate snapshots (which would double-apply non-idempotent reducers).
         // Returns null if the branch produced no result (empty/cancelled).
-        private Map<String, Object> subgraphFinalState(AsyncGenerator<NodeOutput<State>> generator) {
-            final var result = GraphResult.from(generator);
-
+        private Map<String, Object> subgraphFinalState(GraphResult result) {
             if (result.isEmpty() || result.isCancelled()) {
                 return null;
             }
@@ -131,10 +132,7 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
         }
 
         // merges the generator result value into the branch partial state, like embedGenerator() on the serial path
-        private Map<String, Object> mergeGeneratorResultValue(AsyncGenerator<NodeOutput<State>> generator, Map<String, Object> partialState) {
-
-            final var result = GraphResult.from(generator);
-
+        private Map<String, Object> mergeGeneratorResultValue(GraphResult result, Map<String, Object> partialState) {
             if (result.isEmpty() || result.isCancelled()) {
                 return partialState;
             }
