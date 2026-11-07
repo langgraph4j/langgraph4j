@@ -245,6 +245,7 @@
         <!-- module>studio/quarkus</module -->
 
         <!-- LangGraph4j savers -->
+        <module>langgraph4j-filesystem-saver</module>
         <module>langgraph4j-postgres-saver</module>
         <module>langgraph4j-oracle-saver</module>
         <module>langgraph4j-mysql-saver</module>
