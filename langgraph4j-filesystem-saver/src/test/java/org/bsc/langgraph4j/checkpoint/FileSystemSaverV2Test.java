@@ -64,18 +64,19 @@ class FileSystemSaverV2Test implements LG4JLoggable {
 
     @BeforeAll
     static void cleanTargetFolder() throws Exception {
-        try( var stream = Files.walk(rootPath) ) {
+        if( Files.exists(rootPath) ) {
+            try (var stream = Files.walk(rootPath)) {
 
                 stream.sorted((a, b) -> b.compareTo(a)) // delete children before parents
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
         }
-
     }
 
     @ParameterizedTest

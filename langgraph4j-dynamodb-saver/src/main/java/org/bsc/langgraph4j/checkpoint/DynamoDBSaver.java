@@ -5,7 +5,6 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.std.StdStateSerializer;
-import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -14,6 +13,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -34,10 +34,14 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * <pre>
  *  PK                                    SK                   Purpose
  *  ─────────────────────────────────     ─────────────────    ─────────────────────────────
- *  CHECKPOINT_{threadId}                 {checkpointId}       Checkpoint metadata
+ *  CHECKPOINT_{threadId}                 {checkpointId}       Checkpoint metadata (generation 0)
+ *  CHECKPOINT_{threadId}#{generation}    {checkpointId}       Checkpoint metadata (generation &gt; 0)
  *  CHUNK_{threadId}#{checkpointId}       CHUNK                Serialized state payload
- *  RELEASED_{threadId}                   MARKER               Thread-released sentinel
+ *  RELEASED_{threadId}                   MARKER               Current generation of the thread
  * </pre>
+ *
+ * <p>Releasing a thread archives its checkpoints by starting a new <em>generation</em>,
+ * so the same thread id can be reused for a fresh execution (see {@link DynamoDBRepository}).
  *
  * <h2>Usage</h2>
  * <pre>{@code
@@ -263,18 +267,44 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
 
     // ─── AbstractCheckpointSaver template methods ────────────────────────────────
 
+    /**
+     * Checkpoints of one generation of a thread.
+     *
+     * <p>{@link AbstractCheckpointSaver} passes the list returned by {@link #loadCheckpoints}
+     * to {@link #insertedCheckpoint}, {@link #updatedCheckpoint} and {@link #releaseCheckpoints}
+     * while holding its lock, so the generation read on load is reused by those operations
+     * without reading DynamoDB again.
+     */
+    static final class GenerationCheckpoints extends LinkedList<Checkpoint> {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        final long generation;
+
+        GenerationCheckpoints(long generation) {
+            this.generation = generation;
+        }
+    }
+
+    /**
+     * Returns the generation the given checkpoints were loaded from, reading it
+     * from DynamoDB only if the list was not produced by {@link #loadCheckpoints}.
+     */
+    private long generationOf(String threadId, LinkedList<Checkpoint> checkpoints) {
+        return (checkpoints instanceof GenerationCheckpoints loaded)
+                ? loaded.generation
+                : repository.currentGeneration(threadId);
+    }
+
     @Override
     protected LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception {
         final String threadId = threadId(config);
 
-        // If this thread has been released, return empty (same semantics as PostgresSaver)
-        if (repository.isThreadReleased(threadId)) {
-            log.debug("Thread '{}' is released – returning empty checkpoint list", threadId);
-            return new LinkedList<>();
-        }
+        // Only the current generation is visible: released generations stay archived
+        final long generation = repository.currentGeneration(threadId);
 
-        final LinkedList<Checkpoint> checkpoints = new LinkedList<>();
-        final List<DynamoDBRepository.CheckpointRecord> records = repository.loadCheckpointRecords(threadId);
+        final LinkedList<Checkpoint> checkpoints = new GenerationCheckpoints(generation);
+        final List<DynamoDBRepository.CheckpointRecord> records = repository.loadCheckpointRecords(threadId, generation);
 
         for (DynamoDBRepository.CheckpointRecord record : records) {
             try {
@@ -293,7 +323,7 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
             }
         }
 
-        log.debug("Loaded {} checkpoint(s) for thread '{}'", checkpoints.size(), threadId);
+        log.debug("Loaded {} checkpoint(s) for thread '{}' (generation {})", checkpoints.size(), threadId, generation);
         return checkpoints;
     }
 
@@ -302,13 +332,15 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
                                       LinkedList<Checkpoint> checkpoints,
                                       Checkpoint checkpoint) throws Exception {
         final String threadId = threadId(config);
+        final long generation = generationOf(threadId, checkpoints);
         final String parentCheckpointId = config.checkPointId().orElse(null);
-        log.debug("Inserting checkpoint '{}' for thread '{}' (parent='{}')",
-                checkpoint.id(), threadId, parentCheckpointId);
+        log.debug("Inserting checkpoint '{}' for thread '{}' (generation {}, parent='{}')",
+                checkpoint.id(), threadId, generation, parentCheckpointId);
 
         final byte[] payload = encodeState(checkpoint.state());
         repository.putCheckpoint(
             threadId,
+            generation,
             checkpoint.id(),
             checkpoint.nodeId(),
             checkpoint.nextNodeId(),
@@ -324,19 +356,21 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
                                      LinkedList<Checkpoint> checkpoints,
                                      Checkpoint checkpoint) throws Exception {
         final String threadId = threadId(config);
+        final long generation = generationOf(threadId, checkpoints);
 
         // Delete the old checkpoint (identified by the config's checkpointId) then insert new
         config.checkPointId().ifPresent(oldId -> {
             log.debug("Deleting old checkpoint '{}' before update, thread '{}'", oldId, threadId);
-            repository.deleteCheckpoint(threadId, oldId);
+            repository.deleteCheckpoint(threadId, generation, oldId);
         });
 
         final String parentCheckpointId = config.checkPointId().orElse(null);
-        log.debug("Updating checkpoint '{}' for thread '{}' (parent='{}')",
-                checkpoint.id(), threadId, parentCheckpointId);
+        log.debug("Updating checkpoint '{}' for thread '{}' (generation {}, parent='{}')",
+                checkpoint.id(), threadId, generation, parentCheckpointId);
         final byte[] payload = encodeState(checkpoint.state());
         repository.putCheckpoint(
             threadId,
+            generation,
             checkpoint.id(),
             checkpoint.nodeId(),
             checkpoint.nextNodeId(),
@@ -350,8 +384,10 @@ public class DynamoDBSaver extends AbstractCheckpointSaver implements LG4JLoggab
     @Override
     protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
         final String threadId = threadId(config);
-        log.debug("Releasing thread '{}'", threadId);
-        repository.markThreadReleased(threadId);
+        final long generation = generationOf(threadId, checkpoints);
+        log.debug("Releasing thread '{}' (generation {})", threadId, generation);
+        // archive the current generation: the next execution of this thread id starts empty
+        repository.startNextGeneration(threadId, generation);
         return new Tag(threadId, checkpoints);
     }
 
