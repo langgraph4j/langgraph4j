@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
