@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.checkpoint;
 
-import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
@@ -10,10 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.bsc.langgraph4j.StateGraph.END;
@@ -109,12 +106,12 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
             for (int execution = 0; execution < 2; execution++) {
 
-                Optional<State> state = app.invoke( GraphInput.noArgs(), runnableConfig_1);
+                var result = app.invokeSync( GraphInput.noArgs(), runnableConfig_1);
 
-                assertTrue(state.isPresent());
-                assertEquals(expectedSteps + (execution * 2), state.get().steps());
+                assertTrue(result.isStateData());
+                assertEquals(expectedSteps + (execution * 2), result.<State>asState().steps());;
 
-                List<String> messages = state.get().messages();
+                List<String> messages = result.<State>asState().messages();
                 assertFalse(messages.isEmpty());
 
                 log.info("thread_1: execution: {} messages:\n{}\n", execution, messages);
@@ -131,22 +128,22 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
                 // SUBMIT NEW THREAD 2
 
-                state = app.invoke(GraphInput.noArgs(), runnableConfig_2);
+                result = app.invokeSync(GraphInput.noArgs(), runnableConfig_2);
 
-                assertTrue(state.isPresent());
-                assertEquals(expectedSteps + execution, state.get().steps());
-                messages = state.get().messages();
+                assertTrue(result.isStateData());
+                assertEquals(expectedSteps + execution, result.<State>asState().steps());
+                messages = result.<State>asState().messages();
 
                 log.info("thread_2: execution: {} messages:\n{}\n", execution, messages);
 
                 assertEquals(expectedSteps + execution, messages.size());
 
                 // RE-SUBMIT THREAD 1
-                state = app.invoke(GraphInput.noArgs(), runnableConfig_1);
+                result = app.invokeSync(GraphInput.noArgs(), runnableConfig_1);
 
-                assertTrue(state.isPresent());
-                assertEquals(expectedSteps + 1 + execution * 2, state.get().steps());
-                messages = state.get().messages();
+                assertTrue(result.isStateData());
+                assertEquals(expectedSteps + 1 + execution * 2, result.<State>asState().steps());
+                messages = result.<State>asState().messages();
 
                 log.info("thread_1: execution: {} messages:\n{}\n", execution, messages);
 
@@ -201,10 +198,10 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                 .build();
         // saver.deleteFile( runnableConfig_2 );
 
-        var state = app.invoke( GraphInput.noArgs(), runnableConfig_1);
+        var result = app.invokeSync( GraphInput.noArgs(), runnableConfig_1);
 
-        assertTrue(state.isPresent());
-        assertEquals(expectedSteps, state.get().steps());
+        assertTrue(result.isStateData());
+        assertEquals(expectedSteps, result.<State>asState().steps());
 
         var tag = saver.release(runnableConfig_1);
         assertNotNull( tag );
@@ -213,9 +210,9 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         var tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
-        assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
+        assertIterableEquals( result.<State>asState().data().entrySet(), tagState.get().entrySet() );
 
-        var messages = state.get().messages();
+        var messages = result.<State>asState().messages();
 
         assertEquals(expectedSteps, messages.size());
 
@@ -228,11 +225,11 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
         // SUBMIT NEW THREAD 2
 
-        state = app.invoke(GraphInput.noArgs(), runnableConfig_2);
+        result = app.invokeSync(GraphInput.noArgs(), runnableConfig_2);
 
-        assertTrue(state.isPresent());
-        assertEquals(expectedSteps, state.get().steps());
-        messages = state.get().messages();
+        assertTrue(result.isStateData());
+        assertEquals(expectedSteps, result.<State>asState().steps());
+        messages = result.<State>asState().messages();
 
         tag = saver.release(runnableConfig_2);
         assertNotNull( tag );
@@ -241,15 +238,15 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
-        assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
+        assertIterableEquals( result.<State>asState().data().entrySet(), tagState.get().entrySet() );
 
         assertEquals(expectedSteps, messages.size());
 
         // RE-SUBMIT THREAD 1
-        state = app.invoke(GraphInput.noArgs(), runnableConfig_1);
+        result = app.invokeSync(GraphInput.noArgs(), runnableConfig_1);
 
-        assertTrue(state.isPresent());
-        assertEquals(expectedSteps, state.get().steps());
+        assertTrue(result.isStateData());
+        assertEquals(expectedSteps, result.<State>asState().steps());
 
         tag = saver.release(runnableConfig_1);
         assertNotNull( tag );
@@ -258,7 +255,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isPresent() );
 
-        assertIterableEquals( state.get().data().entrySet(), tagState.get().entrySet() );
+        assertIterableEquals( result.<State>asState().data().entrySet(), tagState.get().entrySet() );
 
     }
 
@@ -299,10 +296,10 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                 .threadId("thread_2")
                 .build();
 
-        var state_1 = app.invoke( GraphInput.noArgs(), runnableConfig_1);
+        var result_1 = app.invokeSync( GraphInput.noArgs(), runnableConfig_1);
 
-        assertTrue(state_1.isPresent());
-        assertEquals(expectedSteps, state_1.get().steps());
+        assertTrue(result_1.isStateData());
+        assertEquals(expectedSteps, result_1.<State>asState().steps());
 
         var tag = saver.release(runnableConfig_1);
         assertNotNull( tag );
@@ -311,7 +308,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         var tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
         assertTrue( tagState.isEmpty() );
 
-        var messages = state_1.get().messages();
+        var messages = result_1.<State>asState().messages();
 
         assertEquals(expectedSteps, messages.size());
 
@@ -324,11 +321,11 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
         // SUBMIT NEW THREAD 2
 
-        var state_2 = app.invoke(GraphInput.noArgs(), runnableConfig_2);
+        var result_2 = app.invokeSync(GraphInput.noArgs(), runnableConfig_2);
 
-        assertTrue(state_2.isPresent());
-        assertEquals(expectedSteps, state_2.get().steps());
-        messages = state_2.get().messages();
+        assertTrue(result_2.isStateData());
+        assertEquals(expectedSteps, result_2.<State>asState().steps());
+        messages = result_2.<State>asState().messages();
 
         tag = saver.release(runnableConfig_2);
         assertEquals( "thread_2", tag.threadId());
@@ -340,15 +337,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         assertEquals(expectedSteps, messages.size());
 
         // RE-SUBMIT THREAD 1
-        var iterator = app.stream(GraphInput.noArgs(), runnableConfig_1);
-
-        state_1 = iterator.stream()
-                .reduce((a, b) -> b)
-                .map( NodeOutput::state);
-        assertTrue( state_1.isPresent() );
-        assertInstanceOf(AsyncGenerator.HasResultValue.class, iterator );
-
-        var result = GraphResult.from(iterator);
+        var result = app.invokeSync(GraphInput.noArgs(), runnableConfig_1);
 
         assertFalse( result.isEmpty() );
         assertTrue( result.isCheckpointSaverTag() );
@@ -356,7 +345,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
         tagState = tag.checkpoints().stream().map(Checkpoint::state).findFirst();
 
         assertTrue( tagState.isPresent() );
-        assertIterableEquals( state_1.get().data().entrySet(), tagState.get().entrySet() );
+        assertIterableEquals( result.<State>asState().data().entrySet(), tagState.get().entrySet() );
 
 
     }
@@ -386,14 +375,14 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                 .build();
 
         try {
-            final var state = app.invoke( GraphInput.noArgs(), runnableConfig );
+            final var result = app.invokeSync( GraphInput.noArgs(), runnableConfig );
 
-            assertTrue(state.isPresent());
-            assertEquals(1, state.get().steps());
+            assertTrue(result.isStateData());
+            assertEquals(1, result.<State>asState().steps());
 
             // reload the checkpoints from the file system using a brand new saver instance
             final var reloadedSaver = new FileSystemSaver( checkpointStore, workflow.getStateSerializer() );
-            final var checkpoints = new ArrayList<Checkpoint>( reloadedSaver.list( runnableConfig ) );
+            final var checkpoints = reloadedSaver.list( runnableConfig ).stream().toList();
 
             assertFalse(checkpoints.isEmpty());
             for( final var checkpoint : checkpoints ) {
@@ -402,7 +391,11 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
 
             // checkpoints are returned newest first: creation dates must not increase going deeper in the list
             for( int i = 0 ; i < checkpoints.size() - 1 ; i++ ) {
-                assertFalse( checkpoints.get(i).savedAt().isBefore( checkpoints.get(i+1).savedAt() ) );
+                final var instant = checkpoints.get(i).savedAt();
+                assertNotNull(instant);
+                final var otherInstant = checkpoints.get(i + 1).savedAt();
+                assertNotNull(otherInstant);
+                assertFalse( instant.isBefore(otherInstant) );
             }
 
             final var snapshot = app.getState( runnableConfig );

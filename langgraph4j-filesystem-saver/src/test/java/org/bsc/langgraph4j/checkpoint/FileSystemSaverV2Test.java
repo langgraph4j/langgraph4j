@@ -380,10 +380,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
         assertEquals(expectedSteps, messages.size());
 
         // RE-SUBMIT THREAD 1
-        var result = app.stream(GraphInput.noArgs(), runnableConfig_1)
-                            .toCompletableFuture()
-                            .thenApply(GraphResult::from)
-                            .join();
+        var result = app.invokeSync(GraphInput.noArgs(), runnableConfig_1);
 
         assertFalse( result.isEmpty() );
         assertTrue( result.isCheckpointSaverTag() );
