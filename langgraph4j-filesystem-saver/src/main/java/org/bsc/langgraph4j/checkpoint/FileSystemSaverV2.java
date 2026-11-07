@@ -1,8 +1,3 @@
-/*
- * Persists active and released checkpoint lists as files in a caller-selected directory.
- * Graph execution and state serialization belong to core; this class owns the file envelope.
- * Files use UTF-8 JSON and share the lifetime of the configured directory.
- */
 package org.bsc.langgraph4j.checkpoint;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -87,8 +82,9 @@ public class FileSystemSaverV2 extends AbstractCheckpointSaver implements LG4JLo
     }
 
     /** Returns the extension used by both active and archived JSON envelopes. */
-    private String extension() {
-        return ".json";
+    public final  String extension() {
+        return ( checkpointsSerializer.contentType().equals("application/json")) ? ".json" : ".json+bin" ;
+
     }
 
     /** Formats the active-file stem for a thread identifier. */
