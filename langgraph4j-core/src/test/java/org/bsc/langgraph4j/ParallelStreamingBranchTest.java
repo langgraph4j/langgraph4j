@@ -10,6 +10,8 @@ import org.bsc.langgraph4j.state.Channels;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.bsc.langgraph4j.utils.TryConsumer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,12 +128,59 @@ public class ParallelStreamingBranchTest {
                 "appender content must be applied exactly once");
     }
 
-    @Test
-    void streamingBranchEndToEnd() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void nodeOutputProgressRetainsPartialStateBesideGenerator(boolean useSubtype) throws Exception {
+        AsyncNodeActionWithConfig<State> stream = (state, config) -> {
+            var generator = new AsyncGenerator.Base<NodeOutput<State>>() {
+                private boolean emitted;
+
+                @Override
+                public Data<NodeOutput<State>> next() {
+                    if (!emitted) {
+                        emitted = true;
+                        NodeOutput<State> output = useSubtype
+                                ? new StreamingOutput<>("chunk", "stream", state, null)
+                                : NodeOutput.of("stream", state);
+                        return Data.of(output);
+                    }
+                    return Data.done(Map.of("b", "from-stream"));
+                }
+            };
+            return completedFuture(Map.of("a", "from-partial-state", "content", generator));
+        };
+
+        var result = parallelAction(new ParallelNode<>("p", List.of(stream), State.SCHEMA))
+                .apply(new State(Map.of("a", "orig-a", "b", "orig-b")), RunnableConfig.empty())
+                .join();
+
+        assertEquals("from-partial-state", result.get("a"),
+                "progress output must not discard the branch's accompanying partial state");
+        assertEquals("from-stream", result.get("b"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void streamingBranchEndToEnd(boolean useGeneratorFlow) throws Exception {
+        AsyncNodeActionWithConfig<State> stream = useGeneratorFlow
+                ? streamingAction("b", "from-stream")
+                : (state, config) -> {
+                    var chunks = List.of("chunk-1", "chunk-2").iterator();
+                    var generator = new AsyncGenerator.Base<NodeOutput<State>>() {
+                        @Override
+                        public Data<NodeOutput<State>> next() {
+                            if (chunks.hasNext()) {
+                                return Data.of(new StreamingOutput<>(chunks.next(), "stream", state, null));
+                            }
+                            return Data.done(Map.of("b", "from-stream"));
+                        }
+                    };
+                    return completedFuture(Map.of("content", generator));
+                };
         var app = new StateGraph<>(State.SCHEMA, State::new)
                 .addNode("init", node_async(state -> Map.of("a", "orig-a", "b", "orig-b")))
                 .addNode("normal", node_async(state -> Map.of("a", "from-a")))
-                .addNode("stream", streamingAction("b", "from-stream"))
+                .addNode("stream", stream)
                 .addNode("join", node_async(state -> Map.of()))
                 .addEdge(START, "init")
                 .addEdge("init", "normal")
