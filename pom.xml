@@ -4,7 +4,7 @@
 
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-parent</artifactId>
-    <version>1.9.8</version>
+    <version>1.9-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>langgraph4j::parent</name>
@@ -245,6 +245,7 @@
         <!-- module>studio/quarkus</module -->
 
         <!-- LangGraph4j savers -->
+        <module>langgraph4j-filesystem-saver</module>
         <module>langgraph4j-postgres-saver</module>
         <module>langgraph4j-oracle-saver</module>
         <module>langgraph4j-mysql-saver</module>

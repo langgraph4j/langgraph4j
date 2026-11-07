@@ -18,10 +18,8 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -67,20 +65,24 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         this( targetFolder, CheckpointListSerializer.of( stateSerializer ));
     }
 
-    private String getBaseName(String threadId) {
+    private String baseName(String threadId) {
         return "thread-%s".formatted( threadId );
     }
 
-    private String getBaseName(RunnableConfig config) {
-        return getBaseName( threadId(config));
+    private String baseName(RunnableConfig config) {
+        return baseName( threadId(config));
     }
 
-    private Path getPath(RunnableConfig config) {
-        return Paths.get(targetFolder.toString(), getBaseName(config).concat(extension));
+    private Path path(RunnableConfig config) {
+        return Paths.get(targetFolder.toString(), baseName(config).concat(extension));
     }
 
-    private File getFile(RunnableConfig config) {
-        return getPath(config).toFile();
+    private File file(RunnableConfig config) {
+        return path(config).toFile();
+    }
+
+    private Path releasedPath() {
+        return targetFolder.resolve("released");
     }
 
     private void serialize(LinkedList<Checkpoint> checkpoints, File outFile) throws IOException {
@@ -103,7 +105,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
         int index = checkpoints.indexOf(checkpoint);
         checkpoints.set(index, checkpoint.withSavedAtIfUnset( Instant.now() ));
 
-        final var targetFile = getFile(config);
+        final var targetFile = file(config);
         serialize(checkpoints, targetFile);
     }
 
@@ -114,7 +116,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
 
     @Override
     protected LinkedList<Checkpoint> loadCheckpoints(RunnableConfig config) throws Exception {
-        final var targetFile = getFile(config);
+        final var targetFile = file(config);
         return targetFile.exists() ?
                 deserialize(targetFile) :
                 new LinkedList<>();
@@ -122,9 +124,14 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     }
 
     private OptionalInt lastVersion( String ThreadId ) throws IOException  {
-        final var versionPattern = Pattern.compile("thread-(.+)-v(\\d+)%s$".formatted(  extension));
+        final var versionPattern = Pattern.compile("thread-(.+)-v(\\d+)%s$".formatted(extension));
 
-        try (var stream = Files.list(targetFolder)) {
+        final var releasedPath = releasedPath();
+        if( !Files.exists(releasedPath) ) {
+            return OptionalInt.empty();
+        }
+
+        try (var stream = Files.list(releasedPath)) {
             return stream
                     .map(path -> path.getFileName().toString())
                     .map(versionPattern::matcher)
@@ -149,7 +156,7 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
      */
     @Override
     protected Tag releaseCheckpoints(RunnableConfig config, LinkedList<Checkpoint> checkpoints, @Nullable String message) throws Exception {
-        final var currentPath = getPath(config);
+        final var currentPath = path(config);
 
         if (!Files.exists(currentPath)) {
             log.warn("file {} doesn't exist. Skipping file operations.", currentPath);
@@ -165,11 +172,16 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
             return new Tag( threadId(config), List.of());
         }
 
-        var backupFilename = "%s-v%d%s".formatted( getBaseName(config), ++lastVersion, extension);
+        var releasedPath = releasedPath();
+        if( !Files.exists(releasedPath) ) {
+            Files.createDirectory(releasedPath);
+        }
 
-        final Path backupPath = targetFolder.resolve(backupFilename);
+        var releasedFilename = "%s-v%d%s".formatted( baseName(config), ++lastVersion, extension);
 
-        Files.copy(currentPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+        releasedPath = releasedPath.resolve(releasedFilename);
+
+        Files.copy(currentPath, releasedPath, StandardCopyOption.REPLACE_EXISTING);
 
         Files.delete(currentPath);
 
@@ -191,6 +203,16 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
     public Optional<Tag> tag( RunnableConfig config, Integer version) throws Exception {
         requireNonNull(config, "config cannot be null");
 
+        var releasedPath = releasedPath();
+        if( !Files.exists(releasedPath) ) {
+            log.warn("Released folder {} doesn't exist. Skipping file operations.", releasedPath);
+            return Optional.empty();
+        }
+        if( !Files.isDirectory(releasedPath) ) {
+            log.warn("Released folder {} is not a directory. Skipping file operations.", releasedPath);
+            return Optional.empty();
+        }
+
         final int version$;
         final var threadId = threadId(config);
 
@@ -207,16 +229,17 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
             version$ = lastVersion.getAsInt();
         }
 
-        final var backupFilename = "%s-v%d%s".formatted( getBaseName(threadId), version$, extension);
 
-        final Path backupPath = targetFolder.resolve(backupFilename);
+        final var backupFilename = "%s-v%d%s".formatted( baseName(threadId), version$, extension);
 
-        if (!Files.exists(backupPath)) {
-            log.warn("Backup file {} does not exist", backupPath);
+        releasedPath = releasedPath.resolve(backupFilename);
+
+        if (!Files.exists(releasedPath)) {
+            log.warn("released file {} does not exist", releasedPath);
             return Optional.empty();
         }
 
-        final var checkpoints = deserialize(backupPath.toFile());
+        final var checkpoints = deserialize(releasedPath.toFile());
         return Optional.of(new Tag(threadId, version$, checkpoints));
     }
 
@@ -227,29 +250,9 @@ public class FileSystemSaver extends AbstractCheckpointSaver implements LG4JLogg
      * @return true if the file existed and was successfully deleted, false otherwise
      */
     public boolean deleteFile(RunnableConfig config) {
-        File targetFile = getFile(config);
+        File targetFile = file(config);
         return targetFile.exists() && targetFile.delete();
     }
-
-    public static Stream<Path> list(Path targetFolder, BiPredicate<String,Integer> filter ) throws IOException {
-        requireNonNull(targetFolder, "targetFolder cannot be null");
-        requireNonNull(filter, "filter cannot be null");
-
-        if( Files.notExists(targetFolder) || !Files.isDirectory(targetFolder) ) {
-            return Stream.empty();
-        }
-
-        final var versionPattern = Pattern.compile("^thread-(.+)-v(\\d+)-saver.(?:json|bin)$");
-
-        return Files.list(targetFolder)
-                        .filter( path -> {
-                            final var matcher = versionPattern.matcher(path.getFileName().toString());
-                            if( !matcher.matches() ) return false;
-                            return filter.test( matcher.group(1), Integer.parseInt(matcher.group(2)) );
-                        });
-    }
-
-
 
 }
 
