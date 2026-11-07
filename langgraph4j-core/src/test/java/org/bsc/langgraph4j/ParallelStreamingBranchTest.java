@@ -130,6 +130,37 @@ public class ParallelStreamingBranchTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
+    void nodeOutputProgressRetainsPartialStateBesideGenerator(boolean useSubtype) throws Exception {
+        AsyncNodeActionWithConfig<State> stream = (state, config) -> {
+            var generator = new AsyncGenerator.Base<NodeOutput<State>>() {
+                private boolean emitted;
+
+                @Override
+                public Data<NodeOutput<State>> next() {
+                    if (!emitted) {
+                        emitted = true;
+                        NodeOutput<State> output = useSubtype
+                                ? new StreamingOutput<>("chunk", "stream", state, null)
+                                : NodeOutput.of("stream", state);
+                        return Data.of(output);
+                    }
+                    return Data.done(Map.of("b", "from-stream"));
+                }
+            };
+            return completedFuture(Map.of("a", "from-partial-state", "content", generator));
+        };
+
+        var result = parallelAction(new ParallelNode<>("p", List.of(stream), State.SCHEMA))
+                .apply(new State(Map.of("a", "orig-a", "b", "orig-b")), RunnableConfig.empty())
+                .join();
+
+        assertEquals("from-partial-state", result.get("a"),
+                "progress output must not discard the branch's accompanying partial state");
+        assertEquals("from-stream", result.get("b"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
     void streamingBranchEndToEnd(boolean useGeneratorFlow) throws Exception {
         AsyncNodeActionWithConfig<State> stream = useGeneratorFlow
                 ? streamingAction("b", "from-stream")
