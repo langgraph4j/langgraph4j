@@ -1,6 +1,9 @@
 package org.bsc.langgraph4j.checkpoint;
 
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +19,29 @@ class DynamoDBRepositoryTest {
     void testCheckpointPK() {
         assertEquals("CHECKPOINT_t1", DynamoDBRepository.checkpointPK("t1"));
         assertEquals("CHECKPOINT_thread-abc-123", DynamoDBRepository.checkpointPK("thread-abc-123"));
+    }
+
+    @Test
+    void testCheckpointPKWithGeneration() {
+        // generation 0 keeps the original key format
+        assertEquals("CHECKPOINT_t1", DynamoDBRepository.checkpointPK("t1", 0));
+        assertEquals("CHECKPOINT_t1#1", DynamoDBRepository.checkpointPK("t1", 1));
+        assertEquals("CHECKPOINT_t1#42", DynamoDBRepository.checkpointPK("t1", 42));
+        assertEquals("CHECKPOINT_t1#" + Long.MAX_VALUE, DynamoDBRepository.checkpointPK("t1", Long.MAX_VALUE));
+    }
+
+    @Test
+    void testGenerationOf() {
+        final var pk = AttributeValue.builder().s("RELEASED_t1").build();
+        final var sk = AttributeValue.builder().s("MARKER").build();
+
+        // no marker: never released
+        assertEquals(0L, DynamoDBRepository.generationOf(null));
+        // legacy marker without the 'generation' attribute
+        assertEquals(1L, DynamoDBRepository.generationOf(Map.of("PK", pk, "SK", sk)));
+        // current marker
+        assertEquals(7L, DynamoDBRepository.generationOf(Map.of("PK", pk, "SK", sk,
+                DynamoDBRepository.GENERATION_ATTRIBUTE, AttributeValue.builder().n("7").build())));
     }
 
     @Test
