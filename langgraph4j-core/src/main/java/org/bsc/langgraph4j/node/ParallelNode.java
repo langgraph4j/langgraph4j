@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class ParallelNode<State extends AgentState> extends Node<State> {
@@ -63,9 +64,9 @@ public class ParallelNode<State extends AgentState> extends Node<State> {
                     .thenApply(reduced -> {
                         // The terminal Data can carry a result even when the generator does not
                         // expose it through HasResultValue.
-                        final var result = reduced.resultValue() != null
-                                ? GraphResult.from(reduced.resultValue())
-                                : GraphResult.from(generator);
+                        final var result = ofNullable(reduced.resultValue())
+                                .map( GraphResult::from )
+                                .orElseGet(() -> GraphResult.from(generator));
                         // A subgraph branch yields full-state snapshots. Merging every snapshot
                         // would apply non-idempotent reducers multiple times, so its contribution
                         // is the final state itself (apply() merges it via key replacement).
