@@ -38,10 +38,23 @@ import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
  * <pre>
  *   PK                                     SK                Description
  *   ─────────────────────────────────────  ────────────────  ─────────────────────────────
- *   CHECKPOINT_{threadId}                  {checkpointId}    Checkpoint metadata item
+ *   CHECKPOINT_{threadId}                  {checkpointId}    Checkpoint metadata item (generation 0)
+ *   CHECKPOINT_{threadId}#{generation}     {checkpointId}    Checkpoint metadata item (generation &gt; 0)
  *   CHUNK_{threadId}#{checkpointId}        CHUNK             Serialized state payload
- *   RELEASED_{threadId}                    MARKER            Thread-released sentinel
+ *   RELEASED_{threadId}                    MARKER            Current generation of the thread
  * </pre>
+ *
+ * <h2>Thread generations</h2>
+ * <p>Releasing a thread starts a new <em>generation</em>: the released checkpoints stay
+ * archived under the partition of their generation, and the same thread id can be reused
+ * for a fresh execution. The current generation is stored in the {@code generation}
+ * attribute of the {@code RELEASED_{threadId}} marker:
+ * <ul>
+ * <li>no marker: generation {@code 0} (never released, original key format)</li>
+ * <li>marker without {@code generation} (written by earlier versions): generation {@code 1},
+ * so checkpoints released before the upgrade stay hidden</li>
+ * <li>otherwise: the stored {@code generation}</li>
+ * </ul>
  *
  * <p>
  * All item attributes:
@@ -75,6 +88,17 @@ class DynamoDBRepository {
     // ─── PK/SK generators ───────────────────────────────────────────────────────
     static String checkpointPK(String threadId) {
         return "CHECKPOINT_" + threadId;
+    }
+
+    /**
+     * Partition key of the checkpoints belonging to a generation of the thread.
+     * Generation {@code 0} keeps the original key, so threads that were never
+     * released are stored exactly as before.
+     */
+    static String checkpointPK(String threadId, long generation) {
+        return generation == 0
+                ? checkpointPK(threadId)
+                : format("CHECKPOINT_%s#%d", threadId, generation);
     }
 
     static String checkpointSK(String checkpointId) {
@@ -197,6 +221,7 @@ class DynamoDBRepository {
      * item.
      *
      * @param threadId thread identifier
+     * @param generation current generation of the thread
      * @param checkpointId UUID of the checkpoint
      * @param nodeId current graph node
      * @param nextNodeId next graph node
@@ -206,6 +231,7 @@ class DynamoDBRepository {
      * @param allowOverwrite if false, insert-only (conditional write); if true, overwrite allowed
      */
     void putCheckpoint(String threadId,
+            long generation,
             String checkpointId,
             String nodeId,
             String nextNodeId,
@@ -223,7 +249,7 @@ class DynamoDBRepository {
 
         // ── 2. Metadata item ──────────────────────────────────────────────────
         Map<String, AttributeValue> metaItem = new HashMap<>();
-        metaItem.put("PK", s(checkpointPK(threadId)));
+        metaItem.put("PK", s(checkpointPK(threadId, generation)));
         metaItem.put("SK", s(checkpointSK(checkpointId)));
         metaItem.put("checkpointId", s(checkpointId));
         metaItem.put("nodeId", s(nodeId));
@@ -268,12 +294,13 @@ class DynamoDBRepository {
      * Each record's payload is fetched from the associated chunk item.
      *
      * @param threadId thread identifier
+     * @param generation generation of the thread to load
      * @return list of records, ordered by checkpointId descending (UUIDs are
      * time-based when v7, but for lexicographic ordering we rely on DynamoDB's
      * SK scan-forward=false)
      */
-    List<CheckpointRecord> loadCheckpointRecords(String threadId) {
-        String pk = checkpointPK(threadId);
+    List<CheckpointRecord> loadCheckpointRecords(String threadId, long generation) {
+        String pk = checkpointPK(threadId, generation);
 
         QueryRequest query = QueryRequest.builder()
                 .tableName(tableName)
@@ -350,12 +377,12 @@ class DynamoDBRepository {
      * Deletes a single checkpoint: its metadata item. Payload cleanup is
      * handled by the {@link StorageStrategy} during {@code deleteThread}.
      */
-    void deleteCheckpoint(String threadId, String checkpointId) {
+    void deleteCheckpoint(String threadId, long generation, String checkpointId) {
         // Delete metadata
         client.deleteItem(r -> r
                 .tableName(tableName)
                 .key(Map.of(
-                        "PK", s(checkpointPK(threadId)),
+                        "PK", s(checkpointPK(threadId, generation)),
                         "SK", s(checkpointSK(checkpointId))
                 ))
         );
@@ -372,45 +399,104 @@ class DynamoDBRepository {
         log.debug("Deleted checkpoint '{}' for thread '{}'", checkpointId, threadId);
     }
 
-    // ─── Thread release operations ───────────────────────────────────────────────
+    // ─── Thread generation operations ────────────────────────────────────────────
+
+    /** Attribute of the released marker that holds the current generation of the thread. */
+    static final String GENERATION_ATTRIBUTE = "generation";
+
     /**
-     * Writes a sentinel item that marks this thread as "released" (archived).
-     * Subsequent calls to {@link #isThreadReleased(String)} will return
-     * {@code true}.
+     * Returns the current generation of the thread, read from its released marker
+     * (see the class documentation). Uses a strongly consistent read, so a release
+     * is visible to the very next operation.
+     *
+     * @param threadId thread identifier
+     * @return the current generation ({@code 0} if the thread was never released)
      */
-    void markThreadReleased(String threadId) {
-        Map<String, AttributeValue> item = new HashMap<>();
-        item.put("PK", s(releasedPK(threadId)));
-        item.put("SK", s(releasedSK()));
-
-        if (ttlSeconds != null) {
-            item.put("ttl", n(Instant.now().getEpochSecond() + ttlSeconds));
-        }
-
-        client.putItem(r -> r.tableName(tableName).item(item));
-        log.info("Marked thread '{}' as released", threadId);
+    long currentGeneration(String threadId) {
+        GetItemResponse response = client.getItem(r -> r
+                .tableName(tableName)
+                .key(releasedKey(threadId))
+                .consistentRead(true)
+        );
+        return generationOf(response.hasItem() ? response.item() : null);
     }
 
     /**
-     * Returns {@code true} if a released sentinel item exists for the given
-     * thread.
+     * Decodes the generation from a released marker item.
+     *
+     * @param marker the marker item, or {@code null} if it does not exist
+     * @return {@code 0} without marker, {@code 1} for a legacy marker without the
+     * {@code generation} attribute, otherwise the stored generation
      */
-    boolean isThreadReleased(String threadId) {
-        GetItemResponse response = client.getItem(r -> r
+    static long generationOf(Map<String, AttributeValue> marker) {
+        if (marker == null) {
+            return 0L;
+        }
+        final AttributeValue generation = marker.get(GENERATION_ATTRIBUTE);
+        return generation == null ? 1L : Long.parseLong(generation.n());
+    }
+
+    /**
+     * Releases the given generation of the thread by advancing its marker to
+     * {@code generation + 1}. The released checkpoints remain archived under the
+     * partition of their generation.
+     *
+     * <p>The write is conditional on the marker still holding {@code generation}, so
+     * a concurrent release can never move the generation backwards. If another release
+     * won the race, the generation it set is kept and returned.
+     *
+     * <p>The marker carries no {@code ttl}: if it expired, the thread would fall back to
+     * generation {@code 0} and hide the checkpoints of later generations.
+     *
+     * @param threadId thread identifier
+     * @param generation the generation being released
+     * @return the generation that is current after the release
+     */
+    long startNextGeneration(String threadId, long generation) {
+        final long next = Math.addExact(generation, 1L);
+
+        final Map<String, AttributeValue> item = new HashMap<>(releasedKey(threadId));
+        item.put(GENERATION_ATTRIBUTE, n(next));
+
+        final PutItemRequest.Builder request = PutItemRequest.builder()
                 .tableName(tableName)
-                .key(Map.of(
-                        "PK", s(releasedPK(threadId)),
-                        "SK", s(releasedSK())
-                ))
-                .projectionExpression("PK")
+                .item(item);
+
+        if (generation == 0) {
+            // never released: the marker must not exist yet
+            request.conditionExpression("attribute_not_exists(PK)");
+        } else {
+            // generation 1 may also be a legacy marker written without the attribute
+            request.conditionExpression(generation == 1
+                            ? "attribute_not_exists(#gen) OR #gen = :current"
+                            : "#gen = :current")
+                    .expressionAttributeNames(Map.of("#gen", GENERATION_ATTRIBUTE))
+                    .expressionAttributeValues(Map.of(":current", n(generation)));
+        }
+
+        try {
+            client.putItem(request.build());
+            log.info("Released generation {} of thread '{}', current generation is {}", generation, threadId, next);
+            return next;
+        } catch (ConditionalCheckFailedException e) {
+            final long current = currentGeneration(threadId);
+            log.warn("Generation {} of thread '{}' was already released concurrently, current generation is {}",
+                    generation, threadId, current);
+            return current;
+        }
+    }
+
+    private static Map<String, AttributeValue> releasedKey(String threadId) {
+        return Map.of(
+                "PK", s(releasedPK(threadId)),
+                "SK", s(releasedSK())
         );
-        return response.hasItem();
     }
 
     // ─── Hard delete operations ──────────────────────────────────────────────────
     /**
-     * Deletes all items associated with a thread: checkpoint metadata items,
-     * payload chunk items, and the released sentinel (if present).
+     * Deletes all items associated with a thread: the checkpoint metadata items and
+     * payloads of <em>every</em> generation, and the released marker (if present).
      *
      * <p>This is a <em>hard delete</em> — all data for the thread is permanently
      * removed from DynamoDB. The operation is idempotent: calling it on a
@@ -419,11 +505,37 @@ class DynamoDBRepository {
      * @param threadId thread identifier to delete
      */
     void deleteThread(String threadId) {
-        // ── 1. Query all checkpoint metadata items to collect checkpoint IDs + ref info ──
-        String pk = checkpointPK(threadId);
-        List<String> checkpointIds = new ArrayList<>();
-        List<String[]> payloadRefs = new ArrayList<>();  // [refKey, refLoc]
+        // ── 1. Collect the checkpoint metadata keys + payload refs of every generation ──
+        final long lastGeneration = currentGeneration(threadId);
+        final List<Map<String, AttributeValue>> keysToDelete = new ArrayList<>();
+        final List<String[]> payloadRefs = new ArrayList<>();  // [refKey, refLoc]
 
+        for (long generation = 0; generation <= lastGeneration; generation++) {
+            collectCheckpointKeys(threadId, checkpointPK(threadId, generation), keysToDelete, payloadRefs);
+        }
+        final int checkpointCount = keysToDelete.size();
+
+        // ── 2. Released marker (it holds the generation, so it goes last) ────
+        keysToDelete.add(releasedKey(threadId));
+
+        // ── 3. Batch delete metadata items from DynamoDB ─────────────────────
+        batchDeleteItems(keysToDelete);
+
+        // ── 4. Delete payloads via StorageStrategy (handles both DynamoDB chunks + S3) ──
+        storageStrategy.batchDeleteData(payloadRefs);
+
+        log.info("Deleted thread '{}': {} checkpoint(s) across {} generation(s)",
+                threadId, checkpointCount, lastGeneration + 1);
+    }
+
+    /**
+     * Queries one checkpoint partition and collects the keys of its metadata items
+     * and the references of their payloads.
+     */
+    private void collectCheckpointKeys(String threadId,
+                                       String pk,
+                                       List<Map<String, AttributeValue>> keysToDelete,
+                                       List<String[]> payloadRefs) {
         QueryRequest query = QueryRequest.builder()
                 .tableName(tableName)
                 .keyConditionExpression("PK = :pk")
@@ -440,7 +552,10 @@ class DynamoDBRepository {
             QueryResponse response = client.query(reqBuilder.build());
             for (Map<String, AttributeValue> item : response.items()) {
                 String cpId = item.get("SK").s();
-                checkpointIds.add(cpId);
+                keysToDelete.add(Map.of(
+                        "PK", s(pk),
+                        "SK", s(checkpointSK(cpId))
+                ));
 
                 // Collect ref info for S3 cleanup
                 String refLoc = item.containsKey("ref_loc") ? item.get("ref_loc").s() : "DYNAMODB";
@@ -449,53 +564,6 @@ class DynamoDBRepository {
             }
             exclusiveStartKey = response.hasLastEvaluatedKey() ? response.lastEvaluatedKey() : null;
         } while (exclusiveStartKey != null);
-
-        if (checkpointIds.isEmpty()) {
-            log.debug("No checkpoints found for thread '{}' – nothing to delete", threadId);
-            deleteReleasedMarker(threadId);
-            return;
-        }
-
-        // ── 2. Build list of DynamoDB keys to delete (metadata items only) ───
-        List<Map<String, AttributeValue>> keysToDelete = new ArrayList<>();
-
-        for (String checkpointId : checkpointIds) {
-            // Checkpoint metadata item
-            keysToDelete.add(Map.of(
-                    "PK", s(checkpointPK(threadId)),
-                    "SK", s(checkpointSK(checkpointId))
-            ));
-        }
-
-        // Released marker
-        keysToDelete.add(Map.of(
-                "PK", s(releasedPK(threadId)),
-                "SK", s(releasedSK())
-        ));
-
-        // ── 3. Batch delete metadata items from DynamoDB ─────────────────────
-        batchDeleteItems(keysToDelete);
-
-        // ── 4. Delete payloads via StorageStrategy (handles both DynamoDB chunks + S3) ──
-        storageStrategy.batchDeleteData(payloadRefs);
-
-        log.info("Deleted thread '{}': {} checkpoint(s)",
-                threadId, checkpointIds.size());
-    }
-
-    /**
-     * Deletes the released sentinel marker for a thread, if it exists.
-     *
-     * @param threadId thread identifier
-     */
-    private void deleteReleasedMarker(String threadId) {
-        client.deleteItem(r -> r
-                .tableName(tableName)
-                .key(Map.of(
-                        "PK", s(releasedPK(threadId)),
-                        "SK", s(releasedSK())
-                ))
-        );
     }
 
     // ─── Batch operations ────────────────────────────────────────────────────────

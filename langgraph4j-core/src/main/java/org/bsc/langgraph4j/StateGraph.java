@@ -206,6 +206,14 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return this;
     }
 
+    /**
+     * Adds a node to the graph.
+     * @param node the node to be added
+     * @return this state graph instance
+     * @throws NullPointerException if the node is null
+     * @throws GraphStateException if the node identifier is invalid or the node already exists
+     * @since 1.9.6
+     */
     public final StateGraph<State> add(Node<State> node) throws GraphStateException {
         requireNonNull(node, "node cannot be null");
         if (Objects.equals(node.id(), END)) {
@@ -306,7 +314,14 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return add(new SubStateGraphNode<>(id, subGraph));
     }
 
-
+    /**
+     * Adds an edge to the graph.
+     *
+     * @param newEdge the edge to be added
+     * @return this state graph instance
+     * @throws GraphStateException if the edge identifier is invalid or the edge already exists
+     * @since 1.9.6
+     */
     public StateGraph<State> add( Edge<State> newEdge ) throws GraphStateException {
 
         if (Objects.equals(newEdge.sourceId(), END)) {

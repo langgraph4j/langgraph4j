@@ -1,5 +1,7 @@
 ## JAVA NOTEBOOKS
 
+For local checkpoint persistence, see the [file system saver example](../langgraph4j-filesystem-saver/README.md).
+
 Idea is to write how-tos using Java Based Notebooks. 
 We have evaluate:
 
