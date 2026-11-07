@@ -2,6 +2,62 @@
 
 
 
+<!-- "name: v1.9.9" is a release tag -->
+
+## [v1.9.9](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.9) (2026-11-07)
+
+### Features
+
+ *  add new module filesystem-saver. ([1163d67e699cd49](https://github.com/bsorrentino/langgraph4j/commit/1163d67e699cd4908ce0c5d622a795cc779a79a4))
+     > - the module contains FileSystemSaverV2 that is compliant with the new CheckPointSaver strategy
+
+
+### Bug Fixes
+
+ -  **StreamingTest**  execute response handling in a separate thread ([9f5ae0823d07fe8](https://github.com/bsorrentino/langgraph4j/commit/9f5ae0823d07fe83d3423ee48648a5fc1d72f2e9))
+
+
+### Refactor
+
+ -  **FileSystemSaverV2**  make extension() method public ([694ddc4cacc21f7](https://github.com/bsorrentino/langgraph4j/commit/694ddc4cacc21f79b8cd70e8f4dbec451aac732c))
+
+ -  **FileSystemSaver**  move released checkpoints to a dedicated directory ([40869f6eb078fa4](https://github.com/bsorrentino/langgraph4j/commit/40869f6eb078fa4b52cb5f1b2b5f1a3724318e0b))
+    > Store versioned checkpoint files under the released subdirectory and read release tags from there.
+ > - Remove the static list helper, which searched the old archive location.
+ > work on #513
+
+
+### Test
+
+ -  **FileSystemSaverV2Test**  fix cleanup logic ([7ba88cf9457c654](https://github.com/bsorrentino/langgraph4j/commit/7ba88cf9457c654914af877d4354215d918c2197))
+
+ -  replace invoke() with invokeSync() calls ([35b4479e8897ad9](https://github.com/bsorrentino/langgraph4j/commit/35b4479e8897ad9f4d74a2b77a23c622024b6946))
+
+ -  **FileSystemSaverV2Test**  enhance with additional checkpoint scenarios ([3f4685684437f70](https://github.com/bsorrentino/langgraph4j/commit/3f4685684437f705c273a84e2c4250abc101700a))
+
+
+### Documentation
+
+ -  update release references for 1.9.9 ([21011cf92813a9c](https://github.com/bsorrentino/langgraph4j/commit/21011cf92813a9c20aa3ff31d1c87c9da7b3ce82))
+
+ -  **StateGraph**  add javadoc to methods `add(Node)` and `add(Edge)` ([452ca25b879d9f5](https://github.com/bsorrentino/langgraph4j/commit/452ca25b879d9f527daa7fe494d636b0037166a4))
+
+ -  mark 1.9.8 as latest release ([13312dbb5ede42f](https://github.com/bsorrentino/langgraph4j/commit/13312dbb5ede42f9e69ab88fd52f87d6263ecb95))
+
+ -  update changelog ([c3a45fb11fcd1c5](https://github.com/bsorrentino/langgraph4j/commit/c3a45fb11fcd1c5d53fb656a8cf29f4d0034f11f))
+
+
+### ALM
+
+ -  bump to next version 1.9.9 ([c7762c2c2b88a5e](https://github.com/bsorrentino/langgraph4j/commit/c7762c2c2b88a5ec3c6998988950a9cd998b1c00))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([44ab2fcb38976cf](https://github.com/bsorrentino/langgraph4j/commit/44ab2fcb38976cf5ec1288204a6149ccc0b90f22))
+
+
+
+
+
+
 <!-- "name: v1.9.8" is a release tag -->
 
 ## [v1.9.8](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.8) (2026-11-03)
