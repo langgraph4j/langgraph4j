@@ -260,7 +260,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             final var nextNodeCommand = nextNodeId( asNode, branchCheckpoint.getState(), config );
 
             nextNodeId = nextNodeCommand.gotoNode();
-            branchCheckpoint =  branchCheckpoint.updateState( nextNodeCommand.update(), stateGraph.getChannels(), nextNodeId );
+            // nextNodeId has already applied the edge updates to the complete state.
+            branchCheckpoint = Checkpoint.builder()
+                    .state( nextNodeCommand.update() )
+                    .nodeId( branchCheckpoint.getNodeId() )
+                    .nextNodeId( nextNodeId )
+                    .build();
 
         }
         // update checkpoint in saver
