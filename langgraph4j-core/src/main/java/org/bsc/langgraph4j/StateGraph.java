@@ -79,10 +79,6 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     private final StateSerializer<State> stateSerializer;
 
-    AgentState.Schema inputSchema;
-    AgentState.Schema outputSchema;
-
-
     /**
      *
      * @param schema the state's schema of the graph
@@ -187,24 +183,6 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     public AgentState.Schema schema() {
         return schema;
-    }
-
-    public StateGraph<State> withInputSchema( AgentState.Schema inputSchema ) {
-        this.inputSchema = inputSchema;
-        return this;
-    }
-
-    public StateGraph<State> withOutputSchema( AgentState.Schema outputSchema ) {
-        this.outputSchema = outputSchema;
-        return this;
-    }
-
-    public StateGraph<State> withInputSchema( String ...allowChannelNames  ) {
-        return withInputSchema( AgentState.Schema.select(allowChannelNames) );
-    }
-
-    public StateGraph<State> withOutputSchema( String ...allowChannelNames ) {
-        return withOutputSchema( AgentState.Schema.select(allowChannelNames) );
     }
 
     public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
