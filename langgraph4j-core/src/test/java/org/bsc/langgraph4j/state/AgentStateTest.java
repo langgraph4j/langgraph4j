@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.bsc.langgraph4j.state.AppenderChannel.ReplaceAllWith;
 
-import static org.bsc.langgraph4j.state.AgentState.Schema.select;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mapOf;
 import static org.junit.jupiter.api.Assertions.*;
 
