@@ -695,10 +695,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var initState = initialState( input.value(), config );
                 // patch for backward support of AppendableValue
-                final var initializedState = stateGraph.stateFactory()
-                            .apply(initState)
-                            .filterBySchema(stateGraph.inputSchema);
-                this.context = new Context( initializedState );
+                final var initializedState = stateGraph.stateFactory().apply(initState);
+                this.context = new Context( initializedState.data() );
                 this.config = configBuilder.build();
             }
         }
@@ -791,11 +789,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                                     final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
                                             generatorStateMerged :
-<<<<<<< HEAD
                                             AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
-=======
-                                            AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.getChannels());
 
+                                    context.setCurrentState(intermediateState);
+
+                                    return returnFromEmbed;
                                 })
                                 .join()
 
