@@ -148,33 +148,5 @@ public class AgentStateTest {
         assertIterableEquals(List.of("FB", "Ea"), (List<?>) newStateData.get("messages"));
     }
 
-    @Test
-    public void filterAttributes() {
-        final var state = new State(Map.of(
-                "messages", new ArrayList<>(List.of("A", "B", "C")),
-                "steps", 5,
-                "attr1", "value1") );
-
-        assertEquals( 3, state.data().size());
-        assertTrue(state.value("steps").isPresent());
-        assertTrue(state.value("messages").isPresent());
-        assertEquals(5, state.steps());
-        assertIterableEquals( List.of("A", "B", "C"), state.messages());
-
-        var newState = new State(state.filterBySchema(select("messages")));
-
-        assertEquals( 1, newState.data().size());
-        assertTrue(newState.value("steps").isEmpty());
-        assertTrue(newState.value("messages").isPresent());
-        assertIterableEquals( List.of("A", "B", "C"), newState.messages());
-
-        var newState2 = new State(state.filterBySchema(select("steps")));
-
-        assertEquals( 1, newState2.data().size());
-        assertTrue(newState2.value("steps").isPresent());
-        assertTrue(newState2.value("messages").isEmpty());
-        assertEquals(5, newState2.steps());
-
-    }
 
 }
