@@ -342,7 +342,6 @@ public final class GraphResult {
     public Map<String,Object> asLastCheckpointStateData() {
         return asCheckpointSaverTag().lastCheckpoint()
                     .map( Checkpoint::state )
-                    .map(state -> AgentState.filterBySchema(state, outputSchema))
                     .orElseThrow(() -> new IllegalStateException("Checkpoint saver tag doesn't contain any checkpoint"));
     }
 
