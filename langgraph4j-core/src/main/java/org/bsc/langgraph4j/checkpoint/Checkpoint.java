@@ -288,7 +288,7 @@ public record Checkpoint(
                 AgentState.updateState( this.state, values, schema.channels() ),
                 this.nodeId,
                 requireNonNull(nextNodeId, "nextNodeId cannot be null"),
-                this.createdAt );
+                this.savedAt );
     }
 
     @Override
