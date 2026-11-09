@@ -36,21 +36,6 @@ public class AgentState {
             return new SchemaImpl(channels);
         }
 
-        /**
-         * Creates a schema containing only the specified channel names.
-         *
-         * <p>Each selected channel is configured as a bare channel.
-         * This schema is intended to restrict the attributes exposed
-         * through agent input/output boundaries.
-         *
-         * @param channelNames the names of the allowed channels
-         * @return a schema containing the selected channels
-         */
-        static Schema select( String ...channelNames ) {
-            return new SchemaImpl(Arrays.stream(channelNames)
-                    .collect(Collectors.toMap(name -> name, name -> Channels.bare())));
-        }
-
         Map<String, Channel<?>> channels();
 
         default Schema merge( Map<String, Channel<?>> other ) {
@@ -321,16 +306,6 @@ public class AgentState {
         return updateState(this.data(), partialState, channels);
     }
 
-    /**
-     * Provides a new state's data as result of filtering the state data to include only the specified attribute names.
-     *
-     * @param schema the input schema to include in the filtered state
-     * @return a new map containing only the specified attributes from the state data
-     * @since 1.9.8
-     */
-    public Map<String, Object> filterBySchema(@Nullable Schema schema) {
-        return filterBySchema(this.data(), schema);
-    }
 }
 
 
