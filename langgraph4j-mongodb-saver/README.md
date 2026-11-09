@@ -18,7 +18,7 @@ MongoDB-based checkpoint saver for LangGraph4j. It implements the current (V2) s
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-mongodb-saver</artifactId>
-    <version>1.9.7</version>
+    <version>1.9.9</version>
 </dependency>
 ```
 

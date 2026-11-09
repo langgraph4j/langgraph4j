@@ -10,12 +10,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -26,8 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LG4JCancellationTest {
 
+
+    private Executor newThreadPerTask( String name) {
+        return (task) -> new Thread(task, name).start();
+    }
+
     private static StateGraph<AgentState> trackedGraph(Set<Thread> executionThreads) {
-        return new StateGraph<AgentState>(Map.of(), AgentState::new)
+        return new StateGraph<>(Map.of(), AgentState::new)
                 .addBeforeCallNodeHook((nodeId, state, config) -> {
                     executionThreads.add(Thread.currentThread());
                     return completedFuture(state.data());
@@ -70,7 +70,9 @@ public class LG4JCancellationTest {
                 .addEdge("next", END)
                 .compile();
 
-        var generator = graph.stream(GraphInput.args(Map.of()), RunnableConfig.builder().build());
+        var executor = newThreadPerTask("cancellationDoesNotStartTheNextNode");
+        var config = RunnableConfig.builder().emitterExecutor(executor).build();
+        var generator = graph.stream(GraphInput.noArgs(), config);
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "waiting node did not start");
             assertTrue(generator.cancel(mayInterruptIfRunning));
@@ -121,7 +123,8 @@ public class LG4JCancellationTest {
                 .compile();
 
         var input = GraphInput.args(Map.of());
-        var config = RunnableConfig.builder().build();
+        var executor = newThreadPerTask("parentCancellationStopsTheSubgraph");
+        var config = RunnableConfig.builder().emitterExecutor(executor).build();
         var generator = snapshots ? graph.streamSnapshots(input, config) : graph.stream(input, config);
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "child node did not start");
@@ -174,7 +177,11 @@ public class LG4JCancellationTest {
                 .addEdge("right", "parent_next")
                 .addEdge("parent_next", END)
                 .compile();
-        var config = RunnableConfig.builder().addParallelNodeExecutor(START, ForkJoinPool.commonPool()).build();
+        var executor = newThreadPerTask("cancellationStopsParallelSubgraphs");
+        var config = RunnableConfig.builder()
+                .emitterExecutor(executor)
+                .addParallelNodeExecutor(START, executor)
+                .build();
         var generator = graph.stream(GraphInput.args(Map.of()), config);
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "parallel child nodes did not start");
@@ -205,7 +212,9 @@ public class LG4JCancellationTest {
                 .addEdge(START, "waiting")
                 .addEdge("waiting", END)
                 .compile();
-        var generator = graph.stream(GraphInput.args(Map.of()), RunnableConfig.builder().build());
+        var executor = newThreadPerTask("cancellationCompletesTheAsyncConsumer");
+        var config = RunnableConfig.builder().emitterExecutor(executor).build();
+        var generator = graph.stream(GraphInput.noArgs(), config);
         try {
             var result = generator.forEachAsync(output -> consumed.countDown());
             assertTrue(entered.await(5, TimeUnit.SECONDS), "waiting node did not start");
@@ -240,19 +249,23 @@ public class LG4JCancellationTest {
                 .addEdge("waiting", "next")
                 .addEdge("next", END)
                 .compile(CompileConfig.builder().checkpointSaver(saver).build());
-        var config = RunnableConfig.builder().threadId("cancelled-thread").build();
-        var generator = graph.streamSnapshots(GraphInput.args(Map.of()), config);
+
+        Executor executor = newThreadPerTask("cancellationKeepsCheckpointsForResume");
+        var config = RunnableConfig.builder()
+                .threadId("cancelled-thread")
+                .emitterExecutor(executor)
+                .build();
+        var generator = graph.streamSnapshots(GraphInput.noArgs(), config);
         try {
             assertTrue(entered.await(5, TimeUnit.SECONDS), "waiting node did not start");
             assertTrue(generator.cancel(mayInterruptIfRunning));
             pending.complete(Map.of());
             awaitGraphExecution(executionThreads);
-
             assertFalse(nextNodeRan.get(), "next node ran after cancellation");
             assertTrue(saver.get(config).isPresent(), "cancellation released the active checkpoints");
             assertTrue(saver.tag(config, null).isEmpty(), "cancellation tagged a normally completed thread");
 
-            var resumed = graph.stream(GraphInput.resume(), config).forEachAsync(output -> {});
+            var resumed = graph.stream(GraphInput.resume(), config).toCompletableFuture();
             assertTrue(GraphResult.from(resumed.get(5, TimeUnit.SECONDS)).isStateData());
             assertTrue(nextNodeRan.get(), "resume did not run the next node");
         } finally {
@@ -282,9 +295,11 @@ public class LG4JCancellationTest {
                 .addEdge("next", END)
                 .compile();
 
-        var generator = graph.stream(GraphInput.args(Map.of()), RunnableConfig.builder().build());
+        var executor = newThreadPerTask("cancellationKeepsCheckpointsForResume");
+        var config = RunnableConfig.builder().emitterExecutor(executor).build();
+        var generator = graph.stream(GraphInput.noArgs(), config);
         try {
-            var result = generator.forEachAsync(output -> {}).get(5, TimeUnit.SECONDS);
+            var result = generator.toCompletableFuture().get(5, TimeUnit.SECONDS);
             assertTrue(GraphResult.from(result).isCancelled());
             awaitGraphExecution(executionThreads);
             assertFalse(edgeEvaluated.get(), "edge evaluated after the embedded generator was cancelled");

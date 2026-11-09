@@ -763,7 +763,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                                     config,
                                                     returnFromEmbed.asStateData())
                                                 // FIX #306: AfterHook sanitize the result. It applies MARK_AS_REMOVAL and other transformations.
-                                                .thenApply( result -> AgentState.updateState(Map.of(), result, stateGraph.schema()))
+                                                .thenApply( result -> AgentState.updateState(Map.of(), result, stateGraph.getChannels()))
                                                 .join();
                                     }
                                     else {
@@ -791,11 +791,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                                     final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
                                             generatorStateMerged :
+<<<<<<< HEAD
                                             AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
-
-                                    context.setCurrentState(intermediateState);
-
-                                    return returnFromEmbed;
+=======
+                                            AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.getChannels());
 
                                 })
                                 .join()

@@ -2,6 +2,288 @@
 
 
 
+<!-- "name: v1.9.9" is a release tag -->
+
+## [v1.9.9](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.9) (2026-11-07)
+
+### Features
+
+ *  add new module filesystem-saver. ([1163d67e699cd49](https://github.com/bsorrentino/langgraph4j/commit/1163d67e699cd4908ce0c5d622a795cc779a79a4))
+     > - the module contains FileSystemSaverV2 that is compliant with the new CheckPointSaver strategy
+
+
+### Bug Fixes
+
+ -  **StreamingTest**  execute response handling in a separate thread ([9f5ae0823d07fe8](https://github.com/bsorrentino/langgraph4j/commit/9f5ae0823d07fe83d3423ee48648a5fc1d72f2e9))
+
+
+### Refactor
+
+ -  **FileSystemSaverV2**  make extension() method public ([694ddc4cacc21f7](https://github.com/bsorrentino/langgraph4j/commit/694ddc4cacc21f79b8cd70e8f4dbec451aac732c))
+
+ -  **FileSystemSaver**  move released checkpoints to a dedicated directory ([40869f6eb078fa4](https://github.com/bsorrentino/langgraph4j/commit/40869f6eb078fa4b52cb5f1b2b5f1a3724318e0b))
+    > Store versioned checkpoint files under the released subdirectory and read release tags from there.
+ > - Remove the static list helper, which searched the old archive location.
+ > work on #513
+
+
+### Test
+
+ -  **FileSystemSaverV2Test**  fix cleanup logic ([7ba88cf9457c654](https://github.com/bsorrentino/langgraph4j/commit/7ba88cf9457c654914af877d4354215d918c2197))
+
+ -  replace invoke() with invokeSync() calls ([35b4479e8897ad9](https://github.com/bsorrentino/langgraph4j/commit/35b4479e8897ad9f4d74a2b77a23c622024b6946))
+
+ -  **FileSystemSaverV2Test**  enhance with additional checkpoint scenarios ([3f4685684437f70](https://github.com/bsorrentino/langgraph4j/commit/3f4685684437f705c273a84e2c4250abc101700a))
+
+
+### Documentation
+
+ -  update release references for 1.9.9 ([21011cf92813a9c](https://github.com/bsorrentino/langgraph4j/commit/21011cf92813a9c20aa3ff31d1c87c9da7b3ce82))
+
+ -  **StateGraph**  add javadoc to methods `add(Node)` and `add(Edge)` ([452ca25b879d9f5](https://github.com/bsorrentino/langgraph4j/commit/452ca25b879d9f527daa7fe494d636b0037166a4))
+
+ -  mark 1.9.8 as latest release ([13312dbb5ede42f](https://github.com/bsorrentino/langgraph4j/commit/13312dbb5ede42f9e69ab88fd52f87d6263ecb95))
+
+ -  update changelog ([c3a45fb11fcd1c5](https://github.com/bsorrentino/langgraph4j/commit/c3a45fb11fcd1c5d53fb656a8cf29f4d0034f11f))
+
+
+### ALM
+
+ -  bump to next version 1.9.9 ([c7762c2c2b88a5e](https://github.com/bsorrentino/langgraph4j/commit/c7762c2c2b88a5ec3c6998988950a9cd998b1c00))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([44ab2fcb38976cf](https://github.com/bsorrentino/langgraph4j/commit/44ab2fcb38976cf5ec1288204a6149ccc0b90f22))
+
+
+
+
+
+
+<!-- "name: v1.9.8" is a release tag -->
+
+## [v1.9.8](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.8) (2026-11-03)
+
+### Features
+
+ *  **core**  add RemoveEquals to remove a list value by equality ([b67bc4797edc8cc](https://github.com/bsorrentino/langgraph4j/commit/b67bc4797edc8cce1527e7971dc9e586f82feabe))
+     > &#x60;RemoveByHash&#x60; is the only &#x60;RemoveIdentifier&#x60; today and it decides by comparing
+     > hash codes, so every element sharing the target&#x27;s hash code is removed as well
+     > (&#x60;&quot;Aa&quot;&#x60; and &#x60;&quot;BB&quot;&#x60; both hash to 2112). Keep that class as it is and add
+     > &#x60;RemoveEquals&#x60; for the case where only the referenced value must go.
+   
+ *  **ExceptionUtils**  add utility methods for exception cause inspection and unwrapping ([dcaa2679e7ccd59](https://github.com/bsorrentino/langgraph4j/commit/dcaa2679e7ccd597dc53a1f7842ac75ae9978b8e))
+     > work on #511
+   
+ *  **CompiledGraph**  sanitize after-hook result for embedded subgraphs ([73256228ea3f191](https://github.com/bsorrentino/langgraph4j/commit/73256228ea3f1913abc11d232c8a906d7f2ff847))
+     > - add invokeSync() returning GraphResult
+     > work on #306
+   
+ *  **GraphResult**  make asStateData()/isStateData() handle CHECKPOINT_SAVER_TAG A tag now resolves to the last checkpoint's state, so both result kinds are handled the same way. ([f0885eabdc83578](https://github.com/bsorrentino/langgraph4j/commit/f0885eabdc8357854c9fb2c794609f5f3448c318))
+     > - add GraphResult.asState() to build typed state.
+     > - deprecate isStateDataOrCheckpointSaverTag(), asStateDataOrLastCheckpointStateData()
+     > resolve #436
+   
+ *  **savers**  read the saved-at time back from storage ([e37ff47ce4ac3b2](https://github.com/bsorrentino/langgraph4j/commit/e37ff47ce4ac3b264d8509a71cd0b6ea7c8e7434))
+     > The savers never loaded the saved-at time. SQLite kept the column and a
+     > descending index on it, but the SELECT did not ask for it, so every checkpoint
+     > that came back from the store was stamped with Instant.now() at read time. That
+     > makes the value useless for ordering — the same history read twice gets
+     > different times — and it contradicts the meaning of savedAt, which is the time
+     > the storage assigned when the checkpoint was written.
+     > SQLite ( v1 and v2 ) now selects &#x60;saved_at&#x60; and reads it back into the
+     > checkpoint; a null column maps to a null savedAt rather than a fabricated one.
+     > The test loads the same history twice and checks the times match, which is
+     > exactly what a fallback to Instant.now() would fail.
+     > MongoDB follows the renamed attribute. Its column keeps the &#x60;created_at&#x60; name,
+     > so documents written by earlier versions are read unchanged.
+     > The core saver tests use savedAt directly instead of the deprecated alias.
+     > The remaining savers are deliberately not touched: they do not reference the
+     > attribute, and making them read the time back is an independent change that
+     > deserves its own issue rather than a larger diff here.
+   
+ *  **core**  rename Checkpoint.createdAt to savedAt ([7ccf9b3ed9c9b86](https://github.com/bsorrentino/langgraph4j/commit/7ccf9b3ed9c9b86310c29709fb1990e4b6975c76))
+     > See #504. The creation date added in 1.9.6 is taken from the JVM clock of
+     > whichever node built the checkpoint, so once several instances share one
+     > store the values cannot be ordered or compared across nodes. It is renamed
+     > to savedAt, the time the checkpoint was persisted as assigned by the
+     > storage side, which is the only value that means the same thing everywhere.
+     > The field keeps a fallback to Instant.now() truncated to milliseconds for
+     > checkpoints that are not coming from a store, and null now means &quot;the storage
+     > did not give us a time&quot; rather than &quot;not supported&quot;, so it is explicitly
+     > nullable. Builders track whether a value was supplied so that a saver can
+     > hand over null instead of silently getting a local clock reading.
+     > createdAt survives as a deprecated read-only alias plus deprecated builder
+     > setters for one release, because it shipped in 1.9.6 and external savers
+     > ( eg. MongoDBSaver ) already read and write it. Payloads written under the
+     > old name still deserialize into savedAt, while new payloads are written
+     > under the new one.
+   
+ *  **studio**  enable the new AG-UI based studio implementations in Jetty and Spring boot ([d1ce70be42b7619](https://github.com/bsorrentino/langgraph4j/commit/d1ce70be42b76190c9d261aff25b2a27aa9c0785))
+   
+
+### Bug Fixes
+
+ -  **core**  unregister by the type the serializer is bound to ([beed243dc78b5d0](https://github.com/bsorrentino/langgraph4j/commit/beed243dc78b5d0a1e6a630d3affd6c25cb3e8bd))
+     > As pointed out in review, the signature took the serializer&#x27;s own class, but
+     > register() keys the registry by the type being serialized. Looking the entry up
+     > with Key.of(serializerClass) therefore never matched anything and unregister()
+     > returned false for every call.
+     > Took the type bound to the serializer, which is the same value register() was
+     > given, and keep the removal a plain map remove so the two methods stay
+     > symmetrical. No caller passed a serializer class, so nothing else changes.
+     > Tests cover removal, removal of one type among several, and the false case.
+
+ -  **ActionCatalogRepository**  replace getRootCause with unwrap for better exception handling ([dda4d2a9ec9c0f4](https://github.com/bsorrentino/langgraph4j/commit/dda4d2a9ec9c0f4aeb2c8d3d72d9bd8e0a26ec62))
+     > resolve #511
+
+ -  **core**  name the property in SkillParser's list-type mismatch error ([6dc9a3b509c53ea](https://github.com/bsorrentino/langgraph4j/commit/6dc9a3b509c53eadb9a8f80b956e504ff8c0769c))
+     > getStringList throws when the stored value is neither a String nor a List, and its
+     > message is written with a %s placeholder that is never filled in:
+     > throw new IllegalStateException(&quot;property &#x27;%s&#x27; doesn&#x27;t contain a list of strings! &quot;);
+     > A caller therefore sees the literal text &quot;property &#x27;%s&#x27; ...&quot; and cannot tell which
+     > front matter key was mistyped. Format the key into the message.
+     > Tests: SkillParserFrontMatterTypeErrorTest (1 case). Full core module: 244 tests,
+     > 0 failures (this change on top of #506/#507/#508/#509); with only this change applied
+     > the module reports 235 tests and the single pre-existing Windows-only failure fixed by
+     > #506.
+
+ -  **core**  split allowed-tools on commas as well as blanks ([b83713a4bc0a278](https://github.com/bsorrentino/langgraph4j/commit/b83713a4bc0a278cd913ed5770c995afe11ee064))
+     > FrontMatter.getStringList split a plain value on a single blank, so the form used by
+     > the repository&#x27;s own drawio-mcp sample -- &quot;allowed-tools: Bash, Write&quot; -- produced
+     > [&quot;Bash,&quot;, &quot;Write&quot;] and &quot;Bash,Write&quot; produced a single &quot;Bash,Write&quot; entry.
+     > SkilledReactSubAgent matches those entries against tool names, so a trailing comma
+     > silently dropped the tool from the sub-agent; without the blank, no entry matched and
+     > every tool was dropped. Repeated blanks also produced empty entries.
+     > Split on commas and blanks in any combination and drop empty items. Space separated
+     > values and YAML block sequences keep their existing behaviour.
+     > Tests: SkillParserAllowedToolsTest (4 cases). Full core module with only this change:
+     > 238 tests, 1 failure (LG4JRepresentationTest#issue216Test, pre-existing and
+     > Windows-only, fixed by #506); with #506/#507/#508 applied: 243 tests, 0 failures.
+
+ -  **core**  make SerializerMapper.unregister() actually remove the serializer ([4abf06b1ed436d1](https://github.com/bsorrentino/langgraph4j/commit/4abf06b1ed436d1286861f90b1396326cb06b290))
+     > register() keys the registry by the type being serialized, but unregister()
+     > used the serializer&#x27;s own type as that key. No entry is ever stored under a
+     > serializer class, so the lookup always missed: unregister() returned false and
+     > left the registration in place for every possible argument.
+     > Match the registered values against the serializer type instead, and report
+     > whether an entry was really removed. The signature is unchanged.
+     > Tests: SerializerMapperUnregisterTest (2 cases). Full core module with only
+     > this change: 236 tests, 1 failure (LG4JRepresentationTest#issue216Test,
+     > pre-existing and Windows-only, fixed by #506); with #506/#507 applied:
+     > 239 tests, 0 failures.
+
+ -  **core**  match RemoveByHash removal targets by value ([414b7a410919334](https://github.com/bsorrentino/langgraph4j/commit/414b7a4109193349513488a6100ec06626d6075f))
+     > RemoveByHash.compareTo returned the difference of the two hash codes, and
+     > AppenderChannel removes every element for which the identifier returns zero.
+     > Any element sharing the target&#x27;s hash code was therefore removed as well, even
+     > though it is not equal to it: String.hashCode collides for &quot;Aa&quot; and &quot;BB&quot;, so
+     > removing one of them from a state holding both silently dropped the other.
+     > Compare the values with Objects.equals instead. The reducer side received the
+     > same fix in #447/#448; the removal path was missed.
+     > Tests: RemoveByHashTest (2 cases). Full core module with only this change:
+     > 236 tests, 1 failure (LG4JRepresentationTest#issue216Test, pre-existing and
+     > Windows-only, fixed by #506); with #506 applied: 237 tests, 0 failures.
+
+ -  **core**  emit PlantUML output with LF only ([a48cc0c34fc2189](https://github.com/bsorrentino/langgraph4j/commit/a48cc0c34fc21894350ec23309be0aa619d8b289))
+     > PlantUMLGenerator builds a text document, but four of its format strings used
+     > %n - the platform line separator - while the rest of the class and
+     > MermaidGenerator hard-code \n. On Windows that renders a graph with sub graphs
+     > as a document whose sub graph lines end with CRLF and whose other lines end
+     > with LF, while the same graph on Linux/macOS is pure LF.
+     > Replace those four occurrences with \n so the rendered document no longer
+     > depends on the platform. No behaviour change on Linux/macOS.
+     > This also turns the suite green on Windows: LG4JRepresentationTest#issue216Test
+     > compares against an LF text block and was failing there (234 tests,
+     > 1 failure). Windows + JDK 21 after the change: 235 tests, 0 failures.
+
+
+### Refactor
+
+ -  **Checkpoint-Saver**  allow to retrieve checkpoint "savedAt" value from the underlying storage ([268bf77f874c3c1](https://github.com/bsorrentino/langgraph4j/commit/268bf77f874c3c16d0956f5ad47ab665176c3c6b))
+    > - update tests accordingly
+ > work on #504
+
+ -  **Checkpoint**  refine null-free saveAt implementation ([3973bf4dd057654](https://github.com/bsorrentino/langgraph4j/commit/3973bf4dd0576547b582e94a328514652f6beaa7))
+    > work on #504
+
+ -  **SQLiteSaver**  add versioning. update SQL command files to version 1.1 and 2.1 ([3d21b3f90c5e1b7](https://github.com/bsorrentino/langgraph4j/commit/3d21b3f90c5e1b7012c284d791fdc91f1ffee13c))
+    > work on #504
+
+ -  replace deprecated isStateDataOrCheckpointSaverTag() and asStateDataOrLastCheckpointStateData() ([f85cfd4cdb81ef9](https://github.com/bsorrentino/langgraph4j/commit/f85cfd4cdb81ef9759f9550551a54a54c351507e))
+    > work on #436
+
+ -  **serializer**  make JacksonStateSerializer instantiable (remove abstract). ([6eadaf80123e348](https://github.com/bsorrentino/langgraph4j/commit/6eadaf80123e348786e9a19edef74fa1c317dbc0))
+   
+ -  **studio/webagui**  remove usage of unused 'graph-active' event ([91fb70f89123f2b](https://github.com/bsorrentino/langgraph4j/commit/91fb70f89123f2baaba6720a8aa70471b0418e19))
+   
+
+### Test 
+
+ -  **AsyncGeneratorTest**  improve asyncForEachAsyncCancelTest with refined cancellation handling ([b2fce884f7600cf](https://github.com/bsorrentino/langgraph4j/commit/b2fce884f7600cf886f071f9911529d4a157caef))
+   
+ -  **SkillParserTest**  consolidate allowed-tools tests ([1dda9d7f32a8b0e](https://github.com/bsorrentino/langgraph4j/commit/1dda9d7f32a8b0e9cefbc15647cb955443854b01))
+   
+ -  **LG4JRepresentation**  add test for LF-only PlantUML output and remove obsolete test ([13a5b2865fccd59](https://github.com/bsorrentino/langgraph4j/commit/13a5b2865fccd599a9fa8a948bd350fa66179eb0))
+    > work on #506
+
+ -  **ExceptionTest**  add test for preserving action exception type using ExceptionUtils ([a7646be798c6b89](https://github.com/bsorrentino/langgraph4j/commit/a7646be798c6b899933f52d6fe7662f32eee143b))
+    > work on #511
+
+ -  **LG4JCancellationTest**  fix issue on github action (attempt 3) ([94cf1b6da9c06c4](https://github.com/bsorrentino/langgraph4j/commit/94cf1b6da9c06c4117cedd33ef022cb81e5027d0))
+   
+ -  **LG4JCancellationTest**  update executor configuration to use cached thread pool for async graph execution ([09fbf91fa65cce5](https://github.com/bsorrentino/langgraph4j/commit/09fbf91fa65cce5b2ef8ec94e5fdccf77b7bafd4))
+   
+ -  **LG4JCancellationTest**  switch to cached thread pool for parallel node execution and update executor configuration ([4bdd73f5b38ad00](https://github.com/bsorrentino/langgraph4j/commit/4bdd73f5b38ad00eb4b84e6f3ea323f1174aae93))
+   
+ -  **LG4JCancellationTest**  removes dependency on the machine's CPU count through ForkJoinPool.commonPool(). Replaces common pool with fixed thread pool for parallel node execution ([2785c0d099f3a2e](https://github.com/bsorrentino/langgraph4j/commit/2785c0d099f3a2e20bb6db7dbedcd8ab6ea0a328))
+   
+ -  add comprehensive tests for parent and child graph interactions as shared in Issue306 ([7c32119dd68d222](https://github.com/bsorrentino/langgraph4j/commit/7c32119dd68d222674087b5ce2bb820af83b19d0))
+    > work on #306
+
+ -  **studio/springboot**  add support for agent with interruption in AGUILangGraphSampleConfig ([d17a244085b34f4](https://github.com/bsorrentino/langgraph4j/commit/d17a244085b34f4e3b87782e983c71d4996c4195))
+   
+ -  **studio**  enhance AGUISampleAgent with action catalog and interruption handling ([0752e389c6d0c24](https://github.com/bsorrentino/langgraph4j/commit/0752e389c6d0c24a9f08af9ad4eb05592b0bc452))
+   
+
+### Documentation
+
+ -  update release references for 1.9.8 ([dbb2c13627c207f](https://github.com/bsorrentino/langgraph4j/commit/dbb2c13627c207f49eafadfbab0bbd62d2c86ce2))
+
+ -  **code-library**  improve GraphResult documentation for describe new type handling and deprecate outdated methods ([81342f108b90feb](https://github.com/bsorrentino/langgraph4j/commit/81342f108b90febece41123db1b82f2d98d737b4))
+
+ -  **how-tos**  follow Checkpoint.savedAt in the persistence guide ([244c73140078b7e](https://github.com/bsorrentino/langgraph4j/commit/244c73140078b7e14ae9121224de1fd083e8c190))
+     > The checkpoint walkthrough still read createdAt, which is now deprecated, and
+     > sorted a list of checkpoints by comparing the saved-at time directly. That value
+     > is nullable by design now, so comparing it raw would throw on the first saver
+     > that does not pre-fill it; the example sorts nulls last instead.
+
+ -  add detailed guide for AG-UI SDK usage in LangGraph4j ([4c4f171d6d4bb9f](https://github.com/bsorrentino/langgraph4j/commit/4c4f171d6d4bb9f9dfcb2ac0acca787d0fdf5e44))
+
+ -  **README**  update version references for AG-UI based studio implementation ([9f14b863fa410b8](https://github.com/bsorrentino/langgraph4j/commit/9f14b863fa410b8f5389d70c96cd028cf017a398))
+
+ -  update welcome header in README to include avatar ([fac8353c5b237d4](https://github.com/bsorrentino/langgraph4j/commit/fac8353c5b237d4563cc81ee74a2d6406f28bfa1))
+
+ -  mark 1.9.7 as latest release ([473042face9031d](https://github.com/bsorrentino/langgraph4j/commit/473042face9031dbb1576c802b38abe05ff148da))
+
+ -  update changelog ([314a75c97271937](https://github.com/bsorrentino/langgraph4j/commit/314a75c97271937ee0865abb31d8d78542da7349))
+
+
+### ALM 
+
+ -  bump to next version 1.9.8 ([d719d3b8444ebd9](https://github.com/bsorrentino/langgraph4j/commit/d719d3b8444ebd91667cc9a570fb7086de481df9))
+   
+ -  update async.generator version to 5.2.0 ([6a22b5709511676](https://github.com/bsorrentino/langgraph4j/commit/6a22b5709511676fedd92f8bee3ed64f381b7a86))
+   
+ -  update langchain4j version to 1.23.0 and beta to 1.23.0-beta33 ([d86a039b664aae5](https://github.com/bsorrentino/langgraph4j/commit/d86a039b664aae5dc527a85c6efc3716b5ab722a))
+   
+ -  update site management script to support documentation deployment and test ([e5dd92f09ee1548](https://github.com/bsorrentino/langgraph4j/commit/e5dd92f09ee154833089a6fdd1b129b886a0c879))
+   
+ -  bump to next dev version 1.9-SNAPSHOT ([e46e0ea02b5723d](https://github.com/bsorrentino/langgraph4j/commit/e46e0ea02b5723d3232aefb0bd54afaf0860eae4))
+   
+
+
+
+
+
 <!-- "name: v1.9.7" is a release tag -->
 
 ## [v1.9.7](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.7) (2026-10-24)
@@ -9,9 +291,9 @@
 ### Features
 
  *  **Checkpoint**  add Date conversion for createdAt attribute ([6de4fdd4edd4837](https://github.com/bsorrentino/langgraph4j/commit/6de4fdd4edd48370998041495fba716091611ca2))
-
+   
  *  **annotation**  add method to create node with registered action in ActionCatalogRepository ([78c8a8091c4976b](https://github.com/bsorrentino/langgraph4j/commit/78c8a8091c4976ba3882d34c389fb24a21dd6039))
-
+   
  *  **langchain4j**  forward node and edge hooks from AgentExecutorEx.Builder ([ea4723055518fa6](https://github.com/bsorrentino/langgraph4j/commit/ea4723055518fa6e2deceb013e3ea08386198433))
      > The Spring AI ReactAgentBuilderEx exposes addNodeHook/addEdgeHook plus the
      > dedicated call model, dispatch tools, approval action, dispatch action and
@@ -26,7 +308,7 @@
      > in-graph call. AgentExecutorExHooksTest pins that flow with a scripted
      > ChatModel; without the forwarding the hook is silently ignored and the test
      > fails on the injected result.
-
+   
  *  **core**  add creation date to Checkpoint ([927d283068ef39c](https://github.com/bsorrentino/langgraph4j/commit/927d283068ef39cc9cc2dff542a3b5eb970aede4))
      > Every checkpoint now carries a createdAt timestamp, assigned at creation
      > time (defaulting to Instant.now()), that survives serialization round
@@ -38,7 +320,7 @@
      > existing code compiles unchanged; the JSON deserializer tolerates
      > payloads written before this change.
      > Closes #234
-
+   
 
 ### Bug Fixes
 
@@ -71,18 +353,18 @@
 ### Refactor
 
  -  **MongoDBSaver**  add support for new checkpoint attribute createdAt ([faa35ffc3800b01](https://github.com/bsorrentino/langgraph4j/commit/faa35ffc3800b01f978a40dc4da5d021ba5cb51d))
+   
 
-
-### Test
+### Test 
 
  -  **CheckpointTest**  remove redundant null check for createdAt in builder ([7ed06eae5e62dd4](https://github.com/bsorrentino/langgraph4j/commit/7ed06eae5e62dd4bce63002b38758bcff7067c55))
-
+   
  -  **TransientStateSerializer**  refactor test to use stream and CompletableFuture for async handling ([b7aab35d9c5119b](https://github.com/bsorrentino/langgraph4j/commit/b7aab35d9c5119b16fec1361f9b9111fc35b23e1))
-
+   
  -  integrate ActionCatalog for node actions in LG4JMemorySaverTest ([0203694943dcf1c](https://github.com/bsorrentino/langgraph4j/commit/0203694943dcf1ce1c0328ed89eb58b6d3bd4f7d))
-
+   
  -  update LG4JCustomOutputTest to use ActionCatalog for node actions ([e75374d350c2830](https://github.com/bsorrentino/langgraph4j/commit/e75374d350c28302d82ccc11a446f20e87270ec8))
-
+   
  -  add ParallelSubgraphTest ([8cef3c23d41a99a](https://github.com/bsorrentino/langgraph4j/commit/8cef3c23d41a99a9304ca16c58ee00e407714c58))
     > This test class contains regression tests for parallel branches that include subgraphs, ensuring correct state updates and removal propagation.
 
@@ -113,12 +395,12 @@
      > Addresses #412
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.7 ([16e7b12d2b57986](https://github.com/bsorrentino/langgraph4j/commit/16e7b12d2b57986928ffefb98f2e118b55e32b62))
-
+   
  -  bump to next dev version 1.9-SNAPSHOT ([beff58720f27924](https://github.com/bsorrentino/langgraph4j/commit/beff58720f2792431025d1fe906e99757afd89f5))
-
+   
 
 
 
@@ -133,21 +415,21 @@
  *  **StateGraph**  add methods from action catalog created by annotated methods ([898274ff34a3f6e](https://github.com/bsorrentino/langgraph4j/commit/898274ff34a3f6eb6b72fd0ddb53a016e15b3f28))
      > - remove deprecated methods
      > work on #440
-
+   
  *  **annotation**  add ActionCatalog tag interface defining action catalog ([f9e3513f4966947](https://github.com/bsorrentino/langgraph4j/commit/f9e3513f4966947de7b1d99b9851ea8c7d6df75f))
      > work on #440
-
+   
  *  **annotation**  add ActionCatalogRepository interface for managing node and edge actions ([75217aa6d117576](https://github.com/bsorrentino/langgraph4j/commit/75217aa6d117576718f85e173b242eedebfecfa6))
      > work on #440
-
+   
  *  **annotation**  add EdgeAction annotation to decorate methods implementing edge conditional action ([37e332efb840a27](https://github.com/bsorrentino/langgraph4j/commit/37e332efb840a27c32c6d0b79859976bd226afb6))
      > work on #440
-
+   
  *  **annotation**  add NodeAction annotation decorate method implementing node action ([0e54fd2e9a0d1b4](https://github.com/bsorrentino/langgraph4j/commit/0e54fd2e9a0d1b4fcc064da3a571e9eb93171612))
      > work on #440
-
+   
  *  **mongodb-saver**  add MongoDB checkpoint saver module ([2660379aea3678d](https://github.com/bsorrentino/langgraph4j/commit/2660379aea3678d5886389ca3a8d622191ef48fe))
-
+   
 
 ### Bug Fixes
 
@@ -161,20 +443,20 @@
 ### Refactor
 
  -  rename EdgeAction to EdgeCondition and update references ([042fb6772acf1d9](https://github.com/bsorrentino/langgraph4j/commit/042fb6772acf1d9667159071a529ce7d031edc8f))
-
+   
  -  reorganize package node and edge structure moving out from  internal one and update related imports ([123a214ddacbfa9](https://github.com/bsorrentino/langgraph4j/commit/123a214ddacbfa93e7ef58b96b197b62b67a1420))
     > work on #440
 
 
-### Test
+### Test 
 
  -  add UpdateStateResumeTest for updateState-on-resume semantics ([cca55f69ee428b8](https://github.com/bsorrentino/langgraph4j/commit/cca55f69ee428b8be345f38441f26977fb271aaa))
     > This test class contains regression tests for the updateState method in CompiledGraph, ensuring correct behavior when resuming into regular and subgraph nodes.
 
  -  flip Issue260Test to assert fixed behavior ([e79cd56a1b90e87](https://github.com/bsorrentino/langgraph4j/commit/e79cd56a1b90e878da25ca76998075a65b9d9470))
-
+   
  -  update SkillParserTest to use multiline string literals for descriptions ([08a5a5efecdc287](https://github.com/bsorrentino/langgraph4j/commit/08a5a5efecdc287ef86a72ec1074ba6e23b0e4c7))
-
+   
  -  **annotation**  add unit tests for ActionCatalog and NodeAction functionality ([947765c5302ebb4](https://github.com/bsorrentino/langgraph4j/commit/947765c5302ebb462299fa0510fc1400a3518a88))
     > work on #440
 
@@ -202,14 +484,14 @@
  -  update changelog ([cc56ee6d326ba46](https://github.com/bsorrentino/langgraph4j/commit/cc56ee6d326ba462bb7cd3cb6e902fe410564f36))
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.6 ([388288c04a74d76](https://github.com/bsorrentino/langgraph4j/commit/388288c04a74d768c863c593d048715ebe312f46))
-
+   
  -  **mongodd-saver**  update langgraph4j-parent version to 1.9-SNAPSHOT ([e59a2c825fb956c](https://github.com/bsorrentino/langgraph4j/commit/e59a2c825fb956c2203f4db6b349c2329426e2f3))
-
+   
  -  bump to next dev version 1.9-SNAPSHOT ([9ab5c7dd0d2976e](https://github.com/bsorrentino/langgraph4j/commit/9ab5c7dd0d2976ec3cd41a510562a9311d03b0c6))
-
+   
 
 
 
@@ -223,74 +505,74 @@
 
  *  **studio/webagui**  enhance resume handling with updated state and input structure ([edc3f1abcd17d4d](https://github.com/bsorrentino/langgraph4j/commit/edc3f1abcd17d4da9e2fe8de9e1af36ae2ffb670))
      > work on #481
-
+   
  *  **studio**  enhance NodeOutput serialization with optional state serializer handling and thread ID ([49d608c58309b94](https://github.com/bsorrentino/langgraph4j/commit/49d608c58309b94ea09529391a47109445966644))
      > work on #481
-
+   
  *  **studio**  enhance resume handling and interrupt processing in AGUILangGraphStudioAgent ([84d17dd95ca67b0](https://github.com/bsorrentino/langgraph4j/commit/84d17dd95ca67b05f18a186421e73137bfe65760))
-
+   
  *  **ag-ui-json**  add support for custom serialization attributes in AGUIJacksonSerializer ([da6b8c8adca3126](https://github.com/bsorrentino/langgraph4j/commit/da6b8c8adca31266ef62e65563cde728077e8477))
      > work on #481
-
+   
  *  **ag-ui-sdk**  return custom event for cancelled run in onCompleteEvents ([bbe75251921469d](https://github.com/bsorrentino/langgraph4j/commit/bbe75251921469dbbbc4c1985a7e68e06d6a2602))
      > work on #481
-
+   
  *  **studio/webagui**  implement  cancellation request ([4c17c3f5c1f99ad](https://github.com/bsorrentino/langgraph4j/commit/4c17c3f5c1f99ad814035496f64578506fbd9c5f))
      > work on #481
-
+   
  *  **studio/webagui**  enhance handling of 'cancelled' events in graph processing ([6637ad450b065b3](https://github.com/bsorrentino/langgraph4j/commit/6637ad450b065b3e98886bec2e3547a0c0b93160))
      > work on #481
-
+   
  *  **studio/webagui**  handle 'cancelled' custom event in event processing ([5ee5acba334f0da](https://github.com/bsorrentino/langgraph4j/commit/5ee5acba334f0da14e43af971889d16894e54a58))
      > work on #481
-
+   
  *  **studio**  add cancellation  on DELETE http service ([092c1a4e648620d](https://github.com/bsorrentino/langgraph4j/commit/092c1a4e648620df307886654c5fae6739824477))
      > work on #481
-
+   
  *  **studio**  add handling for cancelled events in onCompleteEvents method ([ddc66c48800c43f](https://github.com/bsorrentino/langgraph4j/commit/ddc66c48800c43ff21ac3b524ecbb008b852c5bf))
      > work on #481
-
+   
  *  **studio**  implement execution tracking for asynchronous requests. ([8bae2e70bbd7042](https://github.com/bsorrentino/langgraph4j/commit/8bae2e70bbd70425244e416fb96e834b72c9c7cb))
      > - prepare for cancellation support
      > work on #481
-
+   
  *  **studio/webagui**  setup agui UserMessage to provide in RunAgentInput ([20b824ea38bf4e9](https://github.com/bsorrentino/langgraph4j/commit/20b824ea38bf4e9876c2c87ede054da557d8f53f))
      > work on #481
-
+   
  *  **studio/webagui**  add missing import for LG4JNodeOutput in main.ts ([a70d91303ae57c8](https://github.com/bsorrentino/langgraph4j/commit/a70d91303ae57c8cccf12327f86476c1e2d54247))
      > work on #481
-
+   
  *  **studio/webagui**  add AGUI event routing in LG4JWorkbenchElement ([20d5fb6267355b9](https://github.com/bsorrentino/langgraph4j/commit/20d5fb6267355b98b1c1d0b4b64964d5066bb8e4))
      > work on #481
-
+   
  *  **studio/webagui**  enhance LG4JResultElement with AGUI event handling and TypeScript type annotations ([1e3c1b253de00b1](https://github.com/bsorrentino/langgraph4j/commit/1e3c1b253de00b11adf6074fed1f49a3e7fcdd1c))
      > work on #481
-
+   
  *  **studio/webagui**  implement AGUI event handling in LG4JDSLViewElement ([a81f1fbedca46bb](https://github.com/bsorrentino/langgraph4j/commit/a81f1fbedca46bb1324c6b6f05451119dbcc23c8))
      > work on #481
-
+   
  *  **studio/webagui**  add TypeScript type annotations for DebugConfig and debug function ([0e28a71b41da7af](https://github.com/bsorrentino/langgraph4j/commit/0e28a71b41da7afea57c51001d1365d49eb3d625))
      > work on #481
-
+   
  *  **studio/webagui**  enhance LG4JDSLViewElement with TypeScript type declarations and event handling improvements ([d95d438b6258506](https://github.com/bsorrentino/langgraph4j/commit/d95d438b62585063b24837d9a70e7cd13f32dc99))
      > work on #481
-
+   
  *  **studio/webagui**  duplicate original webui for adapt to AG-UI protocoll ([faeda7db177baf6](https://github.com/bsorrentino/langgraph4j/commit/faeda7db177baf684aa358379f90a24a5f6bfab9))
      > work on #481
-
+   
  *  **studio/webagui**  start with new project for Studio web interface based on AG-UI protocol ([eeea8c90bb2496e](https://github.com/bsorrentino/langgraph4j/commit/eeea8c90bb2496eef62c8bc5dd940342e0d27f67))
-
+   
  *  **studio**  refine AGUI Studio implementation classes: ([9484376f7855975](https://github.com/bsorrentino/langgraph4j/commit/9484376f7855975b9adb8fa3aca1bf9b4fb37aa5))
      > - AGUIAbstractAgent
      > - AGUILangGraphStudioAgent
      > - AGUILangGraphStudioJacksonSerializer
      > - AGUILangGraphStudioServer
      > work on #481
-
+   
  *  **agui**  propagate cancel subscription to the graph async generator ([b8f251f800106a6](https://github.com/bsorrentino/langgraph4j/commit/b8f251f800106a60ded78ac5d46d7a2b8a563ddd))
-
+   
  *  **studio**  first candidate implemention of AGUIAgent to be used in Studio ([3e04791c3f42ad7](https://github.com/bsorrentino/langgraph4j/commit/3e04791c3f42ad71ceabf24eee6b304a1f400dad))
-
+   
 
 ### Bug Fixes
 
@@ -330,7 +612,7 @@
     > work on #481
 
 
-### Test
+### Test 
 
  -  **spring-ai-agent**  enable new AG-UI studio. ([ce95ee0a8e49c1a](https://github.com/bsorrentino/langgraph4j/commit/ce95ee0a8e49c1a83637fa9fe9c3d22d8fa8f511))
     > - verify interruption and resume
@@ -343,7 +625,7 @@
     > work on #481
 
  -  add cancellation test for issue 486 in LG4JCancellationTest ([37059fee4823ae9](https://github.com/bsorrentino/langgraph4j/commit/37059fee4823ae91191d50d8f9a62228e0e5b6bf))
-
+   
 
 ### Documentation
 
@@ -364,26 +646,26 @@
      > work on #481
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.5 ([88c8e8e48ab432a](https://github.com/bsorrentino/langgraph4j/commit/88c8e8e48ab432a42235fac1263c5b3bc46b7f86))
-
+   
  -  **ag-ui-json**  add jspecify dependency for enhanced type safety ([1218bba31d33d62](https://github.com/bsorrentino/langgraph4j/commit/1218bba31d33d62633825054ef0298aee1daf8b9))
     > work on #481
 
  -  **how-tos**  update langchain4j and langchain4jbeta versions to 1.22.0 and 1.22.0-beta32 ([8c4a15abc31b57c](https://github.com/bsorrentino/langgraph4j/commit/8c4a15abc31b57c1620ebc5f94ceedb5977013f8))
-
+   
  -  bump to next dev version 1.9-SNAPSHOT ([f9494ae361cd1c9](https://github.com/bsorrentino/langgraph4j/commit/f9494ae361cd1c94c3533d794a5970ee5c08a6f6))
-
+   
  -  update Maven distribution URL to version 3.9.16 ([1ce587190672c19](https://github.com/bsorrentino/langgraph4j/commit/1ce587190672c1989a885c65b5d9abdaba27d557))
-
+   
  -  update Jackson version to 2.21.4 and add new langgraph4j dependencies ([45721d1eae09a13](https://github.com/bsorrentino/langgraph4j/commit/45721d1eae09a13419e9a5a3110e2d669acd8eb8))
-
+   
 
 ### Continuous Integration
 
  -  update CI and deployment scripts to use mvnw ([6732ed2dca86065](https://github.com/bsorrentino/langgraph4j/commit/6732ed2dca8606531db4617e7b3c5266b7f37e8f))
-
+   
 
 
 
@@ -396,9 +678,9 @@
 
  *  **core**  let callers supply the Executor that runs a graph ([6c54e12c18eb532](https://github.com/bsorrentino/langgraph4j/commit/6c54e12c18eb532a8c46ebfd6d244eaf56f5015d))
      > resolve #485
-
+   
  *  **agui**  propagate cancel subscription to the graph async generator ([4dbc3fc9b2fa7ed](https://github.com/bsorrentino/langgraph4j/commit/4dbc3fc9b2fa7ed341b4ff1cbcd3fb099bef107d))
-
+   
 
 ### Bug Fixes
 
@@ -435,11 +717,11 @@
  > compatibility for existing consumers.
 
  -  **RunnableConfig**  rename streamExecutor to emitterExecutor for clarity ([1cfb99050afa20f](https://github.com/bsorrentino/langgraph4j/commit/1cfb99050afa20f35786d761ad7a353e0d34d659))
-
+   
  -  **core**  move FutureUtils to utils package and change class to interface ([8bb4344d5ca4c22](https://github.com/bsorrentino/langgraph4j/commit/8bb4344d5ca4c225d6397f701fbdac5c6ecd8474))
-
+   
  -  **core**  rename executor to streamExecutor ([1e83ad15cc67d9b](https://github.com/bsorrentino/langgraph4j/commit/1e83ad15cc67d9be70e2ac791338ab822e7b19bd))
-
+   
 
 
 ### Documentation
@@ -447,20 +729,20 @@
  -  update changelog ([54898d47e56f9ea](https://github.com/bsorrentino/langgraph4j/commit/54898d47e56f9ea78578980dafc3399f38e67b04))
 
 
-### ALM
+### ALM 
 
  -  bump to next version 1.9.4 ([da73cf4aa445cc3](https://github.com/bsorrentino/langgraph4j/commit/da73cf4aa445cc3cd255d15125176c01319a23d1))
-
+   
  -  update langchain4j BOM version to 1.22.0 ([1ec1be9ea5b70f9](https://github.com/bsorrentino/langgraph4j/commit/1ec1be9ea5b70f93bb3297b025a0513a577a9d4f))
-
+   
  -  update langchain4j version to 1.22.0 and beta version to 1.22.0-beta32 ([2a418a2e5ab0669](https://github.com/bsorrentino/langgraph4j/commit/2a418a2e5ab06692ac3ab7d5c6ca6711cc933a62))
-
+   
  -  update Maven distribution URL to version 4.0.0-rc-7 ([efc61733b97de9a](https://github.com/bsorrentino/langgraph4j/commit/efc61733b97de9af32ee782d01a4c06faee5a08e))
-
+   
  -  **core**  update async.generator version to 5.1.0 ([911079778940ab8](https://github.com/bsorrentino/langgraph4j/commit/911079778940ab83ec21c2c4d84e48a802fa4a05))
-
+   
  -  bump to next dev version 1.9-SNAPSHOT ([8a99144221a0931](https://github.com/bsorrentino/langgraph4j/commit/8a99144221a093187084562a3500832d108cfe73))
-
+   
 
 
 

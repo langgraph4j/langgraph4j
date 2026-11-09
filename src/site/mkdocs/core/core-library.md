@@ -260,26 +260,37 @@ Instead of manually checking types, use [GraphResult] to safely extract the resu
 
 ```java
 // Get the final result direct from the generator
-GraphResult finalResult = GraphResult.from(generator);
+graph.stream( inputs, config)
+     .forEachAsync( output -> System.out.println("Step executed: " + output))
+     .thenApply( GraphResult::from ) // holds final result in GraphResult
+     .thenAccept( result -> { // process the final result
 
-if ( finalResult.isEmpty() ) {
-    System.out.println("result is empty");
-}
-else if ( finalResult.isCancelled() ) {
-    System.out.println("graph execution cancelled");
-}
-else if ( finalResult.isStateData() ) { // state data or checkpoint saver tag
-    Map<String, Object> state = finalResult.asStateData();
-    System.out.printf("Graph completed with state: %s%n", state);
-} else if ( finalResult.isInterruptionMetadata() ) {
-    InterruptionMetadata<?> metadata = finalResult.asInterruptionMetadata();
-    System.out.printf("Graph completed with interruption: %s%n", metadata);
-}
+        if ( result.isEmpty() ) {  // result.type() == GraphResult.Type.EMPTY
+            System.out.println("result is empty");
+        }
+        else if ( result.isCancelled() ) { // result.type() == GraphResult.Type.CANCELLED
+            System.out.println("graph execution cancelled");
+        }
+        else if( result.isInterruptionMetadata() ) { // result.type() == GraphResult.Type.INTERRUPTION_METADATA
+            InterruptionMetadata<?> metadata = result.asInterruptionMetadata();
+            System.out.printf("Graph completed with interruption: %s%n", metadata);
+        }
+        else if ( result.isStateData() ) { // result.type() == GraphResult.Type.STATE_DATA || result.type() == GraphResult.Type.CHECKPOINT_SAVER_TAG
+            Map<String, Object> state = result.asStateData();
+            System.out.printf("Graph completed with state: %s%n", state);
+        }
+     });
 ```
 
 The [GraphResult] class provides type-safe methods to check (`isStateData()`, `isCheckpointSaverTag()`, `isInterruptionMetadata()`, `isCancelled()`, `isEmpty()`) and retrieve (`asStateData()`, `asCheckpointSaverTag()`, `asInterruptionMetadata()`, `asLastCheckpointStateData()`) each result type, preventing casting errors and making your code more maintainable.
 
-When the result is created through the graph, `asState()` also builds a typed agent state from the (schema-filtered) state data using the graph's state factory.
+When the result is created through the graph, `asState()` also builds a typed agent state using the graph's state factory.
+```java
+    if ( result.isStateData() ) {
+        MyCustomState state = result.asState();
+        System.out.printf("Graph completed with typed state: %s%n", state);
+    }
+```
 
 !!! note "Deprecated methods"
 > `isStateDataOrCheckpointSaverTag()`, `asStateDataOrLastCheckpointStateData()`, `isNodeOutput()` and `asNodeOutput()` are deprecated since 1.9.8 and marked for removal:

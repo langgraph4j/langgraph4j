@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -15,9 +16,11 @@ import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
@@ -71,10 +74,12 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
             .withFixedExposedPort(8344, DYNAMODB_PORT)
             .waitingFor(Wait.forLogMessage(".*Initializing DynamoDB Local.*\\n", 1));
 
+    static final DockerImageName myImage = DockerImageName.parse("pgsty/silo:RELEASE.2026-09-16T00-00-00Z").asCompatibleSubstituteFor("minio/minio");
+
     @Container
-    static final MinIOContainer minioContainer = new MinIOContainer("minio/minio:latest")
-        .withUserName("minioadmin")
-        .withPassword("minioadmin");
+    static final MinIOContainer minioContainer = new MinIOContainer(myImage)
+            .withUserName("minioadmin")
+            .withPassword("minioadmin");
 
     // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -347,7 +352,7 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
                 .tableName(TABLE_NAME)
                 .filterExpression("contains(PK, :tid)")
                 .expressionAttributeValues(Map.of(
-                        ":tid", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                        ":tid", AttributeValue.builder()
                                 .s(threadId).build()
                 ))
         );
@@ -392,7 +397,7 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
                 .tableName(TABLE_NAME)
                 .keyConditionExpression("PK = :pk")
                 .expressionAttributeValues(Map.of(
-                        ":pk", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                        ":pk", AttributeValue.builder()
                                 .s("CHECKPOINT_" + threadId).build()
                 ))
         );
@@ -418,7 +423,7 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
      * Verify that the {@code parentCheckpointId} attribute tracks lineage
      * correctly across multiple graph executions.
      */
-    @org.junit.jupiter.api.Disabled("Pending upstream langgraph4j-core support for checkpoint lineage")
+    @Disabled("Pending upstream langgraph4j-core support for checkpoint lineage")
     @ParameterizedTest
     @EnumSource(StateSerializerEnum.class)
     void testParentCheckpointIdLineage(StateSerializerEnum param) throws Exception {
@@ -442,7 +447,7 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
                 .tableName(TABLE_NAME)
                 .keyConditionExpression("PK = :pk")
                 .expressionAttributeValues(Map.of(
-                        ":pk", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder()
+                        ":pk", AttributeValue.builder()
                                 .s("CHECKPOINT_" + threadId).build()
                 ))
         );
@@ -610,4 +615,123 @@ public class DynamoDBSaverTest extends AbstractCheckpointSaverTest {
         saver.deleteThread(threadId);
         s3Client.close();
     }
+
+    // ─── Thread generations (issue #514) ─────────────────────────────────────
+
+    private static int countItems(DynamoDBSaver saver, String pk) {
+        return saver.getDynamoDbClient().query(r -> r
+                .tableName(TABLE_NAME)
+                .keyConditionExpression("PK = :pk")
+                .expressionAttributeValues(Map.of(":pk", AttributeValue.builder().s(pk).build()))
+        ).count();
+    }
+
+    private static int countThreadItems(DynamoDBSaver saver, String threadId) {
+        return saver.getDynamoDbClient().scan(r -> r
+                .tableName(TABLE_NAME)
+                .filterExpression("contains(PK, :tid)")
+                .expressionAttributeValues(Map.of(":tid", AttributeValue.builder().s(threadId).build()))
+        ).count();
+    }
+
+    private static Map<String, AttributeValue> releasedMarker(DynamoDBSaver saver, String threadId) {
+        return saver.getDynamoDbClient().getItem(r -> r
+                .tableName(TABLE_NAME)
+                .key(Map.of(
+                        "PK", AttributeValue.builder().s(DynamoDBRepository.releasedPK(threadId)).build(),
+                        "SK", AttributeValue.builder().s(DynamoDBRepository.releasedSK()).build()))
+                .consistentRead(true)
+        ).item();
+    }
+
+    /**
+     * A released thread id can be reused: every execution starts empty, returns its own
+     * checkpoints, and is archived under its own generation (issue #514).
+     */
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testReuseThreadAfterRelease(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(true)
+            .build();
+
+        var threadId = "thread-reuse-after-release";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = singleNodeGraph().compile(compileConfig);
+
+        for (int run = 1; run <= 3; run++) {
+            var result = workflow.invoke(GraphInput.args(Map.of("input", "run-" + run)), runnableConfig);
+            assertTrue(result.isPresent(), "run " + run + " must return the final state");
+            assertEquals("run-" + run, result.get().value("input").orElse(null),
+                    "run " + run + " must not see the state of a previous run");
+            assertTrue(workflow.getStateHistory(runnableConfig).isEmpty(),
+                    "run " + run + " must be released");
+        }
+
+        // every run is archived under its own generation (START + agent_1 = 2 checkpoints)
+        assertEquals(2, countItems(saver, DynamoDBRepository.checkpointPK(threadId, 0)));
+        assertEquals(2, countItems(saver, DynamoDBRepository.checkpointPK(threadId, 1)));
+        assertEquals(2, countItems(saver, DynamoDBRepository.checkpointPK(threadId, 2)));
+        assertEquals(3L, DynamoDBRepository.generationOf(releasedMarker(saver, threadId)));
+
+        // deleteThread removes every generation and the marker
+        saver.deleteThread(threadId);
+        assertEquals(0, countThreadItems(saver, threadId),
+                "No DynamoDB items should remain for the deleted thread");
+    }
+
+    /**
+     * A marker written by earlier versions (without the {@code generation} attribute) keeps
+     * the checkpoints released before the upgrade hidden, and the thread id can be reused.
+     */
+    @ParameterizedTest
+    @EnumSource(StateSerializerEnum.class)
+    void testLegacyReleasedMarker(StateSerializerEnum param) throws Exception {
+        var saver = buildSaver(param);
+
+        var compileConfig = CompileConfig.builder()
+            .checkpointSaver(saver)
+            .releaseThread(false)
+            .build();
+
+        var threadId = "thread-legacy-marker";
+        var runnableConfig = RunnableConfig.builder().threadId(threadId).build();
+        var workflow = singleNodeGraph().compile(compileConfig);
+
+        // checkpoints of generation 0, as stored by earlier versions
+        workflow.invoke(GraphInput.args(Map.of("input", "before-upgrade")), runnableConfig);
+        assertEquals(2, workflow.getStateHistory(runnableConfig).size());
+
+        // legacy released marker: no 'generation' attribute
+        saver.getDynamoDbClient().putItem(r -> r
+                .tableName(TABLE_NAME)
+                .item(Map.of(
+                        "PK", AttributeValue.builder().s(DynamoDBRepository.releasedPK(threadId)).build(),
+                        "SK", AttributeValue.builder().s(DynamoDBRepository.releasedSK()).build())));
+
+        assertTrue(workflow.getStateHistory(runnableConfig).isEmpty(),
+                "checkpoints released by earlier versions must stay hidden");
+
+        // the thread id is reusable: the new execution goes to generation 1
+        workflow.invoke(GraphInput.args(Map.of("input", "after-upgrade")), runnableConfig);
+
+        var history = workflow.getStateHistory(runnableConfig);
+        assertEquals(2, history.size());
+        assertEquals("after-upgrade", workflow.lastStateOf(runnableConfig).orElseThrow()
+                .state().value("input").orElse(null));
+        assertEquals(2, countItems(saver, DynamoDBRepository.checkpointPK(threadId, 0)),
+                "legacy checkpoints must be left untouched");
+
+        // releasing advances the legacy marker to generation 2
+        saver.release(runnableConfig);
+        assertEquals(2L, DynamoDBRepository.generationOf(releasedMarker(saver, threadId)));
+        assertTrue(workflow.getStateHistory(runnableConfig).isEmpty());
+
+        saver.deleteThread(threadId);
+        assertEquals(0, countThreadItems(saver, threadId));
+    }
+
 }

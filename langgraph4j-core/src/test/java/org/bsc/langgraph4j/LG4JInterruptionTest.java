@@ -43,8 +43,11 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
 
     @BeforeAll
     static void init() throws IOException {
-        FileSystemSaver.list(rootPath, ( threadId, version ) -> true )
-                .forEach(TryConsumer.Try(Files::delete));
+
+        try(var stream = Files.list(rootPath)) {
+            stream.filter( Files::isRegularFile )
+                  .forEach(TryConsumer.Try(Files::delete));
+        }
     }
 
     @ParameterizedTest

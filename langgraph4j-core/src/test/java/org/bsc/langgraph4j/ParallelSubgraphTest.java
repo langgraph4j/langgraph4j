@@ -54,7 +54,7 @@ class ParallelSubgraphTest {
     }
 
     private static int invokeCount(CompiledGraph<State> app) throws Exception {
-        return app.invoke(GraphInput.noArgs(),RunnableConfig.empty()).orElseThrow().count();
+        return app.invoke( GraphInput.noArgs(), RunnableConfig.empty()).orElseThrow().count();
     }
 
     @Test

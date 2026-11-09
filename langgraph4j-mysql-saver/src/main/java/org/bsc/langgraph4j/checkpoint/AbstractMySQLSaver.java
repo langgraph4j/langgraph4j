@@ -162,6 +162,7 @@ public abstract class AbstractMySQLSaver extends AbstractCheckpointSaver impleme
                                 .nodeId(resultSet.getString(2))
                                 .nextNodeId(resultSet.getString(3))
                                 .state(decodeState(resultSet.getString(4), resultSet.getString(5)))
+                                .savedAt(resultSet.getTimestamp(6)) // Use getTimestamp to retrieve the saved_at value
                                 .build();
                         checkpoints.add(checkpoint);
                     }

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,27 +42,28 @@ public class AsyncGeneratorTest {
 
     @Test
     public void asyncForEachAsyncCancelTest() throws Exception {
-
+        final var countDownLatch = new java.util.concurrent.CountDownLatch(3);
         var myArray = List.of( "e1", "e2", "e3", "e4", "e5" );
 
-        final var it = new AsyncGenerator.BaseCancellable<String>() {
-
-            private int cursor = 0;
-            @Override
-            public Data<String> next() {
-
-                if (cursor == myArray.size()) {
-                    return Data.done();
-                }
-
-                return Data.of(completedFuture(myArray.get(cursor++)));
-            }
-        };
-
-        CompletableFuture.runAsync(() -> {
+        final var it = AsyncGeneratorFlow.<String>create( $1 -> {
             try {
-                Thread.sleep(400);
-                it.cancel(true);
+                for( String value: myArray ) {
+
+                    $1.dispatchSync( AsyncGenerator.Data.of( completedFuture(value )) );
+                    Thread.sleep(100);
+
+                }
+                $1.dispatchSync( AsyncGenerator.Data.done() );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+
+        final var cancelFuture = CompletableFuture.runAsync(() -> {
+            try {
+                countDownLatch.await();
+                it.cancel(false);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -68,28 +71,26 @@ public class AsyncGeneratorTest {
 
         final List<String> result = new ArrayList<>();
 
-        it.forEachAsync( value -> {
-                    try {
-                        Thread.sleep(100);
-                        result.add(value);
-                        System.out.println(value);
-                    } catch (InterruptedException e) {
-                        throw new CancellationException( "Cancelled" );
-                    }
+        final var generationFuture = it.forEachAsync( value -> {
+                    result.add(value);
+                    countDownLatch.countDown();
+                    System.out.printf("value %s added on thread[%s]%n", value, Thread.currentThread().getName());
                 })
-                .thenAccept( t -> {
-                    fail( "Should not reach end of iteration");
-                    System.out.println( "Finished");
+                .thenApply( GraphResult::from )
+                .thenAccept( r -> {
+                    assertTrue( r.isCancelled());
+                    System.out.println("cancelled");
                 })
                 .exceptionally( ex -> {
-                    assertInstanceOf( CancellationException.class, ex.getCause() );
                     System.out.println( ex.getCause().getMessage() );
+                    assertInstanceOf( CancellationException.class, ex.getCause() );
                     return null;
-                })
-                .join();
+                });
+
+        CompletableFuture.allOf( cancelFuture, generationFuture ).join();
 
         var sizeAfterInterruption = result.size();
-        assertNotEquals( myArray.size(), result.size() );
+        assertEquals( 3, result.size() );
 
         for (String i : it) {
             result.add(i);

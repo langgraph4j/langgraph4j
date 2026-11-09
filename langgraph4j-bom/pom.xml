@@ -120,6 +120,11 @@
             <!-- checkpoint saver -->
             <dependency>
                 <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-filesystem-saver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
                 <artifactId>langgraph4j-postgres-saver</artifactId>
                 <version>${project.version}</version>
             </dependency>

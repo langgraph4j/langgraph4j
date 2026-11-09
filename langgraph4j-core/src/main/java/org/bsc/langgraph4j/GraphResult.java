@@ -26,19 +26,16 @@ public final class GraphResult {
     private final Object result;
     private final Type type;
     private final AgentStateFactory<?> stateFactory;
-    private final AgentState.Schema outputSchema;
 
-    private GraphResult(Object result, Type type, AgentStateFactory<?> stateFactory, AgentState.Schema outputSchema) {
+    private GraphResult(Object result, Type type, AgentStateFactory<?> stateFactory) {
         this.result = result;
         this.type = type;
         this.stateFactory = stateFactory;
-        this.outputSchema = outputSchema;
     }
     private GraphResult(Object result, Type type) {
         this.result = result;
         this.type = type;
         this.stateFactory = null;
-        this.outputSchema = null;
     }
 
     public enum Type {
@@ -85,19 +82,19 @@ public final class GraphResult {
         }
 
         if( result instanceof Map<?,?>) {
-            return new GraphResult( result, Type.STATE_DATA, stateGraph.stateFactory(), stateGraph.outputSchema);
+            return new GraphResult( result, Type.STATE_DATA, stateGraph.stateFactory());
         }
         if( result instanceof InterruptionMetadata<?> ) {
-            return new GraphResult( result, Type.INTERRUPTION_METADATA, stateGraph.stateFactory(), stateGraph.outputSchema);
+            return new GraphResult( result, Type.INTERRUPTION_METADATA, stateGraph.stateFactory());
         }
         if( result instanceof BaseCheckpointSaver.Tag ) {
-            return new GraphResult( result, Type.CHECKPOINT_SAVER_TAG, stateGraph.stateFactory(), stateGraph.outputSchema);
+            return new GraphResult( result, Type.CHECKPOINT_SAVER_TAG, stateGraph.stateFactory());
         }
         if( result == AsyncGenerator.IsCancellable.CANCELLED ) {
-            return new GraphResult( result, Type.CANCELLED, stateGraph.stateFactory(), stateGraph.outputSchema);
+            return new GraphResult( result, Type.CANCELLED, stateGraph.stateFactory());
         }
         if( result instanceof NodeOutput<?>  ) {
-            return new GraphResult( result, Type.NODE_OUTPUT, stateGraph.stateFactory(), stateGraph.outputSchema);
+            return new GraphResult( result, Type.NODE_OUTPUT, stateGraph.stateFactory());
         }
         throw new IllegalArgumentException( "Invalid result type: %s".formatted(result.getClass()) );
 
@@ -296,13 +293,12 @@ public final class GraphResult {
      * @return the state data map, restricted to the keys allowed by the output schema.
      * @throws IllegalStateException if the result is neither state data nor a checkpoint saver tag,
      *         or if the tag does not contain any checkpoint.
-     * @see AgentState#filterBySchema(Map, AgentState.Schema)
      * @see #asLastCheckpointStateData()
      */
     @SuppressWarnings("unchecked")
     public Map<String,Object> asStateData() {
         if( type == Type.STATE_DATA ) {
-            return AgentState.filterBySchema((Map<String,Object>)result, outputSchema);
+            return (Map<String,Object>)result;
         }
         if( type == Type.CHECKPOINT_SAVER_TAG ) {
             return asLastCheckpointStateData();
@@ -341,8 +337,6 @@ public final class GraphResult {
      * @throws IllegalStateException if the result does not contain a checkpoint saver tag or if the tag does not contain any checkpoint.
      * @see BaseCheckpointSaver.Tag#lastCheckpoint()
      * @see Checkpoint#state()
-     * @see AgentState#filterBySchema(Map, AgentState.Schema)
-     * @see AgentState.Schema
      * @see GraphResult#isCheckpointSaverTag()
      */
     public Map<String,Object> asLastCheckpointStateData() {

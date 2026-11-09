@@ -32,7 +32,8 @@ SELECT
   c.node_id,
   c.next_node_id,
   c.state_data,
-  c.state_content_type
+  c.state_content_type,
+  c.saved_at
 FROM LANGRAPH4J_CHECKPOINT c
   INNER JOIN LANGRAPH4J_THREAD t ON c.thread_id = t.thread_id
 WHERE t.thread_name = ? AND t.is_released != TRUE
