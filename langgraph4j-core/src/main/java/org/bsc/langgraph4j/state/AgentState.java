@@ -24,7 +24,7 @@ public class AgentState {
      * Experimental Interface representing a schema for an agent's state, defining the channels and their configurations.
      * This schema is used to validate and manage the state of an agent in a structured manner.
      *
-     * @since 1.9.8
+     * @since 1.9.10
      */
     public sealed interface Schema permits SchemaImpl {
 
