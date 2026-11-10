@@ -16,8 +16,10 @@ import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.Channel;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -75,6 +77,8 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
     final NodeHooks<State> nodeHooks = new NodeHooks<>();
     final EdgeHooks<State> edgeHooks = new EdgeHooks<>();
 
+    @Nullable Function<Map<String,Object>, Map<String,Object>> inputMapper;
+    @Nullable Function<Map<String,Object>, Map<String,Object>> outputMapper;
     private final AgentState.Schema schema;
 
     private final StateSerializer<State> stateSerializer;
@@ -183,6 +187,28 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     public AgentState.Schema schema() {
         return schema;
+    }
+
+    /**
+     * Sets the input mapper for this state graph.
+     * @param inputMapper the input mapper function to be set
+     * @return this state graph instance
+     * @since 1.9.10
+     */
+    public StateGraph<State> withInputMapper(@Nullable Function<Map<String,Object>, Map<String,Object>> inputMapper ) {
+        this.inputMapper = inputMapper;
+        return this;
+    }
+
+    /**
+     * Sets the output mapper for this state graph.
+     * @param outputMapper the output mapper function to be set
+     * @return this state graph instance
+     * @since 1.9.10
+     */
+    public StateGraph<State> withOutputMapper(@Nullable Function<Map<String,Object>, Map<String,Object>> outputMapper ) {
+        this.outputMapper = outputMapper;
+        return this;
     }
 
     public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
