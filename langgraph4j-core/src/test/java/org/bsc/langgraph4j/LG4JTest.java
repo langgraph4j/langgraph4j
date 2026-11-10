@@ -14,6 +14,8 @@ import org.bsc.langgraph4j.state.*;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.bsc.langgraph4j.utils.ExceptionUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +32,6 @@ import static org.bsc.langgraph4j.action.AsyncCommandAction.command_async;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
-import static org.bsc.langgraph4j.state.AgentState.Schema.of;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -755,6 +756,141 @@ public class LG4JTest implements LG4JLoggable {
             assertEquals( "test exception", runException.getMessage() );
 
         }
+    }
+    @Test
+    void testInputMapper() throws Exception {
+
+        class ProcessorState extends MessagesState<String> {
+            public static final String CONTEXT = "context";
+            public static final String RESULT = "result";
+
+            public static final Schema SCHEMA =
+                    Schema.of(Map.of(
+                                    CONTEXT, Channels.bare(),
+                                    RESULT, Channels.base(() -> "")))
+                            .merge(MessagesState.SCHEMA);
+
+            public ProcessorState(Map<String, Object> initData) {
+                super(initData);
+            }
+        }
+
+        class Actions implements ActionCatalog {
+
+            @NodeAction
+            public  void checkInput(ProcessorState state, RunnableConfig config) {
+                final var stateData = state.data();
+                assertNotNull( stateData.get(ProcessorState.MESSAGES) );
+                assertNotNull( stateData.get(ProcessorState.RESULT) );
+                assertNull( stateData.get(ProcessorState.CONTEXT) );
+            }
+        }
+
+        final var repo = ActionCatalogRepository.of(new Actions());
+
+        final var graph = new StateGraph<>(ProcessorState.SCHEMA, ProcessorState::new)
+                .withInputMapper( stateData -> {
+                                final var keepKeys = Set.of(ProcessorState.MESSAGES, ProcessorState.RESULT);
+                                return stateData.entrySet().stream()
+                                        .filter(entry ->
+                                                keepKeys.contains(entry.getKey()))
+                                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        })
+                .add( repo.node("A", "checkInput") )
+                .addEdge(START, "A")
+                .addEdge("A", END)
+                .compile( CompileConfig.builder()
+                        .checkpointSaver(new MemorySaver())
+                        .build() );
+
+        final var input = Map.<String,Object>of(
+                ProcessorState.MESSAGES, "message1",
+                ProcessorState.CONTEXT, "context1" );
+
+        graph.stream( GraphInput.args(input), RunnableConfig.empty())
+                .toCompletableFuture()
+                .thenApply( GraphResult::from)
+                .thenAccept( result -> {
+
+                    assertTrue( result.isStateData() );
+
+                    final var stateData = result.asStateData();
+
+                    assertNotNull( stateData.get(ProcessorState.MESSAGES) );
+                    assertNotNull( stateData.get(ProcessorState.RESULT) );
+                    assertNull( stateData.get(ProcessorState.CONTEXT) );
+
+                }).join();
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testOutputMapper(boolean releaseThread) throws Exception {
+
+        class ProcessorState extends MessagesState<String> {
+            public static final String CONTEXT = "context";
+            public static final String RESULT = "result";
+
+            public static final Schema SCHEMA =
+                    Schema.of(Map.of(
+                                    CONTEXT, Channels.bare(),
+                                    RESULT, Channels.base(() -> "")))
+                            .merge(MessagesState.SCHEMA);
+
+            public ProcessorState(Map<String, Object> initData) {
+                super(initData);
+            }
+        }
+
+        class Actions implements ActionCatalog {
+
+            @NodeAction
+            public  void checkInput(ProcessorState state, RunnableConfig config) {
+                final var stateData = state.data();
+                assertNotNull( stateData.get(ProcessorState.MESSAGES) );
+                assertNotNull( stateData.get(ProcessorState.RESULT) );
+                assertNotNull( stateData.get(ProcessorState.CONTEXT) );
+            }
+        }
+
+        final var repo = ActionCatalogRepository.of(new Actions());
+
+        final var graph = new StateGraph<>(ProcessorState.SCHEMA, ProcessorState::new)
+                .withOutputMapper( stateData -> {
+                    final var keepKeys = Set.of(ProcessorState.RESULT);
+                    return stateData.entrySet().stream()
+                            .filter(entry ->
+                                    keepKeys.contains(entry.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                })
+                .add( repo.node("A", "checkInput") )
+                .addEdge(START, "A")
+                .addEdge("A", END)
+                .compile( CompileConfig.builder()
+                        .releaseThread(releaseThread)
+                        .checkpointSaver(new MemorySaver())
+                        .build() );
+
+        final var input = Map.<String,Object>of(
+                ProcessorState.MESSAGES, "message1",
+                ProcessorState.CONTEXT, "context1" );
+
+        graph.stream( GraphInput.args(input), RunnableConfig.empty())
+                .toCompletableFuture()
+                .thenApply( GraphResult::from)
+                .thenAccept( result -> {
+
+                    assertTrue( result.isStateData() );
+
+                    final var stateData = result.asStateData();
+
+                    assertNull( stateData.get(ProcessorState.MESSAGES) );
+                    assertNull( stateData.get(ProcessorState.CONTEXT) );
+                    assertNotNull( stateData.get(ProcessorState.RESULT) );
+
+                }).join();
+
     }
 
 }

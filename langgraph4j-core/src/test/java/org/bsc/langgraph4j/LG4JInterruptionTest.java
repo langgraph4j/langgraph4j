@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +21,8 @@ import java.util.Objects;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.bsc.langgraph4j.utils.CollectionsUtils.lastOf;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class LG4JInterruptionTest implements LG4JTestUtil{
 
@@ -44,9 +46,11 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
     @BeforeAll
     static void init() throws IOException {
 
-        try(var stream = Files.list(rootPath)) {
-            stream.filter( Files::isRegularFile )
-                  .forEach(TryConsumer.Try(Files::delete));
+        if( Files.exists(rootPath) ) {
+            try(var stream = Files.list(rootPath)) {
+                stream.filter( Files::isRegularFile )
+                        .forEach(TryConsumer.Try(Files::delete));
+            }
         }
     }
 
@@ -80,7 +84,6 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
                     .compile(CompileConfig.builder()
                             .checkpointSaver(saverEnum.saver())
                             .interruptAfter("B")
-                            .releaseThread(false)
                             .build());
 
             var results = workflow.stream(GraphInput.noArgs(), runnableConfig)
@@ -95,8 +98,9 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
                     "B"
             ), results);
 
-            results = workflow.stream(GraphInput.resume(), runnableConfig )
-                    .stream()
+            var generator  = workflow.stream(GraphInput.resume(), runnableConfig );
+
+            results = generator.stream()
                     .peek(System.out::println)
                     .map(NodeOutput::node)
                     .toList();
@@ -105,17 +109,20 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
                     END
             ), results );
 
-            var snapshotForNodeB = workflow.getStateHistory(runnableConfig)
-                                        .stream()
-                                        .filter( s ->
-                                                Objects.equals(s.node(),"B") )
-                                        .findFirst()
-                                        .orElseThrow();
+            final var result = GraphResult.from(generator);
+            assertTrue(result.isCheckpointSaverTag());
 
-            runnableConfig = workflow.updateState( snapshotForNodeB.config(runnableConfig),
-                                    Map.of( "messages", "C"));
+            final var tag = result.asCheckpointSaverTag();
+            assertNotNull(tag);
 
-            results = workflow.stream(GraphInput.resume(), runnableConfig )
+            final var checkpoint = tag.checkpoints().stream()
+                    .filter( c -> Objects.equals(c.nodeId(),"B") )
+                    .findFirst()
+                    .orElseThrow()
+                    .updateState(Map.of("messages", List.of("C")), workflow.stateGraph.schema());
+
+
+            results = workflow.stream(GraphInput.resume(checkpoint), runnableConfig )
                 .stream()
                 .peek(System.out::println)
                 .map(NodeOutput::node)
@@ -124,16 +131,118 @@ public class LG4JInterruptionTest implements LG4JTestUtil{
                     "D",
                     END
             ), results);
+
+        } catch (Exception e) {
+            saverEnum.saver().releaseOnError(runnableConfig, e);
         }
-        finally {
-            saverEnum.saver().release(runnableConfig);
+    }
+
+    @ParameterizedTest
+    @EnumSource( CheckpointSaverEnum.class )
+    void interruptAfterEdgeEvaluationWithOutputMapper( CheckpointSaverEnum saverEnum ) throws Exception {
+
+        var runnableConfig = RunnableConfig.builder().threadId("output-mapper").build();
+
+        try {
+            var workflow = new StateGraph<>( State.SCHEMA, StateSerializerEnum.JSON.stateSerializer)
+                    .withOutputMapper( data -> {
+                        final var lastMessage = lastOf((List<?>)data.get("messages"));
+
+                        return lastMessage.map(message -> Map.<String,Object>of("messages", List.of(message)))
+                                .orElseGet(Map::of);
+                    })
+                    .addNode("A", CustomNodeAction.of("A"))
+                    .addNode("B", CustomNodeAction.of("B"))
+                    .addNode("C", CustomNodeAction.of("C"))
+                    .addNode("D", CustomNodeAction.of("D"))
+                    .addConditionalEdges("B",
+                            edge_async(state -> {
+                                var message = state.lastMessage().orElse( END );
+                                return message.equals("B") ? "D" : message ;
+                            }),
+                            EdgeMappings.builder()
+                                    .to("A")
+                                    .to( "C" )
+                                    .to( "D" )
+                                    .toEND()
+                                    .build())
+                    .addEdge( START, "A" )
+                    .addEdge("A", "B")
+                    .addEdge("C", END)
+                    .addEdge("D", END)
+                    .compile(CompileConfig.builder()
+                            .checkpointSaver(saverEnum.saver())
+                            .interruptAfter("B")
+                            .build());
+
+            var generator = workflow.stream(GraphInput.noArgs(), runnableConfig);
+
+            generator.reduce( new ArrayList<String>(), (steps, output) -> {
+                        steps.add(output.node());
+                        return steps;
+                    })
+                    .thenAccept(steps -> {
+                        assertIterableEquals(List.of(
+                                START,
+                                "A",
+                                "B"
+                        ), steps);
+                    }).join();
+            var result = GraphResult.from(generator);
+            assertTrue(result.isInterruptionMetadata());
+            assertEquals( List.of("A", "B"), result.<State>asInterruptionMetadata().state().messages() );
+
+            generator = workflow.stream(GraphInput.resume(), runnableConfig );
+
+            generator.reduce( new ArrayList<String>(), (steps, output) -> {
+                        steps.add(output.node());
+                        return steps;
+                    })
+                    .thenAccept(steps -> {
+                        assertIterableEquals(List.of(
+                                "D",
+                                END
+                        ), steps);
+                    }).join();
+
+            result = GraphResult.from(generator);
+            assertTrue(result.isStateData());
+            assertEquals( List.of("D"), result.<State>asState().messages() );
+
+            final var tag = result.asCheckpointSaverTag();
+            assertNotNull(tag);
+
+            final var checkpoint = tag.checkpoints().stream()
+                    .filter( c -> Objects.equals(c.nodeId(),"B") )
+                    .findFirst()
+                    .orElseThrow()
+                    .updateState(Map.of("messages", List.of("C")), workflow.stateGraph.schema());
+
+            generator = workflow.stream(GraphInput.resume(checkpoint), runnableConfig );
+
+            generator.reduce( new ArrayList<String>(), (steps, output) -> {
+                        steps.add(output.node());
+                        return steps;
+                    })
+                    .thenAccept(steps -> {
+                        assertIterableEquals(List.of(
+                                "D",
+                                END
+                        ), steps);
+                    }).join();
+            result = GraphResult.from(generator);
+            assertTrue(result.isStateData());
+            assertEquals( List.of("D"), result.<State>asState().messages() );
+
+        } catch (Exception e) {
+            saverEnum.saver().releaseOnError(runnableConfig, e);
+            fail(e);
         }
     }
 
     @ParameterizedTest
     @EnumSource( CheckpointSaverEnum.class )
     void interruptBeforeEdgeEvaluation( CheckpointSaverEnum saverEnum ) throws Exception {
-
 
         var runnableConfig = RunnableConfig.empty();
 
