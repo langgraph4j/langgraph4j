@@ -322,10 +322,10 @@ public class Issue306Test {
                 .toCompletableFuture()
                 .thenApply(GraphResult::from)
                 .join();
-        assertTrue(resumed.isStateData() || resumed.isCheckpointSaverTag());
+        assertTrue(resumed.isStateData());
 
         assertFalse(probe.n2.get(0).containsKey(SECRET));
-        assertNull(resumed.asStateData().get(SECRET));
+        assertTrue(resumed.asState().value(SECRET).isEmpty());
     }
 
     @Test

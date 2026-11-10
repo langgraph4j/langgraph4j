@@ -129,7 +129,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
                     return "next";
                 }), Map.of( "next", "agent_1", "exit", END) );
 
-        var saver = new FileSystemSaverV2( checkpointStore, workflow.getStateSerializer() );
+        var saver = new FileSystemSaverV2( checkpointStore, workflow.stateSerializer() );
 
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -223,7 +223,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
                 }), Map.of( "next", "agent_1", "exit", END) );
 
         var saver = new FileSystemSaverV2( rootPath.resolve("testCheckpointSaverWithManualRelease"),
-                workflow.getStateSerializer() );
+                workflow.stateSerializer() );
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -324,7 +324,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
                 }), Map.of( "next", "agent_1", "exit", END) );
 
         var saver = new FileSystemSaverV2( rootPath.resolve("testCheckpointSaverWithManualRelease"),
-                workflow.getStateSerializer() );
+                workflow.stateSerializer() );
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -406,7 +406,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
                         Map.of("steps", 1, "messages", "agent_1:step 1") ))
                 .addEdge("agent_1", END);
 
-        final var saver = new FileSystemSaverV2( checkpointStore, workflow.getStateSerializer() );
+        final var saver = new FileSystemSaverV2( checkpointStore, workflow.stateSerializer() );
 
         final var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -426,7 +426,7 @@ class FileSystemSaverV2Test implements LG4JLoggable {
             assertEquals(1, result.<State>asState().steps());;
 
             // reload the checkpoints from the file system using a brand new saver instance
-            final var reloadedSaver = new FileSystemSaverV2( checkpointStore, workflow.getStateSerializer() );
+            final var reloadedSaver = new FileSystemSaverV2( checkpointStore, workflow.stateSerializer() );
             final var checkpoints = reloadedSaver.list( runnableConfig ).stream().toList();
 
             assertFalse(checkpoints.isEmpty());

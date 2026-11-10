@@ -68,7 +68,7 @@ public class EdgeHooks<State extends AgentState> {
                     );
 
             return futureReturn.thenApply( processedResult -> {
-                final var newStateData = AgentState.updateState(state, processedResult, schema);
+                final var newStateData = state.update(processedResult, schema);
                 return stateFactory.apply(newStateData);
             });
         }

@@ -33,7 +33,7 @@ class MessageWindowConversationContextPolicyTest {
                 UserMessage.from("m5")
         );
 
-        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES_STATE, messages));
+        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES, messages));
 
         var filtered = strategy.filter(state, config);
 
@@ -54,7 +54,7 @@ class MessageWindowConversationContextPolicyTest {
                 UserMessage.from("m2"),
                 UserMessage.from("m3")
         );
-        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES_STATE, messages));
+        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES, messages));
 
         var filtered = strategy.filter(state, config);
 
@@ -79,7 +79,7 @@ class MessageWindowConversationContextPolicyTest {
                 ToolExecutionResultMessage.from(toolRequest, "done"),
                 UserMessage.from("latest")
         );
-        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES_STATE, messages));
+        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES, messages));
 
         var filtered = strategy.filter(state, config);
 
@@ -98,7 +98,7 @@ class MessageWindowConversationContextPolicyTest {
                 UserMessage.from("m2"),
                 UserMessage.from("m3")
         ));
-        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES_STATE, original));
+        final var state = new MessagesState<ChatMessage>(Map.of(MessagesState.MESSAGES, original));
 
         strategy.filter(state, config);
 

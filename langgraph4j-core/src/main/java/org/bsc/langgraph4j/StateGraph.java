@@ -16,8 +16,10 @@ import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.Channel;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -75,18 +77,31 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
     final NodeHooks<State> nodeHooks = new NodeHooks<>();
     final EdgeHooks<State> edgeHooks = new EdgeHooks<>();
 
-    private final Map<String, Channel<?>> channels;
+    @Nullable Function<Map<String,Object>, Map<String,Object>> inputMapper;
+    @Nullable Function<Map<String,Object>, Map<String,Object>> outputMapper;
+    private final AgentState.Schema schema;
 
     private final StateSerializer<State> stateSerializer;
+
+    /**
+     *
+     * @param schema the state's schema of the graph
+     * @param stateSerializer the serializer to serialize the state
+     */
+    public StateGraph( AgentState.Schema schema,
+                       StateSerializer<State> stateSerializer ) {
+        this.schema = requireNonNull(schema, "schema cannot be null");
+        this.stateSerializer = Objects.requireNonNull(stateSerializer, "stateSerializer cannot be null");
+    }
 
     /**
      *
      * @param channels the state's schema of the graph
      * @param stateSerializer the serializer to serialize the state
      */
-    public StateGraph(Map<String, Channel<?>> channels,
-                      StateSerializer<State> stateSerializer) {
-        this.channels = channels;
+    public StateGraph( Map<String, Channel<?>> channels,
+                      StateSerializer<State> stateSerializer ) {
+        this.schema = AgentState.Schema.of(channels);
         this.stateSerializer = Objects.requireNonNull(stateSerializer, "stateSerializer cannot be null");
     }
 
@@ -95,9 +110,8 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      *
      * @param stateSerializer the serializer to serialize the state
      */
-    public StateGraph( StateSerializer<State> stateSerializer) {
-        this( Map.of(), stateSerializer );
-
+    public StateGraph( StateSerializer<State> stateSerializer ) {
+        this( AgentState.Schema.empty(), stateSerializer );
     }
 
     /**
@@ -105,8 +119,17 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      *
      * @param stateFactory the factory to create agent states
      */
-    public StateGraph(AgentStateFactory<State> stateFactory) {
-        this( Map.of(), stateFactory);
+    public StateGraph( AgentStateFactory<State> stateFactory ) {
+        this( AgentState.Schema.empty(), stateFactory );
+    }
+
+    /**
+     *
+     * @param schema the state's schema of the graph
+     * @param stateFactory the factory to create agent states
+     */
+    public StateGraph( AgentState.Schema schema, AgentStateFactory<State> stateFactory ) {
+        this( schema, new ObjectStreamStateSerializer<>(stateFactory) );
     }
 
     /**
@@ -114,10 +137,18 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      * @param channels the state's schema of the graph
      * @param stateFactory the factory to create agent states
      */
-    public StateGraph(Map<String, Channel<?>> channels, AgentStateFactory<State> stateFactory) {
+    public StateGraph( Map<String, Channel<?>> channels, AgentStateFactory<State> stateFactory ) {
         this( channels, new ObjectStreamStateSerializer<>(stateFactory) );
     }
 
+    public StateSerializer<State> stateSerializer() {
+        return stateSerializer;
+    }
+
+    /**
+     * @deprecated use {@link #stateSerializer()} instead
+     */
+    @Deprecated( since = "1.9.8" )
     public StateSerializer<State> getStateSerializer() {
          return stateSerializer;
     }
@@ -140,11 +171,45 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return stateSerializer.stateFactory();
     }
 
-
+    /**
+     * Returns the channels associated with this graph.
+     * @return the channels map
+     * @deprecated use {@link #channels()} instead
+     */
+    @Deprecated
     public Map<String, Channel<?>> getChannels() {
-        return Map.copyOf(channels);
+        return schema.channels();
     }
 
+    public Map<String, Channel<?>> channels() {
+        return schema.channels();
+    }
+
+    public AgentState.Schema schema() {
+        return schema;
+    }
+
+    /**
+     * Sets the input mapper for this state graph.
+     * @param inputMapper the input mapper function to be set
+     * @return this state graph instance
+     * @since 1.9.10
+     */
+    public StateGraph<State> withInputMapper(@Nullable Function<Map<String,Object>, Map<String,Object>> inputMapper ) {
+        this.inputMapper = inputMapper;
+        return this;
+    }
+
+    /**
+     * Sets the output mapper for this state graph.
+     * @param outputMapper the output mapper function to be set
+     * @return this state graph instance
+     * @since 1.9.10
+     */
+    public StateGraph<State> withOutputMapper(@Nullable Function<Map<String,Object>, Map<String,Object>> outputMapper ) {
+        this.outputMapper = outputMapper;
+        return this;
+    }
 
     public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
         nodeHooks.wrapCalls.add( wrapCallHook );
