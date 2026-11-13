@@ -2,9 +2,9 @@
 
 
 
-<!-- "name: v1.8.27" is a release tag -->
+<!-- "name: v1.8.28" is a release tag -->
 
-## [v1.8.27](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.27) (2026-09-05)
+## [v1.8.28](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.28) (2026-09-05)
 
 ### Features
 
@@ -53,7 +53,7 @@
 
 ### ALM 
 
- -  bump to next version 1.8.27 ([f4b9d5310d8c765](https://github.com/bsorrentino/langgraph4j/commit/f4b9d5310d8c76504138975d4be8b1227b900264))
+ -  bump to next version 1.8.28 ([f4b9d5310d8c765](https://github.com/bsorrentino/langgraph4j/commit/f4b9d5310d8c76504138975d4be8b1227b900264))
    
 
 
