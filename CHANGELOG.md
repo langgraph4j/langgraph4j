@@ -2,9 +2,44 @@
 
 
 
-<!-- "name: v1.8.28" is a release tag -->
+<!-- "name: Unreleased" is a release tag -->
 
-## [v1.8.28](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.28) (2026-09-05)
+## [Unreleased](https://github.com/bsorrentino/langgraph4j/releases/tag/Unreleased) ()
+
+
+### Bug Fixes
+
+ -  **core**  preserve resolved state when updating as a node ([7e4767bd4074223](https://github.com/bsorrentino/langgraph4j/commit/7e4767bd40742233f22670884094c2e632449c99))
+     > Save the complete state returned by nextNodeId directly instead of
+     > merging it into the checkpoint again. This avoids reducing channel
+     > values twice and restores conditional-edge removal and reset semantics.
+     > Cover latest and explicit checkpoint updates, unrelated edge changes,
+     > removals, resets, checkpoint identity and single-graph resume.
+
+
+
+
+### Documentation
+
+ -  update SKILL.md for release process clarity ([9155667900dbe7a](https://github.com/bsorrentino/langgraph4j/commit/9155667900dbe7a1e07cedbb7abf192cd482beb0))
+
+ -  update changelog ([1be0be4ab3cdd09](https://github.com/bsorrentino/langgraph4j/commit/1be0be4ab3cdd09c1fe960b4e6c4acbf164d6ff8))
+
+
+### ALM 
+
+ -  bump to next version 1.8.28 ([37384b0b74c682c](https://github.com/bsorrentino/langgraph4j/commit/37384b0b74c682c8edee5f052c9832dfd4e86da7))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([c8aba09b633f2a2](https://github.com/bsorrentino/langgraph4j/commit/c8aba09b633f2a2d3a80f5d0b94ba8a94200d983))
+   
+
+
+
+
+
+<!-- "name: v1.8.27" is a release tag -->
+
+## [v1.8.27](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.27) (2026-09-05)
 
 ### Features
 
@@ -53,7 +88,7 @@
 
 ### ALM 
 
- -  bump to next version 1.8.28 ([f4b9d5310d8c765](https://github.com/bsorrentino/langgraph4j/commit/f4b9d5310d8c76504138975d4be8b1227b900264))
+ -  bump to next version 1.8.27 ([f4b9d5310d8c765](https://github.com/bsorrentino/langgraph4j/commit/f4b9d5310d8c76504138975d4be8b1227b900264))
    
 
 
