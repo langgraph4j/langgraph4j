@@ -22,10 +22,10 @@ jobs:
         with:
           fetch-depth: 0 # Required by mike to access the gh-pages history
 
-      - name: Set up Java
+      - name: Set up Java 21
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: maven
       - name: Build Maven Site

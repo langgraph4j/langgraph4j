@@ -15,11 +15,11 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: develop
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
-          java-version: '17'
+          java-version: '21'
           java-package: jdk
       - name: Check for SNAPSHOT version
         id: check-snapshot

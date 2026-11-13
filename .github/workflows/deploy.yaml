@@ -18,11 +18,11 @@ jobs:
           GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: ./gpg-setup.sh
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: 'liberica'
-          java-version: '17'
+          java-version: '21'
           java-package: jdk
       - name: Deploy to OSS Sonatype
         env:
