@@ -7,6 +7,24 @@
 ## [Unreleased](https://github.com/bsorrentino/langgraph4j/releases/tag/Unreleased) ()
 
 
+
+
+
+
+
+### Continuous Integration
+
+ -  update checkout reference to support/1.8.x in deploy.yaml ([6b8cb17d664e30c](https://github.com/bsorrentino/langgraph4j/commit/6b8cb17d664e30cf6140443dcbc032b8dc6ddc35))
+   
+
+
+
+
+<!-- "name: v1.8.28" is a release tag -->
+
+## [v1.8.28](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.28) (2026-11-13)
+
+
 ### Bug Fixes
 
  -  **core**  preserve resolved state when updating as a node ([7e4767bd4074223](https://github.com/bsorrentino/langgraph4j/commit/7e4767bd40742233f22670884094c2e632449c99))
@@ -20,6 +38,8 @@
 
 
 ### Documentation
+
+ -  update changelog ([aeadbf667f64dfc](https://github.com/bsorrentino/langgraph4j/commit/aeadbf667f64dfc897d97ee0ce7702b4d6afc3ff))
 
  -  update SKILL.md for release process clarity ([9155667900dbe7a](https://github.com/bsorrentino/langgraph4j/commit/9155667900dbe7a1e07cedbb7abf192cd482beb0))
 
