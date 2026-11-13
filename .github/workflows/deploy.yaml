@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: support/1.8.x
       - name: GPG Setup
         env:
           GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: support/1.8.x
       - name: GPG Setup
         env:
           GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
