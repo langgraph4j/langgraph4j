@@ -1,6 +1,6 @@
 package org.bsc.langgraph4j;
 
-import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
+import org.bsc.langgraph4j.action.SubGraphNodeAction;
 import org.bsc.langgraph4j.node.ParallelNode;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
@@ -433,7 +433,7 @@ public final class RunnableConfig implements HasMetadata {
             return false;
         }
         final var subGraphId = nodePath().elementAt( nodeDepth - 2 );
-        return metadata( SubCompiledGraphNodeAction.resumeSubGraphId( subGraphId )).isPresent();
+        return metadata( SubGraphNodeAction.resumeSubGraphId( subGraphId )).isPresent();
     }
 
     public <State extends AgentState, Output extends NodeOutput<State>> GraphDefinition.Dispatcher<State,Output> customDispatcher() {
