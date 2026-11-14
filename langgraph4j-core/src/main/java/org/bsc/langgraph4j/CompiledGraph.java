@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import static java.util.Objects.*;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
+import static org.bsc.langgraph4j.action.SubGraphNodeAction.resumeSubGraphId;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
@@ -786,9 +786,23 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                                 partialStateWithoutGenerator,
                                                 stateGraph.schema());
 
-                                        final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
-                                                generatorStateMerged :
-                                                AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
+                                        // FIX https://github.com/langgraph4j/langgraph4j/issues/306#issuecomment-6872532021
+                                        final Map<String,Object> intermediateState;
+                                        if(action instanceof SubGraphNodeAction<?> subgraphAction ) {
+
+                                            final var childStateGraph = subgraphAction.subGraph().stateGraph;
+                                            if( childStateGraph.inputMapper==null && childStateGraph.outputMapper==null ) {
+                                                intermediateState = generatorStateMerged;
+                                            } else {
+                                                intermediateState = AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
+                                            }
+                                        }
+                                        else {
+                                            intermediateState = AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
+                                        }
+//                                        final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
+//                                                generatorStateMerged :
+//                                                AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
 
                                         context.setCurrentState(intermediateState);
 
