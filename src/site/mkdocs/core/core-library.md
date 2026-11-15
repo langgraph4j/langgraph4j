@@ -296,6 +296,87 @@ When the result is created through the graph, `asState()` also builds a typed ag
 > `isStateDataOrCheckpointSaverTag()`, `asStateDataOrLastCheckpointStateData()`, `isNodeOutput()` and `asNodeOutput()` are deprecated since 1.9.8 and marked for removal:
 > use `isStateData()` and `asStateData()` instead.
 
+### Input/Output Mapper
+
+Input/output mappers define which state data enters and leaves a graph. They are useful for exposing only an agent's result while keeping its working fields internal, and for controlling which fields pass between a parent graph and a [compiled subgraph](subgraph.md#as-a-compiled-graph).
+See [issue #306](https://github.com/langgraph4j/langgraph4j/issues/306) for the feature discussion.
+
+Configure them on `StateGraph` before calling `compile()`. Both `withInputMapper(...)` and `withOutputMapper(...)` accept a `Function<Map<String, Object>, Map<String, Object>>` and return the same `StateGraph` for chaining.
+Each function receives state data and returns the complete mapped map, so it can filter keys, add, rename them, or transform values.
+
+| Mapper | When it runs | Effect |
+| --- | --- | --- |
+| `withInputMapper(...)` | On a new invocation, after initial state creation and before graph execution | Selects or transforms the state available to the graph's nodes. The mapper sees schema defaults as well as supplied input. |
+| `withOutputMapper(...)` | On normal completion | Selects or transforms the state returned to the caller or parent graph. Nodes can still use internal fields while executing. |
+
+An unset mapper leaves that direction unchanged. Passing `null` to either setter disables that mapper; returning `null` from a mapper is treated as returning an empty map.
+Returning a new map and not mutating the supplied state, and keep mapper functions free of side effects: output mapping can run for both the final checkpoint and the completion result.
+
+#### Filter input and output
+
+This standalone example accepts only `messages` and `context`, and returns only `result`. The node also writes a `scratchpad` field, which remains available internally but is excluded from the completed result.
+
+```java
+var processor = new StateGraph<>(AgentState.Schema.empty(), AgentState::new)
+        // Keep only the processor's inputs, including any matching schema defaults.
+        .withInputMapper(stateData -> {
+            final var keepKeys = Set.of("messages", "context");
+            return stateData.entrySet().stream()
+                    .filter(entry -> keepKeys.contains(entry.getKey()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        })
+        // Expose the answer with a fallback when no result was produced.
+        .withOutputMapper(stateData ->
+                Map.of("result", stateData.getOrDefault("result", "<none>")))
+        // Produce an answer and working data without modifying the input map.
+        .addNode("process", node_async(state -> Map.of(
+                "result", "done",
+                "scratchpad", "internal coordination")))
+        .addEdge(START, "process")
+        .addEdge("process", END)
+        .compile();
+
+// Start a fresh invocation so the input mapper selects the node's initial data.
+var result = processor.invokeSync(GraphInput.args(Map.of(
+        "messages", "hello",
+        "context", "support request",
+        "other_data", "caller-only")), RunnableConfig.empty());
+
+System.out.println(result.asStateData()); // {result=done}
+```
+
+Here `other_data` is absent from the node's input. `messages`, `context`, and `scratchpad` are absent from the completed result. A schema still defines channels, defaults, and reducers; the mapper defines which entries cross the graph boundary. Because input mapping happens after initialization, include any defaulted keys that the nodes need in the returned input map.
+
+#### Use a mapped graph as a subgraph
+
+The same compiled `processor` can be added directly as a parent node, without a wrapper action:
+
+```java
+var parent = new StateGraph<>(AgentState.Schema.empty(), AgentState::new)
+        .addNode("processor", processor)
+        .addEdge(START, "processor")
+        .addEdge("processor", END)
+        .compile();
+
+// The child receives only messages and context; keep_me remains in the parent.
+var parentResult = parent.invokeSync(GraphInput.args(Map.of(
+        "messages", "hello",
+        "context", "support request",
+        "keep_me", "parent-value")), RunnableConfig.empty());
+
+System.out.println(parentResult.asStateData());
+// Contains messages=hello, context=support request, keep_me=parent-value, result=done.
+// The child's scratchpad is absent.
+```
+
+When a compiled child has an input or output mapper, its completed mapped output is merged into the existing parent state using the parent's schema and reducers. Parent fields omitted from the child's output remain in the parent. For example, `CompiledSubGraphTest.testWithOutputMapper` maps a child's `sent_back` value from `"yes"` to `"no"` and returns `messages="child"`: the parent retains `keep_me`, receives `sent_back="no"`, and its appender channel accumulates `messages` as `["parent", "child", "after"]` after the next parent node runs.
+
+Use `addNode("processor", processor)` with the **compiled** child to retain this mapping boundary. Adding an uncompiled `StateGraph` merges its nodes into the parent during compilation; the child's mappers are not applied as a separate invocation boundary.
+
+#### Persistence, streaming, and interruptions
+
+The input mapper is not reapplied when resuming from a checkpoint. The output mapper applies to normal completion and to the checkpoint whose next node is `END`. Earlier checkpoints retain the graph's internal state, and interruptions are not treated as completed output. Intermediate streamed node states can also contain internal fields; use the completed [GraphResult](#graphresult) to obtain the mapped result. Output mapping does not filter all checkpoint history or every streamed event.
+
 ## State
 
 The first thing you do when you define a graph is define the `State` of the graph. The `State` consists of the [schema of the graph](#schema) as well as [reducer](#reducers) functions which specify how to apply updates to the state. The schema of the `State` will be the input schema to all `Nodes` and `Edges` in the graph, and should be defined using a map of  [`Channel`] object. All `Nodes` will emit updates to the `State` which are then applied using the specified `reducer` function.
