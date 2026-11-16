@@ -807,7 +807,7 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
 
         final var child = new StateGraph<>(State.schema(), State::new)
                 .withOutputMapper(state ->
-                        Map.of("sent_back", "no", "messages", "child"))
+                        Map.of("sent_back", "no", "messages", List.of("child")))
                 .add( repo.node("only", "sentBack"))
                 .addEdge(START, "only")
                 .addEdge("only", END)
