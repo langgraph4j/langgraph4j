@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.entryOf;
@@ -157,7 +158,7 @@ public class AgentState {
      * @throws NullPointerException if state is null
      */
     public static Map<String, Object> updateState(@NonNull Map<String, Object> state, @Nullable Map<String, Object> partialState, @Nullable Map<String, Channel<?>> channels) {
-        Objects.requireNonNull(state, "state cannot be null");
+        requireNonNull(state, "state cannot be null");
         if (partialState == null || partialState.isEmpty() || state == partialState) {
             return state;
         }
@@ -186,24 +187,20 @@ public class AgentState {
         return updateState(state, partialState, schema != null ? schema.channels() : null);
     }
 
-
     /**
-     * Filters the state to include only the specified attribute names.
+     * Marks the specified keys for removal in the given state map.
      *
-     * @param state          the current state
-     * @param schema the input/output schema to include in the filtered state
-     * @return a new map containing only the specified attributes from the state
-     * @throws NullPointerException if state is null
+     * @param state the current state map
+     * @param keys  the keys to be marked for removal
+     * @return a new map with the specified keys marked for removal
+     * @since 1.9.10
      */
-    public static Map<String, Object> filterBySchema(@NonNull Map<String, Object> state, @Nullable Schema schema) {
-        Objects.requireNonNull(state, "state cannot be null");
-        if (schema == null || schema.channels().isEmpty()) {
-            return state;
+    public static Map<String,Object> markKeysForRemoval(@NonNull Map<String,Object> state, String... keys) {
+        var delta = new LinkedHashMap<>(requireNonNull(state, "state cannot be null"));
+        for (String key : keys) {
+            delta.put(key, AgentState.MARK_FOR_REMOVAL);
         }
-
-        return state.entrySet().stream()
-                .filter(entry -> schema.channels().containsKey(entry.getKey()))
-                .collect(toMapAllowingNulls());
+        return delta;
     }
 
     /**

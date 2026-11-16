@@ -4,6 +4,10 @@
 Amazon S3 storage for large state payloads. It implements the `BaseCheckpointSaver` contract
 through `AbstractCheckpointSaver` and supports checkpoint history, updates, and thread release.
 
+> **New applications:** use [`DynamoDBSaverV2`](./SAVER_V2.md). It archives every release as a
+> versioned tag readable with `tag(config, version)`, records errors and interruptions, and comes
+> with the read-only `DynamoDBSaverV2Dashboard`. V2 uses a new table layout.
+
 ## Maven Dependency
 
 ```xml

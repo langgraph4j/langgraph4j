@@ -492,6 +492,7 @@ We hope this guide helps you get started with LangGraph4j. Happy building!
 
 ## Projects using LangGraph4j
 
+* [LangGraph4j for AI Agents payments | @AgentPay](https://github.com/explorercosmic7-arch/langgraph4j-agentpay-example)
 * [Agentic CI/CD Orchestrator](https://github.com/veerjain-1/agentic-cicd-orchestrator)
 * [AI-Powered Hiring Workflow](https://github.com/ykpraveen/langchain4j-sample)
 * [OpenHuskyAgent (_Agent Runtime Platform_)](https://github.com/HandleCoding/OpenHuskyAgent/tree/main)

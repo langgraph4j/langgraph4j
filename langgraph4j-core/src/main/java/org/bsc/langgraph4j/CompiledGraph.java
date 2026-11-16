@@ -18,6 +18,7 @@ import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -32,8 +33,8 @@ import java.util.stream.Stream;
 import static java.util.Objects.*;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.action.SubCompiledGraphNodeAction.resumeSubGraphId;
-import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
+import static org.bsc.langgraph4j.action.SubGraphNodeAction.resumeSubGraphId;
+import static org.bsc.langgraph4j.utils.CollectionsUtils.*;
 import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 
 /**
@@ -725,6 +726,23 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
             return (Output) StateSnapshot.of(checkpoint, stateGraph.stateFactory());
         }
 
+        private Map<String, Object> updateStateAfterReturnFromSubGraph(@NonNull AsyncNodeActionWithConfig<?> action,
+                                                                       @NonNull Map<String, Object> state,
+                                                                       @NonNull Map<String, Object> partialState,
+                                                                       AgentState.Schema schema
+        ) {
+            /*
+            if(action instanceof SubGraphNodeAction<?> ) {
+                return  partialState ;
+            }
+            else {
+                return AgentState.updateState(context.currentState(), partialState, stateGraph.schema());
+            }
+            */
+            return AgentState.updateState(context.currentState(), partialState, stateGraph.schema());
+        }
+
+
         @SuppressWarnings("unchecked")
         private Optional<GraphResult> embedGenerator(AsyncGeneratorFlow.Dispatcher<Output> $1,
                                                      AsyncNodeActionWithConfig<State> action,
@@ -786,11 +804,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                                 partialStateWithoutGenerator,
                                                 stateGraph.schema());
 
-                                        final var intermediateState = (action instanceof SubCompiledGraphNodeAction) ?
-                                                generatorStateMerged :
-                                                AgentState.updateState(context.currentState(), generatorStateMerged, stateGraph.schema());
 
-                                        context.setCurrentState(intermediateState);
+                                        final Map<String,Object> intermediateState =
+                                                updateStateAfterReturnFromSubGraph( action,
+                                                                                    context.currentState(),
+                                                                                    generatorStateMerged,
+                                                                                    stateGraph.schema());
+
+                                        context.setCurrentState( intermediateState);
 
                                         return returnFromEmbed;
                                     })
