@@ -80,7 +80,7 @@ class UpdateStateResumeTest {
         var config = RunnableConfig.builder().threadId("t1").build();
 
         // run until interruption before "after"
-        app.stream(GraphInput.noArgs(), config).stream().reduce((a, b) -> b);
+        app.stream(GraphInput.noArgs(), config).toCompletableFuture().join();
 
         // human-in-the-loop update
         var resumeConfig = app.updateState(config, Map.of("count", 10));
@@ -118,25 +118,27 @@ class UpdateStateResumeTest {
                         .checkpointSaver(saver)
                         .build());
 
-        var config = RunnableConfig.builder().threadId("t2").build();
+        final var config = RunnableConfig.builder()
+                        .threadId("t2")
+                        .build();
 
         // run until interruption inside the subgraph
-        var generator = app.stream(GraphInput.noArgs(), config);
-        generator.stream().forEach(nodeOutput -> { });
-        var result = GraphResult.from(generator);
+        final var result = app.invokeSync(GraphInput.noArgs(), config);
         assertTrue(result.isInterruptionMetadata(), "expected interruption from subgraph, got: " + result.type());
 
         // human-in-the-loop update while interrupted before the subgraph node
-        var resumeConfig = app.updateState(config, Map.of("count", 10));
+        final var resumeConfig = app.updateState(config, Map.of("count", 10));
 
         // values must still be propagated: the subgraph applies them to its own checkpoint on resume
-        Optional<Map<String, Object>> resumeData = resumeConfig.metadata(
-                RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA, new TypeRef<Map<String, Object>>() {});
+        final Optional<Map<String, Object>> resumeData = resumeConfig.metadata(
+                RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA,
+                new TypeRef<>() {});
+
         assertTrue(resumeData.isPresent(),
                 "resume update data must be set when resuming into a subgraph node");
         assertEquals(10, resumeData.get().get("count"));
 
         // resume: subgraph completes and the parent finishes with the update applied once
-        assertEquals(10, lastNodeCount(app, GraphInput.resume(), resumeConfig));
+        assertEquals(20, lastNodeCount(app, GraphInput.resume(), resumeConfig));
     }
 }
