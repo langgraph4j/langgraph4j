@@ -2,6 +2,172 @@
 
 
 
+<!-- "name: v1.9.10" is a release tag -->
+
+## [v1.9.10](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.10) (2026-11-17)
+
+### Features
+
+ *  **ActionCatalogRepository**  add support for AsyncGenerator return type ([7e1f475798cd6fe](https://github.com/bsorrentino/langgraph4j/commit/7e1f475798cd6fe0a8e14e743572faef33993b54))
+
+ *  **Issue260Test**  add  output mapping to propagate output to the parent ([788611144b9691e](https://github.com/bsorrentino/langgraph4j/commit/788611144b9691e83e2e1fc6b4466c3174976004))
+     > work on #306
+
+ *  **AgentState**  add markKeysForRemoval() utility method ([1857ce1e6660c47](https://github.com/bsorrentino/langgraph4j/commit/1857ce1e6660c4723469f3536a6aa6bbc9739585))
+
+ *  **CompiledGraph**  refactor state update logic after subgraph execution. ([e19210a5f256533](https://github.com/bsorrentino/langgraph4j/commit/e19210a5f2565338fd11cfeddc4332faf019fccf))
+     > BREAKING CHANGE: the MARK_FOR_REMOVAL is not auto propagated anymore to the parent but just in case it is need to use Output Mapper
+     > work on #306
+
+ *  **DynamoDBSaverV2**  archive on release with versioned tags and read-only dashboard (#514) ([adebe73ec56aa31](https://github.com/bsorrentino/langgraph4j/commit/adebe73ec56aa3158e1afa74788242fcab45cabc))
+
+ *  **ActionCatalog**  add doNothing action for no operation ([b9059cb81357232](https://github.com/bsorrentino/langgraph4j/commit/b9059cb813572328e060b148b6d8e8996e7adf7e))
+
+ *  **CompiledGraph**  apply state graph input/output mappers during graph execution ([4f6a47e887a5fb3](https://github.com/bsorrentino/langgraph4j/commit/4f6a47e887a5fb35dc4bae88878cd8533b291245))
+     > Introduce mapInput and mapOutput helpers:
+     > - Map the input state before cloning it and starting a run.
+     > - Map the output state when execution ends, and in the final GraphResult.
+     > - Add an addCheckpoint helper that saves a checkpoint when a CheckpointSaver is present.
+     > work on #306
+
+ *  **StateGraph**  add input and output mapper functions ([e84bb55540fbf9c](https://github.com/bsorrentino/langgraph4j/commit/e84bb55540fbf9c2e8b712e0cee4521609ff171f))
+     > #work on #306
+
+ *  **Channels**  add bare method to create a channel without reducer or default value ([a206849dba0777d](https://github.com/bsorrentino/langgraph4j/commit/a206849dba0777d9055b4f94539798bd95c6bfdb))
+     > work on #306
+
+ *  **Checkpoint**  add overloaded updateState methods to support AgentState.Schema ([5c29ce8bc2e2bcb](https://github.com/bsorrentino/langgraph4j/commit/5c29ce8bc2e2bcbaf4c99f96f8446e57e83d35e3))
+     > work on #306
+
+ *  **CompiledGraph**  update state management to use schema for input and output processing ([349a41c6ba36257](https://github.com/bsorrentino/langgraph4j/commit/349a41c6ba362573dd9341c113f061389ef6dfec))
+     > work on #306
+
+ *  **StateGraph**  refactor to use AgentState.Schema for input and output schemas ([a5e7cc455f05a7d](https://github.com/bsorrentino/langgraph4j/commit/a5e7cc455f05a7d2148cdcd1772abc857647d7aa))
+     > work on #306
+
+ *  **AgentStateFactory**  enhance initialDataFromSchema and applyFromSchema methods for use new Schema interface ([19d08515bacc9a2](https://github.com/bsorrentino/langgraph4j/commit/19d08515bacc9a2daa841e77293598d505639478))
+     > work on #306
+
+ *  **AgentState**  introduce Schema interface for structured state management and filtering ([3f0d3f4935dc3a0](https://github.com/bsorrentino/langgraph4j/commit/3f0d3f4935dc3a02319f4efcf74d00a857ff7983))
+     > work on #306
+
+ *  **StateGraph**  add inputSchema and outputSchema methods for filter input/output state attributes ([e25f56dabac973b](https://github.com/bsorrentino/langgraph4j/commit/e25f56dabac973be1b40517284acc078d0a39be1))
+     > - deprecate getStateSerializer() replaced by stateSerializer()
+     > - deprecate getChannels() replaced by channels()
+     > work on #306
+
+
+### Bug Fixes
+
+ -  **CompiledGraph**  update intermediate state handling for subgraph actions ([d943ffd63d6aec1](https://github.com/bsorrentino/langgraph4j/commit/d943ffd63d6aec187e0bad6397b2c5c2828dc043))
+     > work on #306
+
+ -  **CompiledGraph**  sanitize AfterHook  result when applied after subgraph node. It applies MARK_AS_REMOVAL and other transformations. ([eaa2744bd99cb68](https://github.com/bsorrentino/langgraph4j/commit/eaa2744bd99cb6839912d23718f725eb9315c7e6))
+     > - add invokeSync() method to return a GraphResult
+     > work on #306
+
+
+### Refactor
+
+ -  **SubCompiledGraphNodeAction**  implement the new SubGraphNodeAction interface and remove redundant methods ([bb9f6a9b83c5183](https://github.com/bsorrentino/langgraph4j/commit/bb9f6a9b83c51835ae009d53ea7bc9cad415bf0c))
+
+ -  **AgentState**  rename schema methods for clarity and add select method for channel filtering ([7ecdfe900140eb0](https://github.com/bsorrentino/langgraph4j/commit/7ecdfe900140eb028edc968872f906551b06492f))
+    > work on #306
+
+ -  **Channel**  allow nullable parameters for reducer and defaultProvider in BaseChannel constructor ([429fa21be201c05](https://github.com/bsorrentino/langgraph4j/commit/429fa21be201c05d78459c01d38a6dff580267eb))
+    > work on #306
+
+ -  **BaseCheckpointSaver**  implement custom toString method for improved logging ([2c676244bd32713](https://github.com/bsorrentino/langgraph4j/commit/2c676244bd32713403402996fc9cdfb627aa1144))
+
+ -  **GraphResult**  update outputSchema type to AgentState.Schema for consistency ([2a8d7a3e93890d4](https://github.com/bsorrentino/langgraph4j/commit/2a8d7a3e93890d4f5fdbf58d433d33833112bd82))
+    > work on #306
+
+ -  replace GraphResult deprecated methods usage ([f4cd830f4594704](https://github.com/bsorrentino/langgraph4j/commit/f4cd830f4594704f265c4565153eb787f2984d7a))
+    > work on #436
+
+ -  **GraphResult**  add filter using OutputSchema ([804664017dce9f0](https://github.com/bsorrentino/langgraph4j/commit/804664017dce9f014017dd5e7b949ee529bb3039))
+    > Deprecate methods:
+ > isStateDataOrCheckpointSaverTag() --&gt; isStateData()
+ > asStateDataOrLastCheckpointStateData() --&gt; asStateData()
+ > isNodeOutput()
+ > asNodeOutput()
+ > work on #436 #306
+
+ -  **MessagesState**  deprecate MESSAGES_STATE constant in favor of MESSAGES ([6bc27b21fc9f07d](https://github.com/bsorrentino/langgraph4j/commit/6bc27b21fc9f07d1fa2fb22963913317636fa7df))
+
+ -  **StateFactory**  improve initialDataFromSchema() to handle default value = null ([6e511e62af8be66](https://github.com/bsorrentino/langgraph4j/commit/6e511e62af8be667ab614355744cb206803fb069))
+    > work on #306
+
+ -  **state**  add filterByKeys() method to AgentState to filter state to include only the specified attribute names. ([e42636abe4b7844](https://github.com/bsorrentino/langgraph4j/commit/e42636abe4b784486246ade4a0ac6eac685917cb))
+    > remove deprecated methods
+ > - value(String key, Supplier&lt;T&gt; defaultProvider)
+ > - value(String key, T defaultValue)
+ > - mergeWith(Map partialState, Map channels)
+ > works on #306
+
+
+### Test
+
+ -  **Issue260Test**  refactor test to use Action Catalog and invokeSync() method ([eeb1ed5e425d8bf](https://github.com/bsorrentino/langgraph4j/commit/eeb1ed5e425d8bfba4c49dffd26275a3f80da4dc))
+
+ -  **UpdateStateResumeTest**  update stream handling and fix resume data propagation ([e85f7fad88165ec](https://github.com/bsorrentino/langgraph4j/commit/e85f7fad88165ece3afb09ca17bd495c80640a0a))
+
+ -  **Issue306Test**  add  output mapping to propagate output to the parent ([636de8bdaf25167](https://github.com/bsorrentino/langgraph4j/commit/636de8bdaf2516706786fac038bcd5376c288bfc))
+    > - refactor key removal logic to use markKeysForRemovalHook
+ > work on #306
+
+ -  **CompiledSubGraphTest**  fix the update output mapper to use List for messages ([76b870edac96f70](https://github.com/bsorrentino/langgraph4j/commit/76b870edac96f70dff024892ee5a72d2dae18233))
+
+ -  **LG4JTestUtil**  add schema method to State class for AgentState integration ([98c814527fd643c](https://github.com/bsorrentino/langgraph4j/commit/98c814527fd643c439e4e2655aac17e760189821))
+
+ -  **CompiledSubGraphTest**  add testWithOutputMapper for verify output mapping functionality on subgraph ([bf85234e52af098](https://github.com/bsorrentino/langgraph4j/commit/bf85234e52af0985ccfb68c04b6ac096459e6d6e))
+    > work on #306
+
+ -  **CompiledSubGraphTest**  replace enum with method source for interruption tests ([61b042645e7bd18](https://github.com/bsorrentino/langgraph4j/commit/61b042645e7bd18dd180623e3031a1cbc2a7e651))
+
+ -  verify input/output mappers ([2b5a05297addb76](https://github.com/bsorrentino/langgraph4j/commit/2b5a05297addb760b825044c13342866c0e56827))
+    > worn on #306
+
+ -  remove filter schema usage ([aeca007cbc8ef7d](https://github.com/bsorrentino/langgraph4j/commit/aeca007cbc8ef7d1ff610aee086b2d2280db0b96))
+
+ -  **Issue306Test**  add tests for input/output key filtering in state graph ([ce24d4a91553030](https://github.com/bsorrentino/langgraph4j/commit/ce24d4a91553030a88d65e2ef8d0237ecdb4fd3e))
+    > work on #306
+
+ -  **LG4JTest**  add tests for input and output schema handling in ProcessorState ([a1d05614c94ae5b](https://github.com/bsorrentino/langgraph4j/commit/a1d05614c94ae5bf88e31228c1915e5862f509f0))
+    > work on #306
+
+ -  **AgentStateTest**  refactor updateState calls to use instance method and add filterAttributes test ([fe1eac9f310f791](https://github.com/bsorrentino/langgraph4j/commit/fe1eac9f310f791acca91083ffd4026842187da4))
+    > work on #306
+
+ -  **CheckpointTest**  update test to use empty schema in updateState method ([8adc802c4e75025](https://github.com/bsorrentino/langgraph4j/commit/8adc802c4e750251aeebd5f31706e6d91dbd27ec))
+
+
+### Documentation
+
+ -  update Input/Output Mapper documentation and highlight breaking changes ([62857c11247df74](https://github.com/bsorrentino/langgraph4j/commit/62857c11247df746f15bdd79e3a76f1fb57bb3c0))
+     > work on #306
+
+ -  **README**  add project reference for LangGraph4j for AI Agents payments ([398ca9d88c7ee74](https://github.com/bsorrentino/langgraph4j/commit/398ca9d88c7ee747ed82ecb7a51453c5d00850b3))
+
+ -  add documentation for new input/output mapping feature ([e53f96fd7146c55](https://github.com/bsorrentino/langgraph4j/commit/e53f96fd7146c55cf4bf70bea8f7dd2fdaeb6852))
+
+ -  update changelog ([65974d2a77e7b09](https://github.com/bsorrentino/langgraph4j/commit/65974d2a77e7b09ea93db9a3df9fd5b61b49d088))
+
+ -  update GraphResult type descriptions and deprecation ([921b498f7edf280](https://github.com/bsorrentino/langgraph4j/commit/921b498f7edf2803b51a22ca8b14159957242b4a))
+     > work on #436
+
+
+### ALM
+
+ -  bump to next version 1.9.10 ([2d200755df23d05](https://github.com/bsorrentino/langgraph4j/commit/2d200755df23d05c23ad45bee76376ec809a4ac4))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([166233860d5957c](https://github.com/bsorrentino/langgraph4j/commit/166233860d5957c6b89b849d70cf6e2b6bb09d94))
+
+
+
+
+
+
 <!-- "name: v1.9.9" is a release tag -->
 
 ## [v1.9.9](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.9) (2026-11-07)
