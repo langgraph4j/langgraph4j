@@ -16,6 +16,11 @@ import java.util.Optional;
  */
 public class MessagesState<T> extends AgentState {
 
+    public static final String MESSAGES = "messages";
+    /**
+     * @deprecated Use {@link #MESSAGES} instead. This constant is retained for backward compatibility.
+     */
+    @Deprecated
     public static final String MESSAGES_STATE = "messages";
 
     public static final Map<String, Channel<?>> SCHEMA = Map.of(

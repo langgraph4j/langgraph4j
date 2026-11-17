@@ -10,6 +10,7 @@ import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.plain_text.jackson.JacksonStateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
+import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.streaming.StreamingOutput;
 import org.jspecify.annotations.Nullable;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public interface LG4JTestUtil extends LG4JLoggable {
 
 
+
     class State extends MessagesState<String> {
         final static String RESUME = "LG4J_RESUME";
 
@@ -38,6 +40,9 @@ public interface LG4JTestUtil extends LG4JLoggable {
             return this.<Boolean>value(RESUME).orElse(false);
         }
 
+        public static AgentState.Schema schema()    {
+            return AgentState.Schema.of(MessagesState.SCHEMA);
+        }
 
     }
 
@@ -190,8 +195,8 @@ public interface LG4JTestUtil extends LG4JLoggable {
             }
 
             final var partialResult = ofNullable(attributeKey)
-                    .map( key -> Map.<String,Object>of(State.MESSAGES_STATE, message.concat(Objects.toString(state.value(key).orElse("")))) )
-                    .orElseGet(() -> Map.of(State.MESSAGES_STATE, message));
+                    .map( key -> Map.<String,Object>of(State.MESSAGES, message.concat(Objects.toString(state.value(key).orElse("")))) )
+                    .orElseGet(() -> Map.of(State.MESSAGES, message));
 
             return completedFuture(partialResult);
         }

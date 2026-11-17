@@ -9,4 +9,6 @@ package org.bsc.langgraph4j.annotation;
  */
 public interface ActionCatalog {
 
+    @NodeAction( name = "doNothing", description = "No operation action")
+    default void doNothing() {}
 }

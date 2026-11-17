@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -85,7 +86,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                     return "next";
                 }), Map.of( "next", "agent_1", "exit", END) );
 
-        var saver = new FileSystemSaver( checkpointStore, workflow.getStateSerializer() );
+        var saver = new FileSystemSaver( checkpointStore, workflow.stateSerializer() );
 
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -179,7 +180,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                 }), Map.of( "next", "agent_1", "exit", END) );
 
         var saver = new FileSystemSaver( Paths.get( rootPath, "testCheckpointSaverWithManualRelease" ),
-                workflow.getStateSerializer() );
+                workflow.stateSerializer() );
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -280,7 +281,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                 }), Map.of( "next", "agent_1", "exit", END) );
 
         var saver = new FileSystemSaver( Paths.get( rootPath, "testCheckpointSaverWithManualRelease" ),
-                workflow.getStateSerializer() );
+                workflow.stateSerializer() );
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -361,7 +362,7 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
                         Map.of("steps", 1, "messages", "agent_1:step 1") ))
                 .addEdge("agent_1", END);
 
-        final var saver = new FileSystemSaver( checkpointStore, workflow.getStateSerializer() );
+        final var saver = new FileSystemSaver( checkpointStore, workflow.stateSerializer() );
 
         final var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -381,8 +382,8 @@ public class LG4JFileSystemSaverTest implements LG4JLoggable {
             assertEquals(1, result.<State>asState().steps());
 
             // reload the checkpoints from the file system using a brand new saver instance
-            final var reloadedSaver = new FileSystemSaver( checkpointStore, workflow.getStateSerializer() );
-            final var checkpoints = reloadedSaver.list( runnableConfig ).stream().toList();
+            final var reloadedSaver = new FileSystemSaver( checkpointStore, workflow.stateSerializer() );
+            final var checkpoints = new ArrayList<Checkpoint>( reloadedSaver.list( runnableConfig ) );
 
             assertFalse(checkpoints.isEmpty());
             for( final var checkpoint : checkpoints ) {

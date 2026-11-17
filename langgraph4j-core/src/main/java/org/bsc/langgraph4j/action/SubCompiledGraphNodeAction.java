@@ -29,24 +29,7 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
         String nodeId,
         CompileConfig parentCompileConfig,
         CompiledGraph<State> subGraph
-) implements AsyncNodeActionWithConfig<State> {
-
-    public static String subGraphId( String nodeId ) {
-        return  "subgraph_%s".formatted( requireNonNull( nodeId, "nodeId cannot be null!"));
-
-    }
-
-    public static String resumeSubGraphId( String nodeId ) {
-        return  "resume_%s".formatted( subGraphId(nodeId));
-
-    }
-    public String subGraphId() {
-        return subGraphId(nodeId);
-    }
-
-    public String resumeSubGraphId() {
-        return  resumeSubGraphId(nodeId);
-    }
+) implements SubGraphNodeAction<State> {
 
     /**
      * Executes the given graph with the provided state and configuration.

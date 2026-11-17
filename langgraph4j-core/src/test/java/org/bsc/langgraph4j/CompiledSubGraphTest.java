@@ -1,6 +1,9 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
+import org.bsc.langgraph4j.annotation.ActionCatalog;
+import org.bsc.langgraph4j.annotation.ActionCatalogRepository;
+import org.bsc.langgraph4j.annotation.NodeAction;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.FileSystemSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
@@ -14,12 +17,15 @@ import org.bsc.langgraph4j.state.Channels;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
@@ -30,26 +36,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CompiledSubGraphTest implements LG4JTestUtil {
 
-    public enum InterruptionTypeEnum {
-        DECLARED_INTERRUPTION_WITH_VALUES_JSON( StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.VALUES ),
-        DECLARED_INTERRUPTION_WITH_VALUES_BIN( StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.VALUES ),
-        INTERRUPTABLE_ACTION_WITH_VALUES_JSON( StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.VALUES  ),
-        INTERRUPTABLE_ACTION_WITH_VALUES_BIN( StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.VALUES  ),
-        DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON( StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS ),
-        DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN( StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS ),
-        INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON( StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS  ),
-        INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN( StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS  )
-        ;
-
-        final StateSerializer<State> stateSerializer;
-        final CompiledGraph.StreamMode streamMode;
-
-        InterruptionTypeEnum( StateSerializer<State> stateSerializer,
-                              CompiledGraph.StreamMode streamMode) {
-            this.stateSerializer = stateSerializer;
-            this.streamMode = streamMode;
-        }
-    }
 
     public enum GraphCompileEnum {
         GRAPH_WITHOUT_ID( CompileConfig.builder().build() ),
@@ -332,24 +318,26 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
 
     }
 
-    @ParameterizedTest
-    @EnumSource( value = InterruptionTypeEnum.class )
-    public void testCompiledSubGraphInterruptionSharingSaver( InterruptionTypeEnum mode ) throws Exception {
+    private static Stream<Arguments> provideInterruptionData() {
+        return Stream.of(
+                Arguments.of(false, StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.VALUES),
+                Arguments.of(false, StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.VALUES),
+                Arguments.of(false, StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS),
+                Arguments.of(false, StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS),
+                Arguments.of(true, StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.VALUES),
+                Arguments.of(true, StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.VALUES),
+                Arguments.of(true, StateSerializerEnum.JSON.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS),
+                Arguments.of(true, StateSerializerEnum.BINARY.stateSerializer, CompiledGraph.StreamMode.SNAPSHOTS)
+        );
+    }
 
-        final var asInterruptable = switch( mode ) {
-            case INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON,
-                 INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN,
-                 INTERRUPTABLE_ACTION_WITH_VALUES_JSON,
-                 INTERRUPTABLE_ACTION_WITH_VALUES_BIN -> true;
-            case DECLARED_INTERRUPTION_WITH_VALUES_JSON,
-                 DECLARED_INTERRUPTION_WITH_VALUES_BIN,
-                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON,
-                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN -> false;
-        };
+    @ParameterizedTest
+    @MethodSource("provideInterruptionData")
+    public void testCompiledSubGraphInterruptionSharingSaver( boolean asInterruptable, StateSerializer<State> stateSerializer, CompiledGraph.StreamMode streamMode ) throws Exception {
 
         final var saver = new FileSystemSaver(
                 Paths.get( "target", "testCompiledSubGraphInterruptionSharingSaver") ,
-                mode.stateSerializer);
+                stateSerializer);
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -357,15 +345,15 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
 
         var runnableConfig = RunnableConfig.builder()
                 .threadId("thread01")
-                .streamMode(mode.streamMode)
+                .streamMode(streamMode)
                 .build();
 
         var subGraph = subGraphWithInterruption(
                 saver,
-                mode.stateSerializer,
+                stateSerializer,
                 asInterruptable); // create subgraph
 
-        var parentGraph =  new StateGraph<>(State.SCHEMA, mode.stateSerializer)
+        var parentGraph =  new StateGraph<>(State.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE1")
                 .addNode("NODE1", buildActionFactory("NODE1"))
                 .addNode("NODE2", buildActionFactory("NODE2"))
@@ -432,36 +420,25 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
     }
 
     @ParameterizedTest
-    @EnumSource( InterruptionTypeEnum.class     )
-    public void testCompiledSubGraphInterruptionWithDifferentSaver( InterruptionTypeEnum mode ) throws Exception {
-
-        final var asInterruptable = switch (mode) {
-            case INTERRUPTABLE_ACTION_WITH_SNAPSHOT_JSON,
-                 INTERRUPTABLE_ACTION_WITH_SNAPSHOT_BIN,
-                 INTERRUPTABLE_ACTION_WITH_VALUES_JSON,
-                 INTERRUPTABLE_ACTION_WITH_VALUES_BIN -> true;
-            case DECLARED_INTERRUPTION_WITH_VALUES_JSON,
-                 DECLARED_INTERRUPTION_WITH_VALUES_BIN,
-                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_JSON,
-                 DECLARED_INTERRUPTION_WITH_SNAPSHOT_BIN -> false;
-        };
+    @MethodSource("provideInterruptionData")
+    public void testCompiledSubGraphInterruptionWithDifferentSaver( boolean asInterruptable, StateSerializer<State> stateSerializer, CompiledGraph.StreamMode streamMode ) throws Exception {
 
         final var parentSaver = new FileSystemSaver(
                 Paths.get("target", "testCompiledSubGraphInterruptionWithDifferentSaver"),
-                mode.stateSerializer);
+                stateSerializer);
 
         final var childSaver = new MemorySaver();
 
         var subGraph = subGraphWithInterruption(
                 childSaver,
-                mode.stateSerializer,
+                stateSerializer,
                 asInterruptable); // create subgraph
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(parentSaver)
                 .build();
 
-        var parentGraph = new StateGraph<>(State.SCHEMA, mode.stateSerializer)
+        var parentGraph = new StateGraph<>(State.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE1")
                 .addNode("NODE1", buildActionFactory("NODE1"))
                 .addNode("NODE2", buildActionFactory("NODE2"))
@@ -476,7 +453,7 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
                 .compile(compileConfig);
 
         var runnableConfig = RunnableConfig.builder()
-                .streamMode(mode.streamMode)
+                .streamMode(streamMode)
                 .build();
 
         var input = GraphInput.noArgs();
@@ -812,6 +789,48 @@ public class CompiledSubGraphTest implements LG4JTestUtil {
             log.error("testIssue326", e);
             saver.release(config);
         }
+    }
+
+    @Test
+    void testWithOutputMapper() throws GraphStateException {
+
+        final var repo = ActionCatalogRepository.of( new ActionCatalog () {
+            @NodeAction
+            public Map<String, Object> sentBack(State state, RunnableConfig config) {
+                return Map.of("sent_back", "yes");
+            }
+            @NodeAction
+            public Map<String, Object> addMessage(State state, RunnableConfig config) {
+                return Map.of("messages", config.nodePath().toString());
+            }
+        });
+
+        final var child = new StateGraph<>(State.schema(), State::new)
+                .withOutputMapper(state ->
+                        Map.of("sent_back", "no", "messages", List.of("child")))
+                .add( repo.node("only", "sentBack"))
+                .addEdge(START, "only")
+                .addEdge("only", END)
+                .compile();
+
+        final var parent = new StateGraph<>(State.schema(), State::new)
+                .addNode("child", child)
+                .add( repo.node("after", "addMessage"))
+                .addEdge(START, "child")
+                .addEdge("child", "after")
+                .addEdge("after", END)
+                .compile();
+
+        final var result = parent.invokeSync(
+                GraphInput.args( Map.of("keep_me", "parent-value",
+                                        "messages", "parent")),
+                RunnableConfig.empty());
+
+        assertTrue( result.isStateData() );
+        final var stateData = result.asStateData();
+        assertEquals("parent-value", stateData.get("keep_me"));
+        assertEquals("no", stateData.get("sent_back"));
+        assertEquals( List.of( "parent", "child", "after"), stateData.get("messages") );
 
     }
 }

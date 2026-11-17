@@ -10,6 +10,14 @@ in the near future (2.0),  the support to [Reactor Flow](https://projectreactor.
 
 Core graph execution and the Spring AI/LangChain4j streaming generators now use the new `AsyncGeneratorFlow`.
 
+## Input/Output Mapper and subgraph migration
+
+Since **1.9.10**, `StateGraph.withInputMapper(...)` and `withOutputMapper(...)` accept functions from `Map<String, Object>` to `Map<String, Object>` to filter or transform state at graph boundaries. Configure them before compilation. They work for standalone graphs and compiled subgraphs, allowing a child to accept selected parent fields and return public results while retaining its internal working state during execution. See the [core mapper guide](core/core-library.md#inputoutput-mapper) and [compiled subgraph examples](core/subgraph.md#inputoutput-mappers), based on [issue #306](https://github.com/langgraph4j/langgraph4j/issues/306).
+
+!!! warning "BREAKING CHANGE: compiled subgraph results are merged"
+
+    Previously, the child result was the source of truth and replaced the parent state as-is. Now the result is merged using the parent's channels and reducers, preserving parent fields omitted from the child output. Removing a field inside a child with `AgentState.MARK_FOR_REMOVAL` no longer removes that field from the parent automatically. Applications relying on the previous behavior from [issue #260](https://github.com/langgraph4j/langgraph4j/issues/260) must add removal markers in the child's output mapper with `AgentState.markKeysForRemoval(state, keys...)`. See [the removal migration example](core/subgraph.md#breaking-change-propagate-removals-explicitly).
+
 ## Emit custom output from a node
 
 Nodes can now publish typed `NodeOutput` values directly to the active `graph.stream(...)`
@@ -379,7 +387,7 @@ Change the LangGraph4j version in your BOM or individual dependencies:
     <dependency>
       <groupId>org.bsc.langgraph4j</groupId>
       <artifactId>langgraph4j-bom</artifactId>
-      <version>1.9.9</version>
+      <version>1.9.10</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>

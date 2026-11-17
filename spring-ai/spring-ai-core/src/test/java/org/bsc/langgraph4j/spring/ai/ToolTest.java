@@ -70,7 +70,7 @@ public class ToolTest {
                 toolName,
                 "{ \"arg0\": \"test1\"}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES).join();
 
         assertNotNull(callResult);
         assertTrue(callResult.gotoNodeSafe().isEmpty());
@@ -110,7 +110,7 @@ public class ToolTest {
                 toolName,
                 "{}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES).join();
 
         assertNotNull(callResult);
         assertTrue(callResult.gotoNodeSafe().isEmpty());
@@ -157,7 +157,7 @@ public class ToolTest {
                 toolName,
                 "{ \"arg0\": \"test2\"}");
 
-        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES_STATE).join();
+        Command callResult = toolService.executeFunctions(List.of(toolCall), Map.of(), MessagesState.MESSAGES).join();
 
         assertNotNull(callResult);
 

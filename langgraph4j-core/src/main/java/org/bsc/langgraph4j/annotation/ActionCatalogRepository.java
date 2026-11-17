@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.annotation;
 
+import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
@@ -16,6 +17,7 @@ import org.bsc.langgraph4j.utils.ExceptionUtils;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -247,6 +249,10 @@ public interface ActionCatalogRepository {
                         }
                         return unsupportedReturn.apply(res.getClass());
                     });
+                }
+
+                if( result instanceof AsyncGenerator<?> generator) {
+                    return completedFuture(Map.of( "%s_%s".formatted(config.nodeId(), UUID.randomUUID()), generator));
                 }
 
                 return unsupportedReturn.apply(result.getClass());

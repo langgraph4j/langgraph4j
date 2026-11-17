@@ -7,15 +7,13 @@ import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.GraphDefinition.END;
 import static org.bsc.langgraph4j.GraphDefinition.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+import static org.bsc.langgraph4j.state.AgentState.markKeysForRemoval;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -66,9 +64,10 @@ public class Issue306Test {
             this(new ArrayList<>(), new ArrayList<>());
         }
     }
-    static NodeHook.BeforeCall<BoundaryState> removeKeys(String... keys) {
+
+    static NodeHook.BeforeCall<BoundaryState> markKeysForRemovalHook(String... keys) {
         return (nodeId, state, config) -> {
-            var delta = new LinkedHashMap<String, Object>();
+            final var delta = new HashMap<String, Object>(keys.length);
             for (String key : keys) {
                 delta.put(key, AgentState.MARK_FOR_REMOVAL);
             }
@@ -101,7 +100,9 @@ public class Issue306Test {
                     var visibleToLlm = List.copyOf(state.<List<?>>value(MESSAGES).orElse(List.of()));
                     return Map.of(CHILD_RESULT, "ok", LLM_VIEW, visibleToLlm);
                 }))
-                .addEdge(START, "n1").addEdge("n1", "n2").addEdge("n2", END);
+                .addEdge(START, "n1")
+                .addEdge("n1", "n2")
+                .addEdge("n2", END);
         return childCompile == null ? g.compile() : g.compile(childCompile);
     }
 
@@ -214,15 +215,16 @@ public class Issue306Test {
     void experimentB3_stackedParentBeforeCallsOnlyLastDeltaMerged() throws Exception {
         var probe = new Probe();
         var g = new StateGraph<>(PARENT_SCHEMA, BoundaryState::new)
-                .addBeforeCallNodeHook("child", removeKeys(SECRET))
-                .addBeforeCallNodeHook("child", removeKeys(INTERNAL_DATA))
+                .addBeforeCallNodeHook("child", markKeysForRemovalHook(SECRET))
+                .addBeforeCallNodeHook("child", markKeysForRemovalHook(INTERNAL_DATA))
                 .addNode("before", node_async(state -> Map.of()))
                 .addNode("child", childGraph(probe, null))
                 .addNode("after", node_async(state -> Map.of()))
                 .addEdge(START, "before").addEdge("before", "child")
-                .addEdge("child", "after").addEdge("after", END);
+                .addEdge("child", "after").addEdge("after", END)
+                .compile();
 
-        var parentFinal = g.compile().invoke( GraphInput.args(parentInput()), RunnableConfig.empty()).orElseThrow();
+        var parentFinal = g.invoke( GraphInput.args(parentInput()), RunnableConfig.empty()).orElseThrow();
         var n1 = probe.n1.get(0);
 
         // last-executed stacked BeforeCall (SECRET) is applied;
@@ -239,7 +241,7 @@ public class Issue306Test {
         var parent = parentGraph(
                 childGraph(probe, null),
                 null,
-                removeKeys(SECRET, INTERNAL_DATA),
+                markKeysForRemovalHook(SECRET, INTERNAL_DATA),
                 null);
         var n1 = runParent(parent);
         assertFalse(probe.n1.get(0).containsKey(SECRET));
@@ -251,7 +253,10 @@ public class Issue306Test {
     void experimentB2_childFirstNodeBeforeCallOnly() throws Exception {
         var probe = new Probe();
         var child = new StateGraph<>(CHILD_SCHEMA, BoundaryState::new)
-                .addBeforeCallNodeHook("n1", removeKeys(SECRET, INTERNAL_DATA))
+                // this propagates remove keys after the end of subgraph execution to the parent.
+                .withOutputMapper( state -> AgentState.markKeysForRemoval(state, SECRET, INTERNAL_DATA))
+                // this remove key during subgraph execution.
+                .addBeforeCallNodeHook("n1", markKeysForRemovalHook(SECRET, INTERNAL_DATA))
                 .addNode("n1", node_async(state -> {
                     probe.n1.add(new LinkedHashMap<>(state.data()));
                     return Map.of(CHILD_SCRATCH, "scratch-from-n1");
@@ -260,7 +265,9 @@ public class Issue306Test {
                     probe.n2.add(new LinkedHashMap<>(state.data()));
                     return Map.of(CHILD_RESULT, "ok");
                 }))
-                .addEdge(START, "n1").addEdge("n1", "n2").addEdge("n2", END)
+                .addEdge(START, "n1")
+                .addEdge("n1", "n2")
+                .addEdge("n2", END)
                 .compile();
 
         var parent = parentGraph(child, null, null, null);
@@ -275,12 +282,43 @@ public class Issue306Test {
     }
 
     @Test
+    void experimentB2_childFirstNodeBeforeCallOnlyWithOutputMapper() throws Exception {
+        var probe = new Probe();
+        var child = new StateGraph<>(CHILD_SCHEMA, BoundaryState::new)
+                .withOutputMapper( state ->
+                        mergeMap(state,Map.of(SECRET, INTERNAL_DATA)))
+                .addBeforeCallNodeHook("n1", markKeysForRemovalHook(SECRET, INTERNAL_DATA))
+                .addNode("n1", node_async(state -> {
+                    probe.n1.add(new LinkedHashMap<>(state.data()));
+                    return Map.of(CHILD_SCRATCH, "scratch-from-n1");
+                }))
+                .addNode("n2", node_async(state -> {
+                    probe.n2.add(new LinkedHashMap<>(state.data()));
+                    return Map.of(CHILD_RESULT, "ok");
+                }))
+                .addEdge(START, "n1")
+                .addEdge("n1", "n2")
+                .addEdge("n2", END)
+                .compile();
+
+        var parent = parentGraph(child, null, null, null);
+        var parentFinal = runParent(parent);
+
+        assertFalse(probe.n1.get(0).containsKey(SECRET));
+        assertFalse(probe.n2.get(0).containsKey(SECRET));
+        // Child done-map lacks secret; parent merge is union → parent secret remains.
+        assertTrue(parentFinal.value(SECRET).isPresent());
+        //assertEquals("fake-secret", parentFinal.value(SECRET).orElseThrow());
+        assertEquals("ok", parentFinal.value(CHILD_RESULT).orElseThrow());
+    }
+
+    @Test
     void experimentB1_parentBeforeCallRemovesSecret() throws Exception {
         var probe = new Probe();
         var parent = parentGraph(
                 childGraph(probe, null),
                 null,
-                removeKeys(SECRET, INTERNAL_DATA),
+                markKeysForRemovalHook(SECRET, INTERNAL_DATA),
                 null);
         var parentFinal = runParent(parent);
 
@@ -306,7 +344,7 @@ public class Issue306Test {
         var parent = parentGraph(
                 childGraph(probe, childCompile),
                 parentCompile,
-                removeKeys(SECRET, INTERNAL_DATA),
+                markKeysForRemovalHook(SECRET, INTERNAL_DATA),
                 null);
 
         var config = RunnableConfig.builder().threadId("boundary-e").build();
@@ -322,10 +360,10 @@ public class Issue306Test {
                 .toCompletableFuture()
                 .thenApply(GraphResult::from)
                 .join();
-        assertTrue(resumed.isStateData() || resumed.isCheckpointSaverTag());
+        assertTrue(resumed.isStateData());
 
         assertFalse(probe.n2.get(0).containsKey(SECRET));
-        assertNull(resumed.asStateData().get(SECRET));
+        assertTrue(resumed.asState().value(SECRET).isEmpty());
     }
 
     @Test

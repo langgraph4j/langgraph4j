@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.checkpoint;
 
+import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

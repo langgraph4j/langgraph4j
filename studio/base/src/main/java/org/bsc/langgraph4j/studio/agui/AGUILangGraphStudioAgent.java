@@ -211,7 +211,7 @@ public class AGUILangGraphStudioAgent extends AGUIAgentBase {
 
             final AgentState state;
             try {
-                state = stateGraph.getStateSerializer().readDataFromString(data);
+                state = stateGraph.stateSerializer().readDataFromString(data);
             }
             catch (Exception e) {
                 throw new IllegalArgumentException("Failed to deserialize state data from resume payload", e);
@@ -226,7 +226,7 @@ public class AGUILangGraphStudioAgent extends AGUIAgentBase {
                     .orElseThrow(() -> new IllegalStateException("Checkpoint saver not configured in compileConfig"));
 
             final var checkpoint = checkpointSaver.get(config)
-                    .map( c -> c.updateState( state.data(), stateGraph.getChannels()) )
+                    .map( c -> c.updateState( state.data(), stateGraph.channels()) )
                     .orElseThrow(() -> new IllegalArgumentException("Checkpoint with id '%s' not found".formatted(checkpointId)));
 
 
