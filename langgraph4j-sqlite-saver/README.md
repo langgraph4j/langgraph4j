@@ -30,14 +30,14 @@ For Maven:
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-sqlite-saver</artifactId>
-    <version>1.9.9</version>
+    <version>1.9.10</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```gradle
-implementation("org.bsc.langgraph4j:langgraph4j-sqlite-saver:1.9.9")
+implementation("org.bsc.langgraph4j:langgraph4j-sqlite-saver:1.9.10")
 ```
 
 ## Configuration
