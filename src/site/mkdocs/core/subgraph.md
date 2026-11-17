@@ -28,10 +28,16 @@ There are three ways to add subgraphs to a parent graph:
   This is useful when the parent graph and the subgraph have different state schemas and you need to transform state before or after calling the subgraph
     
     ```java
-    StateGraph.addNode( "subgraph",  node_async(state, config) -> {
-        var input =  GraphInput.args(tate);
-        return Map.of( "subgraph_stream", compiledWorkflowChild.stream( input, config ));
-        });
+    StateGraph.addNode( "subgraph",  (state, config) -> {
+
+           final var input =  GraphInput.args(state.data());
+
+           return compiledWorkflowChild.stream( input, RunnableConfig.empty() )
+               .forEachAsync( System.out::println )
+               .thenApply( res -> state.data() );
+
+        })
+
     ```
 
 * Add a node with the **state subgraph**:
@@ -185,8 +191,8 @@ In the  adding both **state subgraph** and **compiled subgraph** the streaming i
 [formatid]: /langgraph4j/apidocs/org/bsc/langgraph4j/SubGraphNode.html#formatId
 [action]: /langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html
 [state_sample]: /langgraph4j/how-tos/subgraph-as-stategraph
-[compiled_sample]: /langgraph4j/how-tos/subgraph-as-compiledgraph
-[node_sample]: /langgraph4j/how-tos/subgraph-as-nodeaction
+[compiled_sample]: /how-tos/subgraph-as-compiledgraph
+[node_sample]: /how-tos/subgraph-as-nodeaction
 [sg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#getGraph
 [cg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph
 [issue306]: https://github.com/langgraph4j/langgraph4j/issues/306
