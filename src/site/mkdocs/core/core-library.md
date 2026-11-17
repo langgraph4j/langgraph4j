@@ -301,7 +301,7 @@ When the result is created through the graph, `asState()` also builds a typed ag
 Input/output mappers define which state data enters and leaves a graph. They are useful for exposing only an agent's result while keeping its working fields internal, and for controlling which fields pass between a parent graph and a [compiled subgraph](subgraph.md#as-a-compiled-graph).
 See [issue #306](https://github.com/langgraph4j/langgraph4j/issues/306) for the feature discussion.
 
-Configure them on `StateGraph` before calling `compile()`. Both `withInputMapper(...)` and `withOutputMapper(...)` accept a `Function<Map<String, Object>, Map<String, Object>>` and return the same `StateGraph` for chaining.
+Mappers are available since **1.9.10**. Configure them on `StateGraph` before calling `compile()`. Both `withInputMapper(...)` and `withOutputMapper(...)` accept a `Function<Map<String, Object>, Map<String, Object>>` and return the same `StateGraph` for chaining.
 Each function receives state data and returns the complete mapped map, so it can filter keys, add, rename them, or transform values.
 
 | Mapper | When it runs | Effect |
@@ -310,7 +310,7 @@ Each function receives state data and returns the complete mapped map, so it can
 | `withOutputMapper(...)` | On normal completion | Selects or transforms the state returned to the caller or parent graph. Nodes can still use internal fields while executing. |
 
 An unset mapper leaves that direction unchanged. Passing `null` to either setter disables that mapper; returning `null` from a mapper is treated as returning an empty map.
-Returning a new map and not mutating the supplied state, and keep mapper functions free of side effects: output mapping can run for both the final checkpoint and the completion result.
+Return a new map without mutating the supplied state, and keep mapper functions free of side effects: output mapping can run for both the final checkpoint and the completion result.
 
 #### Filter input and output
 
@@ -369,7 +369,11 @@ System.out.println(parentResult.asStateData());
 // The child's scratchpad is absent.
 ```
 
-When a compiled child has an input or output mapper, its completed mapped output is merged into the existing parent state using the parent's schema and reducers. Parent fields omitted from the child's output remain in the parent. For example, `CompiledSubGraphTest.testWithOutputMapper` maps a child's `sent_back` value from `"yes"` to `"no"` and returns `messages="child"`: the parent retains `keep_me`, receives `sent_back="no"`, and its appender channel accumulates `messages` as `["parent", "child", "after"]` after the next parent node runs.
+When a compiled child completes, its output (mapped if configured) is merged into the existing parent state using the parent's schema and reducers. Parent fields omitted from the child's output remain in the parent. For example, `CompiledSubGraphTest.testWithOutputMapper` maps a child's `sent_back` value from `"yes"` to `"no"` and returns `messages=List.of("child")`: the parent retains `keep_me`, receives `sent_back="no"`, and its appender channel accumulates `messages` as `["parent", "child", "after"]` after the next parent node runs.
+
+!!! warning "BREAKING CHANGE: removals must cross the subgraph boundary explicitly"
+
+    Previously, the completed child state replaced the parent state as-is. It is now merged, so omitting a key no longer removes its parent value. A child's local `MARK_FOR_REMOVAL` is consumed inside the child. To propagate that removal, reinsert the marker in the child's output mapper with `AgentState.markKeysForRemoval(state, keys...)`. See [the subgraph migration example](subgraph.md#breaking-change-propagate-removals-explicitly) and [issue #260](https://github.com/langgraph4j/langgraph4j/issues/260).
 
 Use `addNode("processor", processor)` with the **compiled** child to retain this mapping boundary. Adding an uncompiled `StateGraph` merges its nodes into the parent during compilation; the child's mappers are not applied as a separate invocation boundary.
 
