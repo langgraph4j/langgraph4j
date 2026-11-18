@@ -3700,7 +3700,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="streaming-semantics-in-a-parallel-node">Streaming semantics in a parallel node<a class="anchor-link" href="#streaming-semantics-in-a-parallel-node">¶</a></h2><p>A parallel node consumes each branch generator internally before it merges the branch states. The <code>onChunk</code> callback below therefore handles progress at the point where a chunk is produced; in an application it can update a UI, publish an event, or write a structured log. Because the outer graph stream waits for the parallel merge and does not forward inner <code>StreamingOutput</code> values, this callback is the only place to observe per-branch progress in real time.</p>
-<p>Use a generator that retains its result value, such as the generator returned by <code>AsyncGeneratorFlow.create(...)</code>. This lets the parallel path read the map supplied to <code>Data.done(...)</code>. A bare <code>AsyncGenerator.Base</code> does not implement <code>HasResultValue</code>, so its final map cannot be recovered by the parallel node.</p>
+<p>This example uses <code>AsyncGeneratorFlow.create(...)</code> to retain the result value on LangGraph4j 1.9.7. In versions with the fix for <a href="https://github.com/langgraph4j/langgraph4j/issues/515">#515</a>, the parallel node can also read the map from <code>Data.done(...)</code> on a bare <code>AsyncGenerator.Base</code>.</p>
 </div>
 </div>
 </div>
@@ -3736,11 +3736,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-java"><pre><span></span><span class="kd">var</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"user.home"</span><span class="p">);</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">localRepoUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"file://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/.m2/repository/"</span><span class="p">;</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.7"</span><span class="p">;</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.10"</span><span class="p">;</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">var userHomeDir = System.getProperty("user.home");
 var localRepoUrl = "file://" + userHomeDir + "/.m2/repository/";
-var langgraph4jVersion = "1.9.7";</div>
+var langgraph4jVersion = "1.9.10";</div>
 </div>
 </div>
 </div>
@@ -4173,7 +4173,7 @@ final results | [web_search: LangGraph4j documentation, database: 3 matching rec
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="key-points">Key points<a class="anchor-link" href="#key-points">¶</a></h2><ul>
 <li>Return the generator as a value in the node update map.</li>
-<li>Use <code>AsyncGeneratorFlow.create(...)</code> (or another <code>HasResultValue</code> generator) when <code>Data.done(...)</code> carries final state.</li>
+<li>Return the final state update in <code>Data.done(...)</code>. On 1.9.7, use <code>AsyncGeneratorFlow.create(...)</code> (or another <code>HasResultValue</code> generator) to retain that update.</li>
 <li>Handle partial chunks in the branch callback while the generator is being consumed.</li>
 <li>Use an appender channel when multiple branches update the same list.</li>
 <li>Join all branches at one node so the merged state continues through the graph.</li>

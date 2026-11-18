@@ -2725,12 +2725,16 @@ stateGraph.addNode( "subgraph", workflowChild.compile() );
 </ul>
 <p>This is useful when the parent graph and the subgraph have different state schemas and you need to transform state before or after calling the subgraph</p>
 <pre><code>```java
-StateGraph.addNode( "subgraph",  state -&gt; {
-    var input =  Map.&lt;String,Object&gt;of( "subgraphKey", state.lastMessage().orElseThrow() );
-    return compiledWorkflowChild.stream( input )
-        .forEachAsync( System.out::println )
-        .thenApply( ( res ) -&gt; state.data() );
-    });
+StateGraph.addNode( "subgraph",  (state, config) -&gt; {
+
+       final var input =  GraphInput.args(state.data());
+
+       return compiledWorkflowChild.stream( input, RunnableConfig.empty() )
+           .forEachAsync( System.out::println )
+           .thenApply( res -&gt; state.data() );
+
+    })
+
 ```
 </code></pre>
 <ul>
@@ -2742,22 +2746,117 @@ stateGraph.addNode( "subgraph", workflowChild );
 ```
 </code></pre>
 <h2 id="as-a-compiled-graph">As a compiled graph</h2>
-<p>The simplest way to create subgraph nodes is by using a compiled subgraph directly. When doing so, it is important that <strong>the parent graph and the subgraph state schemas share at least one key which they can use to communicate</strong>. If your graph and subgraph do not share any keys, you should use write an action (ie. <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html"><code>AsyncNodeActionWithConfig</code></a> ) invoking the subgraph instead (see below).</p>
+<p>The recomended (<em>simplest</em>) way to create subgraph nodes is by using a compiled subgraph directly. The parent and child can communicate through shared state keys, or through <a href="#inputoutput-mappers">input/output mappers</a> that translate keys and values at the child boundary. A <a href="#as-a-node-action">node action</a> is useful when you need to control the invocation yourself.</p>
 <h3 id="note">Note</h3>
 <ul>
-<li>If you pass extra keys to the subgraph node (i.e., in addition to the shared keys), they will be ignored by the subgraph node. Similarly, if you return extra keys from the subgraph, they will be ignored by the parent graph.</li>
+<li>A schema defines channels, defaults, and reducers; it does not automatically filter all undeclared keys. Use input/output mappers to select the fields exchanged with a compiled subgraph.</li>
 <li>Interruptions are supported </li>
 </ul>
-<p>see <a href="/langgraph4j/how-tos/subgraph-as-compiledgraph">example</a></p>
+<p>see <a href="/how-tos/subgraph-as-compiledgraph">example</a></p>
+<h2 id="inputoutput-mappers">Input/Output Mappers</h2>
+<p>Since <strong>1.9.10</strong>, <code>StateGraph.withInputMapper(...)</code> and <code>StateGraph.withOutputMapper(...)</code> let you define a graph's input and output boundary. Both accept a <code>Function&lt;Map&lt;String, Object&gt;, Map&lt;String, Object&gt;&gt;</code> and return the same builder. Configure them on the child <strong>before compiling it</strong>, then pass the compiled child to <code>addNode(...)</code>. This keeps the subgraph visible to graph visualization and preserves its built-in streaming and interruption support, without a wrapper action.</p>
+<table>
+<thead>
+<tr>
+<th>Mapper</th>
+<th>When it runs</th>
+<th>Typical use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>withInputMapper(...)</code></td>
+<td>At the start of a fresh invocation, after state initialization</td>
+<td>Select parent fields the child needs, rename keys, or transform values. Schema defaults are also visible to the mapper.</td>
+</tr>
+<tr>
+<td><code>withOutputMapper(...)</code></td>
+<td>On normal completion, including the checkpoint whose next node is <code>END</code></td>
+<td>Return only public results, transform values, or explicitly request removal of parent fields.</td>
+</tr>
+</tbody>
+</table>
+<p>Each mapper returns the complete map for that side of the boundary. An unset mapper passes state through unchanged; passing <code>null</code> to a setter disables that mapper. A mapper returning <code>null</code> produces an empty map. Return a new map rather than mutating the supplied state, and keep mappers free of side effects: output mapping can run for both the completion checkpoint and the final result.</p>
+<p>Input mapping is not reapplied when resuming from a checkpoint. Output mapping does not filter intermediate streamed node states or earlier checkpoints, and an interruption is not completed output. Internal fields can still appear there. See the <a href="../core-library/#inputoutput-mapper">core mapper guide</a> for standalone usage and persistence details, and <a href="https://github.com/langgraph4j/langgraph4j/issues/306">issue #306</a> for the design discussion.</p>
+<h3 id="map-a-compiled-childs-input-and-output">Map a compiled child's input and output</h3>
+<p>The following example uses <code>AgentState</code>, <code>Channels</code>, <code>GraphInput</code>, <code>RunnableConfig</code>, and <code>StateGraph</code> from LangGraph4j, <code>ArrayList</code>, <code>List</code>, and <code>Map</code> from <code>java.util</code>, and these static imports:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Use an appender so the parent&#39;s messages accumulate the child&#39;s mapped messages.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AgentState</span><span class="p">.</span><span class="na">Schema</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Channels</span><span class="p">.</span><span class="na">appender</span><span class="p">(</span><span class="n">ArrayList</span><span class="p">::</span><span class="k">new</span><span class="p">)));</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">child</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Copy only messages into the child; keep_me stays outside its working state.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withInputMapper</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">var</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">util</span><span class="p">.</span><span class="na">LinkedHashMap</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">state</span><span class="p">);</span>
+<span class="w">            </span><span class="n">input</span><span class="p">.</span><span class="na">keySet</span><span class="p">().</span><span class="na">retainAll</span><span class="p">(</span><span class="n">java</span><span class="p">.</span><span class="na">util</span><span class="p">.</span><span class="na">Set</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">));</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">;</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="c1">// Publish a transformed result and one message, excluding the scratchpad.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withOutputMapper</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">                </span><span class="s">&quot;sent_back&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;no&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;child&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="c1">// Produce internal working data and a value the output mapper will replace.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;only&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">                </span><span class="s">&quot;sent_back&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;yes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;scratchpad&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;internal work&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;only&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;only&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">parent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;child&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">child</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Add a parent message after the child&#39;s mapped output has been merged.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;after&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;after&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;child&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;child&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;after&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;after&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="c1">// Start a fresh run with both shared data and a parent-only field.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parent</span><span class="p">.</span><span class="na">invokeSync</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;keep_me&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parent-value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parent&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">empty</span><span class="p">());</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">asStateData</span><span class="p">());</span>
+<span class="c1">// Contains keep_me=parent-value, sent_back=no, messages=[parent, child, after].</span>
+<span class="c1">// The child&#39;s scratchpad is absent.</span>
+</code></pre></div>
+<p>The child's mapped output is <strong>merged into the existing parent state using the parent's channels and reducers</strong>. Omitted parent keys retain their values; an output mapper returning only <code>sent_back</code> would also preserve <code>keep_me</code>. Returned message values pass through the parent's appender. This behavior is covered by <a href="https://github.com/langgraph4j/langgraph4j/blob/develop/langgraph4j-core/src/test/java/org/bsc/langgraph4j/CompiledSubGraphTest.java"><code>CompiledSubGraphTest.testWithOutputMapper</code></a>; standalone input and output filtering are covered by <a href="https://github.com/langgraph4j/langgraph4j/blob/develop/langgraph4j-core/src/test/java/org/bsc/langgraph4j/LG4JTest.java"><code>LG4JTest.testInputMapper</code> and <code>testOutputMapper</code></a>.</p>
+<p>This boundary applies to <strong>compiled subgraphs</strong>. With <code>addNode("child", childStateGraph)</code>, the uncompiled child's nodes are merged into the parent at compilation, so the child's mappers do not run as a separate invocation boundary.</p>
+<h3 id="breaking-change-propagate-removals-explicitly">Breaking change: propagate removals explicitly</h3>
+<p>‼️⚠️ warning "BREAKING CHANGE: subgraph output is merged into parent state"</p>
+<p>Before the Input/Output Mapper implementation, the completed subgraph state was treated as the source of truth and assigned as-is to the parent. Now the child result is merged with the parent state. A key missing from the child result no longer removes that key from the parent, even when a child node removed it with <code>AgentState.MARK_FOR_REMOVAL</code>.</p>
+<p>A child node's removal marker is consumed while updating the child's state, leaving the key absent from its completed result. To remove the same key from the parent, <strong>add the marker back in the child's output mapper</strong>. Filtering a key out of the output only prevents an update to it; it does not delete the parent's existing value. This changes the behavior of applications that relied on the previous fix for <a href="https://github.com/langgraph4j/langgraph4j/issues/260">issue #260</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">removalChild</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">AgentState</span><span class="p">.</span><span class="na">Schema</span><span class="p">.</span><span class="na">empty</span><span class="p">(),</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Copy the completed state and reinsert the removal marker for the parent merge.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withOutputMapper</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">AgentState</span><span class="p">.</span><span class="na">markKeysForRemoval</span><span class="p">(</span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;my_value&quot;</span><span class="p">))</span>
+<span class="w">        </span><span class="c1">// Remove the value locally; this marker is consumed inside the child.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;remove_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="w">                </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;my_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">AgentState</span><span class="p">.</span><span class="na">MARK_FOR_REMOVAL</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;remove_value&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;remove_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="n">removalParent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">AgentState</span><span class="p">.</span><span class="na">Schema</span><span class="p">.</span><span class="na">empty</span><span class="p">(),</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;child&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">removalChild</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;child&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;child&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="c1">// The explicit output marker removes my_value from the parent as well as the child.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">removalResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">removalParent</span><span class="p">.</span><span class="na">invokeSync</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;my_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parent-value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;keep_me&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;unchanged&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">empty</span><span class="p">());</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">removalResult</span><span class="p">.</span><span class="na">asStateData</span><span class="p">());</span><span class="w"> </span><span class="c1">// {keep_me=unchanged}</span>
+</code></pre></div>
+<p><code>AgentState.markKeysForRemoval(state, keys...)</code> returns a copy of the supplied map with each named key set to <code>MARK_FOR_REMOVAL</code>, preserving other outputs. Only mark keys that should be removed from the parent. For multiple keys, use <code>state -&gt; AgentState.markKeysForRemoval(state, "secret", "internal_data")</code>. If removal is conditional, add markers only when the corresponding removal is intended.</p>
+<p>The same rule applies when a child hook removes fields before its first node: the hook removes them locally, and the output mapper propagates their removal to the parent. See <a href="https://github.com/langgraph4j/langgraph4j/blob/develop/langgraph4j-core/src/test/java/org/bsc/langgraph4j/Issue306Test.java"><code>Issue306Test.experimentB2_childFirstNodeBeforeCallOnly</code></a> and <a href="https://github.com/langgraph4j/langgraph4j/blob/develop/langgraph4j-core/src/test/java/org/bsc/langgraph4j/Issue260Test.java"><code>Issue260Test.getCompiledGraph</code></a> for examples, including use with a checkpoint saver.</p>
 <h2 id="as-a-node-action">As a node action</h2>
-<p>You might want to define a subgraph with a completely different schema. In this case, you can create a node function that invokes the subgraph. This function will need to transform the input (parent) state to the subgraph state before invoking the subgraph, and transform the results back to the parent state before returning the state update from the node.</p>
+<p>You might want to <strong>define a subgraph with a completely different schema</strong>. In this case, you can create a node function that invokes the subgraph. This function will need to transform the input (parent) state to the subgraph state before invoking the subgraph, and transform the results back to the parent state before returning the state update from the node.</p>
 <h3 id="note_1">Note</h3>
 <ul>
 <li>Interruption support is up to you</li>
 </ul>
-<p>see <a href="/langgraph4j/how-tos/subgraph-as-nodeaction">example</a></p>
+<p>see <a href="/how-tos/subgraph-as-nodeaction">example</a></p>
 <h2 id="as-a-state-graph">As a state graph</h2>
-<p>This is the most effective way to create subgraph nodes is by using a state subgraph. When doing so, the subgraph is merged into the parent one becoming a integral part of it, as conseguence it is important keep note that <strong>the parent graph and the subgraph share everithing like one single graph</strong>.</p>
+<p>This is the most naif way to create subgraph nodes is by using a state subgraph. When doing so, the subgraph is merged into the parent one becoming a integral part of it, as conseguence it is important keep note that <strong>the parent graph and the subgraph share everithing like one single graph</strong>.</p>
 <h3 id="note_2">Note</h3>
 <ul>
 <li>The merging happens during graph compilation and the subgraphs nodes Ids are renamed to avoid clashing. From outside of graph to get the real Id of merge subgraph nodes to must use<a href="/langgraph4j/apidocs/org/bsc/langgraph4j/SubGraphNode.html#formatId"><code>SubGraphNode.formatId( subgraphId, subgraphNodeId )</code></a></li>
@@ -2769,7 +2868,7 @@ stateGraph.addNode( "subgraph", workflowChild );
 <h3 id="note_3">Note</h3>
 <p>Only in the case of  <strong>state subgraph</strong> visualization, since adding it implies its merging into parent, if you call <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#getGraph"><code>StateGraph.getGraph()</code></a> you will got a visualization format before merging process, while if you call <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph"><code>CompiledGraph.getGraph()</code></a> you got a visualization format after merging process.</p>
 <h2 id="streaming">Streaming</h2>
-<p>In the  adding both <strong>state subgraph</strong> and <strong>compiled subgraph</strong> the streaming is automatically enabled, while in the <strong>subgraph as node action</strong> the streaming is up to you</p>
+<p>In the  adding both <strong>state subgraph</strong> and <strong>compiled subgraph</strong> the streaming is automatically enabled, while in the <strong>subgraph as node action</strong> the set up of streaming is up to you.</p>
 
 
 

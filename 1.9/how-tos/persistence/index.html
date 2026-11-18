@@ -3785,13 +3785,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="kd">var</span><span class="w"> </span><span class="n">localRespoUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"file://"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userHomeDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/.m2/repository/"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.22.0"</span><span class="p">;</span>
 <span class="kd">var</span><span class="w"> </span><span class="n">langchain4jbeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.22.0-beta32"</span><span class="p">;</span>
-<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.7"</span><span class="p">;</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">langgraph4jVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"1.9.10"</span><span class="p">;</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">var userHomeDir = System.getProperty("user.home");
 var localRespoUrl = "file://" + userHomeDir + "/.m2/repository/";
 var langchain4jVersion = "1.22.0";
 var langchain4jbeta = "1.22.0-beta32";
-var langgraph4jVersion = "1.9.7";</div>
+var langgraph4jVersion = "1.9.10";</div>
 </div>
 </div>
 </div>
@@ -5144,7 +5144,7 @@ for( var r : result ) {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="order-checkpoints-by-creation-date">Order Checkpoints by Creation Date<a class="anchor-link" href="#order-checkpoints-by-creation-date">¶</a></h2><p>Every <a href="https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/Checkpoint.html"><code>Checkpoint</code></a> carries a <code>createdAt</code> timestamp, assigned when the checkpoint is created.
+<h2 id="order-checkpoints-by-creation-date">Order Checkpoints by Creation Date<a class="anchor-link" href="#order-checkpoints-by-creation-date">¶</a></h2><p>Every <a href="https://langgraph4j.github.io/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/Checkpoint.html"><code>Checkpoint</code></a> carries a <code>savedAt</code> timestamp, assigned when the checkpoint is persisted. A saver that cannot pre-fill it leaves it <code>null</code>, which means the storage did not supply a time rather than that the checkpoint was never saved.
 This makes it possible to order checkpoints reliably, even when the underlying storage
 (eg. a custom saver backed by a store that doesn't preserve the insertion order) returns them
 in an arbitrary sequence.</p>
@@ -5177,14 +5177,14 @@ in an arbitrary sequence.</p>
 <span class="kd">var</span><span class="w"> </span><span class="n">checkpoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">util</span><span class="p">.</span><span class="na">ArrayList</span><span class="o">&lt;</span><span class="n">Checkpoint</span><span class="o">&gt;</span><span class="p">(</span><span class="w"> </span><span class="n">hazelcastSaver</span><span class="p">.</span><span class="na">list</span><span class="p">(</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
 
 <span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="n">cp</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">checkpoints</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="s">"%s -&gt; %s"</span><span class="p">.</span><span class="na">formatted</span><span class="p">(</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">id</span><span class="p">(),</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">createdAt</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="s">"%s -&gt; %s"</span><span class="p">.</span><span class="na">formatted</span><span class="p">(</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">id</span><span class="p">(),</span><span class="w"> </span><span class="n">cp</span><span class="p">.</span><span class="na">savedAt</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
 <span class="p">}</span>
 
 <span class="c1">// sort them oldest first</span>
-<span class="n">checkpoints</span><span class="p">.</span><span class="na">sort</span><span class="p">(</span><span class="w"> </span><span class="n">Comparator</span><span class="p">.</span><span class="na">comparing</span><span class="p">(</span><span class="w"> </span><span class="n">Checkpoint</span><span class="p">::</span><span class="n">createdAt</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="n">checkpoints</span><span class="p">.</span><span class="na">sort</span><span class="p">(</span><span class="w"> </span><span class="n">Comparator</span><span class="p">.</span><span class="na">comparing</span><span class="p">(</span><span class="w"> </span><span class="n">Checkpoint</span><span class="p">::</span><span class="n">savedAt</span><span class="p">,</span><span class="w"> </span><span class="n">Comparator</span><span class="p">.</span><span class="na">nullsLast</span><span class="p">(</span><span class="w"> </span><span class="n">Comparator</span><span class="p">.</span><span class="na">naturalOrder</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
 
 <span class="c1">// the same information is exposed by the state snapshot</span>
-<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">persistentGraph</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">).</span><span class="na">createdAt</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="w"> </span><span class="n">persistentGraph</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="w"> </span><span class="n">runnableConfig</span><span class="w"> </span><span class="p">).</span><span class="na">savedAt</span><span class="p">()</span><span class="w"> </span><span class="p">);</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-21">import org.bsc.langgraph4j.checkpoint.Checkpoint;
 import java.util.Comparator;
@@ -5193,14 +5193,14 @@ import java.util.Comparator;
 var checkpoints = new java.util.ArrayList&lt;Checkpoint&gt;( hazelcastSaver.list( runnableConfig ) );
 
 for( var cp : checkpoints ) {
-  System.out.println( "%s -&gt; %s".formatted( cp.id(), cp.createdAt() ) );
+  System.out.println( "%s -&gt; %s".formatted( cp.id(), cp.savedAt() ) );
 }
 
 // sort them oldest first
-checkpoints.sort( Comparator.comparing( Checkpoint::createdAt ) );
+checkpoints.sort( Comparator.comparing( Checkpoint::savedAt, Comparator.nullsLast( Comparator.naturalOrder() ) ) );
 
 // the same information is exposed by the state snapshot
-System.out.println( persistentGraph.getState( runnableConfig ).createdAt() );</div>
+System.out.println( persistentGraph.getState( runnableConfig ).savedAt() );</div>
 </div>
 </div>
 </div>

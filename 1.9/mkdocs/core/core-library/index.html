@@ -3025,7 +3025,7 @@ The <code>invokeFinal()</code> method blocks until the graph completes and retur
 <h4 id="graphresult">GraphResult</h4>
 <p>The final result returned by <code>AsyncGenerator</code> from the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#stream(java.util.Map,org.bsc.langgraph4j.RunnableConfig)">stream</a> method is a generic <code>Object</code> that can contain different types of values depending on what was yielded during the graph execution. Rather than constantly checking the type with <code>instanceof</code>, LangGraph4j provides the <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> utility class to safely identify and retrieve the correct result type.</p>
 <h5 id="result-types">Result Types</h5>
-<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class can wrap the following result types:</p>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class exposes the kind of result through <code>type()</code> and can wrap the following types:</p>
 <table>
 <thead>
 <tr>
@@ -3036,46 +3036,152 @@ The <code>invokeFinal()</code> method blocks until the graph completes and retur
 <tbody>
 <tr>
 <td><strong>STATE_DATA</strong></td>
-<td>A <code>Map&lt;String, Object&gt;</code> representing the state snapshot after a node execution. This is the most common result during graph streaming.</td>
+<td>A <code>Map&lt;String, Object&gt;</code> representing the state snapshot. The data is filtered by the graph's output schema when retrieved with <code>asStateData()</code>.</td>
 </tr>
 <tr>
-<td><strong>NODE_OUTPUT</strong></td>
-<td>A <code>NodeOutput</code> object containing detailed information about a node's execution, including the node ID, the resulting state, and execution metadata.</td>
+<td><strong>CHECKPOINT_SAVER_TAG</strong></td>
+<td>A <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.Tag.html">BaseCheckpointSaver.Tag</a> object representing a checkpoint identifier and metadata. <code>asStateData()</code> returns the state of its last checkpoint, so it can be handled like <code>STATE_DATA</code>.</td>
 </tr>
 <tr>
 <td><strong>INTERRUPTION_METADATA</strong></td>
 <td>An <code>InterruptionMetadata</code> object indicating that the graph execution was interrupted. This contains information about why the graph was interrupted and the state at the interruption point.</td>
 </tr>
 <tr>
-<td><strong>CHECKPOINT_SAVER_TAG</strong></td>
-<td>A <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/checkpoint/BaseCheckpointSaver.Tag.html">BaseCheckpointSaver.Tag</a> object representing a checkpoint identifier and metadata. Useful for tracking persisted states.</td>
+<td><strong>CANCELLED</strong></td>
+<td>Indicates that the graph execution was cancelled.</td>
 </tr>
 <tr>
 <td><strong>EMPTY</strong></td>
 <td>Indicates no result was produced (typically when the stream yields null).</td>
+</tr>
+<tr>
+<td><strong>NODE_OUTPUT</strong></td>
+<td><em>(deprecated, for removal)</em> A <code>NodeOutput</code> object. The graph doesn't return it anymore: use <code>STATE_DATA</code> or <code>CHECKPOINT_SAVER_TAG</code> instead.</td>
 </tr>
 </tbody>
 </table>
 <h5 id="using-graphresult">Using GraphResult</h5>
 <p>Instead of manually checking types, use <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> to safely extract the result:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">// Get the final result direct from the generator</span>
-<span class="n">GraphResult</span><span class="w"> </span><span class="n">finalResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GraphResult</span><span class="p">.</span><span class="na">from</span><span class="p">(</span><span class="n">generator</span><span class="p">);</span>
+<span class="n">graph</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">)</span>
+<span class="w">     </span><span class="p">.</span><span class="na">forEachAsync</span><span class="p">(</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Step executed: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">output</span><span class="p">))</span>
+<span class="w">     </span><span class="p">.</span><span class="na">thenApply</span><span class="p">(</span><span class="w"> </span><span class="n">GraphResult</span><span class="p">::</span><span class="n">from</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="c1">// holds final result in GraphResult</span>
+<span class="w">     </span><span class="p">.</span><span class="na">thenAccept</span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// process the final result</span>
 
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;result is empty&quot;</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isStateDataOrCheckpointSaverTag</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asStateDataOrLastCheckpointStateData</span><span class="p">();</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with state: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
-<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isNodeOutput</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">NodeOutput</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asNodeOutput</span><span class="p">();</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with node: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">output</span><span class="p">.</span><span class="na">nodeId</span><span class="p">());</span>
-<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">finalResult</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">InterruptionMetadata</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">finalResult</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with interruption: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">);</span>
-<span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// result.type() == GraphResult.Type.EMPTY</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;result is empty&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">isCancelled</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// result.type() == GraphResult.Type.CANCELLED</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;graph execution cancelled&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">isInterruptionMetadata</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// result.type() == GraphResult.Type.INTERRUPTION_METADATA</span>
+<span class="w">            </span><span class="n">InterruptionMetadata</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asInterruptionMetadata</span><span class="p">();</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with interruption: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">isStateData</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// result.type() == GraphResult.Type.STATE_DATA || result.type() == GraphResult.Type.CHECKPOINT_SAVER_TAG</span>
+<span class="w">            </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asStateData</span><span class="p">();</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with state: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">     </span><span class="p">});</span>
 </code></pre></div>
-<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class provides type-safe methods to check (<code>isStateDataOrCheckpointSaverTag()</code>, <code>isNodeOutput()</code>, etc.) and retrieve (<code>asStateDataOrLastCheckpointStateData()</code>, <code>asNodeOutput()</code>, etc.) each result type, preventing casting errors and making your code more maintainable.</p>
+<p>The <a href="/langgraph4j/apidocs/org/bsc/langgraph4j/GraphResult.html">GraphResult</a> class provides type-safe methods to check (<code>isStateData()</code>, <code>isCheckpointSaverTag()</code>, <code>isInterruptionMetadata()</code>, <code>isCancelled()</code>, <code>isEmpty()</code>) and retrieve (<code>asStateData()</code>, <code>asCheckpointSaverTag()</code>, <code>asInterruptionMetadata()</code>, <code>asLastCheckpointStateData()</code>) each result type, preventing casting errors and making your code more maintainable.</p>
+<p>When the result is created through the graph, <code>asState()</code> also builds a typed agent state using the graph's state factory.
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">isStateData</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">MyCustomState</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">asState</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;Graph completed with typed state: %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div></p>
+<div class="admonition note">
+<p class="admonition-title">Deprecated methods</p>
+</div>
+<blockquote>
+<p><code>isStateDataOrCheckpointSaverTag()</code>, <code>asStateDataOrLastCheckpointStateData()</code>, <code>isNodeOutput()</code> and <code>asNodeOutput()</code> are deprecated since 1.9.8 and marked for removal:
+use <code>isStateData()</code> and <code>asStateData()</code> instead.</p>
+</blockquote>
+<h3 id="inputoutput-mapper">Input/Output Mapper</h3>
+<p>Input/output mappers define which state data enters and leaves a graph. They are useful for exposing only an agent's result while keeping its working fields internal, and for controlling which fields pass between a parent graph and a <a href="../subgraph/#as-a-compiled-graph">compiled subgraph</a>.
+See <a href="https://github.com/langgraph4j/langgraph4j/issues/306">issue #306</a> for the feature discussion.</p>
+<p>Mappers are available since <strong>1.9.10</strong>. Configure them on <code>StateGraph</code> before calling <code>compile()</code>. Both <code>withInputMapper(...)</code> and <code>withOutputMapper(...)</code> accept a <code>Function&lt;Map&lt;String, Object&gt;, Map&lt;String, Object&gt;&gt;</code> and return the same <code>StateGraph</code> for chaining.
+Each function receives state data and returns the complete mapped map, so it can filter keys, add, rename them, or transform values.</p>
+<table>
+<thead>
+<tr>
+<th>Mapper</th>
+<th>When it runs</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>withInputMapper(...)</code></td>
+<td>On a new invocation, after initial state creation and before graph execution</td>
+<td>Selects or transforms the state available to the graph's nodes. The mapper sees schema defaults as well as supplied input.</td>
+</tr>
+<tr>
+<td><code>withOutputMapper(...)</code></td>
+<td>On normal completion</td>
+<td>Selects or transforms the state returned to the caller or parent graph. Nodes can still use internal fields while executing.</td>
+</tr>
+</tbody>
+</table>
+<p>An unset mapper leaves that direction unchanged. Passing <code>null</code> to either setter disables that mapper; returning <code>null</code> from a mapper is treated as returning an empty map.
+Return a new map without mutating the supplied state, and keep mapper functions free of side effects: output mapping can run for both the final checkpoint and the completion result.</p>
+<h4 id="filter-input-and-output">Filter input and output</h4>
+<p>This standalone example accepts only <code>messages</code> and <code>context</code>, and returns only <code>result</code>. The node also writes a <code>scratchpad</code> field, which remains available internally but is excluded from the completed result.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">processor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">AgentState</span><span class="p">.</span><span class="na">Schema</span><span class="p">.</span><span class="na">empty</span><span class="p">(),</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Keep only the processor&#39;s inputs, including any matching schema defaults.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withInputMapper</span><span class="p">(</span><span class="n">stateData</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">final</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="n">keepKeys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Set</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;context&quot;</span><span class="p">);</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">stateData</span><span class="p">.</span><span class="na">entrySet</span><span class="p">().</span><span class="na">stream</span><span class="p">()</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">filter</span><span class="p">(</span><span class="n">entry</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">keepKeys</span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="na">getKey</span><span class="p">()))</span>
+<span class="w">                    </span><span class="p">.</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">toMap</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">Entry</span><span class="p">::</span><span class="n">getKey</span><span class="p">,</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">Entry</span><span class="p">::</span><span class="n">getValue</span><span class="p">));</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="c1">// Expose the answer with a fallback when no result was produced.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withOutputMapper</span><span class="p">(</span><span class="n">stateData</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="w">                </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;result&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">stateData</span><span class="p">.</span><span class="na">getOrDefault</span><span class="p">(</span><span class="s">&quot;result&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;&lt;none&gt;&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="c1">// Produce an answer and working data without modifying the input map.</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;process&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">node_async</span><span class="p">(</span><span class="n">state</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">                </span><span class="s">&quot;result&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;done&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="s">&quot;scratchpad&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;internal coordination&quot;</span><span class="p">)))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;process&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;process&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="c1">// Start a fresh invocation so the input mapper selects the node&#39;s initial data.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">processor</span><span class="p">.</span><span class="na">invokeSync</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;context&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;support request&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;other_data&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;caller-only&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">empty</span><span class="p">());</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">asStateData</span><span class="p">());</span><span class="w"> </span><span class="c1">// {result=done}</span>
+</code></pre></div>
+<p>Here <code>other_data</code> is absent from the node's input. <code>messages</code>, <code>context</code>, and <code>scratchpad</code> are absent from the completed result. A schema still defines channels, defaults, and reducers; the mapper defines which entries cross the graph boundary. Because input mapping happens after initialization, include any defaulted keys that the nodes need in the returned input map.</p>
+<h4 id="use-a-mapped-graph-as-a-subgraph">Use a mapped graph as a subgraph</h4>
+<p>The same compiled <code>processor</code> can be added directly as a parent node, without a wrapper action:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="n">parent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">AgentState</span><span class="p">.</span><span class="na">Schema</span><span class="p">.</span><span class="na">empty</span><span class="p">(),</span><span class="w"> </span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addNode</span><span class="p">(</span><span class="s">&quot;processor&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">processor</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;processor&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addEdge</span><span class="p">(</span><span class="s">&quot;processor&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">END</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+
+<span class="c1">// The child receives only messages and context; keep_me remains in the parent.</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">parentResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parent</span><span class="p">.</span><span class="na">invokeSync</span><span class="p">(</span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;context&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;support request&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;keep_me&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;parent-value&quot;</span><span class="p">)),</span><span class="w"> </span><span class="n">RunnableConfig</span><span class="p">.</span><span class="na">empty</span><span class="p">());</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">parentResult</span><span class="p">.</span><span class="na">asStateData</span><span class="p">());</span>
+<span class="c1">// Contains messages=hello, context=support request, keep_me=parent-value, result=done.</span>
+<span class="c1">// The child&#39;s scratchpad is absent.</span>
+</code></pre></div>
+<p>When a compiled child completes, its output (mapped if configured) is merged into the existing parent state using the parent's schema and reducers. Parent fields omitted from the child's output remain in the parent. For example, <code>CompiledSubGraphTest.testWithOutputMapper</code> maps a child's <code>sent_back</code> value from <code>"yes"</code> to <code>"no"</code> and returns <code>messages=List.of("child")</code>: the parent retains <code>keep_me</code>, receives <code>sent_back="no"</code>, and its appender channel accumulates <code>messages</code> as <code>["parent", "child", "after"]</code> after the next parent node runs.</p>
+<div class="admonition warning">
+<p class="admonition-title">BREAKING CHANGE: removals must cross the subgraph boundary explicitly</p>
+<p>Previously, the completed child state replaced the parent state as-is. It is now merged, so omitting a key no longer removes its parent value. A child's local <code>MARK_FOR_REMOVAL</code> is consumed inside the child. To propagate that removal, reinsert the marker in the child's output mapper with <code>AgentState.markKeysForRemoval(state, keys...)</code>. See <a href="../subgraph/#breaking-change-propagate-removals-explicitly">the subgraph migration example</a> and <a href="https://github.com/langgraph4j/langgraph4j/issues/260">issue #260</a>.</p>
+</div>
+<p>Use <code>addNode("processor", processor)</code> with the <strong>compiled</strong> child to retain this mapping boundary. Adding an uncompiled <code>StateGraph</code> merges its nodes into the parent during compilation; the child's mappers are not applied as a separate invocation boundary.</p>
+<h4 id="persistence-streaming-and-interruptions">Persistence, streaming, and interruptions</h4>
+<p>The input mapper is not reapplied when resuming from a checkpoint. The output mapper applies to normal completion and to the checkpoint whose next node is <code>END</code>. Earlier checkpoints retain the graph's internal state, and interruptions are not treated as completed output. Intermediate streamed node states can also contain internal fields; use the completed <a href="#graphresult">GraphResult</a> to obtain the mapped result. Output mapping does not filter all checkpoint history or every streamed event.</p>
 <h2 id="state">State</h2>
 <p>The first thing you do when you define a graph is define the <code>State</code> of the graph. The <code>State</code> consists of the <a href="#schema">schema of the graph</a> as well as <a href="#reducers">reducer</a> functions which specify how to apply updates to the state. The schema of the <code>State</code> will be the input schema to all <code>Nodes</code> and <code>Edges</code> in the graph, and should be defined using a map of  [<code>Channel</code>] object. All <code>Nodes</code> will emit updates to the <code>State</code> which are then applied using the specified <code>reducer</code> function.</p>
 <h3 id="schema">Schema</h3>

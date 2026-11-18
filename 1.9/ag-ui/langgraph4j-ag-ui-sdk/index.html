@@ -2702,29 +2702,393 @@
 
 
 <h1 id="langgraph4j-support-for-ag-ui">LangGraph4j support for AG-UI</h1>
-<p>This module provides the building blocks to expose a <a href="https://github.com/langgraph4j/langgraph4j">LangGraph4j</a> graph
-as an agent compliant with the <a href="https://github.com/ag-ui-protocol/ag-ui">AG-UI protocol</a>, streaming its execution as
-a sequence of AG-UI events (message chunks, step lifecycle, run lifecycle, errors, etc.).</p>
-<h2 id="classes-overview">Classes overview</h2>
-<h3 id="aguiagent">AGUIAgent</h3>
-<p>Core interface representing an AG-UI compliant agent. Exposes a unique <code>id()</code> and a <code>run(RunAgentInput)</code> method returning a <code>Flow.Publisher&lt;Event&gt;</code> that streams the AG-UI events produced by the agent execution.</p>
-<h3 id="aguiagentbase">AGUIAgentBase</h3>
-<p>Abstract base implementation of <code>AGUIAgent</code> that bridges a LangGraph4j <code>CompiledGraph</code> to the AG-UI event stream. It lazily compiles the graph (via the abstract <code>newGraph()</code> method), builds the graph input from the incoming request (via the abstract <code>graphInput(RunAgentInput)</code> method), runs it either asynchronously or synchronously, and translates node/streaming outputs, errors and completion into the corresponding AG-UI events. 
-Subclasses typically only need to implement the two abstract methods.</p>
-<h3 id="aguiagentregistry">AGUIAgentRegistry</h3>
-<p>A simple registry (<code>Map&lt;String, AGUIAgent&gt;</code>) used to look up a registered <code>AGUIAgent</code> by its identifier, typically used to dispatch an incoming AG-UI run request to the appropriate agent implementation.</p>
-<h3 id="aguihook">AGUIHook</h3>
-<p>A LangGraph4j <code>NodeHook</code> implementation dedicated to the AG-UI protocol.
-Its <code>stepEvents()</code> factory method returns a <code>NodeHook.WrapCall</code> that automatically dispatches the AG-UI <code>StepStartedEvent</code> before a node runs and the <code>StepFinishedEvent</code> after it completes successfully, without requiring manual event handling in the node's own logic.</p>
-<h3 id="aguinodeoutput">AGUINodeOutput</h3>
-<p>A custom LangGraph4j <code>NodeOutput</code> implementation that acts as a bridge between LangGraph4j's
-output streaming and AG-UI events. It carries a list of AG-UI <code>Event</code>s (e.g. text message events, step lifecycle
-events) produced by a node, which are then forwarded to the AG-UI subscriber. Instances are created through its
-fluent <code>Builder</code> (<code>AGUINodeOutput.builder()</code>).</p>
-<h3 id="aguirunagentinput">AGUIRunAgentInput</h3>
-<p>A mutable, bean-style wrapper around AG-UI's <code>RunAgentInput</code> (thread id, run id, tools,
-context, messages, forwarded properties, resume, state), convenient for deserialization frameworks. It exposes
-<code>toRunAgentParameters()</code> to convert itself into an immutable <code>RunAgentInput</code> instance.</p>
+<p>This module connects a LangGraph4j graph to the <a href="https://github.com/ag-ui-protocol/ag-ui">AG-UI protocol</a>. An <code>AGUIAgent</code> accepts a <code>RunAgentInput</code> and publishes AG-UI events. <code>AGUIAgentBase</code> handles graph execution and event translation; the remaining classes support registration, step events, custom node events, and request deserialization.</p>
+<p>The <a href="../../studio/base/src/test/java/org/bsc/langgraph4j/agui/AGUISampleAgent.java">Studio sample agents</a> are references: <code>baseAgent</code> registers automatic step events, while <code>agentWithInterruption</code> adds a checkpoint saver and interrupts after node <code>B</code>. They use <code>AGUILangGraphStudioAgent</code>, a Studio-specific subclass of <code>AGUIAgentBase</code>.</p>
+<h2 id="api-reference">API reference</h2>
+<p>These tables cover methods declared by each SDK type, including protected extension points. Constructors and the record's generated accessor are included because callers use them directly. Inherited <code>Object</code>, <code>NodeOutput</code>, and <code>LG4JLoggable</code> methods are outside this module's API description.</p>
+<h3 id="aguiagent"><code>AGUIAgent</code></h3>
+<p>The interface is the entry point consumed by an AG-UI transport.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id()</code></td>
+<td>None</td>
+<td>Returns the agent identifier used for lookup and routing.</td>
+</tr>
+<tr>
+<td><code>run(RunAgentInput input)</code></td>
+<td><code>input</code>: AG-UI run request</td>
+<td>Returns a <code>Flow.Publisher&lt;? extends Event&gt;</code> for the run. Events are delivered on subscription.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aguiagentbase"><code>AGUIAgentBase</code></h3>
+<p>This abstract implementation lazily compiles a graph, runs it through <code>graph.stream(...)</code>, and translates outputs to AG-UI events. Implement <code>newGraph</code> and <code>graphInput</code> at minimum. Override the other protected methods to customize mapping or configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Method or constructor</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGUIAgentBase(String id)</code></td>
+<td><code>id</code>: non-null agent identifier</td>
+<td>Initializes the identity; rejects null.</td>
+</tr>
+<tr>
+<td><code>id()</code></td>
+<td>None</td>
+<td>Returns the supplied ID.</td>
+</tr>
+<tr>
+<td><code>newGraph()</code> <strong>protected, abstract</strong></td>
+<td>None</td>
+<td>Supplies a compiled graph on the first subscription; the result is cached. May throw on compilation failure.</td>
+</tr>
+<tr>
+<td><code>graphInput(RunAgentInput input)</code> <strong>protected, abstract</strong></td>
+<td><code>input</code>: incoming request</td>
+<td>Converts messages, state, or resume data to a LangGraph4j <code>GraphInput</code>.</td>
+</tr>
+<tr>
+<td><code>newMessageId()</code> <strong>protected</strong></td>
+<td>None</td>
+<td>Supplies IDs for streamed assistant text. Default: current time in milliseconds; override if stronger uniqueness is needed.</td>
+</tr>
+<tr>
+<td><code>runnableConfig(RunAgentInput input)</code> <strong>protected</strong></td>
+<td><code>input</code>: incoming request</td>
+<td>Builds the graph configuration, passing <code>input.threadId()</code> by default.</td>
+</tr>
+<tr>
+<td><code>onNextEvents(RunAgentInput input, NodeOutput&lt;? extends AgentState&gt; output)</code> <strong>protected</strong></td>
+<td><code>input</code>: request; <code>output</code>: graph output</td>
+<td>Forwards <code>AGUINodeOutput.events()</code>; ignores ordinary node outputs by default.</td>
+</tr>
+<tr>
+<td><code>onErrorEvents(RunAgentInput input, Throwable error)</code> <strong>protected</strong></td>
+<td><code>input</code>: request; <code>error</code>: execution failure</td>
+<td>Produces a <code>RunErrorEvent</code>, using a nested <code>GraphRunnerException</code> message when available.</td>
+</tr>
+<tr>
+<td><code>onCompleteEvents(RunAgentInput input, GraphResult result)</code> <strong>protected</strong></td>
+<td><code>input</code>: request; <code>result</code>: graph result</td>
+<td>Produces a <code>RunFinishedEvent</code> with <code>SuccessOutcome</code> by default; a cancelled result produces a <code>cancelled</code> custom event.</td>
+</tr>
+<tr>
+<td><code>run(RunAgentInput input)</code></td>
+<td><code>input</code>: AG-UI request</td>
+<td>Returns a publisher that initializes the graph if needed, emits <code>RunStartedEvent</code>, then starts asynchronous streaming on subscription.</td>
+</tr>
+</tbody>
+</table>
+<p>Compilation failure reaches the subscriber through <code>onError</code>. Ordinary execution failures are translated by <code>onErrorEvents</code>; a checkpoint cleanup failure also reaches <code>onError</code>. The base class does not convert an interruption to an AG-UI <code>InterruptOutcome</code>; an adapter must override <code>onCompleteEvents</code> to do that.</p>
+<h3 id="aguiagentregistry"><code>AGUIAgentRegistry</code></h3>
+<p>The registry maps agent IDs to instances. The map constructor and record accessor are generated by Java.</p>
+<table>
+<thead>
+<tr>
+<th>Method or constructor</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGUIAgentRegistry(Map&lt;String, AGUIAgent&gt; map)</code></td>
+<td><code>map</code>: ID-to-agent map</td>
+<td>Creates a registry backed by this map.</td>
+</tr>
+<tr>
+<td><code>AGUIAgentRegistry(AGUIAgent... agents)</code></td>
+<td><code>agents</code>: agents to register</td>
+<td>Builds the map from <code>id()</code>; duplicate IDs cause <code>Collectors.toMap</code> to throw.</td>
+</tr>
+<tr>
+<td><code>map()</code></td>
+<td>None</td>
+<td>Returns the backing map.</td>
+</tr>
+<tr>
+<td><code>agent(String agentId)</code></td>
+<td><code>agentId</code>: requested ID</td>
+<td>Returns an <code>Optional&lt;AGUIAgent&gt;</code>, empty when the ID is unknown.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aguihook"><code>AGUIHook</code></h3>
+<p>This hook wraps node actions and dispatches step lifecycle outputs through the graph's custom dispatcher.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stepEvents()</code> <strong>static</strong></td>
+<td>None; <code>State extends AgentState</code> is inferred</td>
+<td>Returns a <code>NodeHook.WrapCall&lt;State&gt;</code> that dispatches <code>StepStartedEvent</code> before the action and <code>StepFinishedEvent</code> after successful completion. An exceptional action has no finish event.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aguinodeoutputstate-and-aguinodeoutputbuilder"><code>AGUINodeOutput&lt;State&gt;</code> and <code>AGUINodeOutput.Builder</code></h3>
+<p>An <code>AGUINodeOutput</code> carries AG-UI events alongside a LangGraph4j node ID and state. <code>AGUIAgentBase.onNextEvents</code> forwards its events to the subscriber.</p>
+<table>
+<thead>
+<tr>
+<th>Method or constructor</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGUINodeOutput.builder()</code> <strong>static</strong></td>
+<td>None; optional <code>State extends AgentState</code></td>
+<td>Creates an empty event builder.</td>
+</tr>
+<tr>
+<td><code>AGUINodeOutput(String node, State state, List&lt;Event&gt; events)</code> <strong>protected</strong></td>
+<td><code>node</code>: node ID; <code>state</code>: node state; <code>events</code>: non-null list</td>
+<td>Creates an output directly, mainly for subclasses.</td>
+</tr>
+<tr>
+<td><code>events()</code></td>
+<td>None</td>
+<td>Returns the carried event list.</td>
+</tr>
+<tr>
+<td><code>Builder()</code></td>
+<td>None</td>
+<td>Creates an empty builder (implicit public constructor).</td>
+</tr>
+<tr>
+<td><code>Builder.addEvent(Event event)</code></td>
+<td><code>event</code>: one AG-UI event</td>
+<td>Appends one event and returns the builder.</td>
+</tr>
+<tr>
+<td><code>Builder.addEvents(Event... event)</code></td>
+<td><code>event</code>: one or more events</td>
+<td>Appends all supplied events and returns the builder.</td>
+</tr>
+<tr>
+<td><code>Builder.singleTextContentEvents(String messageId, Role role, String content)</code></td>
+<td><code>messageId</code>: message ID; <code>role</code>: author; <code>content</code>: complete text</td>
+<td>Appends start, content, and end events for one non-streamed message.</td>
+</tr>
+<tr>
+<td><code>Builder.stepStartedEvent(String stepName)</code></td>
+<td><code>stepName</code>: node/step ID</td>
+<td>Appends a step-start event without a raw payload.</td>
+</tr>
+<tr>
+<td><code>Builder.stepStartedEvent(String stepName, Object rawEvent)</code></td>
+<td><code>stepName</code>: node/step ID; <code>rawEvent</code>: optional payload</td>
+<td>Appends a step-start event with a raw payload.</td>
+</tr>
+<tr>
+<td><code>Builder.stepFinishedEvent(String stepName)</code></td>
+<td><code>stepName</code>: node/step ID</td>
+<td>Appends a step-finish event without a raw payload.</td>
+</tr>
+<tr>
+<td><code>Builder.stepFinishedEvent(String stepName, Object rawEvent)</code></td>
+<td><code>stepName</code>: node/step ID; <code>rawEvent</code>: optional payload</td>
+<td>Appends a step-finish event with a raw payload.</td>
+</tr>
+<tr>
+<td><code>Builder.build(String nodeId, State state)</code></td>
+<td><code>nodeId</code>: producing node ID; <code>state</code>: associated state</td>
+<td>Binds accumulated events to an output.</td>
+</tr>
+</tbody>
+</table>
+<p>The builder passes its event list into the output without copying it. Finish adding events before <code>build</code>, and use a fresh builder for another output.</p>
+<h3 id="aguirunagentinput"><code>AGUIRunAgentInput</code></h3>
+<p>This mutable bean holds incoming AG-UI request fields for deserialization frameworks. <code>toRunAgentParameters</code> creates the protocol <code>RunAgentInput</code> used by <code>AGUIAgent.run</code>. The bean does not validate required fields or supply defaults.</p>
+<table>
+<thead>
+<tr>
+<th>Method or constructor</th>
+<th>Arguments</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGUIRunAgentInput()</code></td>
+<td>None</td>
+<td>Creates an empty bean (implicit public constructor).</td>
+</tr>
+<tr>
+<td><code>setThreadId(String threadId)</code> / <code>getThreadId()</code></td>
+<td>Setter: conversation thread ID</td>
+<td>Stores/reads the ID used by the default graph <code>RunnableConfig</code> and run events.</td>
+</tr>
+<tr>
+<td><code>setRunId(String runId)</code> / <code>getRunId()</code></td>
+<td>Setter: run ID</td>
+<td>Stores/reads the ID included in run events.</td>
+</tr>
+<tr>
+<td><code>setState(Object state)</code> / <code>getState()</code></td>
+<td>Setter: shared state payload</td>
+<td>Stores/reads the request state forwarded to <code>RunAgentInput</code>.</td>
+</tr>
+<tr>
+<td><code>setMessages(List&lt;Message&gt; messages)</code> / <code>getMessages()</code></td>
+<td>Setter: conversation messages</td>
+<td>Stores/reads messages a graph input mapper can consume.</td>
+</tr>
+<tr>
+<td><code>setTools(List&lt;Tool&gt; tools)</code> / <code>getTools()</code></td>
+<td>Setter: available tools</td>
+<td>Stores/reads tools forwarded to the agent.</td>
+</tr>
+<tr>
+<td><code>setContext(List&lt;Context&gt; context)</code> / <code>getContext()</code></td>
+<td>Setter: context entries</td>
+<td>Stores/reads additional run context.</td>
+</tr>
+<tr>
+<td><code>setForwardedProps(Object forwardedProps)</code> / <code>getForwardedProps()</code></td>
+<td>Setter: arbitrary properties</td>
+<td>Stores/reads application-specific request properties.</td>
+</tr>
+<tr>
+<td><code>setResume(List&lt;Resume&gt; resume)</code> / <code>getResume()</code></td>
+<td>Setter: resume entries</td>
+<td>Stores/reads responses to interruptions.</td>
+</tr>
+<tr>
+<td><code>toRunAgentParameters()</code></td>
+<td>None</td>
+<td>Creates a <code>RunAgentInput</code> from the bean's current fields, including state and resume.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage-examples">Usage examples</h2>
+<p>The snippets use imports from <code>org.bsc.langgraph4j.agui.sdk</code> and the packages shown in the <a href="../../studio/base/src/test/java/org/bsc/langgraph4j/agui/AGUISampleAgent.java">sample agent</a>. Its <code>baseAgent</code> and <code>agentWithInterruption</code> methods contain complete graph definitions.</p>
+<h3 id="run-an-aguiagent">Run an <code>AGUIAgent</code></h3>
+<p>The Studio sample's <code>baseAgent</code> is an <code>AGUIAgent</code>. A transport resolves it, calls <code>run</code>, and subscribes to the publisher. Keep the subscription open until <code>onComplete</code> so all events can be sent to the client.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The Studio builder creates a concrete AGUIAgentBase for the graph in baseAgent.</span>
+<span class="n">AGUIAgent</span><span class="w"> </span><span class="n">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AGUISampleAgent</span><span class="p">.</span><span class="na">baseAgent</span><span class="p">(</span><span class="s">&quot;base-agent&quot;</span><span class="p">);</span>
+<span class="n">Flow</span><span class="p">.</span><span class="na">Publisher</span><span class="o">&lt;?</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Event</span><span class="o">&gt;</span><span class="w"> </span><span class="n">events</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+<span class="c1">// Subscribe with the transport&#39;s Flow.Subscriber to forward each Event.</span>
+</code></pre></div>
+<p>Here <code>request</code> is a <code>RunAgentInput</code> and <code>AGUISampleAgent</code> is the test fixture linked above. In an application, the transport typically owns subscription and event serialization.</p>
+<h3 id="implement-aguiagentbase">Implement <code>AGUIAgentBase</code></h3>
+<p>For a graph with a <code>messages</code> state channel, map incoming messages in <code>graphInput</code>. The graph can be prepared elsewhere and compiled when the first run is subscribed to.</p>
+<div class="highlight"><pre><span></span><code><span class="cm">/**</span>
+<span class="cm"> * Bridges a messages graph to AG-UI.</span>
+<span class="cm"> * One instance retains its compiled graph across runs.</span>
+<span class="cm"> */</span>
+<span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MessagesAgent</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AGUIAgentBase</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cm">/** Graph definition compiled when the first run is subscribed to. */</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;?</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">stateGraph</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Uses a graph whose messages channel accepts the incoming message list.</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param id non-null identifier used for request routing</span>
+<span class="cm">     * @param stateGraph graph definition to compile on first use</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="n">MessagesAgent</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;?</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">stateGraph</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">stateGraph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stateGraph</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Compiles the stored definition on first subscription.</span>
+<span class="cm">     *</span>
+<span class="cm">     * @return compiled graph cached by AGUIAgentBase</span>
+<span class="cm">     * @throws Exception if graph compilation fails</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="n">CompiledGraph</span><span class="o">&lt;?</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">newGraph</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">stateGraph</span><span class="p">.</span><span class="na">compile</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Maps the request&#39;s non-null message list into the graph&#39;s messages channel.</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param input incoming AG-UI request with messages</span>
+<span class="cm">     * @return graph input for a new run</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="n">GraphInput</span><span class="w"> </span><span class="nf">graphInput</span><span class="p">(</span><span class="n">RunAgentInput</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">GraphInput</span><span class="p">.</span><span class="na">args</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;messages&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="na">messages</span><span class="p">()));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The graph's <code>messages</code> channel must accept the request's message type, and <code>input.messages()</code> must be non-null for this <code>Map.of</code> example. For a checkpointed graph, override <code>graphInput</code> to return <code>GraphInput.resume(...)</code> when the request carries a resume response, and override <code>onCompleteEvents</code> to map interruption results to an AG-UI <code>InterruptOutcome</code>. The <a href="../../studio/base/src/main/java/org/bsc/langgraph4j/studio/agui/AGUILangGraphStudioAgent.java">Studio adapter</a> demonstrates those overrides.</p>
+<h3 id="register-and-resolve-agents-with-aguiagentregistry">Register and resolve agents with <code>AGUIAgentRegistry</code></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// IDs come from each AGUIAgent.id() implementation.</span>
+<span class="n">AGUIAgentRegistry</span><span class="w"> </span><span class="n">registry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AGUIAgentRegistry</span><span class="p">(</span>
+<span class="w">        </span><span class="n">AGUISampleAgent</span><span class="p">.</span><span class="na">baseAgent</span><span class="p">(</span><span class="s">&quot;base-agent&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">AGUISampleAgent</span><span class="p">.</span><span class="na">agentWithInterruption</span><span class="p">(</span><span class="s">&quot;agentWithInterruption&quot;</span><span class="p">));</span>
+
+<span class="n">AGUIAgent</span><span class="w"> </span><span class="n">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">registry</span><span class="p">.</span><span class="na">agent</span><span class="p">(</span><span class="s">&quot;base-agent&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">orElseThrow</span><span class="p">(()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">IllegalArgumentException</span><span class="p">(</span><span class="s">&quot;Unknown agent&quot;</span><span class="p">));</span>
+</code></pre></div>
+<p>Use the lookup result to dispatch a request to <code>agent.run(request)</code>. The <a href="../langgraph4j-ag-ui-springboot/src/main/java/org/bsc/langgraph4j/agui/sdk/AGUISSEController.java">Spring Boot controller</a> shows this routing in an HTTP endpoint.</p>
+<h3 id="add-aguihookstepevents-to-a-graph">Add <code>AGUIHook.stepEvents()</code> to a graph</h3>
+<p>Both Studio samples install the hook before adding nodes:</p>
+<div class="highlight"><pre><span></span><code><span class="n">StateGraph</span><span class="o">&lt;</span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StateGraph</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">AgentState</span><span class="p">::</span><span class="k">new</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addWrapCallNodeHook</span><span class="p">(</span><span class="n">AGUIHook</span><span class="p">.</span><span class="na">stepEvents</span><span class="p">());</span>
+<span class="c1">// Add nodes and edges, then compile the graph for an AGUIAgentBase implementation.</span>
+</code></pre></div>
+<p>Each wrapped node dispatches start and finish outputs through the graph's custom dispatcher. An <code>AGUIAgentBase</code> forwards those events. In <code>agentWithInterruption</code>, <code>CompileConfig</code> installs a <code>MemorySaver</code>, sets <code>interruptAfter("B")</code>, and enables <code>interruptBeforeEdge(true)</code> so the run can pause after node <code>B</code> before choosing its next edge. The Studio adapter returns an <code>InterruptOutcome</code> at that pause and uses a checkpoint and serialized state from a later resume payload to continue the graph. Keep the same thread ID across interrupted and resumed runs.</p>
+<p>The interruption setup in the sample is:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Save state at the pause so a later request can resume this run.</span>
+<span class="n">CompileConfig</span><span class="w"> </span><span class="n">compileConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CompileConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">checkpointSaver</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">MemorySaver</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">interruptAfter</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">interruptBeforeEdge</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">AGUIAgent</span><span class="w"> </span><span class="n">interruptedAgent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AGUILangGraphStudioAgent</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">id</span><span class="p">(</span><span class="s">&quot;agentWithInterruption&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">stateGraph</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">compileConfig</span><span class="p">(</span><span class="n">compileConfig</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>Here <code>graph</code> is the sample's complete <code>StateGraph</code> with nodes <code>A</code>, <code>B</code>, and <code>C</code>, its conditional edge from <code>B</code>, and <code>AGUIHook.stepEvents()</code>. The Studio adapter expects a resume entry whose payload contains the checkpoint ID and serialized state under <code>checkpoint</code> and <code>data</code>. Its <code>graphInput</code> restores that checkpoint and returns <code>GraphInput.resume(...)</code>; the SDK base class does not supply this mapping automatically.</p>
+<h3 id="emit-custom-events-with-aguinodeoutput">Emit custom events with <code>AGUINodeOutput</code></h3>
+<p>When a node or hook has access to its node ID, state, and <code>RunnableConfig</code>, it can dispatch a complete message:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The dispatcher inserts this output into the graph stream consumed by AGUIAgentBase.</span>
+<span class="n">AGUINodeOutput</span><span class="o">&lt;</span><span class="n">AgentState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AGUINodeOutput</span><span class="p">.</span><span class="o">&lt;</span><span class="n">AgentState</span><span class="o">&gt;</span><span class="n">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">singleTextContentEvents</span><span class="p">(</span><span class="s">&quot;reply-1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Role</span><span class="p">.</span><span class="na">ASSISTANT</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="na">nodeId</span><span class="p">(),</span><span class="w"> </span><span class="n">state</span><span class="p">);</span>
+<span class="n">config</span><span class="p">.</span><span class="na">customDispatcher</span><span class="p">().</span><span class="na">dispatchAsync</span><span class="p">(</span><span class="n">output</span><span class="p">);</span>
+</code></pre></div>
+<p>Use <code>addEvent</code> or <code>addEvents</code> for other event types. The builder's step event methods support manual step reporting; if <code>AGUIHook.stepEvents()</code> already wraps the node, adding the same step events manually would duplicate them.</p>
+<h3 id="convert-aguirunagentinput-for-a-transport">Convert <code>AGUIRunAgentInput</code> for a transport</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// A deserializer may populate the same bean properties from an HTTP body.</span>
+<span class="n">AGUIRunAgentInput</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AGUIRunAgentInput</span><span class="p">();</span>
+<span class="n">body</span><span class="p">.</span><span class="na">setThreadId</span><span class="p">(</span><span class="s">&quot;thread-1&quot;</span><span class="p">);</span>
+<span class="n">body</span><span class="p">.</span><span class="na">setRunId</span><span class="p">(</span><span class="s">&quot;run-1&quot;</span><span class="p">);</span>
+<span class="n">body</span><span class="p">.</span><span class="na">setMessages</span><span class="p">(</span><span class="n">messages</span><span class="p">);</span>
+<span class="n">body</span><span class="p">.</span><span class="na">setResume</span><span class="p">(</span><span class="n">resumeEntries</span><span class="p">);</span>
+
+<span class="n">RunAgentInput</span><span class="w"> </span><span class="n">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">body</span><span class="p">.</span><span class="na">toRunAgentParameters</span><span class="p">();</span>
+<span class="n">Flow</span><span class="p">.</span><span class="na">Publisher</span><span class="o">&lt;?</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Event</span><span class="o">&gt;</span><span class="w"> </span><span class="n">events</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+</code></pre></div>
+<p>Here <code>messages</code> is a <code>List&lt;Message&gt;</code> and <code>resumeEntries</code> is a <code>List&lt;Resume&gt;</code> (use an empty list for a new run if the agent's mapper expects one). Set tools, context, forwarded properties, or state before conversion when the agent uses them. The <a href="../langgraph4j-ag-ui-springboot/src/main/java/org/bsc/langgraph4j/agui/sdk/AGUISSEController.java">SSE controller</a> performs this conversion for HTTP requests.</p>
 
 
 

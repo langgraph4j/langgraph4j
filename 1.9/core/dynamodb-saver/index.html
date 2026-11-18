@@ -2856,6 +2856,11 @@
 <p><code>DynamoDBSaver</code> persists LangGraph4j workflow checkpoints in Amazon DynamoDB, with optional
 Amazon S3 storage for large state payloads. It implements the <code>BaseCheckpointSaver</code> contract
 through <code>AbstractCheckpointSaver</code> and supports checkpoint history, updates, and thread release.</p>
+<blockquote>
+<p><strong>New applications:</strong> use <a href="SAVER_V2/"><code>DynamoDBSaverV2</code></a>. It archives every release as a
+versioned tag readable with <code>tag(config, version)</code>, records errors and interruptions, and comes
+with the read-only <code>DynamoDBSaverV2Dashboard</code>. V2 uses a new table layout.</p>
+</blockquote>
 <h2 id="maven-dependency">Maven Dependency</h2>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
 <span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.bsc.langgraph4j<span class="nt">&lt;/groupId&gt;</span>
@@ -3009,7 +3014,8 @@ when unset). DynamoDB metadata records the storage location and reference key so
 retrieve the payload from the appropriate backend. The saver does not create the bucket.</p>
 <h2 id="ttl-and-cleanup">TTL and Cleanup</h2>
 <p>Set <code>ttlSeconds(...)</code> to a positive duration to write a numeric <code>ttl</code> attribute containing
-the expiration time in epoch seconds on DynamoDB metadata, chunks, and release markers.
+the expiration time in epoch seconds on DynamoDB metadata and chunks. Release markers hold the
+thread generation and never expire.
 <strong>Enable DynamoDB TTL on the table's <code>ttl</code> attribute separately</strong>; the saver does not enable it.
 Reads do not filter expired timestamps, so expiration is not an application-level read cutoff.</p>
 <p>When S3 and a positive TTL are configured, building the saver also attempts to add a bucket
@@ -3019,12 +3025,14 @@ prefix when present. Lifecycle configuration failures are logged. Ensure the cli
 the required bucket lifecycle and object tagging permissions if you use this feature.</p>
 <p>Thread release and deletion have different effects:</p>
 <ul>
-<li><code>saver.release(config)</code> writes a release marker and returns a <code>Tag</code> containing the loaded
-  checkpoints. Subsequent checkpoint reads for that thread return empty while the marker
-  exists; release retains the stored metadata and payloads.</li>
-<li><code>saver.deleteThread("conversation-1")</code> requests permanent deletion of the thread's metadata,
-  referenced DynamoDB or S3 payloads, and release marker. Calling it for a missing thread is
-  safe. Batch cleanup failures can be logged, so inspect logs when verifying removal.</li>
+<li><code>saver.release(config)</code> archives the current execution and returns a <code>Tag</code> containing its
+  checkpoints. It starts a new <em>generation</em> of the thread: the released metadata and payloads
+  are retained under their generation, and the same thread id can be reused for a fresh
+  execution that starts empty.</li>
+<li><code>saver.deleteThread("conversation-1")</code> requests permanent deletion of the thread's metadata
+  of every generation, referenced DynamoDB or S3 payloads, and release marker. Calling it for
+  a missing thread is safe. Batch cleanup failures can be logged, so inspect logs when
+  verifying removal.</li>
 </ul>
 <p>Use <code>releaseThread(false)</code> when compiling workflows whose history must remain available
 after completion, as in the usage example.</p>
@@ -3040,8 +3048,13 @@ after completion, as in the usage example.</p>
 </thead>
 <tbody>
 <tr>
-<td>Checkpoint metadata</td>
+<td>Checkpoint metadata (generation 0)</td>
 <td><code>CHECKPOINT_&lt;threadId&gt;</code></td>
+<td><code>&lt;checkpointId&gt;</code></td>
+</tr>
+<tr>
+<td>Checkpoint metadata (generation N &gt; 0)</td>
+<td><code>CHECKPOINT_&lt;threadId&gt;#&lt;N&gt;</code></td>
 <td><code>&lt;checkpointId&gt;</code></td>
 </tr>
 <tr>
@@ -3050,18 +3063,24 @@ after completion, as in the usage example.</p>
 <td><code>CHUNK</code></td>
 </tr>
 <tr>
-<td>Released thread marker</td>
+<td>Released thread marker (current generation)</td>
 <td><code>RELEASED_&lt;threadId&gt;</code></td>
 <td><code>MARKER</code></td>
 </tr>
 </tbody>
 </table>
+<p>The current generation of a thread is the <code>generation</code> attribute of its release marker. A
+thread that was never released has no marker and uses generation 0, the original key format.
+A marker written by earlier versions has no <code>generation</code> attribute and is read as
+generation 1, so checkpoints released before upgrading stay hidden without a migration.
+Avoid releasing the same thread from older and newer saver versions at the same time during
+a rolling upgrade: older versions overwrite the marker without the <code>generation</code> attribute.</p>
 <p>Metadata includes node IDs, serializer content type, <code>savedAt</code>, <code>ref_loc</code> (<code>DYNAMODB</code> or <code>S3</code>),
 and <code>ref_key</code>. History queries are paginated and sorted by <code>savedAt</code> descending in memory;
 loading history retrieves each checkpoint payload.</p>
 <ul>
-<li>Payload and metadata writes are separate operations, without a transaction. Reads use
-  the SDK's default consistency; the saver does not request strongly consistent reads.</li>
+<li>Payload and metadata writes are separate operations, without a transaction. Checkpoint reads
+  use the SDK's default consistency; only the release marker is read with strong consistency.</li>
 <li>Insert paths use conditional writes to skip existing checkpoint IDs. Updates delete
   the old checkpoint metadata and DynamoDB chunk before writing the replacement.</li>
 <li>Missing payloads and checkpoints that fail deserialization are logged and skipped during
