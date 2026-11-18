@@ -2752,7 +2752,7 @@ stateGraph.addNode( "subgraph", workflowChild );
 <li>A schema defines channels, defaults, and reducers; it does not automatically filter all undeclared keys. Use input/output mappers to select the fields exchanged with a compiled subgraph.</li>
 <li>Interruptions are supported </li>
 </ul>
-<p>see <a href="/how-tos/subgraph-as-compiledgraph">example</a></p>
+<p>see <a href="../../how-tos/subgraph-as-compiledgraph">example</a></p>
 <h2 id="inputoutput-mappers">Input/Output Mappers</h2>
 <p>Since <strong>1.9.10</strong>, <code>StateGraph.withInputMapper(...)</code> and <code>StateGraph.withOutputMapper(...)</code> let you define a graph's input and output boundary. Both accept a <code>Function&lt;Map&lt;String, Object&gt;, Map&lt;String, Object&gt;&gt;</code> and return the same builder. Configure them on the child <strong>before compiling it</strong>, then pass the compiled child to <code>addNode(...)</code>. This keeps the subgraph visible to graph visualization and preserves its built-in streaming and interruption support, without a wrapper action.</p>
 <table>
@@ -2854,7 +2854,7 @@ stateGraph.addNode( "subgraph", workflowChild );
 <ul>
 <li>Interruption support is up to you</li>
 </ul>
-<p>see <a href="/how-tos/subgraph-as-nodeaction">example</a></p>
+<p>see <a href="../../how-tos/subgraph-as-nodeaction">example</a></p>
 <h2 id="as-a-state-graph">As a state graph</h2>
 <p>This is the most naif way to create subgraph nodes is by using a state subgraph. When doing so, the subgraph is merged into the parent one becoming a integral part of it, as conseguence it is important keep note that <strong>the parent graph and the subgraph share everithing like one single graph</strong>.</p>
 <h3 id="note_2">Note</h3>
