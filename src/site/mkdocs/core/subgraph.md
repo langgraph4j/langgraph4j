@@ -188,13 +188,13 @@ Only in the case of  **state subgraph** visualization, since adding it implies i
 In the  adding both **state subgraph** and **compiled subgraph** the streaming is automatically enabled, while in the **subgraph as node action** the set up of streaming is up to you.
 
 
-[formatid]: /langgraph4j/apidocs/org/bsc/langgraph4j/SubGraphNode.html#formatId
-[action]: /langgraph4j/apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html
-[state_sample]: /langgraph4j/how-tos/subgraph-as-stategraph
-[compiled_sample]: /how-tos/subgraph-as-compiledgraph
-[node_sample]: /how-tos/subgraph-as-nodeaction
-[sg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/StateGraph.html#getGraph
-[cg_getgraph]: /langgraph4j/apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph
+[formatid]: ../../apidocs/org/bsc/langgraph4j/SubGraphNode.html#formatId
+[action]: ../../apidocs/org/bsc/langgraph4j/action/AsyncNodeActionWithConfig.html
+[state_sample]: ../../how-tos/subgraph-as-stategraph
+[compiled_sample]: ../../how-tos/subgraph-as-compiledgraph
+[node_sample]: ../../how-tos/subgraph-as-nodeaction
+[sg_getgraph]: ../../apidocs/org/bsc/langgraph4j/StateGraph.html#getGraph
+[cg_getgraph]: ../../apidocs/org/bsc/langgraph4j/CompiledGraph.html#getGraph
 [issue306]: https://github.com/langgraph4j/langgraph4j/issues/306
 [issue260]: https://github.com/langgraph4j/langgraph4j/issues/260
 [mapper_test]: https://github.com/langgraph4j/langgraph4j/blob/develop/langgraph4j-core/src/test/java/org/bsc/langgraph4j/CompiledSubGraphTest.java
