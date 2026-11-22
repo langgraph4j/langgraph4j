@@ -4,10 +4,11 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * >> FOR TEST ONLY <<
@@ -20,15 +21,18 @@ import java.util.Set;
  */
 public class CorsFilter implements Filter {
 
-    // 👇 Configure allowed origins — use config file or DB in production
-    private static final Set<String> ALLOWED_ORIGINS = new HashSet<>(
-            List.of("http://localhost:1234")
-    );
-
     private static final String ALLOWED_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
     private static final String ALLOWED_HEADERS = "Content-Type, Authorization, X-Requested-With, Accept";
     private static final int MAX_AGE_SECONDS = 1800; // 30 minutes
 
+    private final Set<String> allowedOrigins;
+
+    public CorsFilter() {
+        this.allowedOrigins = Set.of("http://localhost:1234");
+    }
+    public CorsFilter(String... allowedOrigins) {
+        this.allowedOrigins = requireNonNullElse(Set.of( allowedOrigins ), Set.of());
+    }
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -40,7 +44,7 @@ public class CorsFilter implements Filter {
         String origin = req.getHeader("Origin");
 
         // ✅ Only allow if origin is in our whitelist
-        if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+        if (origin != null && allowedOrigins.contains(origin)) {
             res.setHeader("Access-Control-Allow-Origin", origin);
             res.setHeader("Access-Control-Allow-Credentials", "true"); // Required if frontend uses credentials
         }

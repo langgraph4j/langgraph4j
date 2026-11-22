@@ -1,10 +1,9 @@
 package org.bsc.langgraph4j;
 
-import org.bsc.langgraph4j.action.AsyncCommandAction;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.Command;
 import org.bsc.langgraph4j.annotation.ActionCatalog;
 import org.bsc.langgraph4j.annotation.ActionCatalogRepository;
+import org.bsc.langgraph4j.annotation.EdgeCondition;
 import org.bsc.langgraph4j.annotation.NodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.state.AgentState;
@@ -13,7 +12,6 @@ import org.bsc.langgraph4j.state.Channels;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -78,9 +76,7 @@ public class Issue260Test {
         // SUBGRAPH: Will try to remove my_value using MARK_FOR_REMOVAL
         final var subGraph = new StateGraph<>(GraphState.getChannels(), GraphState::new)
             .withOutputMapper( state -> { // PROPAGATE MARK_FOR_REMOVAL to parent graph
-                final var delta = new LinkedHashMap<>(state);
-                delta.put(GraphState.MY_VALUE, AgentState.MARK_FOR_REMOVAL);
-                return delta;
+                return AgentState.markKeysForRemoval( state, GraphState.MY_VALUE);
             })
             .add(repo.node("remove_value", "subgraphNode"))
             .addEdge(StateGraph.START, "remove_value")
@@ -116,9 +112,10 @@ public class Issue260Test {
         // Start with my_value set
         final var input = new GraphArgs(Map.of(GraphState.MY_VALUE, "initial_value"));
 
-        final var output = graph.invokeFinal(input, runConfig).orElseThrow();
+        final var result = graph.invokeSync(input, runConfig);
 
-        final var state = output.state();
+        assertTrue( result.isStateData() );
+        final GraphState state = result.asState();
 
         assertTrue( state.myValue().isEmpty(), "Expected: my_value should be NOT_PRESENT after subgraph");
     }
@@ -126,52 +123,62 @@ public class Issue260Test {
     private static CompiledGraph<GraphState> getFixedCompiledGraph() throws GraphStateException
     {
 
-        AsyncNodeAction<GraphState> subgraphNode = AsyncNodeAction.node_async((state) -> {
-            System.out.println("  [SUBGRAPH] Before removal - my_value: " + state.myValue().orElse("NOT_PRESENT"));
-            System.out.println("  [SUBGRAPH] Returning MARK_FOR_REMOVAL for my_value");
-            //return Map.of(GraphState.MY_VALUE, AgentState.MARK_FOR_REMOVAL);
-            return Map.of();
-        });
+        final var repo = ActionCatalogRepository.of( new ActionCatalog() {
+
+             @NodeAction
+             public Map<String, Object> subgraphNode(GraphState state) {
+                 System.out.println("  [SUBGRAPH] Before removal - my_value: " + state.myValue().orElse("NOT_PRESENT"));
+                 System.out.println("  [SUBGRAPH] Returning MARK_FOR_REMOVAL for my_value");
+                 return Map.of();
+             }
+
+            @NodeAction
+            public Map<String, Object> setValueNode( GraphState state) {
+                System.out.println("  [PARENT] Setting my_value to 'parent_value'");
+                return Map.of(GraphState.MY_VALUE, "parent_value");
+            }
+
+            @NodeAction
+            public Map<String, Object> checkValueNode( GraphState state) {
+                System.out.println("  [PARENT] After subgraph - checking my_value...");
+                if (state.myValue().isPresent())
+                {
+                    System.out.println("  [PARENT] ❌ BUG: my_value still exists with value: " + state.myValue().get());
+                }
+                else
+                {
+                    System.out.println("  [PARENT] ✅ SUCCESS: my_value was removed");
+                }
+                return Map.of();
+            }
+
+            @EdgeCondition
+            public Command exitFromSubGraphEdge( GraphState state, RunnableConfig config ) {
+                    return new Command( "check_value",
+                            Map.of(GraphState.MY_VALUE, AgentState.MARK_FOR_REMOVAL));
+            }
+
+         });
 
         // SUBGRAPH: Will try to remove my_value using MARK_FOR_REMOVAL
         var subGraph = new StateGraph<>(GraphState.getChannels(), GraphState::new)
-                .addNode("remove_value", subgraphNode)
+                .add( repo.node("remove_value", "subgraphNode"))
                 .addEdge(StateGraph.START, "remove_value")
                 .addEdge("remove_value", StateGraph.END);
 
-        AsyncNodeAction<GraphState> setValueNode = AsyncNodeAction.node_async((state) -> {
-            System.out.println("  [PARENT] Setting my_value to 'parent_value'");
-            return Map.of(GraphState.MY_VALUE, "parent_value");
-        });
-
-        AsyncNodeAction<GraphState> checkValueNode = AsyncNodeAction.node_async((state) -> {
-            System.out.println("  [PARENT] After subgraph - checking my_value...");
-            if (state.myValue().isPresent())
-            {
-                System.out.println("  [PARENT] ❌ BUG: my_value still exists with value: " + state.myValue().get());
-            }
-            else
-            {
-                System.out.println("  [PARENT] ✅ SUCCESS: my_value was removed");
-            }
-            return Map.of();
-        });
-
-        AsyncCommandAction<GraphState> exitFromSubGraphEdge = AsyncCommandAction.command_async(( state, config ) ->
-            new Command( "check_value", Map.of(GraphState.MY_VALUE, AgentState.MARK_FOR_REMOVAL)));
 
         // PARENT GRAPH
         var parentGraph = new StateGraph<>(GraphState.getChannels(), GraphState::new)
-                .addNode("set_value", setValueNode)
+                .add( repo.node("set_value", "setValueNode"))
                 .addNode("subgraph", subGraph.compile())
-                .addNode("check_value", checkValueNode)
+                .add( repo.node("check_value", "checkValueNode"))
                 .addEdge(StateGraph.START, "set_value")
                 .addEdge("set_value", "subgraph")
-                .addConditionalEdges("subgraph",
-                        exitFromSubGraphEdge,
+                .add( repo.edge("subgraph",
+                        "exitFromSubGraphEdge",
                         EdgeMappings.builder()
                                 .to("check_value")
-                                .build())
+                                .build()))
                 .addEdge("check_value", StateGraph.END);
 
         var compileConfig = CompileConfig.builder()
@@ -193,9 +200,10 @@ public class Issue260Test {
         // Start with my_value set
         var input = new GraphArgs(Map.of(GraphState.MY_VALUE, "initial_value"));
 
-        var output = graph.invokeFinal(input, runConfig).orElseThrow();
+        var result = graph.invokeSync(input, runConfig);
 
-        var state = output.state();
+        assertTrue( result.isStateData() );
+        GraphState state = result.asState();
 
         assertTrue( state.myValue().isEmpty(), "Expected: my_value should be NOT_PRESENT after subgraph");
     }

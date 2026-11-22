@@ -19,7 +19,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.version>12.1.13</jetty.version>
+        <jetty.version>12.1.15</jetty.version>
         <jackson.version>2.21.7</jackson.version>
     </properties>
 
