@@ -49,7 +49,7 @@ public interface LG4JStudioApplication {
                 .instance(Map.entry( "sample", SampleGraph.withConditionalEdge() ))
                 .instance(Map.entry( "state_subgraph", SampleGraph.withStateSubgraph() ))
                 .instance(Map.entry( "compiled_subgraph", SampleGraph.withCompiledSubgraph() ))
-                .filter( ctx -> ctx.addFilter(CorsFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST)))
+                .cors("http://localhost:1234")
                 .build()
                 .start()
                 .join();
