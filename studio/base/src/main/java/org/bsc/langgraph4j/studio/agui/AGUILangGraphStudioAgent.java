@@ -238,8 +238,14 @@ public class AGUILangGraphStudioAgent extends AGUIAgentBase {
             final var inputMap = input.messages().stream()
                     .map(message ->
                             inputArgs.stream()
-                                    .filter(arg -> arg.name().equals(message.id()) && arg.converter() != null).findAny()
-                                    .map(arg -> Map.entry(message.id(), arg.converter().apply(message)))
+                                    .filter(arg -> arg.name().equals(message.id()))
+                                    .findAny()
+                                    .map(arg -> {
+                                        final var content = ( arg.converter() != null ) ?
+                                                arg.converter().apply(message) :
+                                                message.content();
+                                        return Map.entry(message.id(), content);
+                                    })
                                     .orElse(null)
                     )
                     .filter(Objects::nonNull)
