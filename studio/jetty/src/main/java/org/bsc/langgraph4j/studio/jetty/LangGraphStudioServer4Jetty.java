@@ -1,12 +1,12 @@
 package org.bsc.langgraph4j.studio.jetty;
 
+import jakarta.servlet.DispatcherType;
 import org.bsc.langgraph4j.studio.LangGraphStudioServer;
+import org.eclipse.jetty.ee10.servlet.DefaultServlet;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 
 import java.util.*;
@@ -15,9 +15,9 @@ import java.util.function.Consumer;
 
 
 /**
- * Represents a streaming server for LangGraph using Jetty.
- * LangGraphStreamingServer is an interface that represents a server that supports streaming
- * of LangGraph. Implementations of this interface can be used to create a web server that exposes an API for interacting with compiled language graphs.
+ * Hosts the Studio UI and graph API in a shared Jetty servlet context.
+ * Servlet filters apply to both API requests and static resources, including CORS preflight.
+ * Configure instances and filters before starting; Jetty manages request threads and sessions.
  */
 public class LangGraphStudioServer4Jetty implements LangGraphStudioServer {
 
@@ -60,7 +60,8 @@ public class LangGraphStudioServer4Jetty implements LangGraphStudioServer {
     }
 
     /**
-     * Builder class for constructing LangGraphStreamingServerJetty instances.
+     * Configures the Jetty connector, graph servlets, static resources, and optional filters.
+     * Use on a single configuration thread before starting the constructed server.
      */
     public static class Builder {
         private int port = 8080;
@@ -93,28 +94,31 @@ public class LangGraphStudioServer4Jetty implements LangGraphStudioServer {
             return this;
         }
 
+        public Builder cors(String... allowedOrigins) {
+            final var filter = new CorsFilter(allowedOrigins);
+            return filter( ctx -> ctx.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST)));
+        }
+
         /**
-         * Builds and returns a LangGraphStreamingServerJetty instance.
+         * Builds an unstarted Studio server with a shared servlet context for the UI and API.
          *
-         * @return a new LangGraphStreamingServerJetty instance
-         * @throws NullPointerException if the stateGraph is null
-         * @throws Exception if an error occurs during server setup
+         * <p>Static resources use the default servlet so OPTIONS requests reach configured
+         * filters before resource handling. Call {@link LangGraphStudioServer4Jetty#start()}
+         * after completing configuration; Jetty owns the resources for the server lifetime.
+         *
+         * @return a new, non-null server configured from this builder
+         * @throws Exception if server or classpath resource setup fails
          */
         public LangGraphStudioServer4Jetty build() throws Exception {
 
+            // Configure the listening connector without starting request processing.
             Server server = new Server();
 
             ServerConnector connector = new ServerConnector(server);
             connector.setPort(port);
             server.addConnector(connector);
 
-            var resourceHandler = new ResourceHandler();
-
-            var baseResource = ResourceFactory.of(resourceHandler).newClassLoaderResource("webapp");
-            resourceHandler.setBaseResource(baseResource);
-
-            resourceHandler.setDirAllowed(true);
-
+            // Keep API and static requests inside the same filter and session lifecycle.
             var context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 
             context.setSessionHandler(new org.eclipse.jetty.ee10.servlet.SessionHandler());
@@ -123,12 +127,18 @@ public class LangGraphStudioServer4Jetty implements LangGraphStudioServer {
 
             context.addServlet(new ServletHolder(new GraphStreamServlet(instanceMap)), "/stream/*");
 
+            context.setBaseResource(ResourceFactory.of(context).newClassLoaderResource("webapp"));
+            context.setWelcomeFiles(new String[]{"index.html"});
+            var defaultServlet = new ServletHolder(new DefaultServlet());
+            defaultServlet.setInitParameter("dirAllowed", "true");
+            // The default mapping serves assets while the more specific API mappings take precedence.
+            context.addServlet(defaultServlet, "/");
+
+            // Install filters before startup so preflight cannot bypass their CORS headers.
             if( filterHandler != null ) {
                 filterHandler.accept(context);
             }
-            var handlerList = new Handler.Sequence(resourceHandler, context  );
-
-            server.setHandler(handlerList);
+            server.setHandler(context);
 
             return new LangGraphStudioServer4Jetty(server);
         }

@@ -1,9 +1,12 @@
 package org.bsc.langgraph4j.studio.jetty.agui;
 
+import jakarta.servlet.DispatcherType;
 import org.bsc.langgraph4j.agui.sdk.AGUIAgent;
 import org.bsc.langgraph4j.agui.sdk.AGUIAgentRegistry;
 import org.bsc.langgraph4j.studio.agui.AGUILangGraphStudioJacksonSerializer;
 import org.bsc.langgraph4j.studio.agui.AGUILangGraphStudioServer;
+import org.bsc.langgraph4j.studio.jetty.CorsFilter;
+import org.eclipse.jetty.ee10.servlet.DefaultServlet;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Handler;
@@ -12,6 +15,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -94,6 +98,11 @@ public class AGUILangGraphStudioServer4Jetty implements AGUILangGraphStudioServe
             return this;
         }
 
+        public Builder cors(String... allowedOrigins) {
+            final var filter = new CorsFilter(allowedOrigins);
+            return filter( ctx -> ctx.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST)));
+        }
+
         public Builder serializer(AGUILangGraphStudioJacksonSerializer serializer) {
             this.serializer = serializer;
             return this;
@@ -129,6 +138,13 @@ public class AGUILangGraphStudioServer4Jetty implements AGUILangGraphStudioServe
             context.addServlet(new ServletHolder(new InitServlet(registry, serializer)), "/init");
 
             context.addServlet(new ServletHolder(new StreamServlet(registry, serializer)), "/stream/*");
+
+            context.setBaseResource(ResourceFactory.of(context).newClassLoaderResource("webapp"));
+            context.setWelcomeFiles(new String[]{"index.html"});
+            var defaultServlet = new ServletHolder(new DefaultServlet());
+            defaultServlet.setInitParameter("dirAllowed", "true");
+            // The default mapping serves assets while the more specific API mappings take precedence.
+            context.addServlet(defaultServlet, "/");
 
             if( filterHandler != null ) {
                 filterHandler.accept(context);
