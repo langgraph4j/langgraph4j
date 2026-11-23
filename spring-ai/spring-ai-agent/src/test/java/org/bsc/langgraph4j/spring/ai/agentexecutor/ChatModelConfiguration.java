@@ -12,7 +12,7 @@ public class ChatModelConfiguration {
     @Bean
     @Profile("ollama")
     public ChatModel ollamaModel() {
-        return AIModel.OLLAMA.chatModel("qwen3");
+        return AIModel.OLLAMA.chatModel("qwen3.5");
     }
 
     @Bean
