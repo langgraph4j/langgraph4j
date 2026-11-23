@@ -153,6 +153,7 @@
                         <systemPropertyVariables>
                             <api.version>1.44</api.version>
                         </systemPropertyVariables>
+                            <argLine>--enable-preview</argLine>
                     </configuration>
                 </plugin>
 
@@ -162,6 +163,9 @@
                     <version>3.13.0</version>
                     <configuration>
                         <release>21</release>
+                        <compilerArgs>
+                            <arg>--enable-preview</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
 
