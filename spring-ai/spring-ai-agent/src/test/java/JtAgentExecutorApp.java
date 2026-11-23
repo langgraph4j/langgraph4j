@@ -1,16 +1,17 @@
-//DEPS org.bsc.langgraph4j:spring-ai-agent-archetype:1.8.10
-//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.8.10
+//REPOS mavenlocal,mavencentral
+//DEPS org.bsc.langgraph4j:langgraph4j-springai-agentexecutor:1.9-SNAPSHOT
+//DEPS org.bsc.langgraph4j:langgraph4j-javelit:1.9-SNAPSHOT
 //DEPS net.sourceforge.plantuml:plantuml-mit:1.2025.10
-//DEPS org.springframework.ai:spring-ai-bom:1.1.0@pom
+//DEPS org.springframework.ai:spring-ai-bom:2.1.0@pom
 //DEPS org.springframework.ai:spring-ai-client-chat
 //DEPS org.springframework.ai:spring-ai-openai
 //DEPS org.springframework.ai:spring-ai-ollama
-//DEPS org.springframework.ai:spring-ai-goole-genai
-//DEPS org.springframework.ai:spring-ai-azure-openai
+//DEPS org.springframework.ai:spring-ai-google-genai
+///DEPS org.springframework.ai:spring-ai-azure-openai
 
-//SOURCES org/bsc/langgraph4j/spring/ai/agentexecutor/AiModel.java
-//SOURCES org/bsc/langgraph4j/spring/ai/agentexecutor/TestTools.java
-//SOURCES org/bsc/langgraph4j/spring/ai/agentexecutor/gemini/TestTools4Gemini.java
+//SOURCES org/bsc/langgraph4j/spring/ai/AiModel.java
+//SOURCES org/bsc/langgraph4j/spring/ai/tool/TestTools.java
+//SOURCES org/bsc/langgraph4j/spring/ai/tool/gemini/TestTools4Gemini.java
 
 import io.javelit.core.Jt;
 import io.javelit.core.JtComponent;
@@ -39,10 +40,17 @@ public class JtAgentExecutorApp {
 
         var app = new JtAgentExecutorApp();
 
-        app.view();
+        app.start();
     }
 
+    void start() {
+        // prepare a Javelit server
 
+        var server = io.javelit.core.Server.builder(this::view, 8888).build();
+
+        // start the server - this is non-blocking, user thread
+        server.start();
+    }
     public void view() {
         Jt.title("LangGraph4J React Agent").use();
         Jt.markdown("### Powered by LangGraph4j and SpringAI").use();
