@@ -76,8 +76,10 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
 
         try {
 
+            // on resume the values to apply come from RunnableConfig.SUBGRAPH_RESUME_UPDATE_DATA,
+            // the rest of the state is already in the checkpoint of the subgraph
             final GraphInput input = ( resumeSubgraph ) ?
-                    GraphInput.resume( state.data() ) :
+                    GraphInput.resume() :
                     GraphInput.args(state.data());
 
             var generator = subGraph.streamSnapshots(input, subGraphRunnableConfig)
