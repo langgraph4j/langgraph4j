@@ -651,7 +651,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                     // RESUME FORM SUBGRAPH DETECTED
                     final var resumeUpdateData = optionalResumeUpdateData
-                            .map(data -> mergeMap(data, input.value()))
+                            .map(data -> mergeMap(data, input.value(), (updated, resumed) -> resumed))
                             .orElseGet(input::value);
 
                     // RESUME FORM SUBGRAPH DETECTED
