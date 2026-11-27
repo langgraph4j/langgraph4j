@@ -2,6 +2,94 @@
 
 
 
+<!-- "name: Unreleased" is a release tag -->
+
+## [Unreleased](https://github.com/bsorrentino/langgraph4j/releases/tag/Unreleased) ()
+
+
+
+
+
+
+
+
+
+
+
+<!-- "name: v2.0.0-beta1" is a release tag -->
+
+## [v2.0.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/v2.0.0-beta1) (2026-11-27)
+
+### Features
+
+ *  **studio/jetty**  add CORS support and default servlet configuration ([a6777c589549e5c](https://github.com/bsorrentino/langgraph4j/commit/a6777c589549e5c93b8a639f81896c16a1a7551a))
+
+ *  **studio/jetty**  add CORS support and default servlet configuration ([32d9801e270b703](https://github.com/bsorrentino/langgraph4j/commit/32d9801e270b703e89cda5be47cca273e7d34227))
+
+ *  **ActionCatalog**  add edgeAction method for retrieving edge actions by ID ([c1ae2d2c5b0cd86](https://github.com/bsorrentino/langgraph4j/commit/c1ae2d2c5b0cd865f169fe1baf9031fadd36d734))
+
+
+### Bug Fixes
+
+ -  **core**  resume of nested subgraphs fails with duplicate key ([4816860e536f7a6](https://github.com/bsorrentino/langgraph4j/commit/4816860e536f7a6bf291aa7a1f69ecfc10b78e36))
+
+ -  **AGUILangGraphStudioAgent**  handle null converters in message processing ([c32729b923450cb](https://github.com/bsorrentino/langgraph4j/commit/c32729b923450cbf4cc42f4af20f0e3df8f61d28))
+
+
+
+### Test
+
+ -  **spring-ai-agent**  verify with new spring ai 2.1.0 version ([edbac79145eb23b](https://github.com/bsorrentino/langgraph4j/commit/edbac79145eb23b22c1418987929c279b2963cf7))
+
+ -  **studio/jetty**  verify the cors built-in support ([84a968d3887126b](https://github.com/bsorrentino/langgraph4j/commit/84a968d3887126b1cb4fc4bcf81a678ab21e010c))
+
+
+### Documentation
+
+ -  update release references to 2.0.0-beta1 ([b5216ab2425ce93](https://github.com/bsorrentino/langgraph4j/commit/b5216ab2425ce93b55979c2a1bfd22cd7f62d873))
+
+ -  add LangGraph4j Fundamentals image ([c3c6d359bcb624d](https://github.com/bsorrentino/langgraph4j/commit/c3c6d359bcb624d91f892f38c5108f3efd80602f))
+
+ -  **subgraph**  update links to relative paths in documentation ([be3f2b7b155b559](https://github.com/bsorrentino/langgraph4j/commit/be3f2b7b155b559e15dba0cffb1e6cc129f4e3e4))
+
+ -  **subgraph**  enhance node creation with Action Catalog and AsyncGenerator support ([e423c3ad9060591](https://github.com/bsorrentino/langgraph4j/commit/e423c3ad9060591d09f4e3b6aa969b1455e6d26f))
+
+ -  update changelog ([cb408a1ad6961db](https://github.com/bsorrentino/langgraph4j/commit/cb408a1ad6961dbe8d4fd0803ad9f317f413d6e6))
+
+
+### ALM
+
+ -  bump to next version 2.0.0-beta1 ([b964ef73b450777](https://github.com/bsorrentino/langgraph4j/commit/b964ef73b45077798510ca19d50eebd59e6fc6c3))
+
+ -  update async.generator version to 6.0.0 ([73d4459ae54c756](https://github.com/bsorrentino/langgraph4j/commit/73d4459ae54c756e9417d98b69eb0ac7e983683e))
+
+ -  merge from develop ([c6009eca3a362ef](https://github.com/bsorrentino/langgraph4j/commit/c6009eca3a362efe3f8826fc91f4409eea3a7a0e))
+
+ -  update async-generator version to 5.2.1 ([6e4e842e4d38faa](https://github.com/bsorrentino/langgraph4j/commit/6e4e842e4d38faa6d3ec5247433f324c683af0ce))
+
+ -  update langchain4j version to 1.24.0 and beta to 1.24.0-beta34 ([af37f049e10ae70](https://github.com/bsorrentino/langgraph4j/commit/af37f049e10ae707d87b290125654c23bdd37e31))
+
+ -  enable preview features for Java 21 ([fb3d8e4f3671335](https://github.com/bsorrentino/langgraph4j/commit/fb3d8e4f3671335a6a0e30e899058cb39f41c634))
+
+ -  update spring-ai version to 2.1.0 ([cf0d07b3132f20e](https://github.com/bsorrentino/langgraph4j/commit/cf0d07b3132f20e86cf037108eac99ceaa6033d4))
+
+ -  **studio/jetty**  update Jetty version to 12.1.15 ([89bd1ca61a8020a](https://github.com/bsorrentino/langgraph4j/commit/89bd1ca61a8020a75f300fcd8af284cb87447b6b))
+
+ -  bump to next dev version 1.9-SNAPSHOT ([54a8a2a4076b9df](https://github.com/bsorrentino/langgraph4j/commit/54a8a2a4076b9dfeb9af4108292f37fd4f41f738))
+
+ -  update async.generator version to 6.0-SNAPSHOT ([c230a9eae2890b9](https://github.com/bsorrentino/langgraph4j/commit/c230a9eae2890b99bc4f5003f2fda66ea66a2cdd))
+
+ -  update Maven compiler and plugin versions to 21 and 3.2.8 ([f9fe4376665c6e0](https://github.com/bsorrentino/langgraph4j/commit/f9fe4376665c6e0ea949d936c2848f61c9962a70))
+
+
+### Continuous Integration
+
+ -  update Java version to 21 in deployment configurations ([d0f7721dd00cc6d](https://github.com/bsorrentino/langgraph4j/commit/d0f7721dd00cc6d0612c1225ce59d3254087ef03))
+
+
+
+
+
 <!-- "name: v1.9.10" is a release tag -->
 
 ## [v1.9.10](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.9.10) (2026-11-17)
