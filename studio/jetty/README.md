@@ -9,7 +9,7 @@ This module provide the reference implementation of LangGraph4j Studio using [Je
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-jetty</artifactId>
-    <version>1.9.10</version>
+    <version>2.0.0-beta1</version>
 </dependency>
 ```
 

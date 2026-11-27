@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-studio:1.9-SNAPSHOT
+//DEPS org.bsc.langgraph4j:langgraph4j-studio:2.0.0-beta1
 //DEPS com.ag-ui.community:java-client:0.1.1
 
 import com.agui.community.client.HttpAgent;

@@ -77,12 +77,12 @@ To use LangGraph4j in your project, you need to add it as a dependency.
 
 **Maven:**
 
-Make sure you are using Java 17 or later.
+Make sure you are using Java 21 or later.
 
-**Latest Stable Version (Recommended):**
+**2.0 Prerelease Version:**
 ```xml
 <properties>
-    <langgraph4j.version>1.9.10</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>2.0.0-beta1</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
@@ -108,16 +108,16 @@ Make sure you are using Java 17 or later.
 ```
 *(Note: Always check the [Maven Central Repository] for the latest version number.)*
 
-**Development Snapshot Version:**
-If you want to use the latest unreleased features, you can use a snapshot version.
+**Direct Dependency:**
+You can also specify the prerelease version directly without importing the BOM.
 ```xml
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-core</artifactId>
-    <version>1.9.10</version> <!-- Or the current snapshot version -->
+    <version>2.0.0-beta1</version>
 </dependency>
 ```
-You might need to configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
+For development snapshot versions, configure your `settings.xml` or `pom.xml` to include the Sonatype OSS snapshots repository:
 ```xml
 <repositories>
     <repository>
