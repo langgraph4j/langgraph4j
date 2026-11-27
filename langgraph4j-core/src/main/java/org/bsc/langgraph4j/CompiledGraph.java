@@ -24,6 +24,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -46,6 +49,28 @@ import static org.bsc.langgraph4j.utils.FutureUtils.awaitCompletion;
 public final class CompiledGraph<State extends AgentState> implements GraphDefinition<State>, LG4JLoggable {
 
     private static final String INTERRUPT_AFTER = "__INTERRUPTED__";
+
+    static final String DEFAULT_EMITTER_THREAD_PREFIX = "langgraph4j-emitter-";
+
+    /**
+     * Holds the {@link Executor} used when the caller doesn't supply one through
+     * {@link RunnableConfig.Builder#emitterExecutor(Executor)}.
+     * <p>
+     * Its threads are daemon threads, so a short-lived JVM is not kept alive by an idle
+     * emitter thread once the graph execution is over. The pool is shared by every
+     * execution that relies on the default, and the holder class defers its creation
+     * until the first such execution.
+     */
+    private static final class DefaultEmitterExecutor {
+        private static final AtomicLong THREAD_COUNT = new AtomicLong();
+
+        private static final Executor INSTANCE = Executors.newCachedThreadPool(runnable -> {
+            final var thread = new Thread(runnable,
+                    DEFAULT_EMITTER_THREAD_PREFIX + THREAD_COUNT.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
 
     /**
      * Enum representing various error messages related to graph runner.
@@ -408,6 +433,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
     /**
      * Creates an AsyncGenerator stream of NodeOutput based on the provided inputs.
+     * <p>
+     * The stream runs on {@link RunnableConfig.Builder#emitterExecutor(Executor)} when the caller
+     * supplies one, otherwise on a shared pool of daemon threads owned by the library.
      *
      * @param input  the input data
      * @param config the invoke configuration
@@ -417,7 +445,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         requireNonNull(config, "config cannot be null");
 
         final var builder = AsyncGeneratorFlow.builder();
-        config.emitterExecutor().ifPresent(builder::executor);
+        builder.executor(config.emitterExecutor().orElse(DefaultEmitterExecutor.INSTANCE));
         config.metadata(RunnableConfig.CUSTOM_DISPATCHER, new TypeRef<Dispatcher<State, NodeOutput<State>>>() {
                 })
                 .ifPresent(parent -> builder.cancelledBy(parent.delegate));

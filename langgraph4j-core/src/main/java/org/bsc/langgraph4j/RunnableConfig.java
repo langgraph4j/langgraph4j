@@ -120,7 +120,8 @@ public final class RunnableConfig implements HasMetadata {
         /**
          * Sets the {@link Executor} that runs the graph execution loop for this invocation.
          * <p>
-         * Without one, the loop runs on {@code CompletableFuture}'s default async executor.
+         * Without one, the loop runs on a shared pool of daemon threads owned by the library, so an
+         * idle loop thread never keeps a short-lived JVM alive once the execution is over.
          * The loop is submitted from the calling thread, so an executor that captures thread-bound
          * state on submission (tracing context, MDC) carries it into node actions, hooks, edges and
          * retries, but not into parallel branches with their own {@link #addParallelNodeExecutor}
@@ -273,7 +274,7 @@ public final class RunnableConfig implements HasMetadata {
     /**
      * Returns the {@link Executor} that runs the graph execution loop for this invocation.
      *
-     * @return an optional executor, or empty when {@code CompletableFuture}'s default async executor should be used
+     * @return an optional executor, or empty when the library's shared daemon-thread pool should be used
      * @since 1.9
      */
     public Optional<Executor> emitterExecutor() {
