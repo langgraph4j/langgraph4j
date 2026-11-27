@@ -29,6 +29,7 @@
             <groupId>org.bsc.async</groupId>
             <artifactId>async-generator</artifactId>
             <version>${async.generator}</version>
+
         </dependency>
 
         <dependency>
