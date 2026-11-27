@@ -85,7 +85,7 @@ flowchart TD
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-springai-agentexecutor</artifactId>
-    <version>1.9.10</version>
+    <version>2.0.0-beta1</version>
 </dependency>
 ```
 

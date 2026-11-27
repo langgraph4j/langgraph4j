@@ -8,7 +8,7 @@ This module provide the reference implementation of LangGraph4j Studio using Spr
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-studio-springboot</artifactId>
-    <version>1.9.10</version>
+    <version>2.0.0-beta1</version>
 </dependency>
 ```
 

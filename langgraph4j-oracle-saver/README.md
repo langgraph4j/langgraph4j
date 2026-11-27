@@ -31,14 +31,14 @@ For Maven:
 <dependency>
     <groupId>org.bsc.langgraph4j</groupId>
     <artifactId>langgraph4j-oracle-saver</artifactId>
-    <version>1.9.10</version>
+    <version>2.0.0-beta1</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```gradle
-implementation("org.bsc.langgraph4j:langgraph4j-oracle-saver:1.9.10")
+implementation("org.bsc.langgraph4j:langgraph4j-oracle-saver:2.0.0-beta1")
 ```
 
 ## Configuration
