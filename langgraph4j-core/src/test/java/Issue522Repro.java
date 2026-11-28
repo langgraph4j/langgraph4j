@@ -1,4 +1,4 @@
-//DEPS org.bsc.langgraph4j:langgraph4j-core:1.9-SNAPSHOT
+//DEPS org.bsc.langgraph4j:langgraph4j-core:2.0-SNAPSHOT
 
 import java.nio.file.Path;
 import java.util.List;
